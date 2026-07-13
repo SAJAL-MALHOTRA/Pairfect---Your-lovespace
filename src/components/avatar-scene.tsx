@@ -393,14 +393,9 @@ export default function AvatarScene({
 }
 
 function RotatingFigure({ outfit, skinColor }: { outfit: Outfit; skinColor: string }) {
-  const groupRef = useRef<any>(null);
-  useFrame((state, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.2; // slow spin
-    }
-  });
+  // Static 3/4 angle gives a premium voxel presentation without running delta checks
   return (
-    <group ref={groupRef}>
+    <group rotation={[0, -Math.PI / 8, 0]}>
       <MinecraftFigure outfit={outfit} position={[0, -1.15, 0]} skinColor={skinColor} />
     </group>
   );
