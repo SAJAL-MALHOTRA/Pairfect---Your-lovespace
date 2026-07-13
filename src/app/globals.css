@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-rose-50: #fff5f6;
+  --color-brand-rose-100: #ffe6e8;
+  --color-brand-rose-200: #fecdd3;
+  --color-brand-rose-300: #fda4af;
+  --color-brand-rose-400: #fb7185;
+  --color-brand-rose-500: #f43f5e;
+  --color-brand-rose-600: #e11d48;
+  --color-brand-rose-700: #be123c;
+
+  --color-brand-peach-50: #fffaf7;
+  --color-brand-peach-100: #ffedd5;
+  --color-brand-peach-200: #fed7aa;
+  --color-brand-peach-300: #fdba74;
+  --color-brand-peach-400: #fb923c;
+  --color-brand-peach-500: #f97316;
+
+  --color-brand-lavender-50: #faf5ff;
+  --color-brand-lavender-100: #f3e8ff;
+  --color-brand-lavender-200: #e9d5ff;
+  --color-brand-lavender-300: #d8b4fe;
+  --color-brand-lavender-400: #c084fc;
+  --color-brand-lavender-500: #a855f7;
+
+  --color-brand-sage-50: #f0fdf4;
+  --color-brand-sage-100: #dcfce7;
+  --color-brand-sage-200: #bbf7d0;
+  --color-brand-sage-300: #86efac;
+  --color-brand-sage-400: #4ade80;
+  --color-brand-sage-500: #22c55e;
+
+  --font-sans: var(--font-outfit), var(--font-geist-sans), sans-serif;
+}
+
+:root {
+  --background: #faf8f6;
+  --foreground: #2d2a29;
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(240, 230, 220, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --shadow-color: rgba(210, 195, 185, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #151312;
+    --foreground: #f4eae4;
+    --card-bg: rgba(26, 23, 22, 0.7);
+    --card-border: rgba(45, 40, 38, 0.8);
+    --glass-bg: rgba(26, 23, 22, 0.45);
+    --glass-border: rgba(45, 40, 38, 0.6);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 var(--shadow-color);
+}
+
+.cozy-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 4px 20px 0 var(--shadow-color);
+  border-radius: 1.5rem;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+  opacity: 0.2;
+}
