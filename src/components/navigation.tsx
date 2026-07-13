@@ -16,6 +16,7 @@ export default function Navigation() {
     { href: "/recap", label: "Recap", icon: Sparkles },
     { href: "/quiz", label: "Quiz", icon: Gamepad2 },
     { href: "/watch", label: "Watch", icon: Tv },
+    { href: "/avatars", label: "Avatars", icon: User },
     { href: "/moments", label: "Moments", icon: BookOpen },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
