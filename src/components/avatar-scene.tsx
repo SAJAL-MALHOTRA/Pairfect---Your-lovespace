@@ -1,6 +1,7 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
+import { useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
 
 interface Outfit {
@@ -387,6 +388,39 @@ export default function AvatarScene({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function RotatingFigure({ outfit, skinColor }: { outfit: Outfit; skinColor: string }) {
+  const groupRef = useRef<any>(null);
+  useFrame((state, delta) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.2; // slow spin
+    }
+  });
+  return (
+    <group ref={groupRef}>
+      <MinecraftFigure outfit={outfit} position={[0, -0.4, 0]} skinColor={skinColor} />
+    </group>
+  );
+}
+
+export function MiniAvatarScene({ outfit, skinColor = "#f5cac3" }: { outfit: Outfit; skinColor?: string }) {
+  return (
+    <div className="w-full h-full relative overflow-hidden rounded-full">
+      <Canvas 
+        camera={{ position: [0, 0.95, 0.9], fov: 36 }}
+        dpr={[1, 1.5]}
+        gl={{ preserveDrawingBuffer: false }}
+        className="w-full h-full"
+      >
+        <color attach="background" args={["#faf8f6"]} />
+        <ambientLight intensity={1.3} />
+        <directionalLight position={[5, 8, 5]} intensity={1.3} />
+        <directionalLight position={[-5, 5, -2]} intensity={0.4} />
+        <RotatingFigure outfit={outfit} skinColor={skinColor} />
+      </Canvas>
     </div>
   );
 }

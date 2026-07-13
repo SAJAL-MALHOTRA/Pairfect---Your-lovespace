@@ -8,9 +8,21 @@ import { calculateStreak } from "@/lib/utils/streak";
 import Link from "next/link";
 import { 
   Heart, Sparkles, Plus, Calendar, Music, 
-  ChevronRight, Smile, Flame, Shield, ArrowRight 
+  ChevronRight, Smile, Flame, Shield, ArrowRight, Pencil
 } from "lucide-react";
 import { format, isToday } from "date-fns";
+import dynamic from "next/dynamic";
+
+const MiniAvatarScene = dynamic(() => import("@/components/avatar-scene").then(m => m.MiniAvatarScene), { ssr: false });
+
+const defaultOutfit = {
+  top_style: "tshirt",
+  top_color: "#e7e5e4",
+  bottom_style: "pants",
+  bottom_color: "#78716c",
+  shoes_style: "sneakers",
+  shoes_color: "#1c1917"
+};
 
 export const moodDetails = {
   joyful: { label: "Joyful", emoji: "😊", color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-950/25 border-yellow-100 dark:border-yellow-900/30" },
@@ -31,6 +43,8 @@ export default function DashboardPage() {
   const [streak, setStreak] = useState(0);
   const [todayUserLog, setTodayUserLog] = useState<any>(null);
   const [todayPartnerLog, setTodayPartnerLog] = useState<any>(null);
+  const [userOutfit, setUserOutfit] = useState<any>(null);
+  const [partnerOutfit, setPartnerOutfit] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
   const supabase = createClient();
 
@@ -62,6 +76,21 @@ export default function DashboardPage() {
         const partnerLatest = todayLogs.find((log: any) => log.user_id === partner.id);
         setTodayPartnerLog(partnerLatest || null);
       }
+
+      // Fetch avatar outfits
+      const { data: outfits, error: outfitsErr } = await supabase
+        .from("avatar_outfits")
+        .select("*")
+        .in("user_id", [user?.id, partner?.id].filter(Boolean));
+
+      if (!outfitsErr && outfits) {
+        const myOutfit = outfits.find((o: any) => o.user_id === user?.id);
+        setUserOutfit(myOutfit || null);
+        if (partner) {
+          const partnerOutfitObj = outfits.find((o: any) => o.user_id === partner.id);
+          setPartnerOutfit(partnerOutfitObj || null);
+        }
+      }
     } catch (err) {
       console.error("Error loading dashboard data:", err);
     } finally {
@@ -73,7 +102,7 @@ export default function DashboardPage() {
     if (!loading && pair) {
       fetchTodayData();
 
-      // Set up real-time subscription for new mood logs
+      // Set up real-time subscription for new mood logs and outfit changes
       const channel = supabase
         .channel(`dashboard-moods-${pair.id}`)
         .on(
@@ -83,6 +112,17 @@ export default function DashboardPage() {
             schema: "public",
             table: "mood_logs",
             filter: `pair_id=eq.${pair.id}`,
+          },
+          () => {
+            fetchTodayData();
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "avatar_outfits",
           },
           () => {
             fetchTodayData();
@@ -149,11 +189,33 @@ export default function DashboardPage() {
           <div className="cozy-card p-6 flex flex-col justify-between min-h-[250px] relative overflow-hidden transition-all hover:shadow-xl hover:shadow-brand-rose-100/20">
             <div>
               <div className="flex items-center justify-between border-b border-card-border pb-4 mb-4">
-                <span className="font-bold text-sm tracking-wide text-muted-foreground uppercase">
-                  Your Vibe Today
-                </span>
+                <div className="flex items-center space-x-3">
+                  <div className="relative w-14 h-14 rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden flex-shrink-0">
+                    <MiniAvatarScene 
+                      outfit={userOutfit || defaultOutfit} 
+                      skinColor="#f5cac3"
+                    />
+                    <Link 
+                      href="/avatars" 
+                      className="absolute -bottom-1 -right-1 p-1 bg-brand-rose-500 hover:bg-brand-rose-600 border border-white text-white rounded-full transition-transform active:scale-90"
+                      title="Edit Avatar"
+                    >
+                      <Pencil className="w-2.5 h-2.5" />
+                    </Link>
+                  </div>
+                  <div>
+                    <span className="font-bold text-sm tracking-wide text-muted-foreground uppercase block">
+                      Your Vibe Today
+                    </span>
+                    {todayUserLog && (
+                      <span className="text-[10px] text-muted-foreground font-medium block sm:hidden">
+                        {format(new Date(todayUserLog.created_at), "h:mm a")}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 {todayUserLog && (
-                  <span className="text-xs text-muted-foreground font-medium">
+                  <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
                     Logged at {format(new Date(todayUserLog.created_at), "h:mm a")}
                   </span>
                 )}
@@ -232,11 +294,26 @@ export default function DashboardPage() {
           <div className="cozy-card p-6 flex flex-col justify-between min-h-[250px] relative overflow-hidden transition-all hover:shadow-xl hover:shadow-brand-peach-100/20">
             <div>
               <div className="flex items-center justify-between border-b border-card-border pb-4 mb-4">
-                <span className="font-bold text-sm tracking-wide text-muted-foreground uppercase">
-                  {partner?.display_name || "Partner"}'s Vibe
-                </span>
+                <div className="flex items-center space-x-3">
+                  <div className="relative w-14 h-14 rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden flex-shrink-0">
+                    <MiniAvatarScene 
+                      outfit={partnerOutfit || defaultOutfit} 
+                      skinColor="#eddcd2"
+                    />
+                  </div>
+                  <div>
+                    <span className="font-bold text-sm tracking-wide text-muted-foreground uppercase block">
+                      {partner?.display_name || "Partner"}'s Vibe
+                    </span>
+                    {todayPartnerLog && (
+                      <span className="text-[10px] text-muted-foreground font-medium block sm:hidden">
+                        {format(new Date(todayPartnerLog.created_at), "h:mm a")}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 {todayPartnerLog && (
-                  <span className="text-xs text-muted-foreground font-medium">
+                  <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
                     Logged at {format(new Date(todayPartnerLog.created_at), "h:mm a")}
                   </span>
                 )}
