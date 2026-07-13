@@ -401,7 +401,7 @@ function RotatingFigure({ outfit, skinColor }: { outfit: Outfit; skinColor: stri
   });
   return (
     <group ref={groupRef}>
-      <MinecraftFigure outfit={outfit} position={[0, -0.4, 0]} skinColor={skinColor} />
+      <MinecraftFigure outfit={outfit} position={[0, -1.15, 0]} skinColor={skinColor} />
     </group>
   );
 }
@@ -410,7 +410,7 @@ export function MiniAvatarScene({ outfit, skinColor = "#f5cac3" }: { outfit: Out
   return (
     <div className="w-full h-full relative overflow-hidden rounded-full">
       <Canvas 
-        camera={{ position: [0, 0.95, 0.9], fov: 36 }}
+        camera={{ position: [0, 0.1, 0.75], fov: 32 }}
         dpr={[1, 1.5]}
         gl={{ preserveDrawingBuffer: false }}
         className="w-full h-full"
