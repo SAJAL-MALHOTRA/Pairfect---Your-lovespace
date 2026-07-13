@@ -11,18 +11,9 @@ import {
   ChevronRight, Smile, Flame, Shield, ArrowRight, Pencil
 } from "lucide-react";
 import { format, isToday } from "date-fns";
-import dynamic from "next/dynamic";
-
-const MiniAvatarScene = dynamic(() => import("@/components/avatar-scene").then(m => m.MiniAvatarScene), { ssr: false });
-
-const defaultOutfit = {
-  top_style: "tshirt",
-  top_color: "#e7e5e4",
-  bottom_style: "pants",
-  bottom_color: "#78716c",
-  shoes_style: "sneakers",
-  shoes_color: "#1c1917"
-};
+import { StreakBadge } from "@/components/streak-badge";
+import { MoodCard, WaitingCard } from "@/components/mood-card";
+import { QuickLinks } from "@/components/quick-links";
 
 export const moodDetails = {
   joyful: { label: "Joyful", emoji: "😊", color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-950/25 border-yellow-100 dark:border-yellow-900/30" },
@@ -153,292 +144,143 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-rose-50/20 via-background to-background">
+    <div className="relative min-h-screen pb-24 md:pb-8">
+      {/* soft ambient warmth */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 animate-fade-in"
+        style={{
+          background:
+            "radial-gradient(60rem 40rem at 15% -10%, #f7e2e2 0%, transparent 55%), radial-gradient(50rem 40rem at 100% 10%, #f6ece4 0%, transparent 50%)",
+        }}
+      />
+
       <Navigation />
 
-      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-8">
-        
-        {/* Streak & Greeting Row */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <main className="mx-auto max-w-6xl px-4 pb-16 pt-8 md:px-6">
+        {/* Greeting + streak */}
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          {/* subtle pixel dot-grid texture */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-x-3 -top-6 bottom-0 -z-10 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                "radial-gradient(var(--color-primary) 1px, transparent 1px)",
+              backgroundSize: "10px 10px",
+              maskImage:
+                "linear-gradient(to bottom, black, transparent 85%)",
+              WebkitMaskImage:
+                "linear-gradient(to bottom, black, transparent 85%)",
+            }}
+          />
           <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-              Good day, {profile?.display_name}!
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
+              {format(new Date(), "EEEE, MMMM d")}
+            </p>
+            <h1 className="mt-2 font-serif text-4xl font-semibold tracking-tight text-foreground text-balance md:text-5xl">
+              Good day, {profile?.display_name || "there"}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Here is how you and {partner?.display_name || "your partner"} are vibrating today.
+            <p className="mt-2 max-w-md text-muted-foreground text-pretty">
+              Here&apos;s how you and {partner?.display_name || "your partner"} are feeling today. A little check-in keeps you close.
             </p>
           </div>
-
-          <div className="inline-flex items-center space-x-3 px-5 py-3 rounded-2xl bg-orange-500/10 dark:bg-orange-500/5 border border-orange-200/50 dark:border-orange-950/20 self-start md:self-auto">
-            <Flame className="w-6 h-6 text-orange-500 fill-orange-500 animate-bounce" />
-            <div>
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-semibold tracking-wide uppercase">
-                Active Streak
-              </p>
-              <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
-                {streak} {streak === 1 ? "day" : "days"} checked-in!
-              </p>
-            </div>
-          </div>
+          <StreakBadge days={streak} />
         </div>
 
-        {/* Mood Check-in Status Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* User's Card */}
-          <div className="cozy-card p-6 flex flex-col justify-between min-h-[250px] relative overflow-hidden transition-all hover:shadow-xl hover:shadow-brand-rose-100/20">
-            <div>
-              <div className="flex items-center justify-between border-b border-card-border pb-4 mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <div className="w-full h-full rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden">
-                      <MiniAvatarScene 
-                        outfit={userOutfit || defaultOutfit} 
-                        skinColor="#f5cac3"
-                      />
-                    </div>
-                    <Link 
-                      href="/avatars" 
-                      className="absolute -bottom-1 -right-1 p-1.5 bg-brand-rose-500 hover:bg-brand-rose-600 border-2 border-white dark:border-[#1c1917] text-white rounded-full transition-all active:scale-95 shadow-md z-10"
-                      title="Edit Avatar"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </Link>
-                  </div>
-                  <div>
-                    <span className="font-bold text-sm tracking-wide text-muted-foreground uppercase block">
-                      Your Vibe Today
-                    </span>
-                    {todayUserLog && (
-                      <span className="text-[10px] text-muted-foreground font-medium block sm:hidden">
-                        {format(new Date(todayUserLog.created_at), "h:mm a")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {todayUserLog && (
-                  <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
-                    Logged at {format(new Date(todayUserLog.created_at), "h:mm a")}
-                  </span>
-                )}
+        {/* Mood cards */}
+        <section aria-label="Today's moods" className="mt-8 grid gap-5 md:grid-cols-2">
+          {todayUserLog ? (
+            <MoodCard 
+              mood={{
+                name: profile?.display_name || "You",
+                initials: profile?.display_name ? profile.display_name.slice(0, 2).toUpperCase() : "SA",
+                emoji: moodDetails[todayUserLog.mood as keyof typeof moodDetails]?.emoji || "😊",
+                label: moodDetails[todayUserLog.mood as keyof typeof moodDetails]?.label || "Content",
+                intensity: todayUserLog.mood_intensity,
+                note: todayUserLog.note || "",
+                song: todayUserLog.spotify_track_name ? {
+                  title: todayUserLog.spotify_track_name,
+                  artist: todayUserLog.spotify_artist_name || "Unknown Artist"
+                } : null,
+                loggedAt: `Logged ${format(new Date(todayUserLog.created_at), "h:mm a")}`
+              }} 
+              heading="Your vibe today" 
+            />
+          ) : (
+            <article className="relative flex flex-col justify-center overflow-hidden rounded-3xl border border-dashed border-border bg-card/40 p-6 shadow-[0_18px_40px_-24px_rgba(120,80,80,0.35)] backdrop-blur-xl md:p-7">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-8 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                  {profile?.display_name ? profile.display_name.slice(0, 2).toUpperCase() : "ME"}
+                </span>
+                <h2 className="font-serif text-lg font-semibold text-foreground">Your vibe today</h2>
               </div>
 
-              {todayUserLog ? (
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-4xl select-none">
-                      {moodDetails[todayUserLog.mood as keyof typeof moodDetails]?.emoji}
-                    </span>
-                    <div>
-                      <h3 className="font-bold text-xl text-foreground">
-                        {moodDetails[todayUserLog.mood as keyof typeof moodDetails]?.label}
-                      </h3>
-                      <div className="flex items-center space-x-1 mt-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`w-2 h-2 rounded-full ${
-                              i < todayUserLog.mood_intensity
-                                ? "bg-brand-rose-500"
-                                : "bg-card-border"
-                            }`}
-                          />
-                        ))}
-                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider ml-1">
-                          Intensity {todayUserLog.mood_intensity}/5
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {todayUserLog.note && (
-                    <p className="text-sm italic text-foreground/90 bg-card-border/20 rounded-2xl p-4 leading-relaxed">
-                      "{todayUserLog.note}"
-                    </p>
-                  )}
-
-                  {todayUserLog.spotify_track_id && (
-                    <div className="flex items-center space-x-3 bg-brand-sage-50/30 border border-brand-sage-100/50 dark:bg-emerald-950/10 dark:border-emerald-950/20 p-3 rounded-2xl">
-                      <Music className="w-5 h-5 text-brand-sage-500 animate-spin-slow" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-foreground truncate">
-                          {todayUserLog.spotify_track_name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {todayUserLog.spotify_artist_name}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center my-6 py-6 text-center">
-                  <Smile className="w-10 h-10 text-muted-foreground/60 mb-2" />
-                  <p className="text-sm font-medium text-muted-foreground">
-                    You haven't logged your mood today yet.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 border-t border-card-border pt-4">
-              <Link
-                href="/checkin"
-                className="w-full inline-flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-brand-rose-500 hover:bg-brand-rose-600 active:scale-[0.98] transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{todayUserLog ? "Log Another Mood" : "Check-in Your Mood"}</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Partner's Card */}
-          <div className="cozy-card p-6 flex flex-col justify-between min-h-[250px] relative overflow-hidden transition-all hover:shadow-xl hover:shadow-brand-peach-100/20">
-            <div>
-              <div className="flex items-center justify-between border-b border-card-border pb-4 mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <div className="w-full h-full rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden">
-                      <MiniAvatarScene 
-                        outfit={partnerOutfit || defaultOutfit} 
-                        skinColor="#eddcd2"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-bold text-sm tracking-wide text-muted-foreground uppercase block">
-                      {partner?.display_name || "Partner"}'s Vibe
-                    </span>
-                    {todayPartnerLog && (
-                      <span className="text-[10px] text-muted-foreground font-medium block sm:hidden">
-                        {format(new Date(todayPartnerLog.created_at), "h:mm a")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {todayPartnerLog && (
-                  <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
-                    Logged at {format(new Date(todayPartnerLog.created_at), "h:mm a")}
-                  </span>
-                )}
-              </div>
-
-              {todayPartnerLog ? (
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-4xl select-none">
-                      {moodDetails[todayPartnerLog.mood as keyof typeof moodDetails]?.emoji}
-                    </span>
-                    <div>
-                      <h3 className="font-bold text-xl text-foreground">
-                        {moodDetails[todayPartnerLog.mood as keyof typeof moodDetails]?.label}
-                      </h3>
-                      <div className="flex items-center space-x-1 mt-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`w-2 h-2 rounded-full ${
-                              i < todayPartnerLog.mood_intensity
-                                ? "bg-brand-peach-500"
-                                : "bg-card-border"
-                            }`}
-                          />
-                        ))}
-                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider ml-1">
-                          Intensity {todayPartnerLog.mood_intensity}/5
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {todayPartnerLog.note && (
-                    <p className="text-sm italic text-foreground/90 bg-card-border/20 rounded-2xl p-4 leading-relaxed">
-                      "{todayPartnerLog.note}"
-                    </p>
-                  )}
-
-                  {todayPartnerLog.spotify_track_id && (
-                    <div className="flex items-center space-x-3 bg-brand-sage-50/30 border border-brand-sage-100/50 dark:bg-emerald-950/10 dark:border-emerald-950/20 p-3 rounded-2xl">
-                      <Music className="w-5 h-5 text-brand-sage-500 animate-spin-slow" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-foreground truncate">
-                          {todayPartnerLog.spotify_track_name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {todayPartnerLog.spotify_artist_name}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center my-6 py-6 text-center">
-                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-muted-foreground/40 flex items-center justify-center mb-2 text-muted-foreground/60 text-lg font-bold">
-                    ?
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Waiting for {partner?.display_name || "your partner"} to check in today.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Quick action helper card linking to moments or history */}
-            <div className="mt-6 border-t border-card-border pt-4 text-center">
-              <p className="text-xs text-muted-foreground italic">
-                {todayPartnerLog
-                  ? `${partner?.display_name || "Your partner"} logged their status!`
-                  : "Nudge them to share their vibe."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Dashboard Shortcuts */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link
-            href="/recap"
-            className="flex items-center justify-between p-5 rounded-2xl border border-card-border bg-white/40 dark:bg-[#1e1a19]/40 hover:bg-brand-rose-50/20 dark:hover:bg-brand-rose-950/10 group active:scale-[0.99] transition-all"
-          >
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-rose-100 dark:bg-brand-rose-950/30 text-brand-rose-500 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 fill-brand-rose-400 stroke-brand-rose-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-foreground">
-                  Weekly Recaps
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  View Gemini vibe trend summaries.
+              <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
+                <span className="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-primary/40 text-3xl">
+                  {"📝"}
+                </span>
+                <p className="mt-4 max-w-[16rem] text-pretty font-serif text-lg italic text-foreground/80">
+                  You haven't logged your vibe today yet. Sharing keeps you connected!
                 </p>
+                <Link
+                  href="/checkin"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:scale-105 active:scale-95 shadow-md"
+                >
+                  <Plus className="size-4" aria-hidden="true" />
+                  Check-in Now
+                </Link>
               </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-brand-rose-500 group-hover:translate-x-1 transition-all" />
-          </Link>
+            </article>
+          )}
 
-          <Link
-            href="/moments"
-            className="flex items-center justify-between p-5 rounded-2xl border border-card-border bg-white/40 dark:bg-[#1e1a19]/40 hover:bg-brand-peach-50/20 dark:hover:bg-brand-peach-950/10 group active:scale-[0.99] transition-all"
-          >
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-peach-100 dark:bg-brand-peach-950/30 text-brand-peach-500 flex items-center justify-center">
-                <Heart className="w-5 h-5 fill-brand-peach-300 stroke-brand-peach-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-foreground">
-                  Shared Scrapbook
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Log anniversaries and memories.
-                </p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-brand-peach-500 group-hover:translate-x-1 transition-all" />
-          </Link>
-        </div>
+          {todayPartnerLog ? (
+            <MoodCard 
+              mood={{
+                name: partner?.display_name || "Partner",
+                initials: partner?.display_name ? partner.display_name.slice(0, 2).toUpperCase() : "PR",
+                emoji: moodDetails[todayPartnerLog.mood as keyof typeof moodDetails]?.emoji || "😊",
+                label: moodDetails[todayPartnerLog.mood as keyof typeof moodDetails]?.label || "Content",
+                intensity: todayPartnerLog.mood_intensity,
+                note: todayPartnerLog.note || "",
+                song: todayPartnerLog.spotify_track_name ? {
+                  title: todayPartnerLog.spotify_track_name,
+                  artist: todayPartnerLog.spotify_artist_name || "Unknown Artist"
+                } : null,
+                loggedAt: `Logged ${format(new Date(todayPartnerLog.created_at), "h:mm a")}`
+              }} 
+              heading={`${partner?.display_name || "Partner"}'s vibe`} 
+            />
+          ) : (
+            <WaitingCard 
+              heading={`${partner?.display_name || "Partner"}'s vibe`} 
+              name={partner?.display_name || "your partner"} 
+              initials={partner?.display_name ? partner.display_name.slice(0, 2).toUpperCase() : "PR"} 
+              onNudge={() => alert(`Nudged ${partner?.display_name || "partner"} to check-in!`)}
+            />
+          )}
+        </section>
+
+        {/* Log another mood */}
+        {todayUserLog && (
+          <div className="mt-6 flex justify-center">
+            <Link
+              href="/checkin"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-[0_12px_28px_-12px_rgba(217,128,140,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95"
+            >
+              <Plus className="size-5" aria-hidden="true" />
+              Log another mood
+            </Link>
+          </div>
+        )}
+
+        {/* Quick links */}
+        <section aria-label="Shortcuts" className="mt-10">
+          <QuickLinks />
+        </section>
 
         {/* Small Privacy/Info Badge */}
-        <div className="flex items-center justify-center space-x-2 text-[10px] text-muted-foreground/60 py-4">
+        <div className="flex items-center justify-center space-x-2 text-[10px] text-muted-foreground/60 py-8 border-t border-border/20 mt-12">
           <Shield className="w-3.5 h-3.5" />
           <span>Strict End-to-End Pair Encryption applied under public RLS policies.</span>
         </div>
