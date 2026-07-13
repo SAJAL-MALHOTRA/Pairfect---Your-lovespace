@@ -83,29 +83,7 @@
   --radius: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #151312;
-    --foreground: #f4eae4;
-    --card-bg: rgba(26, 23, 22, 0.7);
-    --card-border: rgba(45, 40, 38, 0.8);
-    --glass-bg: rgba(26, 23, 22, 0.45);
-    --glass-border: rgba(45, 40, 38, 0.6);
-    --shadow-color: rgba(0, 0, 0, 0.4);
-    
-    --card: #1c1917;
-    --card-foreground: #f4eae4;
-    --primary: #d9808c;
-    --secondary: #2d2422;
-    --secondary-foreground: #eec19b;
-    --muted: #2d2826;
-    --muted-foreground: #a8948d;
-    --accent: #3a2527;
-    --accent-foreground: #f0a3aa;
-    --border: #3d3532;
-    --input: #3d3532;
-  }
-}
+
 
 body {
   background: var(--background);
