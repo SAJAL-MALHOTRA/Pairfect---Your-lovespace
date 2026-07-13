@@ -14,29 +14,9 @@ export default function SettingsPage() {
   const [profileSuccess, setProfileSuccess] = useState(false);
   
   const [unlinkingPair, setUnlinkingPair] = useState(false);
-  const [spotifyMessage, setSpotifyMessage] = useState<string | null>(null);
   
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const spotifyParam = params.get("spotify");
-    const errParam = params.get("error");
-    
-    if (spotifyParam === "connected") {
-      setSpotifyMessage("Successfully connected your Spotify account!");
-      window.history.replaceState({}, "", "/settings");
-      refreshSession();
-    } else if (spotifyParam === "disconnected") {
-      setSpotifyMessage("Successfully disconnected Spotify.");
-      window.history.replaceState({}, "", "/settings");
-      refreshSession();
-    } else if (errParam) {
-      setError(`Spotify connection failed: ${errParam}`);
-      window.history.replaceState({}, "", "/settings");
-    }
-  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,16 +40,6 @@ export default function SettingsPage() {
       setError(err.message || "Failed to update profile settings.");
     } finally {
       setUpdatingProfile(false);
-    }
-  };
-
-  const handleConnectSpotify = () => {
-    window.location.href = "/api/auth/spotify/login";
-  };
-
-  const handleDisconnectSpotify = () => {
-    if (confirm("Are you sure you want to disconnect your Spotify account?")) {
-      window.location.href = "/api/auth/spotify/disconnect";
     }
   };
 
@@ -177,42 +147,7 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* 2. Spotify Settings */}
-        <div className="cozy-card p-6 bg-white/50 dark:bg-[#1e1a19]/50 border border-card-border space-y-4">
-          <h2 className="text-base font-bold text-foreground flex items-center space-x-2 pb-2 border-b border-card-border/50">
-            <Music className="w-5 h-5 text-brand-sage-500" />
-            <span>Spotify Integration</span>
-          </h2>
 
-          {spotifyMessage && (
-            <div className="p-3.5 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400 text-xs flex items-center space-x-1.5">
-              <Check className="w-4 h-4 flex-shrink-0" />
-              <span>{spotifyMessage}</span>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                Spotify Status: {profile?.spotify_connected ? "Connected" : "Disconnected"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                Linking Spotify enables attaching your recently played songs to daily mood check-ins.
-              </p>
-            </div>
-
-            <button
-              onClick={profile?.spotify_connected ? handleDisconnectSpotify : handleConnectSpotify}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
-                profile?.spotify_connected
-                  ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40 hover:bg-red-100"
-                  : "bg-brand-sage-500 text-white hover:bg-brand-sage-600 shadow-sm"
-              }`}
-            >
-              {profile?.spotify_connected ? "Disconnect" : "Connect Spotify"}
-            </button>
-          </div>
-        </div>
 
         {/* 3. Pairing Settings */}
         {pair && (
