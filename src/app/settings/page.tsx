@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
@@ -13,11 +13,30 @@ export default function SettingsPage() {
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
   
-  const [updatingSpotify, setUpdatingSpotify] = useState(false);
   const [unlinkingPair, setUnlinkingPair] = useState(false);
+  const [spotifyMessage, setSpotifyMessage] = useState<string | null>(null);
   
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const spotifyParam = params.get("spotify");
+    const errParam = params.get("error");
+    
+    if (spotifyParam === "connected") {
+      setSpotifyMessage("Successfully connected your Spotify account!");
+      window.history.replaceState({}, "", "/settings");
+      refreshSession();
+    } else if (spotifyParam === "disconnected") {
+      setSpotifyMessage("Successfully disconnected Spotify.");
+      window.history.replaceState({}, "", "/settings");
+      refreshSession();
+    } else if (errParam) {
+      setError(`Spotify connection failed: ${errParam}`);
+      window.history.replaceState({}, "", "/settings");
+    }
+  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,24 +63,13 @@ export default function SettingsPage() {
     }
   };
 
-  const handleToggleSpotify = async () => {
-    setUpdatingSpotify(true);
-    setError(null);
-    try {
-      const currentStatus = profile?.spotify_connected || false;
-      const { error: updateErr } = await supabase
-        .from("users")
-        .update({ spotify_connected: !currentStatus })
-        .eq("id", user!.id);
+  const handleConnectSpotify = () => {
+    window.location.href = "/api/auth/spotify/login";
+  };
 
-      if (updateErr) throw updateErr;
-
-      await refreshSession();
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to toggle Spotify status.");
-    } finally {
-      setUpdatingSpotify(false);
+  const handleDisconnectSpotify = () => {
+    if (confirm("Are you sure you want to disconnect your Spotify account?")) {
+      window.location.href = "/api/auth/spotify/disconnect";
     }
   };
 
@@ -176,6 +184,13 @@ export default function SettingsPage() {
             <span>Spotify Integration</span>
           </h2>
 
+          {spotifyMessage && (
+            <div className="p-3.5 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400 text-xs flex items-center space-x-1.5">
+              <Check className="w-4 h-4 flex-shrink-0" />
+              <span>{spotifyMessage}</span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-foreground">
@@ -187,15 +202,14 @@ export default function SettingsPage() {
             </div>
 
             <button
-              onClick={handleToggleSpotify}
-              disabled={updatingSpotify}
+              onClick={profile?.spotify_connected ? handleDisconnectSpotify : handleConnectSpotify}
               className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
                 profile?.spotify_connected
                   ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40 hover:bg-red-100"
                   : "bg-brand-sage-500 text-white hover:bg-brand-sage-600 shadow-sm"
               }`}
             >
-              {updatingSpotify ? "Processing..." : profile?.spotify_connected ? "Disconnect" : "Connect Spotify"}
+              {profile?.spotify_connected ? "Disconnect" : "Connect Spotify"}
             </button>
           </div>
         </div>

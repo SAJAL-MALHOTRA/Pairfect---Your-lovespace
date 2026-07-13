@@ -22,6 +22,7 @@ export default function CheckinPage() {
   const [intensity, setIntensity] = useState<number>(3);
   const [note, setNote] = useState("");
   const [spotifyTracks, setSpotifyTracks] = useState<any[]>([]);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<any | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
   const [spotifyLoading, setSpotifyLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -30,17 +31,41 @@ export default function CheckinPage() {
   const supabase = createClient();
 
   useEffect(() => {
-    // If Spotify is connected, fetch recently played. For MVP, we supply fallback cozy tracks
-    // and let users select them, or fetch if they have active integration.
-    setSpotifyLoading(true);
-    // Mimic API latency
-    const timer = setTimeout(() => {
-      setSpotifyTracks(fallbackTracks);
-      setSpotifyLoading(false);
-    }, 400);
+    const fetchTracks = async () => {
+      if (!profile) return;
+      setSpotifyLoading(true);
+      try {
+        if (profile.spotify_connected) {
+          const res = await fetch("/api/spotify/tracks");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.error === "revoked") {
+              setSpotifyTracks(fallbackTracks);
+            } else {
+              setSpotifyTracks(data.recentlyPlayed || []);
+              if (data.currentlyPlaying) {
+                setCurrentlyPlaying(data.currentlyPlaying);
+                setSelectedTrack(data.currentlyPlaying); // auto-select currently playing
+              }
+            }
+          } else {
+            setSpotifyTracks(fallbackTracks);
+          }
+        } else {
+          setSpotifyTracks(fallbackTracks);
+        }
+      } catch (err) {
+        console.error("Failed to load tracks:", err);
+        setSpotifyTracks(fallbackTracks);
+      } finally {
+        setSpotifyLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    if (!loading) {
+      fetchTracks();
+    }
+  }, [profile, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,43 +266,83 @@ export default function CheckinPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Select a song from your recently played tracks to attach to this mood check-in:
-                </p>
-
                 {spotifyLoading ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="w-5 h-5 text-brand-rose-400 animate-spin" />
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="w-5 h-5 text-brand-sage-500 animate-spin" />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-2">
-                    {spotifyTracks.map((track) => (
-                      <button
-                        key={track.id}
-                        type="button"
-                        onClick={() => setSelectedTrack(track)}
-                        className="flex items-center space-x-3 p-2.5 rounded-xl border border-card-border bg-background/30 hover:bg-background/80 hover:border-brand-sage-300/40 text-left transition-all group"
-                      >
-                        <img
-                          src={track.albumArt}
-                          alt={track.name}
-                          className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-foreground truncate group-hover:text-brand-rose-500 transition-colors">
-                            {track.name}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground truncate">
-                            {track.artist}
-                          </p>
+                  <div className="space-y-4">
+                    {/* A. Currently Playing Section */}
+                    {currentlyPlaying && (
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-brand-sage-600 uppercase tracking-widest flex items-center space-x-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          <span>Currently Playing</span>
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTrack(currentlyPlaying)}
+                          className="w-full flex items-center space-x-3 p-3 rounded-2xl border-2 border-green-500/30 bg-green-500/5 hover:bg-green-500/10 text-left transition-all group"
+                        >
+                          <img
+                            src={currentlyPlaying.albumArt}
+                            alt={currentlyPlaying.name}
+                            className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-foreground truncate group-hover:text-brand-sage-600 transition-colors">
+                              {currentlyPlaying.name}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {currentlyPlaying.artist}
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* B. Recently Played Section */}
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {profile?.spotify_connected ? "Recently Played History" : "Cozy Lo-Fi Defaults"}
+                      </p>
+                      
+                      {spotifyTracks.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic pl-1">No recently played tracks found.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2">
+                          {spotifyTracks.map((track) => (
+                            <button
+                              key={track.id}
+                              type="button"
+                              onClick={() => setSelectedTrack(track)}
+                              className="flex items-center space-x-3 p-2.5 rounded-xl border border-card-border bg-background/30 hover:bg-background/80 hover:border-brand-sage-300/40 text-left transition-all group"
+                            >
+                              <img
+                                src={track.albumArt}
+                                alt={track.name}
+                                className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-foreground truncate group-hover:text-brand-rose-500 transition-colors">
+                                  {track.name}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground truncate">
+                                  {track.artist}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
                         </div>
-                      </button>
-                    ))}
+                      )}
+                    </div>
                   </div>
                 )}
                 
                 <p className="text-[10px] text-muted-foreground/60 italic text-center border-t border-card-border/50 pt-2.5">
-                  Spotify OAuth is disabled by default. Using local cozy defaults. You can link your personal Spotify inside Settings.
+                  {profile?.spotify_connected 
+                    ? "Spotify connected. Loading live playback information." 
+                    : "Using default tracks. Connect your personal Spotify account inside Settings."}
                 </p>
               </div>
             )}
