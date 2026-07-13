@@ -190,17 +190,19 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center justify-between border-b border-card-border pb-4 mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="relative w-14 h-14 rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden flex-shrink-0">
-                    <MiniAvatarScene 
-                      outfit={userOutfit || defaultOutfit} 
-                      skinColor="#f5cac3"
-                    />
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <div className="w-full h-full rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden">
+                      <MiniAvatarScene 
+                        outfit={userOutfit || defaultOutfit} 
+                        skinColor="#f5cac3"
+                      />
+                    </div>
                     <Link 
                       href="/avatars" 
-                      className="absolute -bottom-1 -right-1 p-1 bg-brand-rose-500 hover:bg-brand-rose-600 border border-white text-white rounded-full transition-transform active:scale-90"
+                      className="absolute -bottom-1 -right-1 p-1.5 bg-brand-rose-500 hover:bg-brand-rose-600 border-2 border-white dark:border-[#1c1917] text-white rounded-full transition-all active:scale-95 shadow-md z-10"
                       title="Edit Avatar"
                     >
-                      <Pencil className="w-2.5 h-2.5" />
+                      <Pencil className="w-3 h-3" />
                     </Link>
                   </div>
                   <div>
@@ -295,11 +297,13 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center justify-between border-b border-card-border pb-4 mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="relative w-14 h-14 rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden flex-shrink-0">
-                    <MiniAvatarScene 
-                      outfit={partnerOutfit || defaultOutfit} 
-                      skinColor="#eddcd2"
-                    />
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <div className="w-full h-full rounded-full border border-card-border bg-[#faf8f6] shadow-inner overflow-hidden">
+                      <MiniAvatarScene 
+                        outfit={partnerOutfit || defaultOutfit} 
+                        skinColor="#eddcd2"
+                      />
+                    </div>
                   </div>
                   <div>
                     <span className="font-bold text-sm tracking-wide text-muted-foreground uppercase block">
