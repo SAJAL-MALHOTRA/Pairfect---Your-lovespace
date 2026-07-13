@@ -25,7 +25,7 @@ export default async function LandingPage() {
             <Heart className="w-5 h-5 fill-white" />
           </div>
           <span className="font-extrabold text-xl tracking-tight text-foreground bg-gradient-to-r from-brand-rose-500 to-brand-peach-500 bg-clip-text text-transparent">
-            Valence
+            Pairfect
           </span>
         </div>
 
@@ -61,7 +61,7 @@ export default async function LandingPage() {
         </h1>
 
         <p className="text-muted-foreground text-base sm:text-lg max-w-2xl leading-relaxed">
-          Valence is a private, couple-facing relationship companion. Log your mood, track daily check-in streaks, link songs, and read weekly AI-generated recaps. No public feed, no distraction — just you and your partner.
+          Pairfect is a private, couple-facing relationship companion. Log your mood, track daily check-in streaks, link songs, and read weekly AI-generated recaps. No public feed, no distraction â€” just you and your partner.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 w-full max-w-md">

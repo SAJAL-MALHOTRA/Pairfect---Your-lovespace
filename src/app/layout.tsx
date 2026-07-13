@@ -10,7 +10,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Valence — Private Relationship Companion",
+  title: "Pairfect â€” Private Relationship Companion",
   description: "A cozy private space to share check-ins, moods, and music trends with your partner.",
 };
 

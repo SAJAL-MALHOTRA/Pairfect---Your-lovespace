@@ -129,7 +129,7 @@ export default function OnboardingPage() {
           Hello, {profile?.display_name || "there"}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Valence connects two people. Let's link you with your partner.
+          Pairfect connects two people. Let's link you with your partner.
         </p>
       </div>
 

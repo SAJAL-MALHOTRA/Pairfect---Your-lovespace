@@ -39,7 +39,7 @@ export default function LoginPage() {
           <Heart className="w-8 h-8 fill-brand-rose-400 stroke-brand-rose-500" />
         </div>
         <h2 className="text-3xl font-bold tracking-tight text-foreground">
-          Welcome to Valence
+          Welcome to Pairfect
         </h2>
         <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">
           A cozy, private space to sync moods, music, and memories with your partner.
@@ -89,7 +89,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-4 py-3 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-rose-300 dark:focus:ring-brand-rose-800 text-foreground text-sm placeholder:text-muted-foreground/50 transition-all"
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 />
               </div>
             </div>

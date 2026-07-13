@@ -64,7 +64,7 @@ export async function POST() {
       promptLogsText += `[${dateFormatted}] ${creatorName}: mood=${log.mood}, intensity=${log.mood_intensity}/5, note="${log.note || ""}"\n`;
     });
 
-    const prompt = `You are Valence, an AI relationship companion. You are summarizing a week of relationship mood check-ins for two partners, ${nameA} and ${nameB}.
+    const prompt = `You are Pairfect, an AI relationship companion. You are summarizing a week of relationship mood check-ins for two partners, ${nameA} and ${nameB}.
 Here is their chronological check-in data from the past 7 days:
 ${promptLogsText}
 
