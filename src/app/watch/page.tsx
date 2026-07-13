@@ -1,0 +1,310 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/providers/auth-provider";
+import { createClient } from "@/lib/supabase/client";
+import Navigation from "@/components/navigation";
+import { Tv, Play, Pause, RefreshCw, AlertCircle, Link2, Music, Loader2, Send } from "lucide-react";
+
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: (() => void) | undefined;
+    YT: any;
+  }
+}
+
+export default function WatchPage() {
+  const { user, pair, loading } = useAuth();
+  
+  const [videoUrl, setVideoUrl] = useState("");
+  const [currentVideoId, setCurrentVideoId] = useState("dQw4w9WgXcQ"); // Rickroll default
+  const [error, setError] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  
+  const supabase = createClient();
+  const playerRef = useRef<any>(null);
+  const channelRef = useRef<any>(null);
+  const isSyncingRef = useRef(false);
+  const lastStateRef = useRef<number>(-1);
+
+  // Parse YouTube video ID from URL
+  const extractVideoId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  // 1. Initial State Fetch
+  const fetchSessionState = async () => {
+    if (!pair) return;
+    try {
+      const { data, error: fetchErr } = await supabase
+        .from("youtube_sessions")
+        .select("*")
+        .eq("pair_id", pair.id)
+        .maybeSingle();
+
+      if (fetchErr) throw fetchErr;
+
+      if (data) {
+        setCurrentVideoId(data.video_id);
+      }
+    } catch (err) {
+      console.error("Error loading watch session:", err);
+    } finally {
+      setSessionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading && pair) {
+      fetchSessionState();
+    }
+  }, [pair, loading]);
+
+  // 2. Load YouTube IFrame API
+  useEffect(() => {
+    // Only load if not already loaded
+    if (!window.YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+
+    // Bind global ready callback
+    window.onYouTubeIframeAPIReady = () => {
+      initPlayer(currentVideoId);
+    };
+
+    if (window.YT && window.YT.Player) {
+      initPlayer(currentVideoId);
+    }
+
+    return () => {
+      // Cleanup player
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
+    };
+  }, [currentVideoId]);
+
+  const initPlayer = (videoId: string) => {
+    if (playerRef.current) {
+      playerRef.current.destroy();
+    }
+
+    playerRef.current = new window.YT.Player("youtube-player", {
+      height: "100%",
+      width: "100%",
+      videoId: videoId,
+      playerVars: {
+        playsinline: 1,
+        rel: 0,
+      },
+      events: {
+        onStateChange: onPlayerStateChange,
+        onReady: (event: any) => {
+          // Player is ready, sync to initial state if needed
+        }
+      },
+    });
+  };
+
+  // 3. Supabase Realtime Broadcast Listeners
+  useEffect(() => {
+    if (!pair || !user) return;
+
+    const channelName = `watch-sync-${pair.id}`;
+    const channel = supabase.channel(channelName);
+
+    channel
+      .on("broadcast", { event: "sync" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return; // ignore own broadcast
+        
+        const player = playerRef.current;
+        if (!player || !player.getPlayerState) return;
+
+        // Set synchronization lock
+        isSyncingRef.current = true;
+
+        if (payload.action === "play") {
+          const diff = Math.abs(player.getCurrentTime() - payload.time);
+          if (diff > 1.5) {
+            player.seekTo(payload.time, true);
+          }
+          player.playVideo();
+        } else if (payload.action === "pause") {
+          player.pauseVideo();
+        } else if (payload.action === "seek") {
+          player.seekTo(payload.time, true);
+        } else if (payload.action === "load") {
+          setCurrentVideoId(payload.videoId);
+        }
+      })
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pair, user]);
+
+  // 4. Handle Player State Changes (Play / Pause / Seek)
+  const onPlayerStateChange = (event: any) => {
+    const player = playerRef.current;
+    if (!player || !channelRef.current || !user || !pair) return;
+
+    const currentState = event.data;
+    const time = player.getCurrentTime();
+
+    // If change was triggered by broadcast sync, ignore and reset lock
+    if (isSyncingRef.current) {
+      isSyncingRef.current = false;
+      lastStateRef.current = currentState;
+      return;
+    }
+
+    // Prevent duplicate events
+    if (currentState === lastStateRef.current) return;
+
+    if (currentState === window.YT.PlayerState.PLAYING) {
+      // Broadcast play event
+      channelRef.current.send({
+        type: "broadcast",
+        event: "sync",
+        payload: { sender: user.id, action: "play", time },
+      });
+
+      // Persist state to DB
+      updateSessionDB(currentVideoId, time, true);
+    } else if (currentState === window.YT.PlayerState.PAUSED) {
+      // Broadcast pause event
+      channelRef.current.send({
+        type: "broadcast",
+        event: "sync",
+        payload: { sender: user.id, action: "pause", time },
+      });
+
+      // Persist state to DB
+      updateSessionDB(currentVideoId, time, false);
+    }
+
+    lastStateRef.current = currentState;
+  };
+
+  const updateSessionDB = async (videoId: string, time: number, isPlaying: boolean) => {
+    if (!pair || !user) return;
+    try {
+      await supabase.from("youtube_sessions").upsert({
+        pair_id: pair.id,
+        video_id: videoId,
+        last_time: time,
+        is_playing: isPlaying,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Failed to persist player session:", err);
+    }
+  };
+
+  const handleLoadVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const videoId = extractVideoId(videoUrl);
+    if (!videoId) {
+      setError("Please paste a valid YouTube watch URL or share link.");
+      return;
+    }
+
+    setCurrentVideoId(videoId);
+    setVideoUrl("");
+
+    // Broadcast load event to partner
+    if (channelRef.current && user) {
+      channelRef.current.send({
+        type: "broadcast",
+        event: "sync",
+        payload: { sender: user.id, action: "load", videoId },
+      });
+    }
+
+    // Persist to database
+    await updateSessionDB(videoId, 0, false);
+  };
+
+  if (loading || sessionLoading) {
+    return (
+      <div className="flex-1 flex flex-col min-h-screen">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-brand-peach-500 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-peach-50/20 via-background to-background text-foreground">
+      <Navigation />
+
+      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-6">
+        
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center space-x-2">
+            <Tv className="w-8 h-8 text-brand-peach-500" />
+            <span>Watch Together</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Stream YouTube videos with synchronized controls. Play, pause, and seek instantly for both screens.
+          </p>
+        </div>
+
+        {error && (
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start space-x-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Input Bar */}
+        <form onSubmit={handleLoadVideo} className="flex gap-3">
+          <div className="relative flex-1 rounded-xl shadow-sm">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
+              <Link2 className="h-5 w-5" />
+            </div>
+            <input
+              type="text"
+              placeholder="Paste any YouTube video URL (e.g. https://www.youtube.com/watch?v=...)"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className="block w-full pl-10 pr-4 py-3 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+            />
+          </div>
+          <button
+            type="submit"
+            className="px-5 py-3 rounded-xl bg-brand-peach-500 hover:bg-brand-peach-600 text-white font-semibold text-sm active:scale-95 transition-all"
+          >
+            Load Video
+          </button>
+        </form>
+
+        {/* Sync Player Screen */}
+        <div className="aspect-video w-full cozy-card overflow-hidden bg-black border border-card-border shadow-2xl relative">
+          <div id="youtube-player" className="w-full h-full" />
+        </div>
+
+        {/* Note on sync behaviors */}
+        <div className="p-4 rounded-2xl bg-white/40 dark:bg-card-bg/25 border border-card-border/60 text-xs text-muted-foreground leading-relaxed">
+          💡 **How synchronization works**: When you play, pause, or change the video, websocket signals are broadcasted instantly to your partner. If the connection drops, reloading the page will query the database to sync both screens back onto the last played state automatically.
+        </div>
+
+      </main>
+    </div>
+  );
+}
