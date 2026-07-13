@@ -40,23 +40,33 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-tr from-brand-rose-50 via-brand-peach-50 to-brand-lavender-50 dark:from-[#151312] dark:via-[#1a1514] dark:to-[#12141a]">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-rose-100 dark:bg-brand-rose-950/30 text-brand-rose-500 mb-4">
-          <Heart className="w-8 h-8 fill-brand-rose-400 stroke-brand-rose-500" />
+    <div className="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden">
+      {/* soft ambient warmth */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 animate-fade-in"
+        style={{
+          background:
+            "radial-gradient(60rem 40rem at 15% -10%, #3a2527 0%, transparent 55%), radial-gradient(50rem 40rem at 100% 10%, #2e1e20 0%, transparent 50%)",
+        }}
+      />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent text-primary mb-4 animate-pulse">
+          <Heart className="w-8 h-8 fill-primary" />
         </div>
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="text-3xl font-serif font-semibold tracking-tight text-foreground">
           Create Your Space
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">
+        <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto text-pretty">
           Start your private journal for two. Let's get you set up.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="cozy-card p-8 bg-white/70 dark:bg-[#1e1a19]/70 backdrop-blur-md">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
+        <div className="rounded-3xl border border-border/60 bg-card/55 p-8 shadow-[0_18px_40px_-24px_rgba(120,80,80,0.4)] backdrop-blur-xl">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 flex items-start space-x-2 text-red-600 dark:text-red-400 text-sm">
+            <div className="mb-6 p-4 rounded-xl bg-accent/40 border border-border/60 flex items-start space-x-2 text-primary text-sm">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -76,7 +86,7 @@ export default function SignupPage() {
                   required
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-rose-300 dark:focus:ring-brand-rose-800 text-foreground text-sm placeholder:text-muted-foreground/50 transition-all"
+                  className="block w-full pl-10 pr-4 py-3 border border-border/60 rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/50 transition-all"
                   placeholder="e.g. Sunny, Alex, Bun"
                 />
               </div>
@@ -95,7 +105,7 @@ export default function SignupPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-rose-300 dark:focus:ring-brand-rose-800 text-foreground text-sm placeholder:text-muted-foreground/50 transition-all"
+                  className="block w-full pl-10 pr-4 py-3 border border-border/60 rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/50 transition-all"
                   placeholder="name@example.com"
                 />
               </div>
@@ -114,7 +124,7 @@ export default function SignupPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-rose-300 dark:focus:ring-brand-rose-800 text-foreground text-sm placeholder:text-muted-foreground/50 transition-all"
+                  className="block w-full pl-10 pr-4 py-3 border border-border/60 rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/50 transition-all"
                   placeholder="At least 6 characters"
                   minLength={6}
                 />
@@ -125,19 +135,19 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-rose-500 hover:bg-brand-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-rose-400 active:scale-[0.98] disabled:opacity-50 transition-all"
+                className="w-full flex justify-center py-3 px-4 rounded-xl shadow-sm text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-ring active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer"
               >
                 {loading ? "Creating space..." : "Sign Up"}
               </button>
             </div>
           </form>
 
-          <div className="mt-8 text-center border-t border-card-border pt-6">
+          <div className="mt-8 text-center border-t border-border/20 pt-6">
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-medium text-brand-rose-500 hover:text-brand-rose-600 transition-colors"
+                className="font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 Log in instead
               </Link>
