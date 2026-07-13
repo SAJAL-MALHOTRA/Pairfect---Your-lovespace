@@ -3,7 +3,8 @@
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
-import { getOutfit } from "@/lib/avatar-outfits";
+import { getOutfit, type Outfit as OutfitsType } from "@/lib/avatar-outfits";
+import type { Group } from "three";
 
 interface Outfit {
   top_style: string;
@@ -421,6 +422,60 @@ export function MiniAvatarScene({ outfit, skinColor = "#f5cac3" }: { outfit: Out
   );
 }
 
+function VoxelBox({
+  position,
+  args,
+  color,
+}: {
+  position: [number, number, number]
+  args: [number, number, number]
+  color: string
+}) {
+  return (
+    <mesh position={position} castShadow>
+      <boxGeometry args={args} />
+      <meshStandardMaterial color={color} roughness={0.85} metalness={0} flatShading />
+    </mesh>
+  )
+}
+
+function VoxelCharacter({ outfit }: { outfit: OutfitsType }) {
+  const group = useRef<Group>(null)
+
+  // gentle idle bob — cozy, not interactive
+  useFrame((state) => {
+    if (!group.current) return
+    group.current.position.y = Math.sin(state.clock.elapsedTime * 1.4) * 0.05
+  })
+
+  return (
+    <group ref={group} rotation={[0, 0.5, 0]}>
+      {/* Head */}
+      <VoxelBox position={[0, 3.05, 0]} args={[0.95, 0.95, 0.95]} color={outfit.skin} />
+      {/* Hair cap */}
+      <VoxelBox position={[0, 3.42, -0.06]} args={[1.02, 0.4, 1.02]} color={outfit.hair} />
+      <VoxelBox position={[0, 3.05, -0.5]} args={[1.02, 0.7, 0.14]} color={outfit.hair} />
+
+      {/* Torso */}
+      <VoxelBox position={[0, 1.95, 0]} args={[1.05, 1.4, 0.55]} color={outfit.top} />
+
+      {/* Arms */}
+      <VoxelBox position={[-0.77, 1.95, 0]} args={[0.44, 1.4, 0.5]} color={outfit.top} />
+      <VoxelBox position={[0.77, 1.95, 0]} args={[0.44, 1.4, 0.5]} color={outfit.top} />
+      {/* Hands */}
+      <VoxelBox position={[-0.77, 1.05, 0]} args={[0.44, 0.4, 0.5]} color={outfit.skin} />
+      <VoxelBox position={[0.77, 1.05, 0]} args={[0.44, 0.4, 0.5]} color={outfit.skin} />
+
+      {/* Legs */}
+      <VoxelBox position={[-0.28, 0.65, 0]} args={[0.48, 1.3, 0.5]} color={outfit.bottom} />
+      <VoxelBox position={[0.28, 0.65, 0]} args={[0.48, 1.3, 0.5]} color={outfit.bottom} />
+      {/* Shoes */}
+      <VoxelBox position={[-0.28, 0.05, 0.06]} args={[0.5, 0.32, 0.62]} color={outfit.shoes} />
+      <VoxelBox position={[0.28, 0.05, 0.06]} args={[0.5, 0.32, 0.62]} color={outfit.shoes} />
+    </group>
+  )
+}
+
 export function AvatarScene({
   initials,
   className,
@@ -428,29 +483,21 @@ export function AvatarScene({
   initials: string
   className?: string
 }) {
-  const outfit = useMemo(() => getOutfit(initials), [initials]);
-  const mappedOutfit = useMemo(() => ({
-    top_style: "hoodie",
-    top_color: outfit.top,
-    bottom_style: "pants",
-    bottom_color: outfit.bottom,
-    shoes_style: "sneakers",
-    shoes_color: outfit.shoes
-  }), [outfit]);
+  const outfit = useMemo(() => getOutfit(initials), [initials])
 
   return (
     <div className={className} aria-hidden="true">
       <Canvas
         gl={{ alpha: true, antialias: true }}
-        dpr={[1, 1.5]}
-        camera={{ position: [1.0, 0.4, 2.2], fov: 40 }}
+        dpr={[1, 2]}
+        camera={{ position: [1.6, 2.4, 6.2], fov: 32 }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={1.2} />
+        <ambientLight intensity={0.9} />
         <directionalLight position={[3, 6, 4]} intensity={1.5} />
         <directionalLight position={[-4, 2, -3]} intensity={0.4} color="#f7e2e2" />
-        <group position={[0, -0.65, 0]} rotation={[0, 0.35, 0]}>
-          <MinecraftFigure outfit={mappedOutfit} position={[0, 0, 0]} skinColor={outfit.skin} />
+        <group position={[0, -1.7, 0]}>
+          <VoxelCharacter outfit={outfit} />
         </group>
       </Canvas>
     </div>
