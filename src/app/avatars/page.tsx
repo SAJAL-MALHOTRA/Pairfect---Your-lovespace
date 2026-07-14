@@ -397,23 +397,13 @@ export default function AvatarsPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/booth"
-              className="inline-flex items-center space-x-2 px-5 py-3 rounded-2xl bg-accent hover:bg-accent/80 text-primary border border-border/60 font-semibold text-sm active:scale-95 transition-all cursor-pointer"
-            >
-              <Camera className="w-5 h-5" />
-              <span>Webcam Photo Booth</span>
-            </Link>
-
-            <button
-              onClick={() => setShowBoothForm(!showBoothForm)}
-              className="inline-flex items-center space-x-2 px-5 py-3 rounded-2xl bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm active:scale-95 transition-all cursor-pointer"
-            >
-              <Sparkles className="w-5 h-5 fill-primary-foreground" />
-              <span>Snap 3D Avatar</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setShowBoothForm(!showBoothForm)}
+            className="inline-flex items-center space-x-2 px-5 py-3 rounded-2xl bg-brand-peach-500 hover:bg-brand-peach-600 text-white font-semibold text-sm shadow-md shadow-brand-peach-200 dark:shadow-none active:scale-95 transition-all"
+          >
+            <Camera className="w-5 h-5" />
+            <span>Snap Polaroid</span>
+          </button>
         </div>
 
         {error && (

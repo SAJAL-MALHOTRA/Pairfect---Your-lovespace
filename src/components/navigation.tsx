@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
-import { Heart, Home, Calendar, History, Sparkles, BookOpen, Settings, LogOut, User, Gamepad2, Tv, Timer } from "lucide-react";
+import { Heart, Home, Calendar, History, Sparkles, BookOpen, Settings, LogOut, User, Gamepad2, Tv } from "lucide-react";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -13,7 +13,6 @@ export default function Navigation() {
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/checkin", label: "Check-in", icon: Calendar },
     { href: "/history", label: "History", icon: History },
-    { href: "/focus", label: "Focus", icon: Timer },
     { href: "/recap", label: "Recap", icon: Sparkles },
     { href: "/quiz", label: "Quiz", icon: Gamepad2 },
     { href: "/watch", label: "Watch", icon: Tv },
