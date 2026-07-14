@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
@@ -23,8 +23,8 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
       try {
         const res = await fetch(`https://api.giphy.com/v1/gifs/${giphyId}?api_key=${GIPHY_API_KEY}`);
         const json = await res.json();
-        if (json.meta && json.meta.status === 403) {
-          throw new Error("Banned");
+        if (json.meta && json.meta.status !== 200) {
+          throw new Error("Invalid Giphy key or status: " + json.meta.status);
         }
         setUrl(json.data?.images?.fixed_height?.url || null);
       } catch (e) {
@@ -161,17 +161,24 @@ export default function LoveLetterPage() {
   }, [loading, pair]);
 
   // Search Giphy stickers on query input change
+  const latestSearchQuery = useRef("");
+
   const performStickerSearch = async (query: string) => {
     setSearching(true);
     setError(null);
+    latestSearchQuery.current = query;
     try {
       const q = query.trim() ? `cat ${query}` : "cat happy";
       const res = await fetch(
         `https://api.giphy.com/v1/stickers/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(q)}&limit=20&rating=g`
       );
       const data = await res.json();
-      if (data.meta && data.meta.status === 403) {
-        throw new Error("GIPHY API Key invalid or banned (403). Please add NEXT_PUBLIC_GIPHY_API_KEY to your .env.local file.");
+      
+      // If query changed while in flight, discard outdated response to prevent race conditions
+      if (query !== latestSearchQuery.current) return;
+
+      if (data.meta && data.meta.status !== 200) {
+        throw new Error(`GIPHY API Error (${data.meta.status}): ${data.meta.msg || "Unauthorized"}. Please check/add NEXT_PUBLIC_GIPHY_API_KEY in your .env.local file.`);
       }
       setGiphyStickers(data.data || []);
     } catch (err: any) {
