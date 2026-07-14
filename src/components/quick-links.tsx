@@ -1,4 +1,4 @@
-import { ChevronRight, Scale, Camera } from "lucide-react"
+import { ChevronRight, Scale } from "lucide-react"
 import { PixelPhotoStack } from "@/components/pixel-icons"
 
 const items = [
@@ -13,12 +13,6 @@ const items = [
     title: "AI Vibe Judge",
     description: "Settle relationship disputes playfully using Gemini.",
     href: "/vibe-judge"
-  },
-  {
-    Icon: Camera,
-    title: "Snap Hunt",
-    description: "Multiplayer scavenger hunts with Gemini Vision judging.",
-    href: "/snap-hunt"
   }
 ]
 

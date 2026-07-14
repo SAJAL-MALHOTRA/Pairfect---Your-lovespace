@@ -7,7 +7,7 @@ import { useTheme } from "@/components/providers/theme-provider";
 import { 
   Heart, Home, Calendar, BookOpen, 
   Settings, LogOut, User, Gamepad2, Tv, Sun, Moon, Timer,
-  Scale, Camera
+  Scale
 } from "lucide-react";
 
 export default function Navigation() {
@@ -21,7 +21,6 @@ export default function Navigation() {
     { href: "/focus", label: "Focus", icon: Timer },
     { href: "/quiz", label: "Quiz", icon: Gamepad2 },
     { href: "/vibe-judge", label: "Judge", icon: Scale },
-    { href: "/snap-hunt", label: "Hunt", icon: Camera },
     { href: "/watch", label: "Watch", icon: Tv },
     { href: "/avatars", label: "Avatars", icon: User },
     { href: "/moments", label: "Moments", icon: BookOpen },
