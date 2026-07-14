@@ -53,7 +53,7 @@ export default function SignupPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
         <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
-          <img src="/logo.png" alt="Pairfect Logo" className="w-16 h-16 object-contain animate-pulse" />
+          <img src="/logo-book.png" alt="Pairfect Logo" className="w-16 h-16 object-contain animate-pulse" />
         </div>
         <h2 className="text-3xl font-serif font-semibold tracking-tight text-foreground">
           Create Your Space
