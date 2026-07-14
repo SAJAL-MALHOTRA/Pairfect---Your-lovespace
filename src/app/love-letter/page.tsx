@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
-const GIPHY_API_KEY = "dc6zaTOxFJmzC"; // universal GIPHY public beta key for development
+const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "dc6zaTOxFJmzC";
 
 // Isolated Giphy Renderer component to resolve URLs on-the-fly at runtime
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
@@ -23,9 +23,12 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
       try {
         const res = await fetch(`https://api.giphy.com/v1/gifs/${giphyId}?api_key=${GIPHY_API_KEY}`);
         const json = await res.json();
+        if (json.meta && json.meta.status === 403) {
+          throw new Error("Banned");
+        }
         setUrl(json.data?.images?.fixed_height?.url || null);
       } catch (e) {
-        console.error(e);
+        console.error("Giphy resolve error:", e);
       } finally {
         setLoading(false);
       }
@@ -41,7 +44,13 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
     );
   }
 
-  if (!url) return <div className="text-xs text-muted-foreground p-4">Sticker unavailable</div>;
+  if (!url) {
+    return (
+      <div className="text-[10px] text-stone-400 font-mono p-4 text-center">
+        Sticker unavailable (403/Banned)
+      </div>
+    );
+  }
 
   return (
     <img src={url} alt="Cat sticker" className="rounded-xl max-h-48 object-contain w-full shadow-inner" />
@@ -154,15 +163,20 @@ export default function LoveLetterPage() {
   // Search Giphy stickers on query input change
   const performStickerSearch = async (query: string) => {
     setSearching(true);
+    setError(null);
     try {
       const q = query.trim() ? `cat ${query}` : "cat happy";
       const res = await fetch(
         `https://api.giphy.com/v1/stickers/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(q)}&limit=20&rating=g`
       );
       const data = await res.json();
+      if (data.meta && data.meta.status === 403) {
+        throw new Error("GIPHY API Key invalid or banned (403). Please add NEXT_PUBLIC_GIPHY_API_KEY to your .env.local file.");
+      }
       setGiphyStickers(data.data || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Giphy Search Error:", err);
+      setError(err.message || "Failed to query GIPHY sticker list.");
     } finally {
       setSearching(false);
     }
@@ -776,7 +790,12 @@ export default function LoveLetterPage() {
 
             {/* Search Grid / Sticker list */}
             <div className="p-5 overflow-y-auto flex-1 bg-stone-50/50">
-              {searching ? (
+              {error ? (
+                <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-center space-y-2">
+                  <AlertCircle className="w-5 h-5 text-red-500 mx-auto" />
+                  <p className="text-xs text-red-700 font-medium leading-relaxed">{error}</p>
+                </div>
+              ) : searching ? (
                 <div className="text-center py-12">
                   <Loader2 className="w-6 h-6 text-[#db2777] animate-spin mx-auto" />
                   <p className="text-xs text-stone-400 mt-2 font-mono">Searching GIPHY...</p>
