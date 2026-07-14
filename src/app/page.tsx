@@ -27,7 +27,7 @@ export default async function LandingPage() {
       {/* Header */}
       <header className="px-6 py-5 max-w-7xl w-full mx-auto flex items-center justify-between z-10 relative">
         <div className="flex items-center space-x-2.5">
-          <img src="/logo-book.png" alt="Pairfect Logo" className="w-8 h-8 object-contain" />
+          <img src="/logo-book.png" alt="Pairfect Logo" className="w-12 h-12 object-contain" />
           <span className="font-serif text-xl font-semibold tracking-tight text-primary">
             Pairfect
           </span>
