@@ -1,6 +1,10 @@
 import { Heart, Music, Quote, Clock3, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { AvatarScene } from "@/components/avatar-scene"
+import dynamic from "next/dynamic";
+
+const AvatarScene = dynamic(() => import("@/components/avatar-scene").then((mod) => mod.AvatarScene), {
+  ssr: false,
+});
 
 function IntensityMeter({ value }: { value: number }) {
   return (

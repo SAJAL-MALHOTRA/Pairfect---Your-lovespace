@@ -6,7 +6,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { useTheme } from "@/components/providers/theme-provider";
 import { 
   Heart, Home, Calendar, History, Sparkles, BookOpen, 
-  Settings, LogOut, User, Gamepad2, Tv, Sun, Moon 
+  Settings, LogOut, User, Gamepad2, Tv, Sun, Moon, Timer 
 } from "lucide-react";
 
 export default function Navigation() {
@@ -18,6 +18,7 @@ export default function Navigation() {
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/checkin", label: "Check-in", icon: Calendar },
     { href: "/history", label: "History", icon: History },
+    { href: "/focus", label: "Focus", icon: Timer },
     { href: "/recap", label: "Recap", icon: Sparkles },
     { href: "/quiz", label: "Quiz", icon: Gamepad2 },
     { href: "/watch", label: "Watch", icon: Tv },
@@ -26,7 +27,8 @@ export default function Navigation() {
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "??";
     return name.slice(0, 2).toUpperCase();
   };
 
@@ -95,7 +97,7 @@ export default function Navigation() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  getInitials(partner.display_name)
+                  getInitials(partner.display_name || "Partner")
                 )}
               </div>
             )}
