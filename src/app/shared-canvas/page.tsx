@@ -40,9 +40,13 @@ export default function SharedCanvasPage() {
   const [brushWidth, setBrushWidth] = useState(5); // default medium
   const [selectedStamp, setSelectedStamp] = useState("❤️");
 
-  // Live cursor status
+  // Live cursor status — blue for partner, pink for self (swapped by user position)
   const [partnerCursor, setPartnerCursor] = useState<{ x: number; y: number; name: string } | null>(null);
-  const [partnerCursorColor, setPartnerCursorColor] = useState("#60a5fa");
+  const [partnerCursorColor, setPartnerCursorColor] = useState("#60a5fa"); // Blue for partner
+  const MY_CURSOR_COLOR = "#f472b6"; // Pink for self (overridden in useEffect if user is user_b)
+
+  // Local cursor position for HTML overlay dot
+  const [localCursor, setLocalCursor] = useState<{ x: number; y: number } | null>(null);
 
   // Daily prompt calculation
   const [dailyPrompt, setDailyPrompt] = useState("");
@@ -552,6 +556,9 @@ export default function SharedCanvasPage() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Update local cursor HTML overlay position
+    setLocalCursor({ x, y });
+
     // Broadcast cursor position
     channelRef.current?.send({
       type: "broadcast",
@@ -883,7 +890,8 @@ export default function SharedCanvasPage() {
         {/* Drawing Canvas Container */}
         <div 
           ref={containerRef}
-          className="flex-1 w-full min-h-[60vh] border border-border/80 bg-card rounded-2xl relative overflow-hidden shadow-inner cursor-crosshair select-none"
+          className="flex-1 w-full min-h-[60vh] border border-border/80 bg-card rounded-2xl relative overflow-hidden shadow-inner cursor-none select-none"
+          onPointerLeave={() => setLocalCursor(null)}
         >
           <canvas
             ref={canvasRef}
@@ -893,7 +901,30 @@ export default function SharedCanvasPage() {
             className="absolute inset-0 w-full h-full block"
           />
 
-          {/* Figma-like Live Partner Cursor Overlay */}
+          {/* Own local cursor — pink dot + crosshair */}
+          {localCursor && (
+            <div
+              className="absolute pointer-events-none z-30"
+              style={{
+                left: `${localCursor.x}px`,
+                top: `${localCursor.y}px`,
+                transform: "translate(-50%, -50%)"
+              }}
+            >
+              {/* Outer ring */}
+              <div
+                className="w-4 h-4 rounded-full border-2"
+                style={{ borderColor: MY_CURSOR_COLOR, opacity: 0.7 }}
+              />
+              {/* Inner filled dot */}
+              <div
+                className="absolute inset-[3px] rounded-full"
+                style={{ backgroundColor: MY_CURSOR_COLOR }}
+              />
+            </div>
+          )}
+
+          {/* Figma-like Live Partner Cursor Overlay — blue */}
           {partnerCursor && (
             <div 
               className="absolute pointer-events-none transition-all duration-75 ease-out z-20 flex flex-col items-start"
