@@ -154,49 +154,52 @@ function GreenerySVG({ name, className = "w-28 h-28" }: { name: string; classNam
   if (clean === "leafy") {
     return (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 95 L50 35" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
-        <path d="M50 70 C30 60 20 40 15 25" stroke="#10b981" strokeWidth="3" strokeLinecap="round" />
-        <path d="M50 70 C70 60 80 40 85 25" stroke="#10b981" strokeWidth="3" strokeLinecap="round" />
-        {/* leaves */}
-        <circle cx="15" cy="25" r="8" fill="#34d399" />
-        <circle cx="85" cy="25" r="8" fill="#34d399" />
-        <circle cx="28" cy="48" r="7" fill="#059669" />
-        <circle cx="72" cy="48" r="7" fill="#059669" />
-        <circle cx="36" cy="62" r="6" fill="#10b981" />
-        <circle cx="64" cy="62" r="6" fill="#10b981" />
+        <path d="M50 95 C45 75 42 55 50 35" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+        {/* Tapered leaves paths */}
+        <path d="M42 62 C34 58 26 52 20 44 C26 50 34 56 42 62 Z" fill="#10b981" />
+        <path d="M34 48 C24 42 16 34 10 24 C18 32 26 40 34 48 Z" fill="#059669" />
+        <path d="M24 34 C16 26 10 16 5 5 C11 13 18 22 24 34 Z" fill="#34d399" />
+        <path d="M58 62 C66 58 74 52 80 44 C74 50 66 56 58 62 Z" fill="#10b981" />
+        <path d="M66 48 C76 42 84 34 90 24 C82 32 74 40 66 48 Z" fill="#059669" />
+        <path d="M76 34 C84 26 90 16 95 5 C89 13 82 22 76 34 Z" fill="#34d399" />
       </svg>
     );
   }
   if (clean === "fern") {
     return (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 95 C45 65 40 40 30 15" stroke="#047857" strokeWidth="3" strokeLinecap="round" />
-        {/* fronds */}
-        <path d="M42 65 C32 60 26 50 20 42" stroke="#059669" strokeWidth="2.5" />
-        <path d="M45 50 C35 45 28 35 24 28" stroke="#059669" strokeWidth="2.5" />
-        <path d="M48 80 C36 78 30 68 22 60" stroke="#059669" strokeWidth="2.5" />
+        <path d="M50 95 C46 65 42 40 30 15" stroke="#047857" strokeWidth="3.5" strokeLinecap="round" />
+        {/* Tapered fronds paths */}
+        <path d="M42 65 C32 61 24 53 16 43 C24 49 32 55 42 65 Z" fill="#059669" />
+        <path d="M45 50 C35 46 26 38 18 28 C26 34 34 40 45 50 Z" fill="#10b981" />
+        <path d="M48 80 C36 78 26 70 16 60 C26 66 36 72 48 80 Z" fill="#047857" />
+        <path d="M46 68 C56 64 64 56 72 46 C64 52 56 58 46 68 Z" fill="#059669" />
+        <path d="M42 53 C52 49 61 41 69 31 C61 37 53 43 42 53 Z" fill="#10b981" />
+        <path d="M49 83 C61 81 71 73 81 63 C71 69 61 75 49 83 Z" fill="#047857" />
       </svg>
     );
   }
   if (clean === "eucalyptus") {
     return (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 95 L50 15" stroke="#065f46" strokeWidth="3" />
-        <ellipse cx="50" cy="30" rx="14" ry="10" fill="#0d9488" opacity="0.8" />
-        <ellipse cx="50" cy="50" rx="18" ry="12" fill="#0d9488" />
-        <ellipse cx="50" cy="70" rx="22" ry="14" fill="#14b8a6" opacity="0.9" />
+        <path d="M50 95 C48 70 47 40 50 15" stroke="#065f46" strokeWidth="3.5" strokeLinecap="round" />
+        <ellipse cx="50" cy="30" rx="14" ry="9" fill="#0d9488" opacity="0.8" />
+        <ellipse cx="48" cy="50" rx="19" ry="11" fill="#0d9488" />
+        <ellipse cx="52" cy="72" rx="23" ry="13" fill="#14b8a6" opacity="0.9" />
       </svg>
     );
   }
   // willow
   return (
     <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M50 10 C50 35 30 60 20 90" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
-      <path d="M50 10 C50 35 70 60 80 90" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="28" cy="45" r="4" fill="#34d399" />
-      <circle cx="72" cy="45" r="4" fill="#34d399" />
-      <circle cx="22" cy="65" r="4" fill="#059669" />
-      <circle cx="78" cy="65" r="4" fill="#059669" />
+      <path d="M50 15 C45 35 28 60 18 90" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M50 15 C55 35 72 60 82 90" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M40 30 C30 32 20 30 10 26 C20 28 30 28 40 30 Z" fill="#34d399" />
+      <path d="M30 52 C20 56 10 54 2 50 C12 52 22 52 30 52 Z" fill="#059669" />
+      <path d="M22 75 C12 80 2 78 -8 74 C2 76 12 76 22 75 Z" fill="#10b981" />
+      <path d="M60 30 C70 32 80 30 90 26 C80 28 70 28 60 30 Z" fill="#34d399" />
+      <path d="M70 52 C80 56 90 54 98 50 C88 52 78 52 70 52 Z" fill="#059669" />
+      <path d="M78 75 C88 80 98 78 108 74 C98 76 88 76 78 75 Z" fill="#10b981" />
     </svg>
   );
 }
@@ -222,7 +225,7 @@ const cardStylesList = [
   { name: "Burnt Edge", css: "bg-amber-100/80 border-amber-900/30 text-amber-950 font-serif shadow-md" },
   { name: "Rose Gold", css: "bg-gradient-to-br from-rose-50 to-rose-100 border-rose-400/40 text-rose-900 font-sans" },
   { name: "Watercolor Wash", css: "bg-blue-50/80 border-blue-200 text-blue-800 font-sans" },
-  { name: "Midnight", css: "bg-slate-950 border-slate-800 text-indigo-200 font-sans shadow-lg" },
+  { name: "Midnight", css: "bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 border-slate-800 text-indigo-200 font-sans shadow-lg" },
   { name: "Kraft Card", css: "bg-[#ebd3a9]/70 border-[#bfa275] text-[#5c4015] font-serif" },
   { name: "Garden Party", css: "bg-emerald-50/80 border-emerald-200 text-emerald-900 font-serif" }
 ];
@@ -658,13 +661,13 @@ export default function BouquetPage() {
                     <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-pink-500" />
 
                     <div className="space-y-4">
-                      <p className="text-base font-bold italic font-serif text-[#db2777]">To: {recipientName || "..."}</p>
+                      <p className="text-xs font-medium opacity-75 italic font-serif text-[#db2777]">To: {recipientName || "..."}</p>
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
                         {cardMessage || "Your message here..."}
                       </p>
                     </div>
 
-                    <p className="text-right text-xs font-bold italic font-serif text-[#db2777] mt-6">
+                    <p className="text-right text-[10px] font-medium opacity-75 italic font-serif text-[#db2777] mt-6">
                       With love, {senderName || "..."}
                     </p>
                   </div>
@@ -866,35 +869,41 @@ export default function BouquetPage() {
               return (
                 <div className={`rounded-3xl border border-border p-8 md:p-12 text-center shadow-xl space-y-12 relative overflow-hidden transition-all min-h-[80vh] flex flex-col justify-between items-center ${matchTheme.css}`}>
                   
-                  {/* Floating sparkles background effect if animated */}
-                  {matchTheme.animated && (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/5 to-purple-500/5 animate-pulse pointer-events-none" />
-                  )}
+                  {/* Radial gradient depth background behind the bouquet */}
+                  <div className="absolute top-20 w-72 h-72 rounded-full bg-[radial-gradient(circle_at_center,rgba(251,113,133,0.12),transparent_70%)] pointer-events-none -z-10" />
 
-                  {/* Assembled Bouquet Illustration (Screen 6 replicate) */}
-                  <div className="relative w-full max-w-[280px] mx-auto flex flex-col items-center">
+                  {/* Assembled Bouquet Illustration with drop shadow */}
+                  <div className="relative w-full max-w-[280px] mx-auto flex flex-col items-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
                     
                     {/* 1. Greenery Wrapping Background */}
                     <div className="z-10 animate-fade-in">
                       <GreenerySVG name={activeBouquet.greenery_type} className="w-56 h-56" />
                     </div>
 
-                    {/* 2. Selected Flowers Bloomed in-place */}
-                    <div className="absolute top-10 inset-x-0 flex justify-center items-end -space-x-8 z-20">
+                    {/* 2. Selected Flowers Overlapped & Bloomed in-place */}
+                    <div className="absolute top-10 inset-x-0 flex justify-center items-end z-20">
                       {activeBouquet.flower_ids.map((flowerId: string, idx: number) => {
                         const matchFlower = flowers.find(f => f.id === flowerId);
                         if (!matchFlower) return null;
 
                         const isBloomed = bloomIndex > idx;
+                        const total = activeBouquet.flower_ids.length;
+                        const angle = (idx - (total - 1) / 2) * 12;
+                        const tx = (idx - (total - 1) / 2) * 20;
+                        const ty = Math.abs(idx - (total - 1) / 2) * 6;
+
                         return (
                           <div
                             key={idx}
-                            className={`transition-all duration-700 ease-out transform ${
+                            className={`absolute transition-all duration-700 ease-out transform ${
                               isBloomed 
-                                ? "opacity-100 scale-100 translate-y-0 rotate-0" 
-                                : "opacity-0 scale-50 translate-y-12 rotate-12"
+                                ? "opacity-100 scale-100" 
+                                : "opacity-0 scale-50 translate-y-12"
                             }`}
-                            style={{ transitionDelay: `${idx * 150}ms` }}
+                            style={{ 
+                              transform: isBloomed ? `rotate(${angle}deg) translate(${tx}px, ${ty}px)` : 'scale(0.5) translateY(48px)',
+                              transitionDelay: `${idx * 150}ms` 
+                            }}
                           >
                             <FlowerSVG name={matchFlower.name} className="w-20 h-20 filter drop-shadow-sm" />
                           </div>
@@ -920,12 +929,12 @@ export default function BouquetPage() {
                         <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-[#db2777]" />
 
                         <div className="space-y-3">
-                          <p className="text-xs font-bold italic text-[#db2777]">To: {activeBouquet.recipient_name}</p>
+                          <p className="text-xs font-medium opacity-75 italic text-[#db2777]">To: {activeBouquet.recipient_name}</p>
                           <p className="text-sm leading-relaxed whitespace-pre-wrap font-serif italic">
                             {typedMessage}
                           </p>
                         </div>
-                        <p className="text-right text-[10px] font-bold italic text-[#db2777] mt-4">
+                        <p className="text-right text-[10px] font-medium opacity-75 italic text-[#db2777] mt-4">
                           With love, {activeBouquet.sender_name}
                         </p>
                       </div>
