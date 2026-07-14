@@ -1,4 +1,4 @@
-import { ChevronRight, Scale } from "lucide-react"
+import { ChevronRight, Scale, HelpCircle } from "lucide-react"
 import { PixelPhotoStack } from "@/components/pixel-icons"
 
 const items = [
@@ -13,6 +13,12 @@ const items = [
     title: "AI Vibe Judge",
     description: "Settle relationship disputes playfully using Gemini.",
     href: "/vibe-judge"
+  },
+  {
+    Icon: HelpCircle,
+    title: "Riddle Night",
+    description: "Crack mind-bending riddles together with live timers.",
+    href: "/riddle"
   }
 ]
 
