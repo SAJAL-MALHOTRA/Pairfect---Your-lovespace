@@ -17,7 +17,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Hoedex — Private Relationship Companion",
+  title: "Pairfect — Private Relationship Companion",
   description: "A private, bold space to share check-ins, moods, and scrapbook memories with your partner.",
 };
 

@@ -35,9 +35,9 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center space-x-2 group">
-          <img src="/logo-book.png" alt="Hoedex" className="w-9 h-9 object-contain group-hover:scale-105 transition-transform" />
+          <img src="/logo-book.png" alt="Pairfect" className="w-9 h-9 object-contain group-hover:scale-105 transition-transform" />
           <span className="font-sans text-lg font-black tracking-tight text-foreground">
-            Hoedex
+            Pairfect
           </span>
         </Link>
 

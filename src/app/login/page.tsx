@@ -46,10 +46,10 @@ export default function LoginPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
         <div className="inline-flex items-center justify-center w-20 h-20 mb-4">
-          <img src="/logo-book.png" alt="Hoedex Logo" className="w-20 h-20 object-contain" />
+          <img src="/logo-book.png" alt="Pairfect Logo" className="w-20 h-20 object-contain" />
         </div>
         <h2 className="text-3xl font-sans font-black tracking-tight text-foreground">
-          Welcome to Hoedex
+          Welcome to Pairfect
         </h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-xs mx-auto text-pretty">
           A private, bold space to sync daily rhythms and scrapbook memories with your partner.
