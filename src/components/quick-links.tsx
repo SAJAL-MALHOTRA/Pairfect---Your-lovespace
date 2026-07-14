@@ -1,4 +1,4 @@
-import { ChevronRight, Scale, HelpCircle } from "lucide-react"
+import { ChevronRight, Scale, HelpCircle, Palette } from "lucide-react"
 import { PixelPhotoStack } from "@/components/pixel-icons"
 
 const items = [
@@ -19,6 +19,12 @@ const items = [
     title: "Riddle Night",
     description: "Crack mind-bending riddles together with live timers.",
     href: "/riddle"
+  },
+  {
+    Icon: Palette,
+    title: "Shared Canvas",
+    description: "Collaboratively doodle simultaneously with live partner cursors.",
+    href: "/shared-canvas"
   }
 ]
 
