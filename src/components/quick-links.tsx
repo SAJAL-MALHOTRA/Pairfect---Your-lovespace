@@ -1,13 +1,7 @@
 import { ChevronRight, Scale, Camera } from "lucide-react"
-import { PixelSparkle, PixelPhotoStack } from "@/components/pixel-icons"
+import { PixelPhotoStack } from "@/components/pixel-icons"
 
 const items = [
-  {
-    Icon: PixelSparkle,
-    title: "Weekly Recaps",
-    description: "Gentle summaries of how your week felt together.",
-    href: "/recap"
-  },
   {
     Icon: PixelPhotoStack,
     title: "Shared Scrapbook",

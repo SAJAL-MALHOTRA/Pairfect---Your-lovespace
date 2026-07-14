@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useTheme } from "@/components/providers/theme-provider";
 import { 
-  Heart, Home, Calendar, History, Sparkles, BookOpen, 
+  Heart, Home, Calendar, BookOpen, 
   Settings, LogOut, User, Gamepad2, Tv, Sun, Moon, Timer,
   Scale, Camera
 } from "lucide-react";
@@ -18,9 +18,7 @@ export default function Navigation() {
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/checkin", label: "Check-in", icon: Calendar },
-    { href: "/history", label: "History", icon: History },
     { href: "/focus", label: "Focus", icon: Timer },
-    { href: "/recap", label: "Recap", icon: Sparkles },
     { href: "/quiz", label: "Quiz", icon: Gamepad2 },
     { href: "/vibe-judge", label: "Judge", icon: Scale },
     { href: "/snap-hunt", label: "Hunt", icon: Camera },
