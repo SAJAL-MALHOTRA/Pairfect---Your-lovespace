@@ -8,7 +8,7 @@ import Navigation from "@/components/navigation";
 import { moodDetails } from "@/app/dashboard/page";
 import { Music, AlertCircle, Heart, ArrowLeft, Loader2, Sparkles, Search } from "lucide-react";
 
-// Mock popular cozy tracks if Spotify is not linked, to let users test music attachments instantly
+// Mock popular cozy tracks to let users test music attachments instantly
 const fallbackTracks = [
   { id: "1", name: "Cozy Coffee", artist: "Lo-Fi Lullabies", albumArt: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=80&h=80&fit=crop" },
   { id: "2", name: "Rainy Sunday", artist: "Acoustic Dreams", albumArt: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=80&h=80&fit=crop" },
@@ -21,16 +21,16 @@ export default function CheckinPage() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [intensity, setIntensity] = useState<number>(3);
   const [note, setNote] = useState("");
-  const [spotifyTracks, setSpotifyTracks] = useState<any[]>([]);
+  const [cozyTracks, setCozyTracks] = useState<any[]>([]);
   const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
-  const [spotifyLoading, setSpotifyLoading] = useState(false);
+  const [musicLoading, setMusicLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
-    setSpotifyTracks(fallbackTracks);
+    setCozyTracks(fallbackTracks);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -206,7 +206,7 @@ export default function CheckinPage() {
             />
           </div>
 
-          {/* Spotify Song Attachment */}
+          {/* Cozy Song Attachment */}
           <div className="rounded-3xl border border-border/60 bg-card/55 p-5 shadow-sm backdrop-blur-xl space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-foreground flex items-center space-x-1.5">
@@ -247,7 +247,7 @@ export default function CheckinPage() {
                 </p>
 
                 <div className="grid grid-cols-1 gap-2">
-                  {spotifyTracks.map((track) => (
+                  {cozyTracks.map((track) => (
                     <button
                       key={track.id}
                       type="button"
