@@ -29,10 +29,8 @@ export default function Navigation() {
     <nav className="sticky top-0 z-40 border-b border-border/60 bg-background/70 px-4 sm:px-6 lg:px-8 py-3 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center space-x-2 group">
-          <div className="w-10 h-10 rounded-2xl bg-brand-rose-500 flex items-center justify-center text-white shadow-md shadow-brand-rose-200 dark:shadow-none group-hover:scale-105 active:scale-95 transition-all">
-            <Heart className="w-5 h-5 fill-white" />
-          </div>
+        <Link href="/dashboard" className="flex items-center space-x-2.5 group">
+          <img src="/logo.png" alt="Pairfect" className="w-8 h-8 object-contain group-hover:scale-105 transition-transform" />
           <span className="font-serif text-xl font-semibold tracking-tight text-primary">
             Pairfect
           </span>
