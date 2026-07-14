@@ -6,9 +6,24 @@ import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { 
   Palette, Brush, Trash2, Camera, Loader2, 
-  AlertCircle, ArrowLeft, RefreshCw, Save
+  AlertCircle, ArrowLeft, RefreshCw, Type, Eye,
+  Square, Circle, Minus, ArrowRight, Smile
 } from "lucide-react";
 import { format } from "date-fns";
+
+// Daily drawing prompts pool
+const promptPool = [
+  "Draw tonight's dinner plan 🍽️",
+  "Sketch how your day went today ☀️",
+  "Draw our dream travel destination ✈️",
+  "Sketch each other as funny animals 🦁",
+  "Draw a blueprint of our dream house 🏡",
+  "Doodle our favorite memory together 💭",
+  "Sketch a cartoon version of ourselves 🎨",
+  "Draw what our next date should be 🥂",
+  "Draw our favorite snacks side-by-side 🍕",
+  "Design a coat of arms for our relationship 🛡️"
+];
 
 export default function SharedCanvasPage() {
   const { user, pair, partner, loading } = useAuth();
@@ -19,13 +34,18 @@ export default function SharedCanvasPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Brush settings
+  // Tools: 'pen' | 'eraser' | 'rect' | 'circle' | 'line' | 'arrow' | 'stamp' | 'text'
+  const [activeTool, setActiveTool] = useState<string>("pen");
   const [brushColor, setBrushColor] = useState("#f472b6"); // default pink
   const [brushWidth, setBrushWidth] = useState(5); // default medium
+  const [selectedStamp, setSelectedStamp] = useState("❤️");
 
   // Live cursor status
   const [partnerCursor, setPartnerCursor] = useState<{ x: number; y: number; name: string } | null>(null);
   const [partnerCursorColor, setPartnerCursorColor] = useState("#60a5fa");
+
+  // Daily prompt calculation
+  const [dailyPrompt, setDailyPrompt] = useState("");
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -47,9 +67,16 @@ export default function SharedCanvasPage() {
     "#ffffff"  // White (Eraser/Highlight)
   ];
 
+  // Curated stamp emojis
+  const stampPresets = ["❤️", "⭐", "🐾", "🔥", "🍕", "🎉", "👀", "💋"];
+
   // 1. Fetch or Initialize Canvas Session
   useEffect(() => {
     if (loading || !pair || !user) return;
+
+    // Calculate daily prompt based on day of month
+    const promptIndex = new Date().getDate() % promptPool.length;
+    setDailyPrompt(promptPool[promptIndex]);
 
     // Set partner brush cursor color opposite to mine
     const isUserA = pair.user_a_id === user.id;
@@ -92,9 +119,13 @@ export default function SharedCanvasPage() {
         if (strokesErr) throw strokesErr;
 
         strokesRef.current = (strokesData || []).map((s: any) => ({
+          id: s.id,
+          type: s.type,
           points: s.stroke_data,
           color: s.color,
-          width: s.stroke_width
+          width: s.stroke_width,
+          shape_type: s.shape_type,
+          text_content: s.text_content
         }));
 
         redrawCanvas();
@@ -130,15 +161,23 @@ export default function SharedCanvasPage() {
       })
       .on("broadcast", { event: "draw-end" }, ({ payload }: any) => {
         if (payload.userId !== user.id) {
-          // Append completed partner stroke to local list
+          // Append completed partner stroke/shape to local list
           strokesRef.current.push({
-            points: partnerStrokePointsRef.current,
+            id: payload.id,
+            type: payload.type,
+            points: payload.points || partnerStrokePointsRef.current,
             color: payload.color,
-            width: payload.width
+            width: payload.width,
+            shape_type: payload.shape_type,
+            text_content: payload.text_content
           });
           partnerStrokePointsRef.current = [];
           redrawCanvas();
         }
+      })
+      .on("broadcast", { event: "erase-stroke" }, ({ payload }: any) => {
+        strokesRef.current = strokesRef.current.filter((s: any) => s.id !== payload.strokeId);
+        redrawCanvas();
       })
       .on("broadcast", { event: "clear" }, () => {
         strokesRef.current = [];
@@ -150,7 +189,6 @@ export default function SharedCanvasPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "canvas_strokes", filter: `canvas_id=eq.${canvasRecord.id}` },
         async (payload: any) => {
-          // Verify stroke isn't already inside local strokesRef array (to prevent double rendering)
           const newStroke = payload.new;
           if (newStroke.user_id !== user.id) {
             // Reload list of strokes to ensure correct sync
@@ -162,12 +200,27 @@ export default function SharedCanvasPage() {
 
             if (updatedStrokes) {
               strokesRef.current = updatedStrokes.map((s: any) => ({
+                id: s.id,
+                type: s.type,
                 points: s.stroke_data,
                 color: s.color,
-                width: s.stroke_width
+                width: s.stroke_width,
+                shape_type: s.shape_type,
+                text_content: s.text_content
               }));
               redrawCanvas();
             }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "canvas_strokes" },
+        (payload: any) => {
+          const deletedId = payload.old?.id;
+          if (deletedId) {
+            strokesRef.current = strokesRef.current.filter((s: any) => s.id !== deletedId);
+            redrawCanvas();
           }
         }
       )
@@ -178,7 +231,7 @@ export default function SharedCanvasPage() {
     };
   }, [canvasRecord, user, partner]);
 
-  // Handle window resizing to keep canvas scales consistent
+  // Handle window resizing
   useEffect(() => {
     const handleResize = () => {
       setupCanvasDimensions();
@@ -189,19 +242,13 @@ export default function SharedCanvasPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, [canvasRecord]);
 
-  // Adjust HTML5 Canvas resolution matching its rendering bounds
   const setupCanvasDimensions = () => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    // Use container sizes
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
-    // Set resolution matching rendering scale
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
   };
 
   // 3. Drawing Pipeline Context Redraws
@@ -212,20 +259,50 @@ export default function SharedCanvasPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Clear canvas frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw all historic strokes
-    strokesRef.current.forEach(stroke => drawLine(ctx, stroke.points, stroke.color, stroke.width));
+    // Draw all historic elements
+    strokesRef.current.forEach(stroke => drawElement(ctx, stroke));
 
-    // Draw active partner stroke in real-time
+    // Draw active partner stroke/shape in real-time
     if (partnerStrokePointsRef.current.length > 0) {
-      drawLine(ctx, partnerStrokePointsRef.current, partnerCursorColor, brushWidth);
+      const tempElement = {
+        type: ["rect", "circle", "line", "arrow"].includes(activeTool) ? "shape" : "stroke",
+        points: partnerStrokePointsRef.current,
+        color: partnerCursorColor,
+        width: brushWidth,
+        shape_type: ["rect", "circle", "line", "arrow"].includes(activeTool) ? activeTool : null
+      };
+      drawElement(ctx, tempElement);
     }
 
-    // Draw active local stroke in real-time
+    // Draw active local stroke/shape in real-time
     if (localStrokePointsRef.current.length > 0) {
-      drawLine(ctx, localStrokePointsRef.current, brushColor, brushWidth);
+      const tempElement = {
+        type: ["rect", "circle", "line", "arrow"].includes(activeTool) ? "shape" : "stroke",
+        points: localStrokePointsRef.current,
+        color: brushColor,
+        width: brushWidth,
+        shape_type: ["rect", "circle", "line", "arrow"].includes(activeTool) ? activeTool : null
+      };
+      drawElement(ctx, tempElement);
+    }
+  };
+
+  const drawElement = (ctx: CanvasRenderingContext2D, stroke: any) => {
+    if (stroke.type === "stroke") {
+      drawLine(ctx, stroke.points, stroke.color, stroke.width);
+    } else if (stroke.type === "shape") {
+      drawShape(ctx, stroke.points, stroke.shape_type, stroke.color, stroke.width);
+    } else if (stroke.type === "stamp") {
+      ctx.font = "32px sans-serif";
+      const p = stroke.points[0];
+      if (p) ctx.fillText(stroke.shape_type, p.x - 16, p.y + 12);
+    } else if (stroke.type === "text") {
+      ctx.fillStyle = stroke.color;
+      ctx.font = `bold ${stroke.width * 2 + 12}px sans-serif`;
+      const p = stroke.points[0];
+      if (p) ctx.fillText(stroke.text_content || "", p.x, p.y);
     }
   };
 
@@ -252,16 +329,217 @@ export default function SharedCanvasPage() {
     ctx.stroke();
   };
 
-  // 4. Client Pointer Handlers
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const drawShape = (
+    ctx: CanvasRenderingContext2D,
+    points: { x: number; y: number }[],
+    shapeType: string,
+    color: string,
+    width: number
+  ) => {
+    if (points.length < 2) return;
+    const p0 = points[0];
+    const p1 = points[points.length - 1];
 
-    isDrawingRef.current = true;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    if (shapeType === "line") {
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
+    } else if (shapeType === "rect") {
+      ctx.beginPath();
+      ctx.strokeRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
+    } else if (shapeType === "circle") {
+      const rx = Math.abs(p1.x - p0.x) / 2;
+      const ry = Math.abs(p1.y - p0.y) / 2;
+      const cx = p0.x + (p1.x - p0.x) / 2;
+      const cy = p0.y + (p1.y - p0.y) / 2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+      ctx.stroke();
+    } else if (shapeType === "arrow") {
+      const angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
+
+      // Draw arrowhead
+      const arrowHeadLength = 15;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p1.x - arrowHeadLength * Math.cos(angle - Math.PI / 6), p1.y - arrowHeadLength * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p1.x - arrowHeadLength * Math.cos(angle + Math.PI / 6), p1.y - arrowHeadLength * Math.sin(angle + Math.PI / 6));
+      ctx.stroke();
+    }
+  };
+
+  // 4. Hit-Test Eraser Logic
+  const eraseStrokesAt = async (x: number, y: number) => {
+    const eraseRadius = 15;
+    const remainingStrokes = strokesRef.current.filter((stroke) => {
+      if (stroke.type === "stroke") {
+        const hit = stroke.points.some((p: any) => Math.hypot(p.x - x, p.y - y) <= eraseRadius);
+        if (hit && stroke.id) {
+          deleteStrokeFromDb(stroke.id);
+        }
+        return !hit;
+      }
+      if (stroke.type === "shape") {
+        const pStart = stroke.points[0];
+        const pEnd = stroke.points[stroke.points.length - 1];
+        if (pStart && pEnd) {
+          const distStart = Math.hypot(pStart.x - x, pStart.y - y);
+          const distEnd = Math.hypot(pEnd.x - x, pEnd.y - y);
+          const midX = (pStart.x + pEnd.x) / 2;
+          const midY = (pStart.y + pEnd.y) / 2;
+          const distMid = Math.hypot(midX - x, midY - y);
+          const hit = distStart <= eraseRadius || distEnd <= eraseRadius || distMid <= eraseRadius;
+          if (hit && stroke.id) {
+            deleteStrokeFromDb(stroke.id);
+          }
+          return !hit;
+        }
+      }
+      if (stroke.type === "text" || stroke.type === "stamp") {
+        const p = stroke.points[0];
+        if (p) {
+          const hit = Math.hypot(p.x - x, p.y - y) <= eraseRadius * 2;
+          if (hit && stroke.id) {
+            deleteStrokeFromDb(stroke.id);
+          }
+          return !hit;
+        }
+      }
+      return true;
+    });
+
+    if (remainingStrokes.length !== strokesRef.current.length) {
+      strokesRef.current = remainingStrokes;
+      redrawCanvas();
+    }
+  };
+
+  const deleteStrokeFromDb = async (strokeId: string) => {
+    // Broadcast delete event
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "erase-stroke",
+      payload: { strokeId }
+    });
+
+    // Delete in DB
+    try {
+      await supabase
+        .from("canvas_strokes")
+        .delete()
+        .eq("id", strokeId);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // 5. Client Pointer Handlers
+  const handlePointerDown = async (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !user || !canvasRecord) return;
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    if (activeTool === "eraser") {
+      isDrawingRef.current = true;
+      eraseStrokesAt(x, y);
+      return;
+    }
+
+    if (activeTool === "stamp") {
+      const clientStrokeId = crypto.randomUUID();
+      const points = [{ x, y }];
+      
+      const newStamp = {
+        id: clientStrokeId,
+        type: "stamp",
+        points,
+        color: brushColor,
+        width: brushWidth,
+        shape_type: selectedStamp
+      };
+
+      strokesRef.current.push(newStamp);
+      redrawCanvas();
+
+      // Broadcast complete stamp insert
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "draw-end",
+        payload: newStamp
+      });
+
+      // Save to database
+      try {
+        await supabase.from("canvas_strokes").insert({
+          id: clientStrokeId,
+          canvas_id: canvasRecord.id,
+          user_id: user.id,
+          stroke_data: points,
+          color: brushColor,
+          stroke_width: brushWidth,
+          type: "stamp",
+          shape_type: selectedStamp
+        });
+      } catch (err) {}
+      return;
+    }
+
+    if (activeTool === "text") {
+      const text = prompt("Enter note text:");
+      if (!text || !text.trim()) return;
+
+      const clientStrokeId = crypto.randomUUID();
+      const points = [{ x, y }];
+
+      const newText = {
+        id: clientStrokeId,
+        type: "text",
+        points,
+        color: brushColor,
+        width: brushWidth,
+        text_content: text.trim()
+      };
+
+      strokesRef.current.push(newText);
+      redrawCanvas();
+
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "draw-end",
+        payload: newText
+      });
+
+      try {
+        await supabase.from("canvas_strokes").insert({
+          id: clientStrokeId,
+          canvas_id: canvasRecord.id,
+          user_id: user.id,
+          stroke_data: points,
+          color: brushColor,
+          stroke_width: brushWidth,
+          type: "text",
+          text_content: text.trim()
+        });
+      } catch (err) {}
+      return;
+    }
+
+    // Default shapes or pen drawing
+    isDrawingRef.current = true;
     localStrokePointsRef.current = [{ x, y }];
     redrawCanvas();
   };
@@ -274,7 +552,7 @@ export default function SharedCanvasPage() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // 1. Broadcast ephemeral cursor position
+    // Broadcast cursor position
     channelRef.current?.send({
       type: "broadcast",
       event: "cursor-move",
@@ -283,11 +561,23 @@ export default function SharedCanvasPage() {
 
     if (!isDrawingRef.current) return;
 
-    // 2. Append points and redraw
-    localStrokePointsRef.current.push({ x, y });
+    if (activeTool === "eraser") {
+      eraseStrokesAt(x, y);
+      return;
+    }
+
+    if (["rect", "circle", "line", "arrow"].includes(activeTool)) {
+      // Shape resizing - replace last point with current mouse location
+      const startPoint = localStrokePointsRef.current[0];
+      localStrokePointsRef.current = [startPoint, { x, y }];
+    } else {
+      // Default freehand pen tool
+      localStrokePointsRef.current.push({ x, y });
+    }
+
     redrawCanvas();
 
-    // 3. Broadcast stroke points for real-time stroke-by-stroke preview
+    // Broadcast current points for live size update feedback
     channelRef.current?.send({
       type: "broadcast",
       event: "drawing-stroke",
@@ -299,50 +589,60 @@ export default function SharedCanvasPage() {
     if (!isDrawingRef.current || !canvasRecord || !user) return;
     isDrawingRef.current = false;
 
+    if (activeTool === "eraser") return;
+
     const completedPoints = [...localStrokePointsRef.current];
     localStrokePointsRef.current = [];
 
     if (completedPoints.length === 0) return;
 
-    // Append completed local stroke to list
-    strokesRef.current.push({
+    const clientStrokeId = crypto.randomUUID();
+    const isShape = ["rect", "circle", "line", "arrow"].includes(activeTool);
+
+    const newElement = {
+      id: clientStrokeId,
+      type: isShape ? "shape" : "stroke",
       points: completedPoints,
       color: brushColor,
-      width: brushWidth
-    });
+      width: brushWidth,
+      shape_type: isShape ? activeTool : null
+    };
 
+    strokesRef.current.push(newElement);
     redrawCanvas();
 
-    // Broadcast stroke finish event to clear partner temporary preview
+    // Broadcast completed shape/stroke
     channelRef.current?.send({
       type: "broadcast",
       event: "draw-end",
-      payload: { userId: user.id, color: brushColor, width: brushWidth }
+      payload: newElement
     });
 
-    // Write stroke database log in background
+    // Write log to DB
     try {
       await supabase
         .from("canvas_strokes")
         .insert({
+          id: clientStrokeId,
           canvas_id: canvasRecord.id,
           user_id: user.id,
           stroke_data: completedPoints,
           color: brushColor,
-          stroke_width: brushWidth
+          stroke_width: brushWidth,
+          type: isShape ? "shape" : "stroke",
+          shape_type: isShape ? activeTool : null
         });
     } catch (e) {
-      console.error("Failed to persist stroke to database:", e);
+      console.error(e);
     }
   };
 
-  // 5. Clear Canvas action
+  // 6. Clear Canvas
   const handleClearCanvas = async () => {
     if (!canvasRecord) return;
-    if (!confirm("Are you sure you want to clear the canvas? This deletes all strokes!")) return;
+    if (!confirm("Are you sure you want to clear the canvas? This deletes all drawings!")) return;
 
     try {
-      // Delete all strokes in DB
       const { error: err } = await supabase
         .from("canvas_strokes")
         .delete()
@@ -350,13 +650,11 @@ export default function SharedCanvasPage() {
 
       if (err) throw err;
 
-      // Reset local refs
       strokesRef.current = [];
       localStrokePointsRef.current = [];
       partnerStrokePointsRef.current = [];
       redrawCanvas();
 
-      // Broadcast clear action
       channelRef.current?.send({
         type: "broadcast",
         event: "clear",
@@ -368,7 +666,7 @@ export default function SharedCanvasPage() {
     }
   };
 
-  // 6. Save to Moments scrapbook logic
+  // 7. Save to Moments scrapbook
   const handleSaveToMoments = async () => {
     const canvas = canvasRef.current;
     if (!canvas || !pair || !user || saving) return;
@@ -377,28 +675,25 @@ export default function SharedCanvasPage() {
     setError(null);
 
     try {
-      // 1. Convert Canvas to Blob PNG
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Failed to render canvas image.");
 
-      const file = new File([blob], `canvas-doodle-${Date.now()}.png`, { type: "image/png" });
+      const file = new File([blob], `canvas-${Date.now()}.png`, { type: "image/png" });
       const filename = `canvas-${Date.now()}.png`;
       const storagePath = `${pair.id}/${filename}`;
 
-      // 2. Upload file to Supabase memories bucket
       const { error: uploadErr } = await supabase.storage
         .from("memories")
         .upload(storagePath, file);
 
       if (uploadErr) throw uploadErr;
 
-      // 3. Insert memory database row
       const { error: insertErr } = await supabase
         .from("shared_moments")
         .insert({
           pair_id: pair.id,
           title: "Our Shared Doodle 🎨",
-          description: "A collaborative drawing doodle made by us on the canvas!",
+          description: `A collaborative canvas drawing centered on today's prompt: "${dailyPrompt}"`,
           moment_date: format(new Date(), "yyyy-MM-dd"),
           photo_url: storagePath
         });
@@ -408,13 +703,12 @@ export default function SharedCanvasPage() {
       alert("Doodle saved to Shared Scrapbook moments successfully! 🎉");
     } catch (e: any) {
       console.error(e);
-      setError(e.message || "Failed to save doodle to Moments scrapbook.");
+      setError(e.message || "Failed to save doodle.");
     } finally {
       setSaving(false);
     }
   };
 
-  // Setup dimension resolution once records load
   useEffect(() => {
     if (canvasRecord) {
       setupCanvasDimensions();
@@ -435,7 +729,6 @@ export default function SharedCanvasPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-background text-foreground transition-colors duration-300">
-      {/* soft ambient warmth */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 animate-fade-in"
@@ -447,25 +740,79 @@ export default function SharedCanvasPage() {
 
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col justify-start z-10 animate-fade-in space-y-4">
         
-        {/* Top Control Bar panel */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Curated Daily Prompt Display banner */}
+        {dailyPrompt && (
+          <div className="rounded-xl border border-pink-500/10 bg-pink-500/5 px-4 py-3 text-center text-xs font-bold text-[#f472b6] tracking-wide shadow-sm animate-pulse">
+            🎯 Today's Prompt: "{dailyPrompt}"
+          </div>
+        )}
+
+        {/* Toolbar menu */}
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-4">
           
           {/* Header titles */}
-          <div className="flex items-center space-x-3 w-full sm:w-auto">
+          <div className="flex items-center space-x-3 w-full lg:w-auto">
             <Palette className="w-6 h-6 text-primary" />
             <div>
               <h1 className="text-lg font-sans font-black tracking-tight text-foreground leading-none">
                 Shared Canvas
               </h1>
               <p className="text-[10px] text-stone-400 font-mono mt-1">
-                 dRaw together in real-time
+                 Collaborative drawing sandbox
               </p>
             </div>
           </div>
 
-          {/* Controls tools block */}
-          <div className="flex flex-wrap items-center justify-center gap-4 w-full sm:w-auto">
+          {/* Controls tools list */}
+          <div className="flex flex-wrap items-center justify-center gap-4 w-full lg:w-auto">
             
+            {/* Tool Selection (Pen/Eraser/Shapes/Stickers/Text) */}
+            <div className="flex items-center gap-1 bg-background p-1.5 rounded-xl border border-border">
+              {[
+                { id: "pen", icon: Brush, title: "Pen" },
+                { id: "eraser", icon: Trash2, title: "Eraser" },
+                { id: "rect", icon: Square, title: "Rectangle" },
+                { id: "circle", icon: Circle, title: "Circle" },
+                { id: "line", icon: Minus, title: "Line" },
+                { id: "arrow", icon: ArrowRight, title: "Arrow" },
+                { id: "stamp", icon: Smile, title: "Emoji Sticker" },
+                { id: "text", icon: Type, title: "Text box" }
+              ].map((tool: any) => {
+                const Icon = tool.icon;
+                return (
+                  <button
+                    key={tool.id}
+                    onClick={() => setActiveTool(tool.id)}
+                    className={`p-2 rounded-lg transition-all cursor-pointer ${
+                      activeTool === tool.id
+                        ? "bg-primary text-white"
+                        : "text-muted-foreground hover:bg-muted"
+                    }`}
+                    title={tool.title}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Stamp presets picker (Only shows when stamp tool is selected) */}
+            {activeTool === "stamp" && (
+              <div className="flex items-center gap-1.5 bg-background p-1.5 rounded-xl border border-border animate-fade-in">
+                {stampPresets.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => setSelectedStamp(emoji)}
+                    className={`w-6 h-6 rounded text-sm transition-transform active:scale-95 cursor-pointer ${
+                      selectedStamp === emoji ? "bg-accent scale-110 border border-primary/45" : ""
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Color swatches */}
             <div className="flex items-center gap-1.5 bg-background p-1.5 rounded-xl border border-border">
               {colorSwatches.map((color: string) => (
@@ -476,12 +823,12 @@ export default function SharedCanvasPage() {
                     brushColor === color ? "border-primary scale-110 shadow-sm" : "border-border/60"
                   }`}
                   style={{ backgroundColor: color }}
-                  title={color === "#ffffff" ? "Eraser" : color}
+                  title={color === "#ffffff" ? "Eraser Fill" : color}
                 />
               ))}
             </div>
 
-            {/* Brush sizes selection */}
+            {/* Brush widths */}
             <div className="flex items-center gap-1 bg-background p-1.5 rounded-xl border border-border">
               {[
                 { label: "Thin", val: 2 },
@@ -507,7 +854,7 @@ export default function SharedCanvasPage() {
               <button
                 onClick={handleClearCanvas}
                 className="p-2.5 rounded-xl text-xs font-bold text-red-500 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 active:scale-[0.98] transition-all cursor-pointer"
-                title="Clear all strokes"
+                title="Clear all drawings"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
