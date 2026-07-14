@@ -63,14 +63,23 @@ export default function PhotoBoothPage() {
       });
       setStream(mediaStream);
       setCameraActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
     } catch (err: any) {
       console.error("Camera access failed:", err);
       setCameraError("Could not access your webcam. Please check your camera permissions and try again.");
     }
   };
+
+  // Auto-enable camera on page mount
+  useEffect(() => {
+    enableCamera();
+  }, []);
+
+  // Bind the camera stream to the video element when it becomes available in the DOM
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream, cameraActive]);
 
   // Close camera stream on unmount
   useEffect(() => {
