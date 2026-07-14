@@ -1,4 +1,4 @@
-import { ChevronRight, Scale, HelpCircle, Palette } from "lucide-react"
+import { ChevronRight, Scale, HelpCircle, Palette, Gift } from "lucide-react"
 import { PixelPhotoStack } from "@/components/pixel-icons"
 
 const items = [
@@ -25,6 +25,12 @@ const items = [
     title: "Shared Canvas",
     description: "Collaboratively doodle simultaneously with live partner cursors.",
     href: "/shared-canvas"
+  },
+  {
+    Icon: Gift,
+    title: "Digital Bouquet",
+    description: "Send customizable bouquets, elegant cards, and notes to your partner.",
+    href: "/bouquet"
   }
 ]
 
