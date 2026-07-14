@@ -1,21 +1,57 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { 
   Heart, Check, X, Loader2, AlertCircle, 
   Sparkles, Send, ArrowLeft, Clock, MailOpen, Mail,
-  BookOpen, Plus, Trash2, Smile, Gift, Lock
+  BookOpen, Plus, Trash2, Smile, Gift, Lock, Search
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+
+const GIPHY_API_KEY = "dc6zaTOxFJmzC"; // universal GIPHY public beta key for development
+
+// Isolated Giphy Renderer component to resolve URLs on-the-fly at runtime
+function GiphyRenderer({ giphyId }: { giphyId: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUrl = async () => {
+      try {
+        const res = await fetch(`https://api.giphy.com/v1/gifs/${giphyId}?api_key=${GIPHY_API_KEY}`);
+        const json = await res.json();
+        setUrl(json.data?.images?.fixed_height?.url || null);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUrl();
+  }, [giphyId]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-40 flex items-center justify-center bg-stone-50 rounded-xl">
+        <Loader2 className="w-5 h-5 animate-spin text-pink-500" />
+      </div>
+    );
+  }
+
+  if (!url) return <div className="text-xs text-muted-foreground p-4">Sticker unavailable</div>;
+
+  return (
+    <img src={url} alt="Cat sticker" className="rounded-xl max-h-48 object-contain w-full shadow-inner" />
+  );
+}
 
 export default function LoveLetterPage() {
   const { user, pair, partner, loading } = useAuth();
   const supabase = createClient();
 
-  const [catMedia, setCatMedia] = useState<any[]>([]);
   const [lettersList, setLettersList] = useState<any[]>([]);
   const [activeLetter, setActiveLetter] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
@@ -28,9 +64,11 @@ export default function LoveLetterPage() {
   const [senderName, setSenderName] = useState("");
   const [sendingLetter, setSendingLetter] = useState(false);
 
-  // Cat Gallery Modal selection
+  // Giphy search state
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [galleryFilter, setGalleryFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [giphyStickers, setGiphyStickers] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
 
   // Reveal / Unseal screen state
   const [isUnsealed, setIsUnsealed] = useState(false);
@@ -72,14 +110,11 @@ export default function LoveLetterPage() {
     }
   };
 
-  // 1. Fetch letters list & curated cat media
+  // Fetch initial details
   const fetchData = async () => {
     if (!pair) return;
     setFetching(true);
     try {
-      const { data: cData } = await supabase.from("cat_media").select("*");
-      setCatMedia(cData || []);
-
       const { data: lData, error: lErr } = await supabase
         .from("love_letters")
         .select("*")
@@ -116,7 +151,31 @@ export default function LoveLetterPage() {
     }
   }, [loading, pair]);
 
-  // 2. Block Editing Handlers
+  // Search Giphy stickers on query input change
+  const performStickerSearch = async (query: string) => {
+    setSearching(true);
+    try {
+      const q = query.trim() ? `cat ${query}` : "cat happy";
+      const res = await fetch(
+        `https://api.giphy.com/v1/stickers/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(q)}&limit=20&rating=g`
+      );
+      const data = await res.json();
+      setGiphyStickers(data.data || []);
+    } catch (err) {
+      console.error("Giphy Search Error:", err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Perform a default load on picker modal open
+  useEffect(() => {
+    if (galleryOpen) {
+      performStickerSearch(searchQuery);
+    }
+  }, [galleryOpen]);
+
+  // Block Editing Handlers
   const handleUpdateBlockValue = (index: number, val: string) => {
     const updated = [...contentBlocks];
     updated[index].value = val;
@@ -135,12 +194,13 @@ export default function LoveLetterPage() {
     setContentBlocks(contentBlocks.filter((_, i) => i !== index));
   };
 
-  const handleInsertCatBlock = (catUrl: string) => {
-    setContentBlocks([...contentBlocks, { type: "cat", value: catUrl }]);
+  const handleInsertCatBlock = (giphyId: string) => {
+    setContentBlocks([...contentBlocks, { type: "cat", giphy_id: giphyId }]);
     setGalleryOpen(false);
+    setSearchQuery("");
   };
 
-  // 3. Send Love Letter
+  // Send Love Letter
   const handleSendLetter = async () => {
     if (!pair || !user || sendingLetter) return;
     
@@ -180,7 +240,7 @@ export default function LoveLetterPage() {
       setActiveStep(1);
 
       fetchData();
-      alert("Love Letter (Cat Edition) sent successfully! 💌🐾");
+      alert("Love Letter sent successfully! 💌🐾");
     } catch (e: any) {
       console.error(e);
       alert(e.message || "Failed to send letter.");
@@ -189,13 +249,12 @@ export default function LoveLetterPage() {
     }
   };
 
-  // 4. Open / Unseal animation pipeline
+  // Open / Unseal animation
   const handleUnsealLetter = async (letter: any) => {
     setActiveLetter(letter);
     setIsUnsealed(false);
     setRevealedBlocksCount(0);
 
-    // If already unsealed, skip unsealing slide transitions
     if (letter.is_opened) {
       setIsUnsealed(true);
       setRevealedBlocksCount(letter.content.length);
@@ -207,14 +266,13 @@ export default function LoveLetterPage() {
     setUnsealAnimating(false);
     setIsUnsealed(true);
 
-    // Stagger block reveal fade-in animations
     const blocksCount = letter.content?.length || 0;
     for (let i = 0; i <= blocksCount; i++) {
       await new Promise(resolve => setTimeout(resolve, 800));
       setRevealedBlocksCount(i + 1);
     }
 
-    // Set read status in DB in background
+    // Set read status in DB
     if (!letter.is_opened && user?.id !== letter.sender_id) {
       try {
         await supabase
@@ -225,7 +283,7 @@ export default function LoveLetterPage() {
     }
   };
 
-  // 5. Save Letter to scrapbook moments
+  // Save Letter to scrapbook moments
   const handleSaveToMoments = async () => {
     if (!activeLetter || !pair || !user || savingMoment) return;
     setSavingMoment(true);
@@ -234,7 +292,6 @@ export default function LoveLetterPage() {
       const partnerName = partner?.display_name || "Partner";
       const isSentByMe = activeLetter.sender_id === user.id;
 
-      // Extract a small summary text
       const firstTextBlock = activeLetter.content.find((b: any) => b.type === "text")?.value || "";
       const summaryText = firstTextBlock.slice(0, 100);
 
@@ -272,7 +329,6 @@ export default function LoveLetterPage() {
   }
 
   const partnerName = partner?.display_name || "Partner";
-  const activeStyleObj = envelopeStyles[envelopeStyle] || envelopeStyles.classic;
 
   return (
     <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-[#fffcf5] text-foreground transition-colors duration-300">
@@ -291,11 +347,11 @@ export default function LoveLetterPage() {
                 <span>Love Letters</span>
               </h1>
               <p className="text-sm text-stone-500 max-w-2xl leading-relaxed">
-                Compose custom love letters interspersed with cute cat photos. Pick an envelope theme, seal it with virtual wax, and send it to your partner!
+                Compose custom love letters interspersed with cute cat stickers from GIPHY. Pick an envelope theme, seal it with virtual wax, and send it to your partner!
               </p>
             </div>
 
-            {/* Builder Progression bar (shown in step 2 & 3) */}
+            {/* Builder Progression bar */}
             {activeStep > 1 && (
               <div className="max-w-md mx-auto flex items-center justify-between border-b border-border/40 pb-4">
                 {[
@@ -324,7 +380,7 @@ export default function LoveLetterPage() {
               <div className="space-y-6 max-w-2xl mx-auto">
                 <div className="space-y-1 text-center">
                   <h2 className="text-2xl font-serif text-[#db2777] font-black italic">Write Your Love Letter</h2>
-                  <p className="text-xs text-stone-500 font-mono">Mix heartfelt text blocks with adorable cat stickers</p>
+                  <p className="text-xs text-stone-500 font-mono">Mix heartfelt text blocks with GIPHY cat stickers</p>
                 </div>
 
                 <div className="rounded-3xl border border-border/60 bg-white p-6 md:p-8 shadow-sm space-y-6">
@@ -349,14 +405,10 @@ export default function LoveLetterPage() {
                           className="block w-full h-24 px-3 py-2 border border-stone-100 focus:border-pink-500 rounded-xl bg-[#fafafa] text-sm text-foreground focus:outline-none resize-none font-serif italic"
                         />
                       ) : (
-                        <div className="rounded-xl overflow-hidden border border-border max-w-xs relative bg-[#fafafa] p-2 flex flex-col items-center">
-                          <img
-                            src={block.value}
-                            alt="Sticker cat"
-                            className="rounded-lg max-h-40 object-cover w-full shadow-inner"
-                          />
+                        <div className="rounded-xl overflow-hidden border border-border/60 max-w-xs relative bg-[#fafafa] p-2 flex flex-col items-center">
+                          <GiphyRenderer giphyId={block.giphy_id} />
                           <span className="text-[8px] font-mono uppercase bg-pink-500 text-white px-2 py-0.5 rounded-full mt-2 font-bold tracking-wider">
-                            🐾 Embedded Cat Sticker
+                            🐾 Embedded Giphy Sticker
                           </span>
                         </div>
                       )}
@@ -380,7 +432,7 @@ export default function LoveLetterPage() {
                       className="inline-flex items-center space-x-1.5 py-2.5 px-4 rounded-xl text-xs font-bold text-[#db2777] bg-pink-50 border border-pink-100 hover:bg-pink-100/60 transition-all cursor-pointer"
                     >
                       <Smile className="w-3.5 h-3.5" />
-                      <span>Insert Cat Sticker 🐾</span>
+                      <span>Insert Giphy Cat 🐾</span>
                     </button>
                   </div>
                 </div>
@@ -498,7 +550,7 @@ export default function LoveLetterPage() {
               </div>
             )}
 
-            {/* Historic logs list of sent/received letters */}
+            {/* Historic logs list */}
             {activeStep === 1 && (
               <div className="max-w-2xl mx-auto space-y-4 pt-8 border-t border-border/40">
                 <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
@@ -618,7 +670,7 @@ export default function LoveLetterPage() {
                     <div className="rounded-3xl border border-border/80 bg-white p-8 md:p-12 shadow-xl space-y-8 relative overflow-hidden animate-fade-in font-serif italic text-left min-h-[70vh] flex flex-col justify-between">
                       
                       {/* Letter Top Details */}
-                      <div className="border-b border-border/40 pb-4 flex justify-between items-center text-xs text-stone-400 font-mono tracking-wide not-italic select-none">
+                      <div className="border-b border-border/40 flex justify-between items-center text-xs text-stone-400 font-mono tracking-wide not-italic select-none">
                         <span>TO: {activeLetter.recipient_name}</span>
                         <span>{format(parseISO(activeLetter.sent_at), "MMMM d, yyyy")}</span>
                       </div>
@@ -640,13 +692,9 @@ export default function LoveLetterPage() {
                                 </p>
                               ) : (
                                 <div className="rounded-2xl overflow-hidden border border-border/50 max-w-sm my-4 shadow-md bg-stone-50 p-2 flex flex-col items-center not-italic">
-                                  <img
-                                    src={block.value}
-                                    alt="Cat attachment"
-                                    className="rounded-xl max-h-48 object-cover w-full shadow-inner"
-                                  />
+                                  <GiphyRenderer giphyId={block.giphy_id} />
                                   <span className="text-[8px] font-mono uppercase bg-pink-500 text-white px-2 py-0.5 rounded-full mt-2 font-bold tracking-wider">
-                                    🐾 Embedded Cat Moment
+                                    🐾 Embedded Giphy Sticker
                                   </span>
                                 </div>
                               )}
@@ -687,64 +735,80 @@ export default function LoveLetterPage() {
 
       </main>
 
-      {/* CURATED CAT MEDIA PICKER MODAL (Step 1 sticker insertion) */}
+      {/* GIPHY CAT STICKER SEARCH MODAL (Step 1 sticker tray) */}
       {galleryOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl border border-border animate-scale-up overflow-hidden">
             
             {/* Modal Header */}
-            <div className="p-5 border-b border-border/40 flex justify-between items-center">
+            <div className="p-5 border-b border-border/40 flex justify-between items-center bg-stone-50">
               <div>
-                <h3 className="text-base font-black text-stone-800">Choose a Cute Cat Sticker</h3>
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">Pick one to embed inside your letter</p>
+                <h3 className="text-base font-black text-stone-800">Search Cat Stickers</h3>
+                <p className="text-[10px] text-stone-400 font-mono mt-0.5">Powered by GIPHY</p>
               </div>
               <button
-                onClick={() => setGalleryOpen(false)}
-                className="p-1 rounded-lg text-stone-400 hover:bg-stone-50 cursor-pointer"
+                onClick={() => {
+                  setGalleryOpen(false);
+                  setSearchQuery("");
+                }}
+                className="p-1 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Filter tags */}
-            <div className="px-5 py-3 border-b border-border/40 flex gap-2 overflow-x-auto bg-stone-50 select-none">
-              {["all", "silly", "sleepy", "playful", "love"].map((catFilter) => (
-                <button
-                  key={catFilter}
-                  onClick={() => setGalleryFilter(catFilter)}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                    galleryFilter === catFilter
-                      ? "bg-[#db2777] text-white"
-                      : "bg-white text-stone-500 border border-border hover:bg-stone-100"
-                  }`}
-                >
-                  {catFilter}
-                </button>
-              ))}
+            {/* Giphy Search input bar */}
+            <div className="px-5 py-3 border-b border-border/40 flex gap-2 items-center bg-white">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    performStickerSearch(e.target.value);
+                  }}
+                  placeholder="e.g. happy, sleepy, dance, funny..."
+                  className="block w-full pl-9 pr-4 py-2 border border-border rounded-xl bg-stone-50 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-stone-400" />
+              </div>
             </div>
 
-            {/* Curated Cat Photos Grid */}
-            <div className="p-5 overflow-y-auto flex-1 grid grid-cols-2 gap-4">
-              {catMedia
-                .filter(cat => galleryFilter === "all" || cat.category === galleryFilter)
-                .map((cat) => (
-                  <div
-                    key={cat.id}
-                    onClick={() => handleInsertCatBlock(cat.media_url)}
-                    className="rounded-2xl border border-border overflow-hidden bg-stone-50 shadow-sm cursor-pointer hover:scale-[1.02] transition-all relative group h-40 flex flex-col justify-end"
-                  >
-                    <img
-                      src={cat.media_url}
-                      alt="Cat sticker"
-                      className="absolute inset-0 w-full h-full object-cover rounded-2xl"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-                    
-                    <span className="relative z-10 m-2.5 bg-white/95 text-stone-700 text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded shadow-sm self-start">
-                      🐾 {cat.category}
-                    </span>
-                  </div>
-                ))}
+            {/* Search Grid / Sticker list */}
+            <div className="p-5 overflow-y-auto flex-1 bg-stone-50/50">
+              {searching ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-6 h-6 text-[#db2777] animate-spin mx-auto" />
+                  <p className="text-xs text-stone-400 mt-2 font-mono">Searching GIPHY...</p>
+                </div>
+              ) : giphyStickers.length === 0 ? (
+                <div className="text-center py-12 text-stone-400 text-xs leading-relaxed">
+                  No cat stickers found matching "{searchQuery}". Try searching for something else!
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {giphyStickers.map((sticker: any) => (
+                    <div
+                      key={sticker.id}
+                      onClick={() => handleInsertCatBlock(sticker.id)}
+                      className="rounded-2xl border border-border bg-white overflow-hidden p-2 shadow-sm cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-center items-center h-28 relative"
+                    >
+                      <img
+                        src={sticker.images?.fixed_height_small?.url || sticker.images?.fixed_height?.url}
+                        alt="Cat sticker option"
+                        className="max-h-24 object-contain"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Giphy Attribution Footer */}
+            <div className="p-3 border-t border-border/40 text-center bg-white flex items-center justify-center">
+              <span className="text-[9px] font-mono uppercase tracking-widest text-stone-400 font-bold">
+                Powered By GIPHY
+              </span>
             </div>
 
           </div>
