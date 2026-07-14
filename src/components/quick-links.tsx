@@ -28,9 +28,9 @@ const items = [
   },
   {
     Icon: Gift,
-    title: "Digital Bouquet",
-    description: "Send customizable bouquets, elegant cards, and notes to your partner.",
-    href: "/bouquet"
+    title: "Love Letter",
+    description: "Write custom letters embedded with cute cat photos and sealed with wax.",
+    href: "/love-letter"
   }
 ]
 
