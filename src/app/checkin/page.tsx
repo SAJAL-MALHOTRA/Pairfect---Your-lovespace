@@ -85,15 +85,25 @@ export default function CheckinPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-peach-50/20 via-background to-background">
+    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8">
+      {/* soft ambient warmth */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 animate-fade-in"
+        style={{
+          background:
+            "radial-gradient(60rem 40rem at 15% -10%, #3a2527 0%, transparent 55%), radial-gradient(50rem 40rem at 100% 10%, #2e1e20 0%, transparent 50%)",
+        }}
+      />
+
       <Navigation />
 
-      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start">
+      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start z-10">
         {/* Back Link */}
         <div className="mb-6">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
+            className="inline-flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
@@ -101,7 +111,7 @@ export default function CheckinPage() {
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+          <h1 className="text-3xl font-serif font-semibold text-foreground tracking-tight">
             How are you feeling, {profile?.display_name}?
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -110,7 +120,7 @@ export default function CheckinPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start space-x-2">
+          <div className="mb-6 p-4 rounded-xl bg-accent/40 border border-border/60 text-primary text-sm flex items-start space-x-2">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -134,10 +144,10 @@ export default function CheckinPage() {
                       setSelectedMood(key);
                       setError(null);
                     }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all active:scale-[0.96] ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all active:scale-[0.96] cursor-pointer ${
                       isSelected
-                        ? `${value.color} ring-2 ring-brand-rose-400 scale-[1.03] shadow-md`
-                        : "border-card-border bg-background/50 hover:bg-background text-muted-foreground hover:text-foreground"
+                        ? `${value.color} ring-2 ring-primary scale-[1.03] shadow-md`
+                        : "border-border/60 bg-background/50 hover:bg-background text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <span className="text-3xl mb-1.5 select-none">{value.emoji}</span>
@@ -149,12 +159,12 @@ export default function CheckinPage() {
           </div>
 
           {/* Intensity Slider */}
-          <div className="space-y-4 bg-white/40 dark:bg-[#1e1a19]/40 border border-card-border p-5 rounded-3xl">
+          <div className="rounded-3xl border border-border/60 bg-card/55 p-5 shadow-sm backdrop-blur-xl space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-foreground">
                 2. Mood Intensity
               </label>
-              <span className="text-xs font-bold text-brand-rose-500 bg-brand-rose-50 dark:bg-brand-rose-950/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-xs font-bold text-primary bg-accent px-2 py-0.5 rounded-full uppercase tracking-wider">
                 Level {intensity} / 5
               </span>
             </div>
@@ -166,7 +176,7 @@ export default function CheckinPage() {
               step="1"
               value={intensity}
               onChange={(e) => setIntensity(parseInt(e.target.value))}
-              className="w-full h-2 bg-card-border rounded-lg appearance-none cursor-pointer accent-brand-rose-500 dark:accent-brand-rose-600"
+              className="w-full h-2 bg-border/60 rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground font-semibold uppercase tracking-wider px-1">
               <span>Very Low</span>
@@ -192,22 +202,22 @@ export default function CheckinPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="What is making you feel this way? (e.g. coffee dates, study stress, cozy evening...)"
-              className="block w-full h-24 p-4 border border-card-border rounded-2xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-rose-300 dark:focus:ring-brand-rose-800 text-foreground text-sm placeholder:text-muted-foreground/40 transition-all resize-none"
+              className="block w-full h-24 p-4 border border-border/60 rounded-2xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/40 transition-all resize-none"
             />
           </div>
 
           {/* Spotify Song Attachment */}
-          <div className="space-y-3 bg-white/40 dark:bg-[#1e1a19]/40 border border-card-border p-5 rounded-3xl">
+          <div className="rounded-3xl border border-border/60 bg-card/55 p-5 shadow-sm backdrop-blur-xl space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-foreground flex items-center space-x-1.5">
-                <Music className="w-4 h-4 text-brand-sage-500 fill-brand-sage-500/10" />
+                <Music className="w-4 h-4 text-primary fill-primary/10" />
                 <span>4. Song of the Moment (Optional)</span>
               </label>
               {selectedTrack && (
                 <button
                   type="button"
                   onClick={() => setSelectedTrack(null)}
-                  className="text-xs text-brand-rose-500 hover:text-brand-rose-600 font-semibold"
+                  className="text-xs text-primary hover:text-primary/80 font-semibold cursor-pointer"
                 >
                   Clear Selection
                 </button>
@@ -215,7 +225,7 @@ export default function CheckinPage() {
             </div>
 
             {selectedTrack ? (
-              <div className="flex items-center space-x-4 bg-brand-sage-50/20 border border-brand-sage-200/40 p-4 rounded-2xl">
+              <div className="flex items-center space-x-4 bg-accent/40 border border-border/60 p-4 rounded-2xl">
                 <img
                   src={selectedTrack.albumArt}
                   alt={selectedTrack.name}
@@ -242,7 +252,7 @@ export default function CheckinPage() {
                       key={track.id}
                       type="button"
                       onClick={() => setSelectedTrack(track)}
-                      className="flex items-center space-x-3 p-2.5 rounded-xl border border-card-border bg-background/30 hover:bg-background/80 hover:border-brand-sage-300/40 text-left transition-all group"
+                      className="flex items-center space-x-3 p-2.5 rounded-xl border border-border/60 bg-background/30 hover:bg-background/80 hover:border-accent/40 text-left transition-all group cursor-pointer"
                     >
                       <img
                         src={track.albumArt}
@@ -250,7 +260,7 @@ export default function CheckinPage() {
                         className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-foreground truncate group-hover:text-brand-rose-500 transition-colors">
+                        <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                           {track.name}
                         </p>
                         <p className="text-[10px] text-muted-foreground truncate">
@@ -268,7 +278,7 @@ export default function CheckinPage() {
           <button
             type="submit"
             disabled={submitting || !selectedMood}
-            className="w-full flex items-center justify-center space-x-2 py-4 px-6 border border-transparent rounded-2xl shadow-md text-base font-bold text-white bg-brand-rose-500 hover:bg-brand-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-rose-400 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all"
+            className="w-full flex items-center justify-center space-x-2 py-4 px-6 border border-transparent rounded-2xl shadow-md text-base font-bold text-primary-foreground bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-ring active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer"
           >
             {submitting ? (
               <>
@@ -277,7 +287,7 @@ export default function CheckinPage() {
               </>
             ) : (
               <>
-                <Heart className="w-5 h-5 fill-white stroke-white animate-pulse" />
+                <Heart className="w-5 h-5 fill-primary-foreground stroke-primary-foreground animate-pulse" />
                 <span>Publish Today's Vibe</span>
               </>
             )}
