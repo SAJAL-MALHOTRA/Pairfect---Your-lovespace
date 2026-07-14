@@ -373,14 +373,14 @@ export default function AvatarsPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-brand-peach-500 animate-spin" />
+          <div className="w-8 h-8 rounded-full border-4 border-primary/25 border-t-primary animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-peach-50/20 via-background to-background">
+    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
       <Navigation />
 
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-8">
@@ -388,18 +388,18 @@ export default function AvatarsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center space-x-2">
-              <User className="w-8 h-8 text-brand-peach-500" />
+            <h1 className="text-3xl font-sans font-black text-foreground tracking-tight flex items-center space-x-2.5">
+              <User className="w-7 h-7 text-primary" />
               <span>Avatars & Polaroid Booth</span>
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Dress up your toy 3D figures, spin them around, and snap Polaroid snapshots to save forever.
             </p>
           </div>
 
           <button
             onClick={() => setShowBoothForm(!showBoothForm)}
-            className="inline-flex items-center space-x-2 px-5 py-3 rounded-2xl bg-brand-peach-500 hover:bg-brand-peach-600 text-white font-semibold text-sm shadow-md shadow-brand-peach-200 dark:shadow-none active:scale-95 transition-all"
+            className="inline-flex items-center space-x-2 px-5 py-3 rounded-md bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 text-white font-bold text-sm shadow-md shadow-pink-500/10 dark:shadow-none active:scale-95 transition-all cursor-pointer"
           >
             <Camera className="w-5 h-5" />
             <span>Snap Polaroid</span>
@@ -407,7 +407,7 @@ export default function AvatarsPage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start space-x-2">
+          <div className="p-4 rounded-xl bg-accent/40 border border-border text-primary text-sm flex items-start space-x-2 animate-fade-in">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -415,9 +415,9 @@ export default function AvatarsPage() {
 
         {/* Polaroid Booth Form Modal */}
         {showBoothForm && (
-          <div className="cozy-card p-6 bg-white/70 dark:bg-card-bg/40 border border-brand-peach-200/50 dark:border-brand-peach-950/20 space-y-4 max-w-lg">
-            <h3 className="text-base font-bold text-foreground flex items-center space-x-2">
-              <Sparkles className="w-5 h-5 text-brand-peach-500" />
+          <div className="rounded-lg border border-border bg-card p-6 space-y-4 max-w-lg shadow-sm">
+            <h3 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
+              <Sparkles className="w-4 h-4 text-primary" />
               <span>Snapshot Caption</span>
             </h3>
             <form onSubmit={handleTakePolaroid} className="space-y-4">
@@ -427,20 +427,20 @@ export default function AvatarsPage() {
                 placeholder="Write a sweet handwriting caption (max 60 chars)..."
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                className="block w-full px-3.5 py-2.5 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm"
+                className="block w-full px-3.5 py-2.5 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm"
               />
               <div className="flex space-x-2 justify-end">
                 <button
                   type="button"
                   onClick={() => setShowBoothForm(false)}
-                  className="px-4 py-2 text-xs font-semibold text-muted-foreground border border-card-border hover:bg-card-bg/50 rounded-xl"
+                  className="px-4 py-2 text-xs font-bold text-muted-foreground border border-border hover:bg-muted bg-card rounded-md cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={capturing}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-brand-peach-500 hover:bg-brand-peach-600 rounded-xl inline-flex items-center space-x-1"
+                  className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 rounded-md inline-flex items-center space-x-1 shadow shadow-pink-500/10 cursor-pointer"
                 >
                   {capturing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Capture Photo</span>
@@ -454,7 +454,10 @@ export default function AvatarsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left panel: 3D Viewport (Canvas) */}
-          <div className="lg:col-span-7 aspect-square md:aspect-[4/3] w-full cozy-card overflow-hidden bg-stone-100 border border-card-border shadow-2xl relative min-h-[350px]">
+          <div className="lg:col-span-7 aspect-square md:aspect-[4/3] w-full rounded-lg overflow-hidden bg-stone-100 border border-border shadow-md relative min-h-[350px]">
+            {/* 3px top gradient accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa] z-20 pointer-events-none" />
+
             <AvatarScene 
               userOutfit={userOutfit}
               partnerOutfit={partnerOutfit}
@@ -464,9 +467,12 @@ export default function AvatarsPage() {
           </div>
 
           {/* Right panel: Controls */}
-          <div className="lg:col-span-5 cozy-card p-6 bg-white/50 dark:bg-[#1e1a19]/50 border border-card-border space-y-6">
-            <h2 className="text-lg font-bold text-foreground flex items-center space-x-2 pb-3 border-b border-card-border/50">
-              <Palette className="w-5 h-5 text-brand-peach-500" />
+          <div className="lg:col-span-5 relative overflow-hidden rounded-lg border border-border bg-card p-6 space-y-6 shadow-sm">
+            {/* 3px top gradient accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+
+            <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest pb-3 border-b border-border flex items-center space-x-1.5">
+              <Palette className="w-4 h-4 text-primary" />
               <span>Wardrobe Customizer</span>
             </h2>
 
@@ -474,11 +480,11 @@ export default function AvatarsPage() {
               {/* TOP SLOT */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top / Shirt Style</label>
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Top / Shirt Style</label>
                   <select
                     value={userOutfit.top_style}
                     onChange={(e) => setUserOutfit(prev => ({ ...prev, top_style: e.target.value }))}
-                    className="px-2 py-1 text-xs border border-card-border bg-background rounded-lg text-foreground font-semibold"
+                    className="px-2 py-1 text-xs border border-border bg-card rounded-md text-foreground font-semibold"
                   >
                     <option value="tshirt">T-Shirt</option>
                     <option value="hoodie">Hoodie</option>
@@ -492,8 +498,8 @@ export default function AvatarsPage() {
                       onClick={() => setUserOutfit(prev => ({ ...prev, top_color: color }))}
                       className={`w-6 h-6 rounded-full border transition-all active:scale-90 ${
                         userOutfit.top_color === color 
-                          ? "ring-2 ring-brand-peach-400 border-white scale-110" 
-                          : "border-card-border"
+                          ? "ring-2 ring-primary border-white scale-110" 
+                          : "border-border"
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -504,11 +510,11 @@ export default function AvatarsPage() {
               {/* BOTTOM SLOT */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bottoms / Pants Style</label>
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Bottoms / Pants Style</label>
                   <select
                     value={userOutfit.bottom_style}
                     onChange={(e) => setUserOutfit(prev => ({ ...prev, bottom_style: e.target.value }))}
-                    className="px-2 py-1 text-xs border border-card-border bg-background rounded-lg text-foreground font-semibold"
+                    className="px-2 py-1 text-xs border border-border bg-card rounded-md text-foreground font-semibold"
                   >
                     <option value="pants">Pants</option>
                     <option value="shorts">Shorts</option>
@@ -521,8 +527,8 @@ export default function AvatarsPage() {
                       onClick={() => setUserOutfit(prev => ({ ...prev, bottom_color: color }))}
                       className={`w-6 h-6 rounded-full border transition-all active:scale-90 ${
                         userOutfit.bottom_color === color 
-                          ? "ring-2 ring-brand-peach-400 border-white scale-110" 
-                          : "border-card-border"
+                          ? "ring-2 ring-primary border-white scale-110" 
+                          : "border-border"
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -533,11 +539,11 @@ export default function AvatarsPage() {
               {/* SHOES SLOT */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Footwear / Shoes</label>
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Footwear / Shoes</label>
                   <select
                     value={userOutfit.shoes_style}
                     onChange={(e) => setUserOutfit(prev => ({ ...prev, shoes_style: e.target.value }))}
-                    className="px-2 py-1 text-xs border border-card-border bg-background rounded-lg text-foreground font-semibold"
+                    className="px-2 py-1 text-xs border border-border bg-card rounded-md text-foreground font-semibold"
                   >
                     <option value="sneakers">Sneakers</option>
                   </select>
@@ -549,8 +555,8 @@ export default function AvatarsPage() {
                       onClick={() => setUserOutfit(prev => ({ ...prev, shoes_color: color }))}
                       className={`w-6 h-6 rounded-full border transition-all active:scale-90 ${
                         userOutfit.shoes_color === color 
-                          ? "ring-2 ring-brand-peach-400 border-white scale-110" 
-                          : "border-card-border"
+                          ? "ring-2 ring-primary border-white scale-110" 
+                          : "border-border"
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -562,7 +568,7 @@ export default function AvatarsPage() {
             <button
               onClick={handleSaveOutfit}
               disabled={savingOutfit}
-              className="w-full inline-flex items-center justify-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-peach-500 hover:bg-brand-peach-600 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all mt-4"
+              className="w-full inline-flex items-center justify-center space-x-2 py-3 px-4 rounded-md shadow-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all mt-4 cursor-pointer"
             >
               {savingOutfit ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -576,16 +582,16 @@ export default function AvatarsPage() {
         </div>
 
         {/* Polaroid Booth Album Gallery */}
-        <div className="space-y-6 pt-8 border-t border-card-border/50">
+        <div className="space-y-6 pt-8 border-t border-border">
           <div>
-            <h2 className="text-xl font-bold text-foreground">Polaroid Memory Gallery</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Your pinned snapshot cards from the 3D Booth.</p>
+            <h2 className="text-xl font-sans font-black text-foreground tracking-tight">Polaroid Memory Gallery</h2>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Your pinned snapshot cards from the 3D Booth.</p>
           </div>
 
           {polaroids.length === 0 ? (
-            <div className="cozy-card p-12 text-center text-muted-foreground border border-dashed border-card-border bg-white/20">
+            <div className="rounded-lg border border-border bg-card p-12 text-center text-muted-foreground">
               <Camera className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
-              <p className="text-xs">Take your first 3D Avatar Polaroid together to pin it here!</p>
+              <p className="text-xs font-bold font-sans">Take your first 3D Avatar Polaroid together to pin it here!</p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-8 justify-start">
@@ -623,7 +629,7 @@ export default function AvatarsPage() {
                   {p.created_by === user?.id && (
                     <button
                       onClick={() => handleDeletePolaroid(p)}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500/90 text-white rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity active:scale-90"
+                      className="absolute top-2 right-2 p-1.5 bg-red-500/90 text-white rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity active:scale-90 cursor-pointer"
                       title="Delete Polaroid"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

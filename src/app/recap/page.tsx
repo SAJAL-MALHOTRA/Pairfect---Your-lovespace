@@ -77,25 +77,25 @@ export default function RecapPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-4 border-brand-rose-200 border-t-brand-rose-500 animate-spin"></div>
+          <div className="w-8 h-8 rounded-full border-4 border-primary/25 border-t-primary animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-rose-50/20 via-background to-background">
+    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
       <Navigation />
 
       <main className="max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-8">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center space-x-2">
-              <Sparkles className="w-8 h-8 text-brand-rose-500 fill-brand-rose-300 stroke-brand-rose-500" />
+            <h1 className="text-3xl font-sans font-black text-foreground tracking-tight flex items-center space-x-2.5">
+              <Sparkles className="w-7 h-7 text-primary fill-primary/10 stroke-primary" />
               <span>Weekly Recaps</span>
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               AI-generated emotional summaries of your relationship trending rhythm.
             </p>
           </div>
@@ -103,7 +103,7 @@ export default function RecapPage() {
           <button
             onClick={handleGenerateRecap}
             disabled={generating}
-            className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-xl border border-transparent shadow-sm text-sm font-semibold text-white bg-brand-rose-500 hover:bg-brand-rose-600 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all self-start sm:self-auto"
+            className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
           >
             {generating ? (
               <>
@@ -120,7 +120,7 @@ export default function RecapPage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start space-x-2">
+          <div className="p-4 rounded-xl bg-accent/40 border border-border text-primary text-sm flex items-start space-x-2">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -129,10 +129,10 @@ export default function RecapPage() {
         {/* Recaps List */}
         <div className="space-y-6">
           {recaps.length === 0 ? (
-            <div className="cozy-card p-12 text-center text-muted-foreground border border-dashed border-card-border bg-white/30 dark:bg-transparent">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-pulse" />
-              <p className="text-sm font-medium">No vibe summaries generated yet.</p>
-              <p className="text-xs mt-1">
+            <div className="rounded-lg border border-border bg-card p-12 text-center text-muted-foreground">
+              <Sparkles className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45 animate-pulse" />
+              <p className="text-sm font-bold font-sans">No vibe summaries generated yet.</p>
+              <p className="text-xs text-gray-400 mt-1">
                 Once both you and your partner log check-ins, click "Generate Recap" to compile an AI narrative summary.
               </p>
             </div>
@@ -145,31 +145,34 @@ export default function RecapPage() {
                 return (
                   <div 
                     key={recap.id} 
-                    className="cozy-card p-6 bg-white/50 dark:bg-[#1e1a19]/50 border border-card-border space-y-4 hover:shadow-lg transition-all"
+                    className="relative overflow-hidden rounded-lg border border-border bg-card p-6 space-y-4 hover:border-gray-300 dark:hover:border-white/20 transition-all"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-card-border/50 pb-3">
+                    {/* 3px top gradient accent bar */}
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                       <div className="flex items-center space-x-2 text-sm font-bold text-foreground">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span>
-                          {format(parseISO(recap.period_start), "MMM d")} â€” {format(parseISO(recap.period_end), "MMM d, yyyy")}
+                          {format(parseISO(recap.period_start), "MMM d")} — {format(parseISO(recap.period_end), "MMM d, yyyy")}
                         </span>
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
                           Trend:
                         </span>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${trendDetail.style}`}>
+                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${trendDetail.style}`}>
                           {trendDetail.label}
                         </span>
                       </div>
                     </div>
 
-                    <p className="text-foreground/90 leading-relaxed text-sm italic">
+                    <p className="text-foreground/90 leading-relaxed text-sm">
                       "{recap.summary_text}"
                     </p>
 
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground/50 border-t border-card-border/30 pt-3">
+                    <div className="flex items-center justify-between text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/50 border-t border-border pt-3">
                       <span>Generated by Pairfect AI</span>
                       <span>{format(new Date(recap.generated_at), "h:mm a, MMM d")}</span>
                     </div>

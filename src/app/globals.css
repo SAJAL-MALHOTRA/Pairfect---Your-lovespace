@@ -1,38 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-rose-50: #fff5f6;
-  --color-brand-rose-100: #ffe6e8;
-  --color-brand-rose-200: #fecdd3;
-  --color-brand-rose-300: #fda4af;
-  --color-brand-rose-400: #fb7185;
-  --color-brand-rose-500: #f43f5e;
-  --color-brand-rose-600: #e11d48;
-  --color-brand-rose-700: #be123c;
-
-  --color-brand-peach-50: #fffaf7;
-  --color-brand-peach-100: #ffedd5;
-  --color-brand-peach-200: #fed7aa;
-  --color-brand-peach-300: #fdba74;
-  --color-brand-peach-400: #fb923c;
-  --color-brand-peach-500: #f97316;
-
-  --color-brand-lavender-50: #faf5ff;
-  --color-brand-lavender-100: #f3e8ff;
-  --color-brand-lavender-200: #e9d5ff;
-  --color-brand-lavender-300: #d8b4fe;
-  --color-brand-lavender-400: #c084fc;
-  --color-brand-lavender-500: #a855f7;
-
-  --color-brand-sage-50: #f0fdf4;
-  --color-brand-sage-100: #dcfce7;
-  --color-brand-sage-200: #bbf7d0;
-  --color-brand-sage-300: #86efac;
-  --color-brand-sage-400: #4ade80;
-  --color-brand-sage-500: #22c55e;
-
   --font-sans: var(--font-nunito), var(--font-outfit), var(--font-geist-sans), sans-serif;
-  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-serif: var(--font-nunito), sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -55,37 +25,62 @@
 }
 
 :root {
-  --background: #0b0909;
-  --foreground: #f4eae6;
-  --card-bg: rgba(22, 19, 19, 0.7);
-  --card-border: rgba(39, 34, 34, 0.8);
-  --glass-bg: rgba(22, 19, 19, 0.45);
-  --glass-border: rgba(39, 34, 34, 0.6);
-  --shadow-color: rgba(0, 0, 0, 0.5);
+  --background: #f8f9fb;
+  --foreground: #111827;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --glass-bg: #ffffff;
+  --glass-border: #e2e8f0;
+  --shadow-color: rgba(0, 0, 0, 0.02);
 
-  color-scheme: dark;
-  --card: #161313;
-  --card-foreground: #f4eae6;
-  --popover: #161313;
-  --popover-foreground: #f4eae6;
-  --primary: #d9808c;
-  --primary-foreground: #fffaf8;
-  --secondary: #221819;
-  --secondary-foreground: #f3c4c8;
-  --muted: #1c1616;
-  --muted-foreground: #a3928e;
-  --accent: #2e1e20;
-  --accent-foreground: #f0a3aa;
-  --border: #282323;
-  --input: #282323;
-  --ring: #d9808c;
-  --chart-5: #e6b89c;
-  --radius: 1rem;
+  color-scheme: light;
+  --card: #ffffff;
+  --card-foreground: #4b5563;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #4b5563;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #f472b6;
+  --chart-5: #60a5fa;
+  --radius: 0.5rem;
 }
 
 
+.dark {
+  --background: #0a0a0b;
+  --foreground: #f9fafb;
+  --card-bg: #16161a;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: #16161a;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.3);
 
-
+  color-scheme: dark;
+  --card: #16161a;
+  --card-foreground: #9ca3af;
+  --popover: #16161a;
+  --popover-foreground: #f9fafb;
+  --primary: #f472b6;
+  --primary-foreground: #ffffff;
+  --secondary: #16161a;
+  --secondary-foreground: #f9fafb;
+  --muted: #111113;
+  --muted-foreground: #9ca3af;
+  --accent: #1e1e24;
+  --accent-foreground: #f9fafb;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #60a5fa;
+  --chart-5: #f472b6;
+}
 
 body {
   background: var(--background);
@@ -95,20 +90,18 @@ body {
   overflow-x: hidden;
 }
 
-/* Glassmorphism helpers */
+/* Glassmorphism helpers updated to clean bordered style */
 .glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 var(--shadow-color);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 4px 12px 0 var(--shadow-color);
 }
 
 .cozy-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  box-shadow: 0 4px 20px 0 var(--shadow-color);
-  border-radius: 1.5rem;
+  box-shadow: 0 2px 8px 0 var(--shadow-color);
+  border-radius: 0.5rem;
 }
 
 /* Custom scrollbars */

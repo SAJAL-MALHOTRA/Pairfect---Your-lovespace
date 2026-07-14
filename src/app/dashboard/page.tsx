@@ -133,9 +133,9 @@ export default function DashboardPage() {
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-12 h-12 rounded-full border-4 border-brand-rose-200 border-t-brand-rose-500 animate-spin"></div>
-            <p className="text-sm text-muted-foreground animate-pulse">
-              Setting up your cozy space...
+            <div className="w-12 h-12 rounded-full border-4 border-primary/25 border-t-primary animate-spin"></div>
+            <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider animate-pulse">
+              Setting up your space...
             </p>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
         className="pointer-events-none fixed inset-0 -z-10 animate-fade-in"
         style={{
           background:
-            "radial-gradient(60rem 40rem at 15% -10%, #f7e2e2 0%, transparent 55%), radial-gradient(50rem 40rem at 100% 10%, #f6ece4 0%, transparent 50%)",
+            "radial-gradient(60rem 40rem at 15% -10%, var(--glass-border) 0%, transparent 55%)",
         }}
       />
 
@@ -163,7 +163,7 @@ export default function DashboardPage() {
           {/* subtle pixel dot-grid texture */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -inset-x-3 -top-6 bottom-0 -z-10 opacity-[0.06]"
+            className="pointer-events-none absolute -inset-x-3 -top-6 bottom-0 -z-10 opacity-[0.04]"
             style={{
               backgroundImage:
                 "radial-gradient(var(--color-primary) 1px, transparent 1px)",
@@ -175,13 +175,13 @@ export default function DashboardPage() {
             }}
           />
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
+            <p className="text-[10px] font-mono font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase">
               {format(new Date(), "EEEE, MMMM d")}
             </p>
-            <h1 className="mt-2 font-serif text-4xl font-semibold tracking-tight text-foreground text-balance md:text-5xl">
+            <h1 className="mt-2 font-sans text-4xl font-black tracking-tight text-foreground text-balance md:text-5xl">
               Good day, {profile?.display_name || "there"}
             </h1>
-            <p className="mt-2 max-w-md text-muted-foreground text-pretty">
+            <p className="mt-2 max-w-md text-sm text-muted-foreground text-pretty">
               Here&apos;s how you and {partner?.display_name || "your partner"} are feeling today. A little check-in keeps you close.
             </p>
           </div>
@@ -208,26 +208,26 @@ export default function DashboardPage() {
               heading="Your vibe today" 
             />
           ) : (
-            <article className="relative flex flex-col justify-center overflow-hidden rounded-3xl border border-dashed border-border bg-card/40 p-6 shadow-[0_18px_40px_-24px_rgba(120,80,80,0.35)] backdrop-blur-xl md:p-7">
+            <article className="relative flex flex-col justify-center overflow-hidden rounded-lg border border-border bg-card p-6 shadow-sm md:p-7">
               <div className="flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                <span className="flex size-8 items-center justify-center rounded-md border border-border bg-accent text-xs font-bold text-foreground">
                   {profile?.display_name ? profile.display_name.slice(0, 2).toUpperCase() : "ME"}
                 </span>
-                <h2 className="font-serif text-lg font-semibold text-foreground">Your vibe today</h2>
+                <h2 className="font-sans font-extrabold text-base text-foreground tracking-tight">Your vibe today</h2>
               </div>
 
               <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
-                <span className="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-primary/40 text-3xl">
+                <span className="flex size-16 items-center justify-center rounded-md border border-border bg-muted text-3xl">
                   {"📝"}
                 </span>
-                <p className="mt-4 max-w-[16rem] text-pretty font-serif text-lg italic text-foreground/80">
+                <p className="mt-4 max-w-[16rem] text-pretty font-sans text-sm text-foreground/80 leading-relaxed">
                   You haven't logged your vibe today yet. Sharing keeps you connected!
                 </p>
                 <Link
                   href="/checkin"
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:scale-105 active:scale-95 shadow-md"
+                  className="mt-5 inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#f472b6] to-[#60a5fa] px-5 py-2.5 text-xs font-bold text-white shadow hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
                 >
-                  <Plus className="size-4" aria-hidden="true" />
+                  <Plus className="size-3.5" aria-hidden="true" />
                   Check-in Now
                 </Link>
               </div>
@@ -266,9 +266,9 @@ export default function DashboardPage() {
           <div className="mt-6 flex justify-center">
             <Link
               href="/checkin"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-[0_12px_28px_-12px_rgba(217,128,140,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95"
+              className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#f472b6] to-[#60a5fa] px-6 py-3 text-sm font-bold text-white shadow hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
             >
-              <Plus className="size-5" aria-hidden="true" />
+              <Plus className="size-4" aria-hidden="true" />
               Log another mood
             </Link>
           </div>

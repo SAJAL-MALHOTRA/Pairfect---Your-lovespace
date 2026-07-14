@@ -169,14 +169,14 @@ export default function MomentsPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-brand-rose-500 animate-spin" />
+          <div className="w-8 h-8 rounded-full border-4 border-primary/25 border-t-primary animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-peach-50/20 via-background to-background">
+    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
       <Navigation />
 
       <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-8">
@@ -184,18 +184,18 @@ export default function MomentsPage() {
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center space-x-2">
-              <BookOpen className="w-8 h-8 text-brand-peach-500" />
-              <span>Shared scrapbook</span>
+            <h1 className="text-3xl font-sans font-black text-foreground tracking-tight flex items-center space-x-2.5">
+              <BookOpen className="w-7 h-7 text-primary" />
+              <span>Shared Scrapbook</span>
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Document your milestones, dates, and sweet memories.
             </p>
           </div>
 
           <button
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-xl border border-transparent shadow-sm text-sm font-semibold text-white bg-brand-peach-500 hover:bg-brand-peach-600 active:scale-[0.98] transition-all"
+            className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
           >
             <Plus className="w-4 h-4" />
             <span>Add Moment</span>
@@ -204,15 +204,15 @@ export default function MomentsPage() {
 
         {/* Moments Scrapbook Feed */}
         {moments.length === 0 ? (
-          <div className="cozy-card p-16 text-center text-muted-foreground border border-dashed border-card-border bg-white/30 dark:bg-transparent">
-            <Camera className="w-10 h-10 mx-auto mb-2 text-muted-foreground/50" />
-            <p className="text-sm font-semibold">Your scrapbook is empty</p>
-            <p className="text-xs mt-1">
+          <div className="rounded-lg border border-border bg-card p-16 text-center text-muted-foreground">
+            <Camera className="w-10 h-10 mx-auto mb-2 text-muted-foreground/45" />
+            <p className="text-sm font-bold font-sans">Your scrapbook is empty</p>
+            <p className="text-xs text-gray-400 mt-1">
               Save your first relationship photo or note milestone by clicking Add Moment.
             </p>
           </div>
         ) : (
-          <div className="relative border-l border-card-border ml-4 sm:ml-6 space-y-8 py-4">
+          <div className="relative border-l border-border ml-4 sm:ml-6 space-y-8 py-4">
             {moments.map((moment) => {
               const isCreator = moment.created_by === user!.id;
               const creatorName = isCreator 
@@ -222,15 +222,18 @@ export default function MomentsPage() {
               return (
                 <div key={moment.id} className="relative pl-6 sm:pl-8">
                   {/* Timeline dot */}
-                  <div className="absolute left-[-6px] top-1.5 w-3 h-3 rounded-full bg-brand-peach-400 ring-4 ring-background border border-card-border" />
+                  <div className="absolute left-[-6px] top-1.5 w-3 h-3 rounded-full bg-pink-500 ring-4 ring-background border border-border" />
                   
-                  <div className="cozy-card p-5 bg-white/50 dark:bg-[#1e1a19]/50 border border-card-border max-w-2xl space-y-4 hover:shadow-lg transition-all group">
+                  <div className="relative overflow-hidden rounded-lg border border-border bg-card p-5 max-w-2xl space-y-4 hover:border-gray-300 dark:hover:border-white/20 transition-all group">
+                    {/* 3px top gradient accent bar */}
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-bold text-foreground">
+                        <h3 className="font-sans font-black text-base text-foreground tracking-tight">
                           {moment.title}
                         </h3>
-                        <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-0.5">
+                        <div className="flex items-center space-x-2 text-[10px] font-mono font-bold tracking-wider text-muted-foreground uppercase mt-1">
                           <Calendar className="w-3.5 h-3.5" />
                           <span>{format(parseISO(moment.moment_date), "MMMM d, yyyy")}</span>
                           <span>•</span>
@@ -241,7 +244,7 @@ export default function MomentsPage() {
                       {isCreator && (
                         <button
                           onClick={() => handleDeleteMoment(moment.id, moment.photo_url)}
-                          className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-xl"
+                          className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-md hover:bg-muted cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -255,7 +258,7 @@ export default function MomentsPage() {
                     )}
 
                     {moment.resolved_photo_url && (
-                      <div className="rounded-2xl overflow-hidden max-h-[350px] border border-card-border">
+                      <div className="rounded-md overflow-hidden max-h-[350px] border border-border">
                         <img
                           src={moment.resolved_photo_url}
                           alt={moment.title}
@@ -272,25 +275,28 @@ export default function MomentsPage() {
 
         {/* Create Modal Dialog */}
         {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="cozy-card bg-white dark:bg-[#181615] border border-card-border w-full max-w-md p-6 max-h-[90vh] overflow-y-auto shadow-2xl relative">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="relative overflow-hidden rounded-lg border border-border bg-card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+              {/* 3px top gradient accent bar */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa] z-10" />
+
               <button
                 onClick={() => {
                   setModalOpen(false);
                   setPhotoPreview(null);
                   setPhotoFile(null);
                 }}
-                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-card-border/30 transition-all"
+                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-all z-10 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <h2 className="text-xl font-bold text-foreground mb-4">
+              <h2 className="text-xl font-sans font-black text-foreground tracking-tight mb-5">
                 Add to Scrapbook
               </h2>
 
               {error && (
-                <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs flex items-center space-x-1.5">
+                <div className="mb-4 p-3.5 rounded-md bg-accent/40 border border-border text-primary text-xs flex items-center space-x-1.5 animate-fade-in">
                   <AlertCircle className="w-4.5 h-4.5 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -298,7 +304,7 @@ export default function MomentsPage() {
 
               <form onSubmit={handleAddMoment} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Memory Title
                   </label>
                   <input
@@ -307,24 +313,24 @@ export default function MomentsPage() {
                     placeholder="e.g. First Picnic, Dinner Date..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="block w-full px-3 py-2 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm"
+                    className="block w-full px-3.5 py-2.5 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Description
                   </label>
                   <textarea
                     placeholder="Describe this moment (optional)..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="block w-full h-20 px-3 py-2 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm resize-none"
+                    className="block w-full h-20 px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Date of Moment
                   </label>
                   <input
@@ -332,16 +338,16 @@ export default function MomentsPage() {
                     required
                     value={momentDate}
                     onChange={(e) => setMomentDate(e.target.value)}
-                    className="block w-full px-3 py-2 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm"
+                    className="block w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Upload Photo
                   </label>
                   {photoPreview ? (
-                    <div className="relative rounded-2xl overflow-hidden border border-card-border max-h-[180px]">
+                    <div className="relative rounded-md overflow-hidden border border-border max-h-[180px]">
                       <img
                         src={photoPreview}
                         alt="Preview"
@@ -353,16 +359,16 @@ export default function MomentsPage() {
                           setPhotoFile(null);
                           setPhotoPreview(null);
                         }}
-                        className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                        className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center w-full">
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-card-border rounded-2xl cursor-pointer bg-background/50 hover:bg-background transition-colors">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-md cursor-pointer bg-muted/40 hover:bg-muted transition-colors">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Camera className="w-8 h-8 text-muted-foreground/60 mb-2" />
+                          <Camera className="w-8 h-8 text-muted-foreground/50 mb-2" />
                           <p className="text-xs text-muted-foreground">
                             Click to select an image file
                           </p>
@@ -378,7 +384,7 @@ export default function MomentsPage() {
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-card-border flex justify-end space-x-3">
+                <div className="pt-4 border-t border-border flex justify-end space-x-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -386,14 +392,14 @@ export default function MomentsPage() {
                       setPhotoPreview(null);
                       setPhotoFile(null);
                     }}
-                    className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground rounded-xl border border-card-border bg-background/30"
+                    className="px-4 py-2 text-sm font-bold text-muted-foreground border border-border hover:bg-muted bg-card rounded-md cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-5 py-2 text-sm font-semibold text-white bg-brand-peach-500 hover:bg-brand-peach-600 rounded-xl flex items-center space-x-1.5"
+                    className="px-5 py-2 text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 rounded-md flex items-center space-x-1.5 cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
                   >
                     {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                     <span>Save Memory</span>

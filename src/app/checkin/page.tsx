@@ -78,7 +78,7 @@ export default function CheckinPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-brand-rose-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       </div>
     );
@@ -92,7 +92,7 @@ export default function CheckinPage() {
         className="pointer-events-none fixed inset-0 -z-10 animate-fade-in"
         style={{
           background:
-            "radial-gradient(60rem 40rem at 15% -10%, #3a2527 0%, transparent 55%), radial-gradient(50rem 40rem at 100% 10%, #2e1e20 0%, transparent 50%)",
+            "radial-gradient(60rem 40rem at 15% -10%, var(--glass-border) 0%, transparent 55%)",
         }}
       />
 
@@ -103,18 +103,18 @@ export default function CheckinPage() {
         <div className="mb-6">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer"
+            className="inline-flex items-center space-x-2 text-xs font-bold text-muted-foreground hover:text-foreground uppercase font-mono tracking-wider transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back</span>
           </button>
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-serif font-semibold text-foreground tracking-tight">
+          <h1 className="text-3xl font-sans font-black text-foreground tracking-tight">
             How are you feeling, {profile?.display_name}?
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Choose your emotional rhythm and optionally write a short log for your partner.
           </p>
         </div>
@@ -144,10 +144,10 @@ export default function CheckinPage() {
                       setSelectedMood(key);
                       setError(null);
                     }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all active:scale-[0.96] cursor-pointer ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-md border text-center transition-all active:scale-[0.96] cursor-pointer ${
                       isSelected
-                        ? `${value.color} ring-2 ring-primary scale-[1.03] shadow-md`
-                        : "border-border/60 bg-background/50 hover:bg-background text-muted-foreground hover:text-foreground"
+                        ? `${value.color} ring-2 ring-primary scale-[1.03] shadow-sm`
+                        : "border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <span className="text-3xl mb-1.5 select-none">{value.emoji}</span>
@@ -159,12 +159,12 @@ export default function CheckinPage() {
           </div>
 
           {/* Intensity Slider */}
-          <div className="rounded-3xl border border-border/60 bg-card/55 p-5 shadow-sm backdrop-blur-xl space-y-4">
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-foreground">
-                2. Mood Intensity
+              <label className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">
+                2. MOOD INTENSITY
               </label>
-              <span className="text-xs font-bold text-primary bg-accent px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-pink-500 bg-pink-500/10 border border-pink-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
                 Level {intensity} / 5
               </span>
             </div>
@@ -190,10 +190,10 @@ export default function CheckinPage() {
           {/* Note Area */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label className="text-sm font-bold text-foreground">
-                3. Add a short note (Optional)
+              <label className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">
+                3. ADD A SHORT NOTE (OPTIONAL)
               </label>
-              <span className="text-xs text-muted-foreground font-medium">
+              <span className="text-[10px] font-mono font-bold text-muted-foreground">
                 {note.length} / 280
               </span>
             </div>
@@ -202,22 +202,22 @@ export default function CheckinPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="What is making you feel this way? (e.g. coffee dates, study stress, cozy evening...)"
-              className="block w-full h-24 p-4 border border-border/60 rounded-2xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/40 transition-all resize-none"
+              className="block w-full h-24 p-4 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/30 transition-all resize-none"
             />
           </div>
 
           {/* Cozy Song Attachment */}
-          <div className="rounded-3xl border border-border/60 bg-card/55 p-5 shadow-sm backdrop-blur-xl space-y-3">
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-foreground flex items-center space-x-1.5">
-                <Music className="w-4 h-4 text-primary fill-primary/10" />
-                <span>4. Song of the Moment (Optional)</span>
+              <label className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
+                <Music className="w-3.5 h-3.5 text-primary" />
+                <span>4. SONG OF THE MOMENT (OPTIONAL)</span>
               </label>
               {selectedTrack && (
                 <button
                   type="button"
                   onClick={() => setSelectedTrack(null)}
-                  className="text-xs text-primary hover:text-primary/80 font-semibold cursor-pointer"
+                  className="text-xs text-primary hover:underline font-bold cursor-pointer"
                 >
                   Clear Selection
                 </button>
@@ -225,11 +225,11 @@ export default function CheckinPage() {
             </div>
 
             {selectedTrack ? (
-              <div className="flex items-center space-x-4 bg-accent/40 border border-border/60 p-4 rounded-2xl">
+              <div className="flex items-center space-x-4 bg-muted/40 border border-border p-4 rounded-md">
                 <img
                   src={selectedTrack.albumArt}
                   alt={selectedTrack.name}
-                  className="w-12 h-12 rounded-xl object-cover shadow-sm flex-shrink-0"
+                  className="w-12 h-12 rounded object-cover shadow-sm flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground truncate">
@@ -252,12 +252,12 @@ export default function CheckinPage() {
                       key={track.id}
                       type="button"
                       onClick={() => setSelectedTrack(track)}
-                      className="flex items-center space-x-3 p-2.5 rounded-xl border border-border/60 bg-background/30 hover:bg-background/80 hover:border-accent/40 text-left transition-all group cursor-pointer"
+                      className="flex items-center space-x-3 p-2.5 rounded-md border border-border bg-card hover:bg-muted text-left transition-all group cursor-pointer"
                     >
                       <img
                         src={track.albumArt}
                         alt={track.name}
-                        className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+                        className="w-9 h-9 rounded object-cover flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
@@ -278,16 +278,16 @@ export default function CheckinPage() {
           <button
             type="submit"
             disabled={submitting || !selectedMood}
-            className="w-full flex items-center justify-center space-x-2 py-4 px-6 border border-transparent rounded-2xl shadow-md text-base font-bold text-primary-foreground bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-ring active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer"
+            className="w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
           >
             {submitting ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Publishing Check-in...</span>
               </>
             ) : (
               <>
-                <Heart className="w-5 h-5 fill-primary-foreground stroke-primary-foreground animate-pulse" />
+                <Heart className="w-4 h-4 fill-white stroke-white animate-pulse" />
                 <span>Publish Today's Vibe</span>
               </>
             )}

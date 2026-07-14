@@ -23,14 +23,14 @@ export function QuickLinks() {
         <a
           key={title}
           href={href}
-          className="group flex items-center gap-4 rounded-3xl border border-border/60 bg-card/55 p-5 shadow-sm backdrop-blur-xl transition-colors hover:bg-card"
+          className="group flex items-center gap-4 rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40"
         >
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-primary">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-accent text-primary">
             <Icon className="size-6" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-serif text-lg font-semibold text-foreground">{title}</span>
-            <span className="block text-sm text-muted-foreground text-pretty">{description}</span>
+            <span className="block font-sans text-base font-extrabold text-foreground tracking-tight">{title}</span>
+            <span className="block text-xs text-muted-foreground mt-0.5 text-pretty">{description}</span>
           </span>
           <ChevronRight className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </a>

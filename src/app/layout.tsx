@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Outfit, Fraunces, Nunito } from "next/font/google";
+import { Outfit, Nunito } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-});
-
-const fraunces = Fraunces({ 
-  subsets: ["latin"], 
-  variable: "--font-fraunces", 
-  display: "swap" 
 });
 
 const nunito = Nunito({ 
@@ -22,8 +17,8 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Pairfect — Private Relationship Companion",
-  description: "A cozy private space to share check-ins, moods, and music trends with your partner.",
+  title: "Hoedex — Private Relationship Companion",
+  description: "A private, bold space to share check-ins, moods, and scrapbook memories with your partner.",
 };
 
 export default function RootLayout({
@@ -34,10 +29,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${fraunces.variable} ${nunito.variable} h-full antialiased`}
+      className={`${outfit.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

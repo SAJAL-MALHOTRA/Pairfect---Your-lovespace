@@ -197,14 +197,14 @@ export default function QuizPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-brand-peach-500 animate-spin" />
+          <div className="w-8 h-8 rounded-full border-4 border-primary/25 border-t-primary animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-peach-50/20 via-background to-background">
+    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
       <Navigation />
 
       <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-8">
@@ -212,24 +212,24 @@ export default function QuizPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center space-x-2">
-              <Gamepad2 className="w-8 h-8 text-brand-peach-500" />
+            <h1 className="text-3xl font-sans font-black text-foreground tracking-tight flex items-center space-x-2.5">
+              <Gamepad2 className="w-7 h-7 text-primary" />
               <span>Couple Trivia</span>
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Test how well you know each other! Create questions and grade guesses.
             </p>
           </div>
 
           {/* Compatibility Score Widget */}
           {scoreData.percentage !== null && (
-            <div className="inline-flex items-center space-x-3 px-5 py-3.5 rounded-2xl bg-brand-rose-500/10 border border-brand-rose-200/50 dark:border-brand-rose-950/20 self-start md:self-auto shadow-sm">
-              <Trophy className="w-6 h-6 text-brand-rose-500 fill-brand-rose-400/25" />
+            <div className="inline-flex items-center space-x-3 px-5 py-3.5 rounded-lg bg-pink-500/10 border border-pink-500/20 self-start md:self-auto shadow-sm">
+              <Trophy className="w-6 h-6 text-pink-500 fill-pink-500/10" />
               <div>
-                <p className="text-xs text-brand-rose-600 dark:text-brand-rose-400 font-semibold tracking-wide uppercase">
+                <p className="text-[9px] font-mono font-bold text-pink-500 tracking-wider uppercase">
                   Compatibility Score
                 </p>
-                <p className="text-lg font-bold text-foreground">
+                <p className="text-base font-bold text-foreground">
                   {scoreData.percentage}% Match ({scoreData.correctCount}/{scoreData.totalGraded})
                 </p>
               </div>
@@ -251,15 +251,15 @@ export default function QuizPage() {
             
             {/* 1. GUESS PARTNER'S QUESTIONS */}
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-foreground flex items-center space-x-2">
-                <HelpCircle className="w-5 h-5 text-brand-peach-500" />
+              <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
+                <HelpCircle className="w-4 h-4 text-primary" />
                 <span>Guess {partner?.display_name || "Partner"}'s Answers</span>
               </h2>
 
               {partnerQuestions.length === 0 ? (
-                <div className="cozy-card p-8 text-center text-muted-foreground border border-dashed border-card-border bg-white/20">
-                  <MessageCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-                  <p className="text-xs">No questions written by your partner yet.</p>
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground">
+                  <MessageCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
+                  <p className="text-xs font-bold font-sans">No questions written by your partner yet.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -267,15 +267,18 @@ export default function QuizPage() {
                     const myGuess = q.quiz_guesses?.find((g: any) => g.guessed_by === user?.id);
 
                     return (
-                      <div key={q.id} className="cozy-card p-5 bg-white/60 dark:bg-[#1e1a19]/60 border border-card-border space-y-4">
-                        <p className="font-bold text-base text-foreground">
+                      <div key={q.id} className="relative overflow-hidden rounded-lg border border-border bg-card p-5 space-y-4 hover:border-gray-300 dark:hover:border-white/20 transition-all">
+                        {/* 3px top gradient accent bar */}
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+
+                        <p className="font-bold text-base text-foreground leading-tight">
                           "{q.question_text}"
                         </p>
 
                         {myGuess ? (
-                          <div className="pt-3 border-t border-card-border/50 flex items-center justify-between">
+                          <div className="pt-3 border-t border-border flex items-center justify-between">
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+                              <p className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
                                 Your Guess
                               </p>
                               <p className="text-sm font-medium text-foreground italic">
@@ -284,18 +287,18 @@ export default function QuizPage() {
                             </div>
                             
                             {myGuess.status === "pending" && (
-                              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 rounded-full uppercase border border-amber-200/50">
+                              <span className="text-[9px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 uppercase">
                                 Pending Grading
                               </span>
                             )}
                             {myGuess.status === "correct" && (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-950/20 px-2.5 py-1 rounded-full uppercase border border-green-200/50">
+                              <span className="inline-flex items-center space-x-1 text-[9px] font-mono font-bold text-green-500 bg-green-500/10 px-2.5 py-1 rounded border border-green-500/20 uppercase">
                                 <Check className="w-3.5 h-3.5" />
                                 <span>Correct!</span>
                               </span>
                             )}
                             {myGuess.status === "incorrect" && (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/20 px-2.5 py-1 rounded-full uppercase border border-red-200/50">
+                              <span className="inline-flex items-center space-x-1 text-[9px] font-mono font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded border border-red-500/20 uppercase">
                                 <X className="w-3.5 h-3.5" />
                                 <span>Incorrect</span>
                               </span>
@@ -313,12 +316,12 @@ export default function QuizPage() {
                                   [q.id]: e.target.value,
                                 }))
                               }
-                              className="flex-1 px-3.5 py-2 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-sm text-foreground"
+                              className="flex-1 px-3.5 py-2 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-ring text-sm text-foreground"
                             />
                             <button
                               onClick={() => handleSubmitGuess(q.id)}
                               disabled={submittingGuess === q.id || !guessesInput[q.id]?.trim()}
-                              className="p-2.5 rounded-xl bg-brand-peach-500 hover:bg-brand-peach-600 text-white active:scale-95 disabled:opacity-50 transition-all"
+                              className="p-2.5 rounded-md bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 text-white active:scale-95 disabled:opacity-50 transition-all cursor-pointer shadow"
                             >
                               {submittingGuess === q.id ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -337,14 +340,14 @@ export default function QuizPage() {
 
             {/* 2. MY QUESTIONS (GRADING FEED) */}
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-foreground flex items-center space-x-2">
-                <Gamepad2 className="w-5 h-5 text-brand-rose-500" />
+              <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
+                <Gamepad2 className="w-4 h-4 text-primary" />
                 <span>Your Questions & Grading</span>
               </h2>
 
               {myQuestions.length === 0 ? (
-                <div className="cozy-card p-8 text-center text-muted-foreground border border-dashed border-card-border bg-white/20">
-                  <p className="text-xs">You haven't written any questions yet. Add one in the sidebar!</p>
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground">
+                  <p className="text-xs font-bold font-sans">You haven't written any questions yet. Add one in the sidebar!</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -352,20 +355,23 @@ export default function QuizPage() {
                     const partnerGuess = q.quiz_guesses?.[0]; // single guess unique constraint
 
                     return (
-                      <div key={q.id} className="cozy-card p-5 bg-white/60 dark:bg-[#1e1a19]/60 border border-card-border space-y-4">
+                      <div key={q.id} className="relative overflow-hidden rounded-lg border border-border bg-card p-5 space-y-4 hover:border-gray-300 dark:hover:border-white/20 transition-all">
+                        {/* 3px top gradient accent bar */}
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+
                         <div>
-                          <p className="font-bold text-base text-foreground">
+                          <p className="font-bold text-base text-foreground leading-tight">
                             "{q.question_text}"
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Your correct answer: <span className="font-semibold text-brand-peach-500">"{q.correct_answer}"</span>
+                          <p className="text-xs text-muted-foreground mt-1.5">
+                            Your correct answer: <span className="font-bold text-pink-500">"{q.correct_answer}"</span>
                           </p>
                         </div>
 
                         {partnerGuess ? (
-                          <div className="pt-3 border-t border-card-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+                              <p className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
                                 {partner?.display_name || "Partner"}'s Guess
                               </p>
                               <p className="text-sm font-medium text-foreground italic">
@@ -377,29 +383,29 @@ export default function QuizPage() {
                               <div className="flex items-center space-x-2 self-end sm:self-auto">
                                 <button
                                   onClick={() => handleGradeGuess(partnerGuess.id, "incorrect")}
-                                  className="p-2 border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 transition-colors"
+                                  className="p-2 border border-border bg-red-500/10 text-red-500 rounded hover:bg-red-500/20 transition-colors cursor-pointer"
                                   title="Mark Incorrect"
                                 >
                                   <X className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleGradeGuess(partnerGuess.id, "correct")}
-                                  className="px-4 py-2 border border-transparent bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl flex items-center space-x-1.5 transition-all active:scale-95 shadow-sm"
+                                  className="px-4 py-2 border border-transparent bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-95 text-white font-bold rounded flex items-center space-x-1.5 transition-all active:scale-95 shadow cursor-pointer text-xs"
                                   title="Mark Correct"
                                 >
                                   <Check className="w-4 h-4" />
-                                  <span className="text-xs">Correct</span>
+                                  <span>Correct</span>
                                 </button>
                               </div>
                             ) : (
                               <div className="self-end sm:self-auto">
                                 {partnerGuess.status === "correct" ? (
-                                  <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-950/20 px-2.5 py-1 rounded-full uppercase border border-green-200/50">
+                                  <span className="inline-flex items-center space-x-1 text-[9px] font-mono font-bold text-green-500 bg-green-500/10 px-2.5 py-1 rounded border border-green-500/20 uppercase">
                                     <Check className="w-3.5 h-3.5" />
                                     <span>Correct</span>
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/20 px-2.5 py-1 rounded-full uppercase border border-red-200/50">
+                                  <span className="inline-flex items-center space-x-1 text-[9px] font-mono font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded border border-red-500/20 uppercase">
                                     <X className="w-3.5 h-3.5" />
                                     <span>Incorrect</span>
                                   </span>
@@ -408,7 +414,7 @@ export default function QuizPage() {
                             )}
                           </div>
                         ) : (
-                          <div className="pt-3 border-t border-card-border/50 text-xs text-muted-foreground italic">
+                          <div className="pt-3 border-t border-border text-xs text-muted-foreground italic">
                             Waiting for {partner?.display_name || "your partner"} to write a guess.
                           </div>
                         )}
@@ -423,15 +429,15 @@ export default function QuizPage() {
 
           {/* Column B: Form Input (1/3 width) */}
           <div className="space-y-4">
-            <div className="cozy-card p-6 bg-white/50 dark:bg-[#1e1a19]/50 border border-card-border sticky top-24">
-              <h2 className="text-base font-bold text-foreground flex items-center space-x-2 pb-3 border-b border-card-border/50">
-                <Plus className="w-5 h-5 text-brand-peach-500" />
+            <div className="rounded-lg border border-border bg-card p-6 sticky top-24 shadow-sm">
+              <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest pb-3 border-b border-border flex items-center space-x-1.5">
+                <Plus className="w-4 h-4 text-primary" />
                 <span>Write a Question</span>
               </h2>
 
               <form onSubmit={handleCreateQuestion} className="space-y-4 mt-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Trivia Question
                   </label>
                   <textarea
@@ -439,12 +445,12 @@ export default function QuizPage() {
                     required
                     value={questionText}
                     onChange={(e) => setQuestionText(e.target.value)}
-                    className="block w-full h-20 px-3 py-2 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm resize-none"
+                    className="block w-full h-20 px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Correct Answer
                   </label>
                   <input
@@ -453,7 +459,7 @@ export default function QuizPage() {
                     required
                     value={correctAnswer}
                     onChange={(e) => setCorrectAnswer(e.target.value)}
-                    className="block w-full px-3.5 py-2.5 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm"
+                    className="block w-full px-3.5 py-2.5 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed">
                     This answer remains hidden from your partner until they submit their guess.
@@ -463,7 +469,7 @@ export default function QuizPage() {
                 <button
                   type="submit"
                   disabled={submittingQuestion || !questionText.trim() || !correctAnswer.trim()}
-                  className="w-full inline-flex items-center justify-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-peach-500 hover:bg-brand-peach-600 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all"
+                  className="w-full inline-flex items-center justify-center space-x-2 py-3 px-4 rounded-md shadow-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer"
                 >
                   {submittingQuestion && <Loader2 className="w-4 h-4 animate-spin" />}
                   <span>Save Question</span>

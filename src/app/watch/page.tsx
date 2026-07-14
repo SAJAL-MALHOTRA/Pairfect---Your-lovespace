@@ -242,31 +242,31 @@ export default function WatchPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-brand-peach-500 animate-spin" />
+          <div className="w-8 h-8 rounded-full border-4 border-primary/25 border-t-primary animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8 bg-gradient-to-b from-brand-peach-50/20 via-background to-background text-foreground">
+    <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
       <Navigation />
 
       <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-6">
         
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center space-x-2">
-            <Tv className="w-8 h-8 text-brand-peach-500" />
+          <h1 className="text-3xl font-sans font-black text-foreground tracking-tight flex items-center space-x-2.5">
+            <Tv className="w-7 h-7 text-primary" />
             <span>Watch Together</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Stream YouTube videos with synchronized controls. Play, pause, and seek instantly for both screens.
           </p>
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start space-x-2">
+          <div className="p-4 rounded-xl bg-accent/40 border border-border text-primary text-sm flex items-start space-x-2 animate-fade-in">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -274,7 +274,7 @@ export default function WatchPage() {
 
         {/* Input Bar */}
         <form onSubmit={handleLoadVideo} className="flex gap-3">
-          <div className="relative flex-1 rounded-xl shadow-sm">
+          <div className="relative flex-1 rounded-md shadow-sm">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
               <Link2 className="h-5 w-5" />
             </div>
@@ -283,24 +283,27 @@ export default function WatchPage() {
               placeholder="Paste any YouTube video URL (e.g. https://www.youtube.com/watch?v=...)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
-              className="block w-full pl-10 pr-4 py-3 border border-card-border rounded-xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-peach-300 text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+              className="block w-full pl-10 pr-4 py-3 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
             />
           </div>
           <button
             type="submit"
-            className="px-5 py-3 rounded-xl bg-brand-peach-500 hover:bg-brand-peach-600 text-white font-semibold text-sm active:scale-95 transition-all"
+            className="px-5 py-3 rounded-md bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 text-white font-bold text-sm active:scale-95 transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
           >
             Load Video
           </button>
         </form>
 
         {/* Sync Player Screen */}
-        <div className="aspect-video w-full cozy-card overflow-hidden bg-black border border-card-border shadow-2xl relative">
+        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border border-border shadow-md relative">
+          {/* 3px top gradient accent bar */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa] z-20 pointer-events-none" />
+          
           <div id="youtube-player" className="w-full h-full" />
         </div>
 
         {/* Note on sync behaviors */}
-        <div className="p-4 rounded-2xl bg-white/40 dark:bg-card-bg/25 border border-card-border/60 text-xs text-muted-foreground leading-relaxed">
+        <div className="p-4 rounded-lg border border-border bg-card text-xs text-muted-foreground leading-relaxed shadow-sm">
           💡 **How synchronization works**: When you play, pause, or change the video, websocket signals are broadcasted instantly to your partner. If the connection drops, reloading the page will query the database to sync both screens back onto the last played state automatically.
         </div>
 
