@@ -206,16 +206,19 @@ export default function AvatarsPage() {
     try {
       const { error: saveErr } = await supabase
         .from("avatar_outfits")
-        .upsert({
-          user_id: user.id,
-          top_style: userOutfit.top_style,
-          top_color: userOutfit.top_color,
-          bottom_style: userOutfit.bottom_style,
-          bottom_color: userOutfit.bottom_color,
-          shoes_style: userOutfit.shoes_style,
-          shoes_color: userOutfit.shoes_color,
-          updated_at: new Date().toISOString(),
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            top_style: userOutfit.top_style,
+            top_color: userOutfit.top_color,
+            bottom_style: userOutfit.bottom_style,
+            bottom_color: userOutfit.bottom_color,
+            shoes_style: userOutfit.shoes_style,
+            shoes_color: userOutfit.shoes_color,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
 
       if (saveErr) throw saveErr;
     } catch (err: any) {
