@@ -7,6 +7,9 @@ ALTER TABLE public.bouquets ADD COLUMN IF NOT EXISTS recipient_name text DEFAULT
 ALTER TABLE public.bouquets ADD COLUMN IF NOT EXISTS sender_name text DEFAULT '' NOT NULL;
 ALTER TABLE public.bouquets ADD COLUMN IF NOT EXISTS background_theme text DEFAULT 'Soft Blush' NOT NULL;
 
+-- Drop NOT NULL constraint on card_style_id since card templates are stored as static strings
+ALTER TABLE public.bouquets ALTER COLUMN card_style_id DROP NOT NULL;
+
 -- Ensure flowers table has the 8 selected varieties from Screen 1
 DELETE FROM public.flowers;
 
