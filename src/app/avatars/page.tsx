@@ -193,9 +193,22 @@ export default function PhotoboothPage() {
   const [iAmReady, setIAmReady] = useState(false);
 
   // Camera
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+
+  const videoRefCallback = useCallback((node: HTMLVideoElement | null) => {
+    videoElementRef.current = node;
+    if (node) {
+      if (streamRef.current) {
+        node.srcObject = streamRef.current;
+        node.play().catch(err => {
+          console.error("Camera play failed on mount:", err);
+          setCameraError("Camera play failed: " + err.message);
+        });
+      }
+    }
+  }, []);
 
   // Countdown
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
@@ -226,25 +239,35 @@ export default function PhotoboothPage() {
   const startCamera = useCallback(async () => {
     setCameraError(null);
     try {
+      console.log("Requesting camera stream via getUserMedia...");
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: "user" },
         audio: false,
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+
+      const video = videoElementRef.current;
+      if (video) {
+        video.srcObject = stream;
+        video.play().catch(err => {
+          console.error("video.play() failed on stream update:", err);
+          setCameraError("Camera play failed: " + err.message);
+        });
       }
     } catch (e: any) {
-      setCameraError(e.message?.includes("denied")
-        ? "Camera access was denied. Please allow camera in browser settings."
-        : "Could not access camera. Check if another app is using it.");
+      console.error("getUserMedia error caught:", e);
+      setCameraError(`Camera connection error: ${e.name} - ${e.message}. Please check browser settings and permissions.`);
     }
   }, []);
 
   const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    if (videoElementRef.current) {
+      videoElementRef.current.srcObject = null;
+    }
   }, []);
 
   // ── Realtime ──────────────────────────────────────────────────────
@@ -347,7 +370,7 @@ export default function PhotoboothPage() {
 
   // ── Capture — client-side only, no upload of raw frame ───────────
   const capturePhoto = useCallback(() => {
-    const video = videoRef.current;
+    const video = videoElementRef.current;
     if (!video) return;
     const canvas = document.createElement("canvas");
     canvas.width = 640; canvas.height = 640;
@@ -689,7 +712,7 @@ export default function PhotoboothPage() {
                   <button onClick={startCamera} className="text-xs text-[#f472b6] underline cursor-pointer">Try again</button>
                 </div>
               ) : (
-                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover"
+                <video ref={videoRefCallback} autoPlay muted playsInline className="w-full h-full object-cover"
                   style={{ filter: selectedFilter.css === "none" ? undefined : selectedFilter.css, transform: "scaleX(-1)" }} />
               )}
               <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono font-bold">
@@ -733,7 +756,7 @@ export default function PhotoboothPage() {
               {countdownValue === 0 ? "📸" : countdownValue}
             </div>
             <p className="text-muted-foreground text-sm">{countdownValue === 0 ? "Captured!" : "Hold still…"}</p>
-            <video ref={videoRef} autoPlay muted playsInline
+            <video ref={videoRefCallback} autoPlay muted playsInline
               style={{ position: "absolute", width: "1px", height: "1px", opacity: 0.01, left: "-9999px", pointerEvents: "none", filter: selectedFilter.css === "none" ? undefined : selectedFilter.css }} />
           </div>
         )}
