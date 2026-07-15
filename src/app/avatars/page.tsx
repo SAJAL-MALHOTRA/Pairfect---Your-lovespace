@@ -369,9 +369,47 @@ export default function PhotoboothPage() {
   };
 
   // ── Capture — client-side only, no upload of raw frame ───────────
-  const capturePhoto = useCallback(() => {
+  const capturePhoto = useCallback(async () => {
     const video = videoElementRef.current;
     if (!video) return;
+
+    // 1. Confirm video track status
+    const track = streamRef.current?.getVideoTracks()[0];
+    console.log("Photobooth Capture - Video Track state:", track?.readyState);
+
+    // 2. Ensure video isn't paused
+    if (video.paused) {
+      console.log("Photobooth Capture - Video is paused, resuming play...");
+      try {
+        await video.play();
+      } catch (err) {
+        console.error("Failed to resume video play before capture:", err);
+      }
+    }
+
+    // 3. Wait for decoded frame metadata to be ready
+    if (video.readyState < 2 || video.videoWidth === 0) {
+      console.log("Photobooth Capture - Waiting for loadeddata frame event...");
+      await new Promise<void>((resolve) => {
+        const onLoaded = () => {
+          video.removeEventListener("loadeddata", onLoaded);
+          resolve();
+        };
+        video.addEventListener("loadeddata", onLoaded);
+        // Fallback safety timeout of 1s
+        setTimeout(onLoaded, 1000);
+      });
+    }
+
+    // 4. Log state before drawing
+    console.log("Photobooth Capture - Drawing parameters:", {
+      readyState: video.readyState,
+      videoWidth: video.videoWidth,
+      videoHeight: video.videoHeight,
+      paused: video.paused,
+      trackReadyState: track?.readyState,
+    });
+
     const canvas = document.createElement("canvas");
     canvas.width = 640; canvas.height = 640;
     const ctx = canvas.getContext("2d")!;
