@@ -410,13 +410,25 @@ export default function PhotoboothPage() {
       trackReadyState: track?.readyState,
     });
 
+    // 5. Draw video to a temporary canvas first (unfiltered, mirrored).
+    // This bypasses a major Safari WebKit bug where drawImage(video) directly with ctx.filter enabled results in a solid black canvas.
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = 640;
+    tempCanvas.height = 640;
+    const tempCtx = tempCanvas.getContext("2d")!;
+    tempCtx.translate(tempCanvas.width, 0);
+    tempCtx.scale(-1, 1);
+    tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+    // 6. Draw temp canvas to final canvas with the selected filter applied
     const canvas = document.createElement("canvas");
-    canvas.width = 640; canvas.height = 640;
+    canvas.width = 640;
+    canvas.height = 640;
     const ctx = canvas.getContext("2d")!;
-    ctx.filter = selectedFilter.css === "none" ? "none" : selectedFilter.css;
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (selectedFilter.css !== "none") {
+      ctx.filter = selectedFilter.css;
+    }
+    ctx.drawImage(tempCanvas, 0, 0);
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
@@ -476,8 +488,16 @@ export default function PhotoboothPage() {
 
     const loadImg = (src: string): Promise<HTMLImageElement> =>
       new Promise((res, rej) => {
-        const img = new Image(); img.crossOrigin = "anonymous";
-        img.onload = () => res(img); img.onerror = rej; img.src = src;
+        const img = new Image();
+        if (src.startsWith("http")) {
+          img.crossOrigin = "anonymous";
+        }
+        img.onload = () => res(img);
+        img.onerror = (err) => {
+          console.error("Failed to load image:", src, err);
+          rej(new Error("Image load failed."));
+        };
+        img.src = src;
       });
 
     const [img1, img2] = await Promise.all([loadImg(myPhotoUrl), loadImg(partnerPhotoUrl)]);
