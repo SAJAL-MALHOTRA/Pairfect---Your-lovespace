@@ -7,7 +7,7 @@ import { useTheme } from "@/components/providers/theme-provider";
 import { 
   Heart, Home, Calendar, BookOpen, 
   Settings, LogOut, User, Gamepad2, Tv, Sun, Moon, Timer,
-  Scale, HelpCircle, Palette, Gift, Brain, Camera, Compass
+  Scale, HelpCircle, Gift, Brain, Camera, Compass
 } from "lucide-react";
 
 export default function Navigation() {
@@ -22,7 +22,6 @@ export default function Navigation() {
     { href: "/quiz", label: "Quiz", icon: Gamepad2 },
     { href: "/vibe-judge", label: "Judge", icon: Scale },
     { href: "/riddle", label: "Riddle", icon: HelpCircle },
-    { href: "/shared-canvas", label: "Canvas", icon: Palette },
     { href: "/love-letter", label: "Letter", icon: Gift },
     { href: "/iq-duel", label: "IQ Duel", icon: Brain },
     { href: "/watch", label: "Watch", icon: Tv },
@@ -133,7 +132,7 @@ export default function Navigation() {
 
       {/* Mobile Navigation bar at the bottom */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-border/60 px-4 py-2 flex justify-around items-center bg-background/80 backdrop-blur-lg z-50">
-        {links.filter(l => !["/vibe-judge", "/snap-hunt", "/riddle", "/shared-canvas", "/love-letter", "/iq-duel"].includes(l.href)).map((link) => {
+        {links.filter(l => !["/vibe-judge", "/snap-hunt", "/riddle", "/love-letter", "/iq-duel"].includes(l.href)).map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
           return (
