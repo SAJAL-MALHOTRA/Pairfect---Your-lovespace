@@ -787,15 +787,37 @@ export default function PhotoboothPage() {
 
         {/* ── COUNTDOWN ─────────────────────────────────────────────── */}
         {screen === "countdown" && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-8 animate-fade-in">
-            <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Get ready…</p>
-            <div key={countdownValue} className="text-[140px] font-black font-mono leading-none animate-pulse"
-              style={{ background: "linear-gradient(135deg,#f472b6,#60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              {countdownValue === 0 ? "📸" : countdownValue}
+          <div className="space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Get ready…</p>
+              <span className="text-xs text-[#f472b6] font-mono animate-pulse">Hold still!</span>
             </div>
-            <p className="text-muted-foreground text-sm">{countdownValue === 0 ? "Captured!" : "Hold still…"}</p>
-            <video ref={videoRefCallback} autoPlay muted playsInline
-              style={{ position: "absolute", width: "1px", height: "1px", opacity: 0.01, left: "-9999px", pointerEvents: "none", filter: selectedFilter.css === "none" ? undefined : selectedFilter.css }} />
+
+            <div className="relative overflow-hidden rounded-2xl border-2 border-[#f472b6]/30 bg-black aspect-square">
+              <video ref={videoRefCallback} autoPlay muted playsInline className="w-full h-full object-cover"
+                style={{ filter: selectedFilter.css === "none" ? undefined : selectedFilter.css, transform: "scaleX(-1)" }} />
+              
+              {/* Overlay countdown in center */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                <div key={countdownValue} className="text-[120px] font-black font-mono leading-none animate-bounce"
+                  style={{
+                    background: "linear-gradient(135deg, #f472b6, #60a5fa)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  {countdownValue === 0 ? "📸" : countdownValue}
+                </div>
+                <p className="text-white text-xs font-mono tracking-wider mt-4">
+                  {countdownValue === 0 ? "Snapping!" : "Smiling time..."}
+                </p>
+              </div>
+
+              <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono font-bold">
+                {selectedFilter.label}
+              </div>
+            </div>
           </div>
         )}
 
