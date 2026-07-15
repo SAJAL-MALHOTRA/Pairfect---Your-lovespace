@@ -7,7 +7,7 @@ import { useTheme } from "@/components/providers/theme-provider";
 import { 
   Heart, Home, Calendar, BookOpen, 
   Settings, LogOut, User, Gamepad2, Tv, Sun, Moon, Timer,
-  Scale, HelpCircle, Palette, Gift, Brain
+  Scale, HelpCircle, Palette, Gift, Brain, Camera, Compass
 } from "lucide-react";
 
 export default function Navigation() {
@@ -26,7 +26,8 @@ export default function Navigation() {
     { href: "/love-letter", label: "Letter", icon: Gift },
     { href: "/iq-duel", label: "IQ Duel", icon: Brain },
     { href: "/watch", label: "Watch", icon: Tv },
-    { href: "/avatars", label: "Avatars", icon: User },
+    { href: "/avatars", label: "Photobooth", icon: Camera },
+    { href: "/stories", label: "Stories", icon: Compass },
     { href: "/moments", label: "Moments", icon: BookOpen },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
