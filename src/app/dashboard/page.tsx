@@ -8,7 +8,8 @@ import { calculateStreak } from "@/lib/utils/streak";
 import Link from "next/link";
 import { 
   Heart, Sparkles, Plus, Calendar, Music, 
-  ChevronRight, Smile, Flame, Shield, ArrowRight, Pencil
+  ChevronRight, Smile, Flame, Shield, ArrowRight, Pencil,
+  Loader2, AlertCircle
 } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { StreakBadge } from "@/components/streak-badge";
@@ -38,6 +39,51 @@ export default function DashboardPage() {
   const [partnerOutfit, setPartnerOutfit] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
   const supabase = createClient();
+
+  // Inline Check-in Form States
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [intensity, setIntensity] = useState<number>(3);
+  const [note, setNote] = useState("");
+  const [submittingCheckin, setSubmittingCheckin] = useState(false);
+  const [checkinError, setCheckinError] = useState<string | null>(null);
+
+  const handleCheckinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMood) {
+      setCheckinError("Please select a mood.");
+      return;
+    }
+    if (!pair || !user) return;
+
+    setSubmittingCheckin(true);
+    setCheckinError(null);
+    try {
+      const { error: insertErr } = await supabase
+        .from("mood_logs")
+        .insert({
+          pair_id: pair.id,
+          user_id: user.id,
+          mood: selectedMood as any,
+          mood_intensity: intensity,
+          note: note.trim() || null,
+        });
+
+      if (insertErr) throw insertErr;
+      
+      // Clear form states
+      setSelectedMood(null);
+      setIntensity(3);
+      setNote("");
+
+      // Refresh Dashboard data
+      await fetchTodayData();
+    } catch (err: any) {
+      console.error(err);
+      setCheckinError(err.message || "Failed to submit check-in.");
+    } finally {
+      setSubmittingCheckin(false);
+    }
+  };
 
   const fetchTodayData = async () => {
     if (!pair) return;
@@ -208,7 +254,8 @@ export default function DashboardPage() {
               heading="Your vibe today" 
             />
           ) : (
-            <article className="relative flex flex-col justify-center overflow-hidden rounded-lg border border-border bg-card p-6 shadow-sm md:p-7">
+            <article className="relative flex flex-col justify-start overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm md:p-7 space-y-6">
+              {/* Header */}
               <div className="flex items-center gap-2.5">
                 <span className="flex size-8 items-center justify-center rounded-md border border-border bg-accent text-xs font-bold text-foreground">
                   {profile?.display_name ? profile.display_name.slice(0, 2).toUpperCase() : "ME"}
@@ -216,21 +263,117 @@ export default function DashboardPage() {
                 <h2 className="font-sans font-extrabold text-base text-foreground tracking-tight">Your vibe today</h2>
               </div>
 
-              <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
-                <span className="flex size-16 items-center justify-center rounded-md border border-border bg-muted text-3xl">
-                  {"📝"}
-                </span>
-                <p className="mt-4 max-w-[16rem] text-pretty font-sans text-sm text-foreground/80 leading-relaxed">
-                  You haven't logged your vibe today yet. Sharing keeps you connected!
-                </p>
-                <Link
-                  href="/checkin"
-                  className="mt-5 inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#f472b6] to-[#60a5fa] px-5 py-2.5 text-xs font-bold text-white shadow hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+              {/* Form body */}
+              <form onSubmit={handleCheckinSubmit} className="space-y-5 flex-1 flex flex-col justify-between">
+                {checkinError && (
+                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{checkinError}</span>
+                  </div>
+                )}
+
+                {/* Mood Select grid */}
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                    1. How is your rhythm today?
+                  </label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {Object.entries(moodDetails).slice(0, 5).map(([key, value]) => {
+                      const isSelected = selectedMood === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            setSelectedMood(key);
+                            setCheckinError(null);
+                          }}
+                          className={`flex flex-col items-center justify-center py-2.5 rounded-xl border text-center transition-all active:scale-[0.96] cursor-pointer ${
+                            isSelected
+                              ? `${value.color} ring-2 ring-primary scale-[1.03] shadow-sm`
+                              : "border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <span className="text-xl mb-1 select-none">{value.emoji}</span>
+                          <span className="text-[9px] font-bold truncate w-full px-0.5">{value.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="grid grid-cols-5 gap-2 mt-2">
+                    {Object.entries(moodDetails).slice(5, 10).map(([key, value]) => {
+                      const isSelected = selectedMood === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            setSelectedMood(key);
+                            setCheckinError(null);
+                          }}
+                          className={`flex flex-col items-center justify-center py-2.5 rounded-xl border text-center transition-all active:scale-[0.96] cursor-pointer ${
+                            isSelected
+                              ? `${value.color} ring-2 ring-primary scale-[1.03] shadow-sm`
+                              : "border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <span className="text-xl mb-1 select-none">{value.emoji}</span>
+                          <span className="text-[9px] font-bold truncate w-full px-0.5">{value.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Intensity range slider */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                    <span>2. Mood Intensity</span>
+                    <span className="text-pink-500 font-bold bg-pink-500/10 px-2 py-0.5 rounded-full">
+                      Level {intensity}/5
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="1"
+                    value={intensity}
+                    onChange={(e) => setIntensity(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                  <div className="flex justify-between text-[8px] text-muted-foreground font-mono uppercase tracking-widest px-1">
+                    <span>Low</span>
+                    <span>Peak</span>
+                  </div>
+                </div>
+
+                {/* Short text note */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                    <span>3. Log note (optional)</span>
+                    <span>{note.length}/100</span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Short check-in details..."
+                    className="w-full px-3 py-2 border border-border rounded-xl bg-muted/30 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={submittingCheckin || !selectedMood}
+                  className="w-full mt-3 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 disabled:opacity-40 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-pink-500/5"
                 >
-                  <Plus className="size-3.5" aria-hidden="true" />
-                  Check-in Now
-                </Link>
-              </div>
+                  {submittingCheckin ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  <span>Publish Today's Vibe</span>
+                </button>
+              </form>
             </article>
           )}
 

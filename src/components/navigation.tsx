@@ -17,7 +17,7 @@ export default function Navigation() {
 
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/checkin", label: "Check-in", icon: Calendar },
+    { href: "/gratitude-jar", label: "Gratitude Jar", icon: Gift },
     { href: "/focus", label: "Focus", icon: Timer },
     { href: "/quiz", label: "Quiz", icon: Gamepad2 },
     { href: "/vibe-judge", label: "Judge", icon: Scale },
