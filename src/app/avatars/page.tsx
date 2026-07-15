@@ -733,8 +733,8 @@ export default function PhotoboothPage() {
               {countdownValue === 0 ? "📸" : countdownValue}
             </div>
             <p className="text-muted-foreground text-sm">{countdownValue === 0 ? "Captured!" : "Hold still…"}</p>
-            <video ref={videoRef} autoPlay muted playsInline className="hidden"
-              style={{ filter: selectedFilter.css === "none" ? undefined : selectedFilter.css }} />
+            <video ref={videoRef} autoPlay muted playsInline
+              style={{ position: "absolute", width: "1px", height: "1px", opacity: 0.01, left: "-9999px", pointerEvents: "none", filter: selectedFilter.css === "none" ? undefined : selectedFilter.css }} />
           </div>
         )}
 
@@ -754,10 +754,18 @@ export default function PhotoboothPage() {
               ${partnerPhotoUrl ? "border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600" : "border-border text-muted-foreground"}`}>
               {partnerPhotoUrl
                 ? `✓ ${partner?.display_name || "Partner"}'s photo is in!`
-                : <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Waiting for {partner?.display_name || "partner"}'s capture…
-                  </span>}
+                : <div className="space-y-3">
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Waiting for {partner?.display_name || "partner"}'s capture…
+                    </span>
+                    <button
+                      onClick={() => setPartnerPhotoUrl(myPhotoUrl)}
+                      className="text-xs text-[#f472b6] font-bold hover:underline cursor-pointer py-1 px-3 rounded-lg border border-[#f472b6]/20 bg-[#f472b6]/5"
+                    >
+                      ✨ Try Solo Mode (Use your photo twice to test)
+                    </button>
+                  </div>}
             </div>
             <button onClick={handleOpenCustomize} disabled={!partnerPhotoUrl || uploading}
               className="w-full py-4 rounded-2xl font-sans font-black text-white text-base bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] disabled:opacity-40 transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer">
