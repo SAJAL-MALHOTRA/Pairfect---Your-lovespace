@@ -64,7 +64,7 @@ export default function SharedCanvasPage() {
   const colorSwatches = [
     "#f472b6", // Pink
     "#60a5fa", // Blue
-    "#a855f7", // Purple
+    "#ef4444", // Red
     "#10b981", // Green
     "#f59e0b", // Yellow
     "#09090b", // Charcoal Black

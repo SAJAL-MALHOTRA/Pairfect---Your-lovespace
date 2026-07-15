@@ -105,10 +105,10 @@ export default function LoveLetterPage() {
     },
     midnight: {
       name: "Midnight Stars",
-      bg: "bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950",
-      border: "border-indigo-800/40",
-      text: "text-indigo-200",
-      seal: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/30"
+      bg: "bg-gradient-to-br from-slate-950 via-slate-900 to-[#0a0f1e]",
+      border: "border-blue-900/40",
+      text: "text-blue-200",
+      seal: "bg-blue-600 hover:bg-blue-700 shadow-blue-600/30"
     },
     kraft: {
       name: "Kraft Heart",

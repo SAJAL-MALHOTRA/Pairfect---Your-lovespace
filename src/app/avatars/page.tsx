@@ -47,7 +47,7 @@ const COLOR_PALETTE = [
   "#f43f5e", // Rose
   "#ec4899", // Pink
   "#d946ef", // Fuchsia
-  "#8b5cf6", // Purple
+  "#ef4444", // Red
   "#3b82f6", // Blue
   "#06b6d4", // Cyan
   "#14b8a6", // Teal

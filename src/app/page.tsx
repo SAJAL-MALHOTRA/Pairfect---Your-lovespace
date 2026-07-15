@@ -144,7 +144,7 @@ export default async function LandingPage() {
                   <div className="w-9 h-9 rounded bg-[#60a5fa]/10 text-[#60a5fa] flex items-center justify-center">
                     <Music className="w-4 h-4" />
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                  <span className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider bg-pink-500/10 text-pink-500 border border-pink-500/20">
                     Active
                   </span>
                 </div>
