@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
-const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "dc6zaTOxFJmzC";
+const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "";
 
 // Isolated Giphy Renderer component to resolve URLs on-the-fly at runtime
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
