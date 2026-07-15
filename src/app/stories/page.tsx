@@ -38,8 +38,32 @@ export default function StoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedStory, setSelectedStory] = useState<any | null>(null);
 
+  const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
+
   // User profiles list for displaying names
   const [profilesMap, setProfilesMap] = useState<Record<string, any>>({});
+
+  // ── Helper to open modal for create or edit ──────────────────────
+  const openShareModal = () => {
+    const myStory = stories.find(s => s.author_id === user?.id);
+    if (myStory) {
+      const { badge, body } = parseStoryContent(myStory.content);
+      setTitle(myStory.title);
+      setContent(body);
+      setStatusBadge(badge);
+      setEditingStoryId(myStory.id);
+      setCoverPreview(myStory.resolved_cover || null);
+    } else {
+      setTitle("");
+      setContent("");
+      setStatusBadge(STATUS_OPTIONS[0].label);
+      setEditingStoryId(null);
+      setCoverPreview(null);
+    }
+    setCoverFile(null);
+    setError(null);
+    setModalOpen(true);
+  };
 
   // ── Fetch Stories & Profiles ─────────────────────────────────────
   const fetchStories = async () => {
@@ -160,22 +184,38 @@ export default function StoriesPage() {
         if (uploadError) throw uploadError;
       }
 
-      // 2. Insert to database
-      // statusBadge is prepended to content or saved in content
       const decoratedContent = `[${statusBadge}]\n\n${content.trim()}`;
 
-      const { error: insertError } = await supabase
-        .from("love_stories")
-        .insert({
-          pair_id: pair.id,
-          author_id: user.id,
+      // 2. Insert or Update to database
+      if (editingStoryId) {
+        const updateData: any = {
           title: title.trim(),
           content: decoratedContent,
-          cover_image_url: storagePath,
-          likes: 0,
-        });
+        };
+        if (storagePath) {
+          updateData.cover_image_url = storagePath;
+        }
 
-      if (insertError) throw insertError;
+        const { error: updateError } = await supabase
+          .from("love_stories")
+          .update(updateData)
+          .eq("id", editingStoryId);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("love_stories")
+          .insert({
+            pair_id: pair.id,
+            author_id: user.id,
+            title: title.trim(),
+            content: decoratedContent,
+            cover_image_url: storagePath,
+            likes: 0,
+          });
+
+        if (insertError) throw insertError;
+      }
 
       // Reset Form
       setTitle("");
@@ -183,12 +223,13 @@ export default function StoriesPage() {
       setCoverFile(null);
       setCoverPreview(null);
       setModalOpen(false);
+      setEditingStoryId(null);
 
       // Refresh stories
       await fetchStories();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to post story.");
+      setError(err.message || "Failed to save story.");
     } finally {
       setSubmitting(false);
     }
@@ -260,11 +301,11 @@ export default function StoriesPage() {
           </div>
 
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={openShareModal}
             className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10"
           >
             <Plus className="w-4 h-4" />
-            <span>Share Our Story</span>
+            <span>{stories.some(s => s.author_id === user?.id) ? "Edit Our Story" : "Share Our Story"}</span>
           </button>
         </div>
 
@@ -277,7 +318,7 @@ export default function StoriesPage() {
               Be the first couple to share your milestones, date nights, or success story with the community!
             </p>
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={openShareModal}
               className="mt-2 text-xs text-[#f472b6] font-bold hover:underline cursor-pointer"
             >
               Write story ▷
@@ -456,8 +497,12 @@ export default function StoriesPage() {
 
               <div className="text-center space-y-1">
                 <Sparkles className="w-6 h-6 text-primary mx-auto" />
-                <h2 className="text-xl font-sans font-black text-foreground">Share Your Success Story</h2>
-                <p className="text-xs text-muted-foreground">Draft your relationship stories, advice, or milestones.</p>
+                <h2 className="text-xl font-sans font-black text-foreground">
+                  {editingStoryId ? "Edit Your Success Story" : "Share Your Success Story"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {editingStoryId ? "Modify your relationship story or milestones." : "Draft your relationship stories, advice, or milestones."}
+                </p>
               </div>
 
               {error && (
@@ -543,7 +588,9 @@ export default function StoriesPage() {
                 className="w-full py-3 rounded-2xl font-sans font-black text-white text-sm bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
               >
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {submitting ? "Publishing Story…" : "Publish Story ▷"}
+                {submitting 
+                  ? (editingStoryId ? "Saving Changes…" : "Publishing Story…") 
+                  : (editingStoryId ? "Save Changes ▷" : "Publish Story ▷")}
               </button>
             </form>
           </div>
