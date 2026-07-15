@@ -22,9 +22,8 @@ const FILTERS = [
 
 // ─── Strip Layouts ────────────────────────────────────────────────────
 const LAYOUTS = [
-  { id: "sidebyside", label: "Side by Side", icon: "⬛⬛" },
-  { id: "classic",    label: "Classic Strip", icon: "📷" },
-  { id: "grid",       label: "2×2 Grid",      icon: "⊞"  },
+  { id: "classic", label: "Classic Strip (1 × 4)", icon: "📷", desc: "1 × 4" },
+  { id: "grid",    label: "Grid Layout (2 × 2)",   icon: "⊞",  desc: "2 × 2" },
 ];
 
 // ─── Background Presets ───────────────────────────────────────────────
@@ -34,7 +33,7 @@ type BgPreset = {
   pack: "simple" | "patterns";
   apply: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
   preview: string;
-  previewClass?: string; // CSS helper for HTML preview
+  previewClass?: string;
 };
 const BG_PRESETS: BgPreset[] = [
   // Simple (Solid colors)
@@ -80,7 +79,6 @@ const BG_PRESETS: BgPreset[] = [
     apply: (ctx, w, h) => {
       ctx.fillStyle = "#fcf5eb"; ctx.fillRect(0, 0, w, h);
       ctx.font = "28px sans-serif";
-      // Draw bears in corners and midpoints
       ctx.fillText("🐻", 12, 40); ctx.fillText("🐻", w - 42, 40);
       ctx.fillText("🐻", 12, h - 20); ctx.fillText("🐻", w - 42, h - 20);
       ctx.fillText("🍪", w / 2 - 14, h - 20);
@@ -159,7 +157,6 @@ const BG_PRESETS: BgPreset[] = [
 // ─── Sticker Presets ──────────────────────────────────────────────────
 const STICKERS = ["❤️","✨","🐾","⭐","😘","🌸","💋","🎉","🔥","🌈","💭","🦋"];
 
-// ─── Sticker type ─────────────────────────────────────────────────────
 type Sticker = { id: string; emoji: string; x: number; y: number; size: number };
 
 // ─── Polaroid Card ────────────────────────────────────────────────────
@@ -247,82 +244,68 @@ export default function PhotoboothPage() {
   const { user, pair, partner, loading } = useAuth();
   const supabase = createClient();
 
-  type Screen = "lobby" | "camera" | "countdown" | "preview" | "customize" | "strip" | "gallery";
+  type Screen = "lobby" | "camera" | "countdown" | "customize" | "strip" | "gallery";
   const [screen, setScreen] = useState<Screen>("lobby");
   const [error, setError] = useState<string | null>(null);
 
-  // Session
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState(FILTERS[0]);
-  const [partnerReady, setPartnerReady] = useState(false);
-  const [iAmReady, setIAmReady] = useState(false);
+  // Customization step wizard
+  const [wizardStep, setWizardStep] = useState(1);
+  const [selectedPack, setSelectedPack] = useState<"simple" | "patterns">("simple");
 
-  // Camera
+  // Camera settings
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState(FILTERS[0]);
 
-  const videoRefCallback = useCallback((node: HTMLVideoElement | null) => {
-    videoElementRef.current = node;
-    if (node) {
-      if (streamRef.current) {
-        node.srcObject = streamRef.current;
-        node.play().catch(err => {
-          console.error("Camera play failed on mount:", err);
-          setCameraError("Camera play failed: " + err.message);
-        });
-      }
-    }
-  }, []);
-
-  // Countdown
+  // Multiple Poses Capture State
+  const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]); // local Blob/Object URLs (size 4)
+  const [captureIndex, setCaptureIndex] = useState(0);                // 0 to 3
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
+  const [flashActive, setFlashActive] = useState(false);
 
-  // Photos & Strip
-  const [myPhotoUrl, setMyPhotoUrl] = useState<string | null>(null);
-  const [partnerPhotoUrl, setPartnerPhotoUrl] = useState<string | null>(null);
-  const [stripUrl, setStripUrl] = useState<string | null>(null);
-  const [caption, setCaption] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  // Customization (post-capture, pre-compose)
-  const [wizardStep, setWizardStep] = useState(1);
-  const [selectedPack, setSelectedPack] = useState<"simple" | "patterns">("simple");
+  // Customization elements
   const [selectedLayout, setSelectedLayout] = useState(LAYOUTS[0]);
   const [selectedBg, setSelectedBg] = useState(BG_PRESETS[0]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const stripPreviewRef = useRef<HTMLDivElement | null>(null);
-  const [customizeTab, setCustomizeTab] = useState<"layout" | "bg" | "stickers">("layout");
+  const [caption, setCaption] = useState("");
+  const [stripUrl, setStripUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Gallery
   const [strips, setStrips] = useState<any[]>([]);
   const [fetchingStrips, setFetchingStrips] = useState(false);
 
-  const channelRef = useRef<any>(null);
   const ROTATIONS = ["-rotate-2","rotate-1","-rotate-1","rotate-2","-rotate-3","rotate-3","rotate-0"];
 
-  // ── Camera ────────────────────────────────────────────────────────
+  // Callback ref for camera view binding
+  const videoRefCallback = useCallback((node: HTMLVideoElement | null) => {
+    videoElementRef.current = node;
+    if (node && streamRef.current) {
+      node.srcObject = streamRef.current;
+      node.play().catch(err => {
+        console.error("Camera play failed on callback ref bind:", err);
+      });
+    }
+  }, []);
+
+  // ── Camera helpers ────────────────────────────────────────────────
   const startCamera = useCallback(async () => {
     setCameraError(null);
     try {
-      console.log("Requesting camera stream via getUserMedia...");
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: "user" },
         audio: false,
       });
       streamRef.current = stream;
-
-      const video = videoElementRef.current;
-      if (video) {
-        video.srcObject = stream;
-        video.play().catch(err => {
-          console.error("video.play() failed on stream update:", err);
-          setCameraError("Camera play failed: " + err.message);
+      if (videoElementRef.current) {
+        videoElementRef.current.srcObject = stream;
+        videoElementRef.current.play().catch(err => {
+          console.error("Camera play failed:", err);
         });
       }
     } catch (e: any) {
-      console.error("getUserMedia error caught:", e);
       setCameraError(`Camera connection error: ${e.name} - ${e.message}. Please check browser settings and permissions.`);
     }
   }, []);
@@ -337,34 +320,7 @@ export default function PhotoboothPage() {
     }
   }, []);
 
-  // ── Realtime ──────────────────────────────────────────────────────
-  useEffect(() => {
-    if (loading || !pair || !user) return;
-    const channel = supabase.channel(`photobooth-${pair.id}`);
-    channelRef.current = channel;
-    channel
-      .on("broadcast", { event: "session-created" }, ({ payload }: any) => {
-        if (payload.createdBy !== user.id) {
-          setSessionId(payload.sessionId);
-          setScreen("camera");
-          startCamera();
-        }
-      })
-      .on("broadcast", { event: "partner-ready" }, ({ payload }: any) => {
-        if (payload.userId !== user.id) setPartnerReady(true);
-      })
-      .on("broadcast", { event: "countdown-start" }, ({ payload }: any) => {
-        const elapsed = (Date.now() - payload.startedAt) / 1000;
-        runCountdown(Math.max(1, Math.round(3 - elapsed)));
-      })
-      .on("broadcast", { event: "partner-captured" }, ({ payload }: any) => {
-        if (payload.userId !== user.id) setPartnerPhotoUrl(payload.signedUrl);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); stopCamera(); };
-  }, [loading, pair, user]);
-
-  // ── Gallery fetch ─────────────────────────────────────────────────
+  // ── Gallery strips fetch ──────────────────────────────────────────
   const fetchStrips = useCallback(async () => {
     if (!pair) return;
     setFetchingStrips(true);
@@ -389,144 +345,97 @@ export default function PhotoboothPage() {
 
   useEffect(() => { if (!loading && pair) fetchStrips(); }, [loading, pair]);
 
-  // ── Start session ─────────────────────────────────────────────────
-  const handleStartSession = async () => {
-    if (!pair || !user) return;
+  // ── Start Capture sequence ────────────────────────────────────────
+  const handleStartCapture = async () => {
+    setCapturedPhotos([]);
+    setCaptureIndex(0);
     setError(null);
-    try {
-      const { data: sess, error: e } = await supabase
-        .from("photobooth_sessions")
-        .insert({ pair_id: pair.id, filter_applied: selectedFilter.id, status: "waiting" })
-        .select().single();
-      if (e) throw e;
-      channelRef.current?.send({ type: "broadcast", event: "session-created",
-        payload: { sessionId: sess.id, createdBy: user.id } });
-      setSessionId(sess.id);
-      setScreen("camera");
-      await startCamera();
-    } catch (e: any) { setError(e.message || "Failed to start."); }
+    setScreen("camera");
+    await startCamera();
   };
 
-  // ── Ready / countdown ─────────────────────────────────────────────
-  const handleReady = () => {
-    setIAmReady(true);
-    channelRef.current?.send({ type: "broadcast", event: "partner-ready",
-      payload: { userId: user!.id } });
-    if (partnerReady) triggerCountdown();
-  };
-
-  useEffect(() => { if (iAmReady && partnerReady) triggerCountdown(); }, [partnerReady]);
-
-  const triggerCountdown = () => {
-    const startedAt = Date.now();
-    channelRef.current?.send({ type: "broadcast", event: "countdown-start",
-      payload: { startedAt } });
-    runCountdown(3);
-  };
-
-  const runCountdown = (from: number) => {
+  // ── Trigger the 4 poses countdown loop ───────────────────────────
+  const startPoseCountdown = () => {
     setScreen("countdown");
+    runPoseCountdown(3);
+  };
+
+  const runPoseCountdown = (from: number) => {
     setCountdownValue(from);
     let val = from;
     const tick = setInterval(() => {
       val -= 1;
-      if (val <= 0) { clearInterval(tick); setCountdownValue(0); setTimeout(capturePhoto, 200); }
-      else setCountdownValue(val);
+      if (val <= 0) {
+        clearInterval(tick);
+        setCountdownValue(0);
+        // Snap!
+        capturePoseFrame();
+      } else {
+        setCountdownValue(val);
+      }
     }, 1000);
   };
 
-  // ── Capture — client-side only, no upload of raw frame ───────────
-  const capturePhoto = useCallback(async () => {
+  // ── Capture a single pose frame ──────────────────────────────────
+  const capturePoseFrame = async () => {
     const video = videoElementRef.current;
     if (!video) return;
 
-    // 1. Confirm video track status
-    const track = streamRef.current?.getVideoTracks()[0];
-    console.log("Photobooth Capture - Video Track state:", track?.readyState);
+    // Trigger flash animation
+    setFlashActive(true);
+    setTimeout(() => setFlashActive(false), 150);
 
-    // 2. Ensure video isn't paused
+    // Ensure video isn't paused
     if (video.paused) {
-      console.log("Photobooth Capture - Video is paused, resuming play...");
-      try {
-        await video.play();
-      } catch (err) {
-        console.error("Failed to resume video play before capture:", err);
-      }
+      try { await video.play(); } catch (_) {}
     }
 
-    // 3. Wait for decoded frame metadata to be ready
+    // Wait for frames ready
     if (video.readyState < 2 || video.videoWidth === 0) {
-      console.log("Photobooth Capture - Waiting for loadeddata frame event...");
-      await new Promise<void>((resolve) => {
-        const onLoaded = () => {
-          video.removeEventListener("loadeddata", onLoaded);
-          resolve();
-        };
-        video.addEventListener("loadeddata", onLoaded);
-        // Fallback safety timeout of 1s
-        setTimeout(onLoaded, 1000);
+      await new Promise<void>((res) => {
+        const onFrame = () => { video.removeEventListener("loadeddata", onFrame); res(); };
+        video.addEventListener("loadeddata", onFrame);
+        setTimeout(onFrame, 500);
       });
     }
 
-    // 4. Log state before drawing
-    console.log("Photobooth Capture - Drawing parameters:", {
-      readyState: video.readyState,
-      videoWidth: video.videoWidth,
-      videoHeight: video.videoHeight,
-      paused: video.paused,
-      trackReadyState: track?.readyState,
-    });
-
-    // 5. Draw video to a temporary canvas first (unfiltered, mirrored).
-    // This bypasses a major Safari WebKit bug where drawImage(video) directly with ctx.filter enabled results in a solid black canvas.
+    // Draw first to temp canvas (unfiltered, mirrored for Safari compatibility)
     const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = 640;
-    tempCanvas.height = 640;
+    tempCanvas.width = 640; tempCanvas.height = 640;
     const tempCtx = tempCanvas.getContext("2d")!;
     tempCtx.translate(tempCanvas.width, 0);
     tempCtx.scale(-1, 1);
     tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
-    // 6. Draw temp canvas to final canvas with the selected filter applied
+    // Apply CSS filters on main canvas
     const canvas = document.createElement("canvas");
-    canvas.width = 640;
-    canvas.height = 640;
+    canvas.width = 640; canvas.height = 640;
     const ctx = canvas.getContext("2d")!;
     if (selectedFilter.css !== "none") {
       ctx.filter = selectedFilter.css;
     }
     ctx.drawImage(tempCanvas, 0, 0);
 
-    canvas.toBlob(async (blob) => {
+    canvas.toBlob((blob) => {
       if (!blob) return;
-      setMyPhotoUrl(URL.createObjectURL(blob));
-      stopCamera();
+      const url = URL.createObjectURL(blob);
+      setCapturedPhotos(prev => {
+        const next = [...prev, url];
+        const nextIndex = next.length;
 
-      // Upload raw capture so partner can receive via broadcast
-      if (sessionId && user && pair) {
-        setUploading(true);
-        try {
-          const filename = `photobooth/${pair.id}/${sessionId}-${user.id}-${Date.now()}.jpg`;
-          await supabase.storage.from("memories")
-            .upload(filename, blob, { contentType: "image/jpeg", upsert: false });
-          await supabase.from("photobooth_captures")
-            .insert({ session_id: sessionId, user_id: user.id, photo_url: filename });
-          const { data: urlData } = await supabase.storage.from("memories")
-            .createSignedUrl(filename, 86400);
-          channelRef.current?.send({ type: "broadcast", event: "partner-captured",
-            payload: { userId: user.id, signedUrl: urlData?.signedUrl } });
-        } catch (e: any) { setError(e.message); }
-        finally { setUploading(false); }
-      }
-      setScreen("preview");
+        if (nextIndex < 4) {
+          // Move to next pose
+          setCaptureIndex(nextIndex);
+          setTimeout(() => runPoseCountdown(3), 1500); // 1.5s delay to pose
+        } else {
+          // Finished all 4 poses
+          stopCamera();
+          setWizardStep(1); // Choose layout
+          setScreen("customize");
+        }
+        return next;
+      });
     }, "image/jpeg", 0.92);
-  }, [selectedFilter, stopCamera, sessionId, user, pair, supabase]);
-
-  // ── Open customize when both photos available ─────────────────────
-  const handleOpenCustomize = () => {
-    if (!partnerPhotoUrl) { setError("Waiting for partner's photo…"); return; }
-    setStickers([]);
-    setScreen("customize");
   };
 
   // ── Sticker helpers ───────────────────────────────────────────────
@@ -549,9 +458,9 @@ export default function PhotoboothPage() {
   const removeSticker = (id: string) =>
     setStickers(prev => prev.filter(s => s.id !== id));
 
-  // ── Compose strip — all client-side ──────────────────────────────
+  // ── Compose strip client-side ─────────────────────────────────────
   const composeStrip = useCallback(async (): Promise<HTMLCanvasElement | null> => {
-    if (!myPhotoUrl || !partnerPhotoUrl) return null;
+    if (capturedPhotos.length < 4) return null;
 
     const loadImg = (src: string): Promise<HTMLImageElement> =>
       new Promise((res, rej) => {
@@ -560,80 +469,58 @@ export default function PhotoboothPage() {
           img.crossOrigin = "anonymous";
         }
         img.onload = () => res(img);
-        img.onerror = (err) => {
-          console.error("Failed to load image:", src, err);
-          rej(new Error("Image load failed."));
-        };
+        img.onerror = () => rej(new Error("Failed to load: " + src));
         img.src = src;
       });
 
-    const [img1, img2] = await Promise.all([loadImg(myPhotoUrl), loadImg(partnerPhotoUrl)]);
+    // Load all 4 pictures
+    const [img1, img2, img3, img4] = await Promise.all([
+      loadImg(capturedPhotos[0]),
+      loadImg(capturedPhotos[1]),
+      loadImg(capturedPhotos[2]),
+      loadImg(capturedPhotos[3]),
+    ]);
 
-    const photoSize = 400;
+    const photoSize = 380;
     const pad = 24;
-    const capH = 80;
+    const capH = 85;
     const border = 6;
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D;
 
-    // ── Layout: side by side ──
-    if (selectedLayout.id === "sidebyside") {
-      const W = pad * 3 + photoSize * 2;
-      const H = pad * 2 + photoSize + capH;
-      canvas = document.createElement("canvas");
-      canvas.width = W; canvas.height = H;
-      ctx = canvas.getContext("2d")!;
-      selectedBg.apply(ctx, W, H);
-
-      // Gradient top bar
-      const gb = ctx.createLinearGradient(0,0,W,0);
-      gb.addColorStop(0,"#f472b6"); gb.addColorStop(1,"#60a5fa");
-      ctx.fillStyle = gb; ctx.fillRect(0,0,W,5);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(pad-border, pad-border, photoSize+border*2, photoSize+border*2);
-      ctx.drawImage(img1, pad, pad, photoSize, photoSize);
-      ctx.fillRect(pad*2+photoSize-border, pad-border, photoSize+border*2, photoSize+border*2);
-      ctx.drawImage(img2, pad*2+photoSize, pad, photoSize, photoSize);
-
-      const capY = pad+photoSize+12;
-      ctx.fillStyle = selectedBg.id === "dark" ? "#e5e7eb" : "#374151";
-      ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center";
-      ctx.fillText(caption || "📸 Our Photobooth Moment", W/2, capY+20);
-      ctx.fillStyle = "#9ca3af"; ctx.font = "16px sans-serif";
-      ctx.fillText(format(new Date(),"MMM d, yyyy"), W/2, capY+48);
-    }
-
-    // ── Layout: classic strip (vertical) ──
-    else if (selectedLayout.id === "classic") {
+    // ── Layout: Classic Strip (1x4 vertical) ──
+    if (selectedLayout.id === "classic") {
       const W = photoSize + pad * 2;
-      const H = pad * 3 + photoSize * 2 + capH;
+      const H = pad * 5 + photoSize * 4 + capH;
       canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       ctx = canvas.getContext("2d")!;
       selectedBg.apply(ctx, W, H);
 
-      const gb = ctx.createLinearGradient(0,0,W,0);
-      gb.addColorStop(0,"#f472b6"); gb.addColorStop(1,"#60a5fa");
-      ctx.fillStyle = gb; ctx.fillRect(0,0,W,5);
+      // Top bar gradient
+      const gb = ctx.createLinearGradient(0, 0, W, 0);
+      gb.addColorStop(0, "#f472b6"); gb.addColorStop(1, "#60a5fa");
+      ctx.fillStyle = gb; ctx.fillRect(0, 0, W, 5);
 
+      const imgs = [img1, img2, img3, img4];
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(pad-border, pad-border, photoSize+border*2, photoSize+border*2);
-      ctx.drawImage(img1, pad, pad, photoSize, photoSize);
-      ctx.fillRect(pad-border, pad*2+photoSize-border, photoSize+border*2, photoSize+border*2);
-      ctx.drawImage(img2, pad, pad*2+photoSize, photoSize, photoSize);
+      for (let i = 0; i < 4; i++) {
+        const y = pad + i * (photoSize + pad);
+        ctx.fillRect(pad - border, y - border, photoSize + border * 2, photoSize + border * 2);
+        ctx.drawImage(imgs[i], pad, y, photoSize, photoSize);
+      }
 
-      const capY = pad*2+photoSize*2+12;
+      const capY = pad * 4 + photoSize * 4 + 14;
       ctx.fillStyle = selectedBg.id === "dark" ? "#e5e7eb" : "#374151";
       ctx.font = "bold 20px sans-serif"; ctx.textAlign = "center";
-      ctx.fillText(caption || "📸 Together", W/2, capY+20);
+      ctx.fillText(caption || "📸 Our Photobooth strip", W / 2, capY + 22);
       ctx.fillStyle = "#9ca3af"; ctx.font = "14px sans-serif";
-      ctx.fillText(format(new Date(),"MMM d, yyyy"), W/2, capY+44);
+      ctx.fillText(format(new Date(), "MMM d, yyyy"), W / 2, capY + 46);
     }
 
-    // ── Layout: 2×2 grid ──
+    // ── Layout: Grid (2x2 Grid) ──
     else {
-      const cell = 300;
+      const cell = 290;
       const W = cell * 2 + pad * 3;
       const H = cell * 2 + pad * 3 + capH;
       canvas = document.createElement("canvas");
@@ -641,88 +528,97 @@ export default function PhotoboothPage() {
       ctx = canvas.getContext("2d")!;
       selectedBg.apply(ctx, W, H);
 
-      const gb = ctx.createLinearGradient(0,0,W,0);
-      gb.addColorStop(0,"#f472b6"); gb.addColorStop(1,"#60a5fa");
-      ctx.fillStyle = gb; ctx.fillRect(0,0,W,5);
+      // Top bar gradient
+      const gb = ctx.createLinearGradient(0, 0, W, 0);
+      gb.addColorStop(0, "#f472b6"); gb.addColorStop(1, "#60a5fa");
+      ctx.fillStyle = gb; ctx.fillRect(0, 0, W, 5);
 
       ctx.fillStyle = "#ffffff";
-      // Top-left: my photo
-      ctx.fillRect(pad-border, pad-border, cell+border*2, cell+border*2);
+      // Top-Left: Pose 1
+      ctx.fillRect(pad - border, pad - border, cell + border * 2, cell + border * 2);
       ctx.drawImage(img1, pad, pad, cell, cell);
-      // Top-right: partner photo
-      ctx.fillRect(pad*2+cell-border, pad-border, cell+border*2, cell+border*2);
-      ctx.drawImage(img2, pad*2+cell, pad, cell, cell);
-      // Bottom-left: partner mirrored
-      ctx.fillRect(pad-border, pad*2+cell-border, cell+border*2, cell+border*2);
-      ctx.save(); ctx.translate(pad + cell, pad*2+cell); ctx.scale(-1,1);
-      ctx.drawImage(img2, 0, 0, cell, cell); ctx.restore();
-      // Bottom-right: my mirrored
-      ctx.fillRect(pad*2+cell-border, pad*2+cell-border, cell+border*2, cell+border*2);
-      ctx.save(); ctx.translate(pad*2+cell+cell, pad*2+cell); ctx.scale(-1,1);
-      ctx.drawImage(img1, 0, 0, cell, cell); ctx.restore();
+      // Top-Right: Pose 2
+      ctx.fillRect(pad * 2 + cell - border, pad - border, cell + border * 2, cell + border * 2);
+      ctx.drawImage(img2, pad * 2 + cell, pad, cell, cell);
+      // Bottom-Left: Pose 3
+      ctx.fillRect(pad - border, pad * 2 + cell - border, cell + border * 2, cell + border * 2);
+      ctx.drawImage(img3, pad, pad * 2 + cell, cell, cell);
+      // Bottom-Right: Pose 4
+      ctx.fillRect(pad * 2 + cell - border, pad * 2 + cell - border, cell + border * 2, cell + border * 2);
+      ctx.drawImage(img4, pad * 2 + cell, pad * 2 + cell, cell, cell);
 
-      const capY = pad*2+cell*2+12;
+      const capY = pad * 2 + cell * 2 + 14;
       ctx.fillStyle = selectedBg.id === "dark" ? "#e5e7eb" : "#374151";
       ctx.font = "bold 20px sans-serif"; ctx.textAlign = "center";
-      ctx.fillText(caption || "📸 Our Grid Moment", W/2, capY+20);
+      ctx.fillText(caption || "📸 Our Grid strip", W / 2, capY + 22);
       ctx.fillStyle = "#9ca3af"; ctx.font = "14px sans-serif";
-      ctx.fillText(format(new Date(),"MMM d, yyyy"), W/2, capY+44);
+      ctx.fillText(format(new Date(), "MMM d, yyyy"), W / 2, capY + 46);
     }
 
-    // ── Bake stickers onto canvas ──────────────────────────────────
+    // ── Bake stickers ──
     if (stickers.length > 0 && stripPreviewRef.current) {
       const previewRect = stripPreviewRef.current.getBoundingClientRect();
       const scaleX = canvas.width / previewRect.width;
       const scaleY = canvas.height / previewRect.height;
 
-      for (const sticker of stickers) {
-        const scaledSize = sticker.size * Math.max(scaleX, scaleY);
-        ctx.font = `${scaledSize}px sans-serif`;
+      for (const s of stickers) {
+        const size = s.size * Math.max(scaleX, scaleY);
+        ctx.font = `${size}px sans-serif`;
         ctx.textAlign = "left";
-        ctx.fillText(sticker.emoji, sticker.x * scaleX, sticker.y * scaleY + scaledSize * 0.8);
+        ctx.fillText(s.emoji, s.x * scaleX, s.y * scaleY + size * 0.8);
       }
     }
 
     return canvas;
-  }, [myPhotoUrl, partnerPhotoUrl, caption, selectedLayout, selectedBg, stickers]);
+  }, [capturedPhotos, caption, selectedLayout, selectedBg, stickers]);
 
-  // ── Make strip preview ────────────────────────────────────────────
+  // ── Compose preview ───────────────────────────────────────────────
   const handleMakeStrip = async () => {
     setError(null);
     try {
       const canvas = await composeStrip();
-      if (!canvas) { setError("Waiting for partner's photo…"); return; }
+      if (!canvas) { setError("Failed to compose strip."); return; }
       setStripUrl(canvas.toDataURL("image/jpeg", 0.92));
       setScreen("strip");
     } catch (e: any) { setError("Compose failed: " + e.message); }
   };
 
-  // ── Save — only upload the final composited image ─────────────────
+  // ── Save strip to Moments ─────────────────────────────────────────
   const handleSaveToMoments = async () => {
-    if (!pair || !user || !stripUrl || !sessionId) return;
+    if (!pair || !user || !stripUrl) return;
     setSaving(true); setError(null);
     try {
       const res = await fetch(stripUrl);
       const blob = await res.blob();
-      const filename = `photobooth/${pair.id}/strip-${sessionId}-${Date.now()}.jpg`;
 
+      // Create a dummy session for the database record
+      const { data: sess, error: sErr } = await supabase
+        .from("photobooth_sessions")
+        .insert({ pair_id: pair.id, filter_applied: selectedFilter.id, status: "completed" })
+        .select().single();
+      if (sErr) throw sErr;
+
+      const filename = `photobooth/${pair.id}/strip-${sess.id}-${Date.now()}.jpg`;
+
+      // Upload composited strip
       const { error: upErr } = await supabase.storage
         .from("memories").upload(filename, blob, { contentType: "image/jpeg", upsert: false });
       if (upErr) throw upErr;
 
+      // Save strip record
       await supabase.from("photobooth_strips").insert({
-        session_id: sessionId, combined_image_url: filename,
+        session_id: sess.id, combined_image_url: filename,
         caption: caption || null, saved_to_moments: true,
       });
+
+      // Save shared moment
       await supabase.from("shared_moments").insert({
         pair_id: pair.id, created_by: user.id,
-        title: caption || "📸 Photobooth Strip",
-        description: `A ${selectedLayout.label} photobooth moment.`,
+        title: caption || "📸 Photobooth strip",
+        description: `A customized photobooth strip.`,
         photo_url: filename,
         moment_date: format(new Date(), "yyyy-MM-dd"),
       });
-      await supabase.from("photobooth_sessions")
-        .update({ status: "completed" }).eq("id", sessionId);
 
       setScreen("gallery"); fetchStrips();
     } catch (e: any) { setError(e.message || "Failed to save."); }
@@ -731,12 +627,16 @@ export default function PhotoboothPage() {
 
   const handleReset = () => {
     stopCamera();
-    setScreen("lobby"); setSessionId(null);
-    setIAmReady(false); setPartnerReady(false);
-    setMyPhotoUrl(null); setPartnerPhotoUrl(null);
-    setStripUrl(null); setCaption(""); setStickers([]);
-    setError(null); setCountdownValue(null);
-    setWizardStep(1); setSelectedPack("simple");
+    setScreen("lobby");
+    setCapturedPhotos([]);
+    setCaptureIndex(0);
+    setStripUrl(null);
+    setCaption("");
+    setStickers([]);
+    setError(null);
+    setCountdownValue(null);
+    setWizardStep(1);
+    setSelectedPack("simple");
   };
 
   if (loading) {
@@ -752,10 +652,16 @@ export default function PhotoboothPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-background text-foreground">
+      {/* Ambient backgrounds */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10" style={{
         background: "radial-gradient(50rem 35rem at 10% 5%,rgba(244,114,182,0.06) 0%,transparent 60%),radial-gradient(40rem 30rem at 90% 95%,rgba(96,165,250,0.06) 0%,transparent 60%)"
       }} />
       <Navigation />
+
+      {/* Screen flash layer */}
+      {flashActive && (
+        <div className="fixed inset-0 bg-white z-50 animate-fade-out pointer-events-none" />
+      )}
 
       <main className="max-w-2xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col z-10">
         {error && (
@@ -764,7 +670,7 @@ export default function PhotoboothPage() {
           </div>
         )}
 
-        {/* ── LOBBY ─────────────────────────────────────────────────── */}
+        {/* ── LOBBY SCREEN ──────────────────────────────────────────── */}
         {screen === "lobby" && (
           <div className="space-y-6 animate-fade-in">
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm p-8 text-center">
@@ -774,15 +680,12 @@ export default function PhotoboothPage() {
               </div>
               <h1 className="font-sans font-black text-3xl tracking-tight text-foreground">Photobooth</h1>
               <p className="text-muted-foreground text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-                A synced 3-2-1 capture — you and{" "}
-                <span className="text-[#f472b6] font-bold">{partner?.display_name || "your partner"}</span>{" "}
-                snap at the exact same moment, then customize together.
+                Take 4 sequential photos in a row to create a classic custom photo strip. Pose, snap, apply custom themes and stickers!
               </p>
               <div className="mt-5 flex items-center justify-center gap-5 text-xs text-muted-foreground font-mono flex-wrap">
-                <span className="flex items-center gap-1.5"><Video className="w-3.5 h-3.5 text-[#f472b6]" /> Live camera</span>
-                <span className="flex items-center gap-1.5"><LayoutTemplate className="w-3.5 h-3.5 text-amber-400" /> 3 layouts</span>
-                <span className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-[#60a5fa]" /> Stickers + BG</span>
-                <span className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Saves to Moments</span>
+                <span className="flex items-center gap-1.5"><Video className="w-3.5 h-3.5 text-[#f472b6]" /> 4 Poses Burst</span>
+                <span className="flex items-center gap-1.5"><LayoutTemplate className="w-3.5 h-3.5 text-amber-400" /> layouts</span>
+                <span className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-[#60a5fa]" /> Stickers &amp; Themes</span>
               </div>
             </div>
 
@@ -800,14 +703,14 @@ export default function PhotoboothPage() {
               </div>
             </div>
 
-            <button onClick={handleStartSession}
+            <button onClick={handleStartCapture}
               className="w-full py-4 rounded-2xl font-sans font-black text-white text-lg bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer">
-              <Camera className="w-5 h-5" /> Open Camera
+              <Camera className="w-5 h-5" /> Start Photobooth
             </button>
 
             {strips.length > 0 && (
               <div className="space-y-4">
-                <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Past Strips</p>
+                <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Your Strips</p>
                 <div className="grid grid-cols-3 gap-6 py-4">
                   {strips.slice(0, 6).map((strip: any, i) => (
                     <PolaroidCard key={strip.id} src={strip.resolved_url}
@@ -820,11 +723,11 @@ export default function PhotoboothPage() {
           </div>
         )}
 
-        {/* ── CAMERA ────────────────────────────────────────────────── */}
+        {/* ── CAMERA PREVIEW SCREEN ─────────────────────────────────── */}
         {screen === "camera" && (
           <div className="space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Live Preview</p>
+              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Webcam Ready</p>
               <button onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer">
                 <RefreshCw className="w-3.5 h-3.5" /> Cancel
               </button>
@@ -846,46 +749,32 @@ export default function PhotoboothPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {FILTERS.map(f => (
-                <button key={f.id} onClick={() => setSelectedFilter(f)}
-                  className={`flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer transition-all ${selectedFilter.id === f.id ? "scale-110" : "opacity-60 hover:opacity-100"}`}>
-                  <div className={`w-10 h-10 rounded-full ${f.preview} border-2 ${selectedFilter.id === f.id ? "border-[#f472b6]" : "border-transparent"} transition-all`} />
-                  <span className={`text-[8px] font-mono font-bold ${selectedFilter.id === f.id ? "text-[#f472b6]" : "text-muted-foreground"}`}>{f.label}</span>
-                </button>
-              ))}
-            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Make sure you are framed well. Once ready, tap start to begin the 4 poses.
+            </p>
 
-            <div className="flex gap-3">
-              <div className={`flex-1 rounded-xl border p-3 text-center text-xs font-bold ${iAmReady ? "border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600" : "border-border text-muted-foreground"}`}>
-                {iAmReady ? "✓ You're ready" : "You"}
-              </div>
-              <div className={`flex-1 rounded-xl border p-3 text-center text-xs font-bold ${partnerReady ? "border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600" : "border-border text-muted-foreground"}`}>
-                {partnerReady ? `✓ ${partner?.display_name || "Partner"} ready` : partner?.display_name || "Partner"}
-              </div>
-            </div>
-
-            <button onClick={handleReady} disabled={iAmReady}
-              className={`w-full py-4 rounded-2xl font-sans font-black text-white text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer
-                ${iAmReady ? "bg-emerald-500 opacity-80" : "bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 shadow-lg shadow-pink-500/20"}`}>
-              {iAmReady ? <><Check className="w-5 h-5" /> Waiting for partner…</> : <><Zap className="w-5 h-5" /> I'm Ready — Start Countdown!</>}
+            <button onClick={startPoseCountdown}
+              className="w-full py-4 rounded-2xl font-sans font-black text-white text-base bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer">
+              <Zap className="w-5 h-5" /> Start Poses Countdown ▷
             </button>
           </div>
         )}
 
-        {/* ── COUNTDOWN ─────────────────────────────────────────────── */}
+        {/* ── COUNTDOWN CAPTURING SCREEN ────────────────────────────── */}
         {screen === "countdown" && (
           <div className="space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Get ready…</p>
+              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">
+                Pose {captureIndex + 1} of 4
+              </p>
               <span className="text-xs text-[#f472b6] font-mono animate-pulse">Hold still!</span>
             </div>
 
             <div className="relative overflow-hidden rounded-2xl border-2 border-[#f472b6]/30 bg-black aspect-square">
               <video ref={videoRefCallback} autoPlay muted playsInline className="w-full h-full object-cover"
                 style={{ filter: selectedFilter.css === "none" ? undefined : selectedFilter.css, transform: "scaleX(-1)" }} />
-              
-              {/* Overlay countdown in center */}
+
+              {/* Overlay countdown digits in center */}
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
                 <div key={countdownValue} className="text-[120px] font-black font-mono leading-none animate-bounce"
                   style={{
@@ -898,54 +787,27 @@ export default function PhotoboothPage() {
                   {countdownValue === 0 ? "📸" : countdownValue}
                 </div>
                 <p className="text-white text-xs font-mono tracking-wider mt-4">
-                  {countdownValue === 0 ? "Snapping!" : "Smiling time..."}
+                  {countdownValue === 0 ? "Snapping Pose!" : `Posing in ${countdownValue}s`}
                 </p>
               </div>
 
-              <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono font-bold">
-                {selectedFilter.label}
+              {/* Visual mini-gallery of completed snaps inside capture screen */}
+              <div className="absolute bottom-3 right-3 flex gap-1 bg-black/50 p-1.5 rounded-lg border border-white/20">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className="w-8 h-8 rounded border border-white/40 bg-stone-900 overflow-hidden flex items-center justify-center">
+                    {capturedPhotos[i] ? (
+                      <img src={capturedPhotos[i]} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] font-mono text-white/50">{i + 1}</span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── PREVIEW ───────────────────────────────────────────────── */}
-        {screen === "preview" && (
-          <div className="space-y-5 animate-fade-in">
-            <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase text-center">Your Capture</p>
-            <div className="relative rounded-2xl overflow-hidden border border-border bg-black aspect-square shadow-lg">
-              {myPhotoUrl && <img src={myPhotoUrl} alt="Your capture" className="w-full h-full object-cover" />}
-              {uploading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
-                </div>
-              )}
-            </div>
-            <div className={`rounded-xl border p-4 text-center text-sm font-bold transition-all
-              ${partnerPhotoUrl ? "border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600" : "border-border text-muted-foreground"}`}>
-              {partnerPhotoUrl
-                ? `✓ ${partner?.display_name || "Partner"}'s photo is in!`
-                : <div className="space-y-3">
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Waiting for {partner?.display_name || "partner"}'s capture…
-                    </span>
-                    <button
-                      onClick={() => setPartnerPhotoUrl(myPhotoUrl)}
-                      className="text-xs text-[#f472b6] font-bold hover:underline cursor-pointer py-1 px-3 rounded-lg border border-[#f472b6]/20 bg-[#f472b6]/5"
-                    >
-                      ✨ Try Solo Mode (Use your photo twice to test)
-                    </button>
-                  </div>}
-            </div>
-            <button onClick={handleOpenCustomize} disabled={!partnerPhotoUrl || uploading}
-              className="w-full py-4 rounded-2xl font-sans font-black text-white text-base bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] disabled:opacity-40 transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer">
-              <Sparkles className="w-5 h-5" /> Customize Your Strip →
-            </button>
-          </div>
-        )}
-
-        {/* ── CUSTOMIZE ─────────────────────────────────────────────── */}
+        {/* ── CUSTOMIZE WIZARD SCREEN ───────────────────────────────── */}
         {screen === "customize" && (
           <div className="space-y-6 animate-fade-in">
 
@@ -963,7 +825,6 @@ export default function PhotoboothPage() {
                     className={`flex flex-col items-center justify-center p-6 bg-card border-2 rounded-2xl transition-all cursor-pointer space-y-4
                       ${selectedLayout.id === "classic" ? "border-[#f472b6] shadow-lg shadow-pink-500/10" : "border-border hover:border-[#f472b6]/40"}`}
                   >
-                    {/* Visual 1x4 stack mock */}
                     <div className="flex flex-col gap-1 w-12 border-2 border-foreground p-1.5 rounded bg-background">
                       <div className="aspect-square border border-foreground/60 w-full" />
                       <div className="aspect-square border border-foreground/60 w-full" />
@@ -979,7 +840,6 @@ export default function PhotoboothPage() {
                     className={`flex flex-col items-center justify-center p-6 bg-card border-2 rounded-2xl transition-all cursor-pointer space-y-4
                       ${selectedLayout.id === "grid" ? "border-[#f472b6] shadow-lg shadow-pink-500/10" : "border-border hover:border-[#f472b6]/40"}`}
                   >
-                    {/* Visual 2x2 grid mock */}
                     <div className="grid grid-cols-2 gap-1 w-16 border-2 border-foreground p-1.5 rounded bg-background">
                       <div className="aspect-square border border-foreground/60 w-full" />
                       <div className="aspect-square border border-foreground/60 w-full" />
@@ -1019,7 +879,6 @@ export default function PhotoboothPage() {
                       <p className="text-[10px] font-mono text-muted-foreground mt-0.5">solid colors · 7</p>
                     </div>
                     <div className="flex items-center gap-4">
-                      {/* Swatches preview */}
                       <div className="flex -space-x-1.5">
                         {BG_PRESETS.filter(b => b.pack === "simple").slice(0, 5).map(b => (
                           <div key={b.id} className={`w-6 h-6 rounded-full border border-white ${b.preview}`} />
@@ -1042,7 +901,6 @@ export default function PhotoboothPage() {
                       <p className="text-[10px] font-mono text-muted-foreground mt-0.5">prints &amp; scenes · 11</p>
                     </div>
                     <div className="flex items-center gap-4">
-                      {/* Pattern icons preview */}
                       <div className="flex -space-x-1.5">
                         {BG_PRESETS.filter(b => b.pack === "patterns").slice(0, 5).map(b => (
                           <div key={b.id} className={`w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] bg-stone-100 ${b.preview}`} />
@@ -1070,7 +928,7 @@ export default function PhotoboothPage() {
               </div>
             )}
 
-            {/* WIZARD STEP 3: THEMES SELECTION CAROUSEL */}
+            {/* WIZARD STEP 3: THEMES SELECTION */}
             {wizardStep === 3 && (
               <div className="space-y-6">
                 <div className="text-center">
@@ -1085,7 +943,6 @@ export default function PhotoboothPage() {
                   </button>
                 </div>
 
-                {/* Horizontal carousel selection */}
                 <div className="flex gap-4 overflow-x-auto pb-4 px-2 snap-x">
                   {BG_PRESETS.filter(b => b.pack === selectedPack).map(bg => {
                     const isSelected = selectedBg.id === bg.id;
@@ -1096,7 +953,6 @@ export default function PhotoboothPage() {
                         className={`flex-shrink-0 w-36 snap-start flex flex-col items-center justify-center p-4 bg-card border-2 rounded-2xl transition-all cursor-pointer space-y-4
                           ${isSelected ? "border-[#f472b6] bg-pink-500/5 shadow-md shadow-pink-500/10" : "border-border hover:border-[#f472b6]/40"}`}
                       >
-                        {/* Visual strip thumbnail matching theme */}
                         <div className={`w-14 h-24 border border-foreground/30 rounded p-1 flex flex-col gap-1 ${bg.previewClass || bg.preview}`}>
                           <div className="w-full aspect-square border border-foreground/10 bg-white" />
                           <div className="w-full aspect-square border border-foreground/10 bg-white" />
@@ -1133,16 +989,32 @@ export default function PhotoboothPage() {
                   </button>
                 </div>
 
-                {/* Live strip preview with sticker layer */}
-                <div ref={stripPreviewRef} className="relative w-full overflow-hidden rounded-2xl border border-border bg-white shadow-md select-none" style={{ minHeight: 260 }}>
-                  <div className="flex gap-2 p-3">
-                    {myPhotoUrl && <img src={myPhotoUrl} alt="me" className="flex-1 aspect-square object-cover rounded-lg" />}
-                    {partnerPhotoUrl && <img src={partnerPhotoUrl} alt="partner" className="flex-1 aspect-square object-cover rounded-lg" />}
+                {/* Combined preview with stickers layer */}
+                <div ref={stripPreviewRef} className="relative w-full overflow-hidden rounded-2xl border border-border bg-white shadow-md select-none" style={{ minHeight: 280 }}>
+                  {/* Visual mockup of the 4 stacked photos inside editor preview */}
+                  <div className={`p-4 flex flex-col gap-2 items-center w-full min-h-[300px] ${selectedBg.previewClass || selectedBg.preview}`}>
+                    {selectedLayout.id === "classic" ? (
+                      <div className="flex flex-col gap-2 w-48">
+                        {capturedPhotos.slice(0, 4).map((p, i) => (
+                          <div key={i} className="aspect-square bg-white border-2 border-white shadow-sm overflow-hidden rounded">
+                            <img src={p} className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+                        {capturedPhotos.slice(0, 4).map((p, i) => (
+                          <div key={i} className="aspect-square bg-white border-2 border-white shadow-sm overflow-hidden rounded">
+                            <img src={p} className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <StickerLayer stickers={stickers} onMove={moveSticker} onRemove={removeSticker} containerRef={stripPreviewRef} />
                 </div>
 
-                {/* Sticker tray */}
+                {/* Stickers Selector */}
                 <div className="space-y-2.5">
                   <p className="text-[9px] font-mono text-muted-foreground tracking-wider uppercase">Stickers (tap to add, drag to place)</p>
                   <div className="flex flex-wrap gap-2">
@@ -1165,7 +1037,7 @@ export default function PhotoboothPage() {
                     type="text"
                     value={caption}
                     onChange={e => setCaption(e.target.value)}
-                    placeholder="e.g. Friday night vibes 🌙"
+                    placeholder="e.g. Pose for the camera 📸"
                     maxLength={80}
                     className="w-full px-4 py-3 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[#f472b6]/40"
                   />
@@ -1183,7 +1055,7 @@ export default function PhotoboothPage() {
           </div>
         )}
 
-        {/* ── STRIP ─────────────────────────────────────────────────── */}
+        {/* ── FINAL STRIP SCREEN ────────────────────────────────────── */}
         {screen === "strip" && stripUrl && (
           <div className="space-y-5 animate-fade-in">
             <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase text-center">Your Photobooth Strip ✨</p>
@@ -1216,7 +1088,7 @@ export default function PhotoboothPage() {
           </div>
         )}
 
-        {/* ── GALLERY ───────────────────────────────────────────────── */}
+        {/* ── GALLERY SCREEN ────────────────────────────────────────── */}
         {screen === "gallery" && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center space-y-1">
