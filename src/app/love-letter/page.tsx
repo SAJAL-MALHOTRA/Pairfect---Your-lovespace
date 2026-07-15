@@ -536,7 +536,7 @@ export default function LoveLetterPage() {
                       type="text"
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="e.g. Pranavi"
+                      placeholder="e.g. Annie"
                       className="block w-full px-4 py-3 border border-border rounded-xl bg-stone-50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
@@ -547,7 +547,7 @@ export default function LoveLetterPage() {
                       type="text"
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
-                      placeholder="e.g. Sajal"
+                      placeholder="e.g. Alex"
                       className="block w-full px-4 py-3 border border-border rounded-xl bg-stone-50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>

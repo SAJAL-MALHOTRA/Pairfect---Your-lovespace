@@ -10,16 +10,16 @@ export type Outfit = {
 }
 
 export const avatarOutfits: Record<string, Outfit> = {
-  // Sajal — warm rose top
-  SA: {
+  // Alex — warm rose top
+  AL: {
     skin: "#e7b48c",
     hair: "#3a2b28",
     top: "#d9808c",
     bottom: "#6f5b57",
     shoes: "#4a3b39",
   },
-  // Pranavi — soft peach top
-  PR: {
+  // Annie — soft peach top
+  AN: {
     skin: "#eec19b",
     hair: "#2d2320",
     top: "#e8a87c",
@@ -29,5 +29,5 @@ export const avatarOutfits: Record<string, Outfit> = {
 }
 
 export function getOutfit(initials: string): Outfit {
-  return avatarOutfits[initials] ?? avatarOutfits.SA
+  return avatarOutfits[initials] ?? avatarOutfits.AL
 }
