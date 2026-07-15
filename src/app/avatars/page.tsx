@@ -29,65 +29,130 @@ const LAYOUTS = [
 
 // ─── Background Presets ───────────────────────────────────────────────
 type BgPreset = {
-  id: string; label: string;
+  id: string;
+  label: string;
+  pack: "simple" | "patterns";
   apply: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
   preview: string;
+  previewClass?: string; // CSS helper for HTML preview
 };
 const BG_PRESETS: BgPreset[] = [
+  // Simple (Solid colors)
   {
-    id: "cream", label: "Cream",
+    id: "cream", label: "Cream", pack: "simple",
     apply: (ctx, w, h) => { ctx.fillStyle = "#f8f4f0"; ctx.fillRect(0, 0, w, h); },
     preview: "bg-[#f8f4f0] border-gray-200",
   },
   {
-    id: "pink_blue", label: "Pink→Blue",
-    apply: (ctx, w, h) => {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, "#fce7f3"); g.addColorStop(1, "#dbeafe");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    },
-    preview: "bg-gradient-to-br from-pink-100 to-blue-100",
+    id: "white", label: "White", pack: "simple",
+    apply: (ctx, w, h) => { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h); },
+    preview: "bg-white border-gray-200",
   },
   {
-    id: "dark", label: "Midnight",
+    id: "dark", label: "Midnight", pack: "simple",
     apply: (ctx, w, h) => { ctx.fillStyle = "#0a0a0b"; ctx.fillRect(0, 0, w, h); },
-    preview: "bg-[#0a0a0b]",
+    preview: "bg-[#0a0a0b] border-gray-800",
   },
   {
-    id: "rose", label: "Rose",
+    id: "rose", label: "Rose", pack: "simple",
+    apply: (ctx, w, h) => { ctx.fillStyle = "#fff1f2"; ctx.fillRect(0, 0, w, h); },
+    preview: "bg-[#fff1f2] border-rose-200",
+  },
+  {
+    id: "sky", label: "Sky", pack: "simple",
+    apply: (ctx, w, h) => { ctx.fillStyle = "#eff6ff"; ctx.fillRect(0, 0, w, h); },
+    preview: "bg-[#eff6ff] border-blue-200",
+  },
+  {
+    id: "lavender", label: "Lilac", pack: "simple",
+    apply: (ctx, w, h) => { ctx.fillStyle = "#faf5ff"; ctx.fillRect(0, 0, w, h); },
+    preview: "bg-[#faf5ff] border-purple-200",
+  },
+  {
+    id: "peach", label: "Peach", pack: "simple",
+    apply: (ctx, w, h) => { ctx.fillStyle = "#fff7ed"; ctx.fillRect(0, 0, w, h); },
+    preview: "bg-[#fff7ed] border-orange-200",
+  },
+
+  // Patterns (Prints & scenes)
+  {
+    id: "teddy", label: "teddy", pack: "patterns",
     apply: (ctx, w, h) => {
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, "#fff1f2"); g.addColorStop(1, "#fce7f3");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#fcf5eb"; ctx.fillRect(0, 0, w, h);
+      ctx.font = "28px sans-serif";
+      // Draw bears in corners and midpoints
+      ctx.fillText("🐻", 12, 40); ctx.fillText("🐻", w - 42, 40);
+      ctx.fillText("🐻", 12, h - 20); ctx.fillText("🐻", w - 42, h - 20);
+      ctx.fillText("🍪", w / 2 - 14, h - 20);
     },
-    preview: "bg-gradient-to-b from-red-50 to-pink-100",
+    preview: "bg-[#fcf5eb] border-amber-200",
+    previewClass: "bg-[#fcf5eb] relative overflow-hidden after:content-['🐻'] after:absolute after:bottom-1 after:right-1 after:text-[10px]",
   },
   {
-    id: "sky", label: "Sky",
+    id: "hearts", label: "hearts", pack: "patterns",
     apply: (ctx, w, h) => {
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, "#eff6ff"); g.addColorStop(1, "#dbeafe");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#fff5f5"; ctx.fillRect(0, 0, w, h);
+      ctx.font = "22px sans-serif";
+      for (let y = 40; y < h; y += 90) {
+        ctx.fillText("❤️", 12, y);
+        ctx.fillText("❤️", w - 32, y + 45);
+      }
     },
-    preview: "bg-gradient-to-b from-blue-50 to-blue-100",
+    preview: "bg-[#fff5f5] border-red-200",
+    previewClass: "bg-[#fff5f5] relative overflow-hidden after:content-['❤️'] after:absolute after:bottom-1 after:right-1 after:text-[10px]",
   },
   {
-    id: "confetti", label: "Confetti",
+    id: "cherry", label: "cherry", pack: "patterns",
+    apply: (ctx, w, h) => {
+      ctx.fillStyle = "#f0f9ff"; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#e0f2fe";
+      const size = 30;
+      for (let x = 0; x < w; x += size * 2) {
+        for (let y = 0; y < h; y += size * 2) {
+          ctx.fillRect(x, y, size, size);
+          ctx.fillRect(x + size, y + size, size, size);
+        }
+      }
+      ctx.font = "28px sans-serif";
+      ctx.fillText("🍒", 12, 40); ctx.fillText("🍒", w - 42, 40);
+      ctx.fillText("🍒", 12, h - 20); ctx.fillText("🍒", w - 42, h - 20);
+    },
+    preview: "bg-sky-100 border-sky-300",
+    previewClass: "bg-sky-100 relative overflow-hidden after:content-['🍒'] after:absolute after:bottom-1 after:right-1 after:text-[10px]",
+  },
+  {
+    id: "gingham", label: "gingham", pack: "patterns",
+    apply: (ctx, w, h) => {
+      ctx.fillStyle = "#f0fdf4"; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#dcfce7";
+      const size = 25;
+      for (let x = 0; x < w; x += size * 2) {
+        for (let y = 0; y < h; y += size * 2) {
+          ctx.fillRect(x, y, size, size);
+          ctx.fillRect(x + size, y + size, size, size);
+        }
+      }
+      ctx.font = "24px sans-serif";
+      ctx.fillText("⭐", 15, 35); ctx.fillText("⭐", w - 35, 35);
+      ctx.fillText("⭐", 15, h - 20); ctx.fillText("⭐", w - 35, h - 20);
+    },
+    preview: "bg-emerald-100 border-emerald-300",
+    previewClass: "bg-emerald-100 relative overflow-hidden after:content-['⭐'] after:absolute after:bottom-1 after:right-1 after:text-[10px]",
+  },
+  {
+    id: "confetti", label: "confetti", pack: "patterns",
     apply: (ctx, w, h) => {
       ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h);
       const dots = ["#f472b6","#60a5fa","#fbbf24","#34d399","#a78bfa"];
-      for (let i = 0; i < 120; i++) {
+      for (let i = 0; i < 80; i++) {
         ctx.fillStyle = dots[i % dots.length];
         ctx.beginPath();
-        ctx.ellipse(
-          Math.random()*w, Math.random()*h,
-          4 + Math.random()*5, 2 + Math.random()*3,
-          Math.random()*Math.PI, 0, Math.PI*2
-        );
+        ctx.arc(Math.random() * w, Math.random() * h, 3 + Math.random() * 4, 0, Math.PI * 2);
         ctx.fill();
       }
     },
-    preview: "bg-white",
+    preview: "bg-white border-pink-200",
+    previewClass: "bg-white relative overflow-hidden after:content-['🎉'] after:absolute after:bottom-1 after:right-1 after:text-[10px]",
   },
 ];
 
@@ -222,6 +287,8 @@ export default function PhotoboothPage() {
   const [uploading, setUploading] = useState(false);
 
   // Customization (post-capture, pre-compose)
+  const [wizardStep, setWizardStep] = useState(1);
+  const [selectedPack, setSelectedPack] = useState<"simple" | "patterns">("simple");
   const [selectedLayout, setSelectedLayout] = useState(LAYOUTS[0]);
   const [selectedBg, setSelectedBg] = useState(BG_PRESETS[0]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
@@ -669,6 +736,7 @@ export default function PhotoboothPage() {
     setMyPhotoUrl(null); setPartnerPhotoUrl(null);
     setStripUrl(null); setCaption(""); setStickers([]);
     setError(null); setCountdownValue(null);
+    setWizardStep(1); setSelectedPack("simple");
   };
 
   if (loading) {
@@ -879,93 +947,239 @@ export default function PhotoboothPage() {
 
         {/* ── CUSTOMIZE ─────────────────────────────────────────────── */}
         {screen === "customize" && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Customize Strip</p>
-              <button onClick={() => setScreen("preview")} className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">← Back</button>
-            </div>
+          <div className="space-y-6 animate-fade-in">
 
-            {/* Live strip preview with sticker layer */}
-            <div ref={stripPreviewRef} className="relative w-full overflow-hidden rounded-2xl border border-border bg-white shadow-md select-none" style={{ minHeight: 260 }}>
-              {/* Side-by-side preview for visualization */}
-              <div className="flex gap-2 p-3">
-                {myPhotoUrl && <img src={myPhotoUrl} alt="me" className="flex-1 aspect-square object-cover rounded-lg" />}
-                {partnerPhotoUrl && <img src={partnerPhotoUrl} alt="partner" className="flex-1 aspect-square object-cover rounded-lg" />}
-              </div>
-              <StickerLayer stickers={stickers} onMove={moveSticker} onRemove={removeSticker} containerRef={stripPreviewRef} />
-            </div>
+            {/* WIZARD STEP 1: CHOOSE YOUR STRIP */}
+            {wizardStep === 1 && (
+              <div className="space-y-6 text-center">
+                <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">
+                  Choose Your Strip
+                </p>
 
-            {/* Tab navigation */}
-            <div className="flex gap-1 p-1 rounded-xl bg-muted border border-border">
-              {(["layout","bg","stickers"] as const).map(tab => (
-                <button key={tab} onClick={() => setCustomizeTab(tab)}
-                  className={`flex-1 py-2 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer
-                    ${customizeTab === tab ? "bg-white dark:bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  {tab === "layout" ? "📐 Layout" : tab === "bg" ? "🎨 Background" : "✨ Stickers"}
-                </button>
-              ))}
-            </div>
-
-            {/* Layout picker */}
-            {customizeTab === "layout" && (
-              <div className="grid grid-cols-3 gap-3">
-                {LAYOUTS.map(l => (
-                  <button key={l.id} onClick={() => setSelectedLayout(l)}
-                    className={`p-4 rounded-xl border-2 text-center cursor-pointer transition-all space-y-1
-                      ${selectedLayout.id === l.id ? "border-[#f472b6] bg-[#f472b6]/5 text-[#f472b6]" : "border-border bg-card text-muted-foreground hover:border-[#f472b6]/40"}`}>
-                    <div className="text-2xl">{l.icon}</div>
-                    <p className="text-[10px] font-mono font-bold">{l.label}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Classic Strip (1x4 representation) */}
+                  <button
+                    onClick={() => setSelectedLayout(LAYOUTS.find(l => l.id === "classic") || LAYOUTS[0])}
+                    className={`flex flex-col items-center justify-center p-6 bg-card border-2 rounded-2xl transition-all cursor-pointer space-y-4
+                      ${selectedLayout.id === "classic" ? "border-[#f472b6] shadow-lg shadow-pink-500/10" : "border-border hover:border-[#f472b6]/40"}`}
+                  >
+                    {/* Visual 1x4 stack mock */}
+                    <div className="flex flex-col gap-1 w-12 border-2 border-foreground p-1.5 rounded bg-background">
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-foreground">1 × 4</span>
                   </button>
-                ))}
-              </div>
-            )}
 
-            {/* Background picker */}
-            {customizeTab === "bg" && (
-              <div className="grid grid-cols-3 gap-3">
-                {BG_PRESETS.map(bg => (
-                  <button key={bg.id} onClick={() => setSelectedBg(bg)}
-                    className={`p-3 rounded-xl border-2 text-center cursor-pointer transition-all space-y-2
-                      ${selectedBg.id === bg.id ? "border-[#f472b6]" : "border-border hover:border-[#f472b6]/40"}`}>
-                    <div className={`w-10 h-10 rounded-full mx-auto border ${bg.preview}`} />
-                    <p className="text-[9px] font-mono font-bold text-muted-foreground">{bg.label}</p>
+                  {/* Grid (2x2 representation) */}
+                  <button
+                    onClick={() => setSelectedLayout(LAYOUTS.find(l => l.id === "grid") || LAYOUTS[0])}
+                    className={`flex flex-col items-center justify-center p-6 bg-card border-2 rounded-2xl transition-all cursor-pointer space-y-4
+                      ${selectedLayout.id === "grid" ? "border-[#f472b6] shadow-lg shadow-pink-500/10" : "border-border hover:border-[#f472b6]/40"}`}
+                  >
+                    {/* Visual 2x2 grid mock */}
+                    <div className="grid grid-cols-2 gap-1 w-16 border-2 border-foreground p-1.5 rounded bg-background">
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                      <div className="aspect-square border border-foreground/60 w-full" />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-foreground">2 × 2</span>
                   </button>
-                ))}
-              </div>
-            )}
-
-            {/* Sticker picker */}
-            {customizeTab === "stickers" && (
-              <div className="space-y-3">
-                <p className="text-[10px] font-mono text-muted-foreground">Tap to add • Drag to move • Double-tap to remove</p>
-                <div className="flex flex-wrap gap-2">
-                  {STICKERS.map(s => (
-                    <button key={s} onClick={() => addSticker(s)}
-                      className="w-12 h-12 rounded-xl border border-border bg-card hover:bg-accent hover:scale-110 active:scale-95 transition-all text-2xl cursor-pointer flex items-center justify-center">
-                      {s}
-                    </button>
-                  ))}
                 </div>
-                {stickers.length > 0 && (
-                  <button onClick={() => setStickers([])} className="text-xs text-red-500 hover:text-red-600 cursor-pointer">
-                    Clear all stickers
+
+                <div className="pt-4 flex justify-center">
+                  <button
+                    onClick={() => setWizardStep(2)}
+                    className="px-6 py-2.5 rounded-xl font-bold bg-[#8e8d92] text-white text-xs tracking-wider hover:opacity-95 cursor-pointer uppercase flex items-center gap-1.5 shadow"
+                  >
+                    next ▷
                   </button>
-                )}
+                </div>
               </div>
             )}
 
-            {/* Caption */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Caption</label>
-              <input type="text" value={caption} onChange={e => setCaption(e.target.value)}
-                placeholder="e.g. Friday night vibes 🌙" maxLength={80}
-                className="w-full px-4 py-3 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[#f472b6]/40" />
-            </div>
+            {/* WIZARD STEP 2: PICK A THEME PACK */}
+            {wizardStep === 2 && (
+              <div className="space-y-6">
+                <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase text-center">
+                  Pick a Theme Pack
+                </p>
 
-            <button onClick={handleMakeStrip}
-              className="w-full py-4 rounded-2xl font-sans font-black text-white text-base bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer">
-              <Sparkles className="w-5 h-5" /> Compose Strip →
-            </button>
+                <div className="space-y-3">
+                  {/* Simple Pack Card */}
+                  <button
+                    onClick={() => { setSelectedPack("simple"); setWizardStep(3); }}
+                    className="w-full flex items-center justify-between p-5 bg-card border border-border rounded-2xl hover:border-[#f472b6]/40 hover:shadow-md transition-all cursor-pointer text-left"
+                  >
+                    <div>
+                      <h3 className="text-sm font-sans font-bold text-foreground">Simple</h3>
+                      <p className="text-[10px] font-mono text-muted-foreground mt-0.5">solid colors · 7</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {/* Swatches preview */}
+                      <div className="flex -space-x-1.5">
+                        {BG_PRESETS.filter(b => b.pack === "simple").slice(0, 5).map(b => (
+                          <div key={b.id} className={`w-6 h-6 rounded-full border border-white ${b.preview}`} />
+                        ))}
+                        <div className="w-6 h-6 rounded-full border border-white bg-stone-100 flex items-center justify-center text-[9px] font-mono font-bold text-stone-500">
+                          +2
+                        </div>
+                      </div>
+                      <span className="text-stone-400 font-mono text-xs">▷</span>
+                    </div>
+                  </button>
+
+                  {/* Patterns Pack Card */}
+                  <button
+                    onClick={() => { setSelectedPack("patterns"); setWizardStep(3); }}
+                    className="w-full flex items-center justify-between p-5 bg-card border border-border rounded-2xl hover:border-[#f472b6]/40 hover:shadow-md transition-all cursor-pointer text-left"
+                  >
+                    <div>
+                      <h3 className="text-sm font-sans font-bold text-foreground">Patterns</h3>
+                      <p className="text-[10px] font-mono text-muted-foreground mt-0.5">prints &amp; scenes · 11</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {/* Pattern icons preview */}
+                      <div className="flex -space-x-1.5">
+                        {BG_PRESETS.filter(b => b.pack === "patterns").slice(0, 5).map(b => (
+                          <div key={b.id} className={`w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] bg-stone-100 ${b.preview}`} />
+                        ))}
+                        <div className="w-6 h-6 rounded-full border border-white bg-stone-100 flex items-center justify-center text-[9px] font-mono font-bold text-stone-500">
+                          +6
+                        </div>
+                      </div>
+                      <span className="text-stone-400 font-mono text-xs">▷</span>
+                    </div>
+                  </button>
+                </div>
+
+                <div className="pt-4 flex justify-between items-center">
+                  <button onClick={() => setWizardStep(1)} className="text-xs text-muted-foreground hover:underline cursor-pointer">
+                    ◁ back
+                  </button>
+                  <button
+                    onClick={() => setWizardStep(3)}
+                    className="px-6 py-2.5 rounded-xl font-bold bg-[#8e8d92] text-white text-xs tracking-wider hover:opacity-95 cursor-pointer uppercase flex items-center gap-1.5 shadow"
+                  >
+                    next ▷
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* WIZARD STEP 3: THEMES SELECTION CAROUSEL */}
+            {wizardStep === 3 && (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">
+                    {selectedPack === "simple" ? "Simple Themes" : "Patterns Themes"}
+                  </p>
+                  <button
+                    onClick={() => setWizardStep(2)}
+                    className="mt-2 text-[10px] font-mono font-bold bg-card border border-border px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    ◁ packs
+                  </button>
+                </div>
+
+                {/* Horizontal carousel selection */}
+                <div className="flex gap-4 overflow-x-auto pb-4 px-2 snap-x">
+                  {BG_PRESETS.filter(b => b.pack === selectedPack).map(bg => {
+                    const isSelected = selectedBg.id === bg.id;
+                    return (
+                      <button
+                        key={bg.id}
+                        onClick={() => setSelectedBg(bg)}
+                        className={`flex-shrink-0 w-36 snap-start flex flex-col items-center justify-center p-4 bg-card border-2 rounded-2xl transition-all cursor-pointer space-y-4
+                          ${isSelected ? "border-[#f472b6] bg-pink-500/5 shadow-md shadow-pink-500/10" : "border-border hover:border-[#f472b6]/40"}`}
+                      >
+                        {/* Visual strip thumbnail matching theme */}
+                        <div className={`w-14 h-24 border border-foreground/30 rounded p-1 flex flex-col gap-1 ${bg.previewClass || bg.preview}`}>
+                          <div className="w-full aspect-square border border-foreground/10 bg-white" />
+                          <div className="w-full aspect-square border border-foreground/10 bg-white" />
+                        </div>
+                        <span className="text-[11px] font-mono font-bold text-foreground">{bg.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-4 flex justify-between items-center">
+                  <button onClick={() => setWizardStep(2)} className="text-xs text-muted-foreground hover:underline cursor-pointer">
+                    ◁ back
+                  </button>
+                  <button
+                    onClick={() => setWizardStep(4)}
+                    className="px-6 py-2.5 rounded-xl font-bold bg-[#8e8d92] text-white text-xs tracking-wider hover:opacity-95 cursor-pointer uppercase flex items-center gap-1.5 shadow"
+                  >
+                    next ▷
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* WIZARD STEP 4: STICKERS & CAPTION */}
+            {wizardStep === 4 && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">
+                    Add Stickers &amp; Caption
+                  </p>
+                  <button onClick={() => setWizardStep(3)} className="text-xs text-muted-foreground hover:underline cursor-pointer">
+                    ◁ back
+                  </button>
+                </div>
+
+                {/* Live strip preview with sticker layer */}
+                <div ref={stripPreviewRef} className="relative w-full overflow-hidden rounded-2xl border border-border bg-white shadow-md select-none" style={{ minHeight: 260 }}>
+                  <div className="flex gap-2 p-3">
+                    {myPhotoUrl && <img src={myPhotoUrl} alt="me" className="flex-1 aspect-square object-cover rounded-lg" />}
+                    {partnerPhotoUrl && <img src={partnerPhotoUrl} alt="partner" className="flex-1 aspect-square object-cover rounded-lg" />}
+                  </div>
+                  <StickerLayer stickers={stickers} onMove={moveSticker} onRemove={removeSticker} containerRef={stripPreviewRef} />
+                </div>
+
+                {/* Sticker tray */}
+                <div className="space-y-2.5">
+                  <p className="text-[9px] font-mono text-muted-foreground tracking-wider uppercase">Stickers (tap to add, drag to place)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {STICKERS.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => addSticker(s)}
+                        className="w-11 h-11 rounded-xl border border-border bg-card hover:bg-accent hover:scale-110 active:scale-95 transition-all text-xl cursor-pointer flex items-center justify-center shadow-sm"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Caption input */}
+                <div className="space-y-1.5 pt-2">
+                  <label className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Caption</label>
+                  <input
+                    type="text"
+                    value={caption}
+                    onChange={e => setCaption(e.target.value)}
+                    placeholder="e.g. Friday night vibes 🌙"
+                    maxLength={80}
+                    className="w-full px-4 py-3 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[#f472b6]/40"
+                  />
+                </div>
+
+                <button
+                  onClick={handleMakeStrip}
+                  className="w-full py-4 rounded-2xl font-sans font-black text-white text-base bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                >
+                  <Sparkles className="w-5 h-5" /> Compose Strip ▷
+                </button>
+              </div>
+            )}
+
           </div>
         )}
 
