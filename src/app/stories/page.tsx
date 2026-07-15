@@ -9,6 +9,7 @@ import {
   Heart, Plus, ArrowLeft, BookOpen, Sparkles, Trash2,
   Image as ImageIcon, Loader2, AlertCircle, Compass, Smile
 } from "lucide-react";
+import { OpenScrapbook, CelestialSparks } from "@/components/cozy-illustrations";
 
 // Status Badge options for stories
 const STATUS_OPTIONS = [
@@ -311,8 +312,8 @@ export default function StoriesPage() {
 
         {/* ── STORIES GRID ────────────────────────────────────────── */}
         {stories.length === 0 ? (
-          <div className="text-center py-20 bg-card rounded-2xl border border-border/60 p-8 space-y-3">
-            <Smile className="w-10 h-10 text-muted-foreground mx-auto" />
+          <div className="text-center py-16 bg-card rounded-2xl border border-border/60 p-8 space-y-4">
+            <CelestialSparks className="w-28 h-28 mx-auto" />
             <h3 className="text-base font-bold text-foreground">No stories shared yet</h3>
             <p className="text-xs text-muted-foreground max-w-xs mx-auto">
               Be the first couple to share your milestones, date nights, or success story with the community!
@@ -342,8 +343,8 @@ export default function StoriesPage() {
                     {story.resolved_cover ? (
                       <img src={story.resolved_cover} alt={story.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-pink-500/10 to-blue-500/10 flex items-center justify-center">
-                        <BookOpen className="w-10 h-10 text-primary/30" />
+                      <div className="w-full h-full bg-gradient-to-br from-pink-500/5 to-blue-500/5 flex items-center justify-center">
+                        <OpenScrapbook className="w-20 h-20" />
                       </div>
                     )}
                     {/* Status Badge */}
@@ -408,8 +409,8 @@ export default function StoriesPage() {
                   {selectedStory.resolved_cover ? (
                     <img src={selectedStory.resolved_cover} alt={selectedStory.title} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-pink-500/15 to-blue-500/15 flex items-center justify-center">
-                      <BookOpen className="w-12 h-12 text-primary/20" />
+                    <div className="w-full h-full bg-gradient-to-br from-pink-500/5 to-blue-500/5 flex items-center justify-center">
+                      <OpenScrapbook className="w-24 h-24" />
                     </div>
                   )}
                   {/* Close btn */}

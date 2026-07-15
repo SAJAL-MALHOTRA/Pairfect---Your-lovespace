@@ -10,6 +10,7 @@ import {
   BookOpen, Plus, Trash2, Smile, Gift, Lock, Search
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { LoveLetterEnvelope, WaxSealStamp } from "@/components/cozy-illustrations";
 
 const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "";
 
@@ -363,8 +364,8 @@ export default function LoveLetterPage() {
             
             {/* Header Title */}
             <div className="border-b border-border/40 pb-6 space-y-2">
-              <h1 className="text-3xl font-sans font-black tracking-tight text-foreground flex items-center space-x-2.5">
-                <Mail className="w-7 h-7 text-[#db2777]" />
+              <h1 className="text-3xl font-sans font-black tracking-tight text-foreground flex items-center space-x-2">
+                <LoveLetterEnvelope className="w-12 h-12" />
                 <span>Love Letters</span>
               </h1>
               <p className="text-sm text-stone-500 max-w-2xl leading-relaxed">
@@ -670,9 +671,10 @@ export default function LoveLetterPage() {
                       {/* Animated Wax Seal button */}
                       <button
                         onClick={() => handleUnsealLetter(activeLetter)}
-                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-95 transition-all shadow-lg text-lg border-2 border-white ${config.seal}`}
+                        className="w-36 h-36 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer select-none"
+                        title="Click to unseal letter"
                       >
-                        💌
+                        <WaxSealStamp className="w-full h-full animate-bounce" />
                       </button>
 
                       <div className="space-y-1">
