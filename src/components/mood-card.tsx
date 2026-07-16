@@ -1,10 +1,5 @@
 import { Heart, Music, Quote, Clock3, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
-import dynamic from "next/dynamic";
-
-const AvatarScene = dynamic(() => import("@/components/avatar-scene").then((mod) => mod.AvatarScene), {
-  ssr: false,
-});
 
 function IntensityMeter({ value }: { value: number }) {
   return (
@@ -68,11 +63,6 @@ export function MoodCard({
 
         {/* Mood */}
         <div className="mt-5 flex items-center gap-4">
-          {/* Full-body voxel avatar (view-only, saved outfit colors) */}
-          <AvatarScene
-            initials={mood.initials}
-            className="h-28 w-[72px] shrink-0 -my-1"
-          />
           <span
             className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-3xl"
             role="img"
