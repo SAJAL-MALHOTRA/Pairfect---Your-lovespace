@@ -11,11 +11,43 @@ export default function OnboardingPage() {
   const [mode, setMode] = useState<"choice" | "create" | "join">("choice");
   const [inviteCode, setInviteCode] = useState("");
   const [inputCode, setInputCode] = useState("");
+  const [tempDisplayName, setTempDisplayName] = useState("");
+  const [displayNameSaved, setDisplayNameSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  // Keep display name input in sync with loaded profile
+  useEffect(() => {
+    if (profile?.display_name && !tempDisplayName) {
+      setTempDisplayName(profile.display_name);
+    }
+  }, [profile]);
+
+  const handleUpdateDisplayName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tempDisplayName.trim() || !user) return;
+    setLoading(true);
+    setError(null);
+    setDisplayNameSaved(false);
+    try {
+      const { error: updateErr } = await supabase
+        .from("users")
+        .update({ display_name: tempDisplayName.trim() })
+        .eq("id", user.id);
+
+      if (updateErr) throw updateErr;
+      setDisplayNameSaved(true);
+      await refreshSession();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to update display name.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // If user A is waiting for user B, set up subscription on the pair row
   useEffect(() => {
@@ -143,6 +175,38 @@ export default function OnboardingPage() {
 
           {mode === "choice" && (
             <div className="space-y-6 my-auto">
+              {/* Profile Display Name Update */}
+              <form onSubmit={handleUpdateDisplayName} className="space-y-2 border-b border-card-border pb-6">
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                  Your Display Name (What partner calls you)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={tempDisplayName}
+                    onChange={(e) => {
+                      setTempDisplayName(e.target.value);
+                      setDisplayNameSaved(false);
+                    }}
+                    placeholder="e.g. Sunny, Alex, Bun"
+                    className="flex-1 px-4 py-2.5 border border-card-border rounded-xl bg-background/50 text-xs focus:outline-none focus:ring-2 focus:ring-brand-rose-300 text-foreground"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || !tempDisplayName.trim() || tempDisplayName.trim() === profile?.display_name}
+                    className="px-4 py-2 bg-foreground hover:bg-foreground/90 disabled:opacity-40 text-background text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center"
+                  >
+                    {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save"}
+                  </button>
+                </div>
+                {displayNameSaved && (
+                  <p className="text-[10px] text-green-500 font-bold font-sans">
+                    ✓ Name saved successfully!
+                  </p>
+                )}
+              </form>
+
               <button
                 onClick={handleCreatePair}
                 disabled={loading}
