@@ -1,23 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Heart, Lock, Mail, AlertCircle } from "lucide-react";
+import { Heart, Lock, Mail, AlertCircle, Check } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [emailUnconfirmed, setEmailUnconfirmed] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setEmailUnconfirmed(false);
 
     const { error: loginError } = await supabase.auth.signInWithPassword({
       email,
@@ -25,7 +36,16 @@ export default function LoginPage() {
     });
 
     if (loginError) {
-      setError(loginError.message);
+      const isUnconfirmed = 
+        loginError.message.toLowerCase().includes("confirm") || 
+        loginError.message.toLowerCase().includes("verified") ||
+        loginError.message.toLowerCase().includes("verification");
+      
+      if (isUnconfirmed) {
+        setEmailUnconfirmed(true);
+      } else {
+        setError(loginError.message);
+      }
       setLoading(false);
     } else {
       router.push("/dashboard");
@@ -43,6 +63,27 @@ export default function LoginPage() {
     });
     if (oauthError) {
       setError(oauthError.message);
+      setLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (cooldown > 0 || !email) return;
+    setError(null);
+    setResendStatus(null);
+    setLoading(true);
+    try {
+      const { error: resendErr } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+      });
+      if (resendErr) throw resendErr;
+      setResendStatus("Verification link resent! Check your inbox.");
+      setCooldown(60);
+    } catch (err: any) {
+      console.error("Resend error:", err);
+      setError(err.message || "Failed to resend confirmation email.");
+    } finally {
       setLoading(false);
     }
   };
@@ -80,6 +121,36 @@ export default function LoginPage() {
             <div className="mb-6 p-4 rounded-xl bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
+            </div>
+          )}
+
+          {emailUnconfirmed && (
+            <div className="mb-6 p-4 rounded-xl border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-3 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-red-500" />
+              <div className="flex items-start space-x-2 text-red-500">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono">Verify Your Email</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Please verify your email first — check your inbox, or click below to resend the confirmation link.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={loading || cooldown > 0}
+                onClick={handleResendEmail}
+                className="w-full py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-wider text-white bg-foreground hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center"
+              >
+                {cooldown > 0 ? `Resend Link in ${cooldown}s` : "Resend Confirmation Link"}
+              </button>
+            </div>
+          )}
+
+          {resendStatus && (
+            <div className="mb-6 p-4 rounded-xl border border-green-500/20 bg-green-500/5 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-sm flex items-center gap-2">
+              <Check className="w-4.5 h-4.5 flex-shrink-0" />
+              <span>{resendStatus}</span>
             </div>
           )}
 
