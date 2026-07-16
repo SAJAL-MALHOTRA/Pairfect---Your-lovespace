@@ -80,24 +80,18 @@ export default function MomentsPage() {
     if (!pair) return;
     setFetching(true);
     try {
-      // 1. Check eligibility (must be in first 100 users created_at index)
-      if (user?.id) {
-        const { data: userData, error: userErr } = await supabase
-          .from("users")
-          .select("created_at")
-          .eq("id", user.id)
-          .single();
+      // 1. Check eligibility: first 50 unique couples to active the feature (claim a slot by having at least 1 moment)
+      const { data: allActiveMoments, error: claimErr } = await supabase
+        .from("shared_moments")
+        .select("pair_id");
 
-        if (!userErr && userData?.created_at) {
-          const { count, error: countErr } = await supabase
-            .from("users")
-            .select("id", { count: "exact", head: true })
-            .lte("created_at", userData.created_at);
+      if (!claimErr && allActiveMoments) {
+        const activePairs = Array.from(new Set(allActiveMoments.map((m: any) => m.pair_id)));
+        const totalClaimedCouples = activePairs.length;
+        const currentCoupleHasClaimed = activePairs.includes(pair.id);
 
-          if (!countErr && count !== null) {
-            setIsEligible(count <= 100);
-          }
-        }
+        // Eligible if current couple already has moments, or if there is room for new couples (less than 50 claimed)
+        setIsEligible(currentCoupleHasClaimed || totalClaimedCouples < 50);
       }
       setCheckingEligibility(false);
 
@@ -261,17 +255,14 @@ export default function MomentsPage() {
     return (
       <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
         <Navigation />
-        <main className="max-w-md w-full mx-auto px-4 py-24 flex-1 flex flex-col justify-center items-center text-center space-y-6">
+        <main className="max-w-md w-full mx-auto px-4 py-24 flex-1 flex flex-col justify-center items-center text-center space-y-6 animate-fade-in">
           <div className="mx-auto flex items-center justify-center w-20 h-20 rounded-2xl bg-accent/40 border border-border text-primary shadow-inner">
             <Lock className="w-10 h-10 text-pink-500" />
           </div>
           <div className="space-y-3">
-            <h1 className="text-2xl font-sans font-black tracking-tight text-foreground">Early Access Full</h1>
+            <h1 className="text-2xl font-sans font-black tracking-tight text-foreground">🎉 Early Access is Full!</h1>
             <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
-              Thank you for your interest! Moments is currently in early access for our first 100 registered users (50 couples).
-            </p>
-            <p className="text-xs text-muted-foreground/80 leading-relaxed text-pretty">
-              The current access window is full. Moments will be available for all couples with the upcoming **Pairfect Premium** plan!
+              Moments was available exclusively to our first 50 couples. It will return soon as part of Pairfect Premium.
             </p>
           </div>
         </main>
@@ -292,7 +283,7 @@ export default function MomentsPage() {
             <div className="space-y-1">
               <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono text-pink-500">Scrapbook Limit Reached</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                You've reached the maximum of 25 memories. Unlimited memories will be available with **Pairfect Premium**.
+                You've reached your 25-memory limit. Unlimited memories will be available with Pairfect Premium.
               </p>
             </div>
           </div>
@@ -308,9 +299,12 @@ export default function MomentsPage() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Document your milestones, dates, and sweet memories.
             </p>
-            <div className="mt-2 flex items-center space-x-2">
+            <div className="mt-2 flex flex-wrap gap-2 items-center">
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${moments.length >= 25 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400'}`}>
-                {moments.length} / 25 memories used
+                {moments.length} / 25 Memories Used
+              </span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                Early Access
               </span>
             </div>
           </div>
