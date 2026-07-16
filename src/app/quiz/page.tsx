@@ -518,6 +518,27 @@ export default function QuizPage() {
     }
   };
 
+  // Save completed quiz session score metrics to Supabase
+  const saveQuizSessionToDb = async (finalCorrect: number, finalTotal: number) => {
+    if (!pair || !selectedPack) return;
+    try {
+      console.log("[QuizPage] Persisting completed quiz session to DB...");
+      const { error } = await supabase
+        .from("quiz_history")
+        .insert({
+          pair_id: pair.id,
+          pack_id: selectedPack.id,
+          score_correct: finalCorrect,
+          score_total: finalTotal
+        });
+
+      if (error) throw error;
+      console.log("[QuizPage] Quiz history saved successfully!");
+    } catch (e) {
+      console.error("Error saving quiz session to DB:", e);
+    }
+  };
+
   // Grade Guesses & Move to Next Question
   const handleGrade = async (isCorrect: boolean) => {
     if (!gameState || !selectedPack || gradingProgress || !user || !pair) return;
@@ -540,8 +561,15 @@ export default function QuizPage() {
     const isDoublePoints = selectedPack.id === "double-points" || selectedPack.id === "spicy-twists";
     const pointsAwarded = isCorrect ? (isDoublePoints ? 2 : 1) : 0;
 
+    const finalCorrect = gameState.scores.correct + pointsAwarded;
+    const finalTotal = gameState.scores.total + (isDoublePoints ? 2 : 1);
+
     const nextQuestionIndex = currentQIndex + 1;
     const isFinished = nextQuestionIndex >= selectedPack.questions.length;
+
+    if (isFinished) {
+      await saveQuizSessionToDb(finalCorrect, finalTotal);
+    }
 
     // Alternate Subject Turns for next question
     const nextTurnOwnerId = gameState.turnOwnerId === user.id ? partner?.id : user.id;
@@ -559,8 +587,8 @@ export default function QuizPage() {
         [currentQIndex]: isCorrect ? "correct" : "incorrect"
       },
       scores: {
-        correct: gameState.scores.correct + pointsAwarded,
-        total: gameState.scores.total + (isDoublePoints ? 2 : 1)
+        correct: finalCorrect,
+        total: finalTotal
       },
       turnOwnerId: nextTurnOwnerId,
       active: !isFinished
