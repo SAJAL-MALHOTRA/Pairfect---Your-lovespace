@@ -181,13 +181,39 @@ export default function IQDuelPage() {
     setStarting(true);
 
     try {
-      // Pick 6 random questions
+      // 1. Fetch recently played question IDs for this pair to prevent duplicate fatigue (last 4 duels = ~24 questions)
+      const { data: pastDuels } = await supabase
+        .from("iq_duels")
+        .select("question_ids")
+        .eq("pair_id", pair.id)
+        .order("created_at", { ascending: false })
+        .limit(4);
+
+      const playedQuestionIds = new Set<string>();
+      if (pastDuels) {
+        pastDuels.forEach((duel: any) => {
+          if (Array.isArray(duel.question_ids)) {
+            duel.question_ids.forEach((id: string) => playedQuestionIds.add(id));
+          }
+        });
+      }
+
+      // 2. Fetch all questions from the database
       const { data: allQ, error: qErr } = await supabase
         .from("iq_questions")
         .select("*");
       if (qErr) throw qErr;
 
-      const shuffled = [...(allQ || [])].sort(() => Math.random() - 0.5).slice(0, 6);
+      // 3. Filter out recently played questions
+      let candidatePool = (allQ || []).filter((q: any) => !playedQuestionIds.has(q.id));
+      
+      // Fallback if the remaining candidate pool is too small to build a full game
+      if (candidatePool.length < 6) {
+        candidatePool = allQ || [];
+      }
+
+      // 4. Shuffle in JavaScript
+      const shuffled = [...candidatePool].sort(() => Math.random() - 0.5).slice(0, 6);
       const qIds = shuffled.map((q: any) => q.id);
 
       // Create duel row

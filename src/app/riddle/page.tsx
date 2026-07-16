@@ -10,6 +10,7 @@ import {
   ArrowLeft, Timer, MessageSquare, Plus, RefreshCw, HelpCircle
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { checkCorrectAnswer } from "@/lib/string-similarity";
 
 export default function RiddlePage() {
   const { user, pair, partner, loading } = useAuth();
@@ -299,12 +300,7 @@ export default function RiddlePage() {
 
   // 8. Fuzz Match Helper
   const checkCorrect = (userAns: string, correctAns: string) => {
-    if (!userAns || !correctAns) return false;
-    const cleanUser = userAns.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
-    const cleanCorrect = correctAns.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
-    
-    // Exact or substring match (e.g. "a towel" contains "towel")
-    return cleanUser.includes(cleanCorrect) || cleanCorrect.includes(cleanUser);
+    return checkCorrectAnswer(userAns, correctAns);
   };
 
   if (loading || !user || !pair) {

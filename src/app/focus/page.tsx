@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { 
   Play, Pause, RotateCcw, Brain, Timer, Flame, Coffee, 
-  Sparkles, CheckCircle2, History, AlertTriangle, ChevronRight, Check
+  Sparkles, CheckCircle2, History, AlertTriangle, ChevronRight, Check, X
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -28,6 +28,9 @@ interface FocusLog {
   label: string;
   duration_minutes: number;
   completed_at: string;
+  started_at?: string;
+  ended_at?: string;
+  completed?: boolean;
   display_name?: string;
   users?: {
     display_name: string;
@@ -45,6 +48,8 @@ export default function FocusZonePage() {
   const [timerActive, setTimerActive] = useState(false);
   const [label, setLabel] = useState("");
   const [customLabelInput, setCustomLabelInput] = useState("");
+  const [startedAt, setStartedAt] = useState<string | null>(null);
+  const startedAtRef = useRef<string | null>(null);
 
   // DB vs Local fallback states
   const [schemaError, setSchemaError] = useState(false);
@@ -86,6 +91,9 @@ export default function FocusZonePage() {
           label,
           duration_minutes,
           completed_at,
+          started_at,
+          ended_at,
+          completed,
           users (
             display_name
           )
@@ -250,8 +258,9 @@ export default function FocusZonePage() {
   };
 
   // Database session save log
-  const saveFocusSessionLog = async (completedLabel: string, completedDurationMinutes: number) => {
+  const saveFocusSessionLog = async (completedLabel: string, completedDurationMinutes: number, wasCompleted: boolean = true) => {
     const timestamp = new Date().toISOString();
+    const startVal = startedAtRef.current || timestamp;
     
     // 1. Try DB Write
     if (pair && !schemaError) {
@@ -264,6 +273,9 @@ export default function FocusZonePage() {
             label: completedLabel,
             duration_minutes: completedDurationMinutes,
             completed_at: timestamp,
+            started_at: startVal,
+            ended_at: timestamp,
+            completed: wasCompleted,
           });
 
         if (error) throw error;
@@ -281,6 +293,9 @@ export default function FocusZonePage() {
       label: completedLabel,
       duration_minutes: completedDurationMinutes,
       completed_at: timestamp,
+      started_at: startVal,
+      ended_at: timestamp,
+      completed: wasCompleted,
       display_name: profile?.display_name || "Me",
     };
 
@@ -299,6 +314,10 @@ export default function FocusZonePage() {
     setSecondsRemaining(seconds);
     setLabel(topic);
     setTimerActive(true);
+
+    const nowStr = new Date().toISOString();
+    setStartedAt(nowStr);
+    startedAtRef.current = nowStr;
 
     if (intervalRef.current) clearInterval(intervalRef.current);
     
@@ -357,11 +376,20 @@ export default function FocusZonePage() {
   };
 
   const resetTimer = () => {
+    // If work timer is active, log it as an abandoned session
+    if (timerActiveRef.current && statusRef.current === "work" && startedAtRef.current) {
+      const elapsedSeconds = durationSecondsRef.current - secondsRemainingRef.current;
+      const elapsedMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+      saveFocusSessionLog(labelRef.current || "Focus Session", elapsedMinutes, false);
+    }
+
     setTimerActive(false);
     setStatus("idle");
     setSecondsRemaining(1500);
     setDurationSeconds(1500);
     setLabel("");
+    setStartedAt(null);
+    startedAtRef.current = null;
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -609,15 +637,26 @@ export default function FocusZonePage() {
                         className="flex items-center justify-between p-3 border border-border bg-background/30 rounded-2xl hover:bg-background/50 transition-all"
                       >
                         <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-xl ${isMe ? "bg-[#f472b6]/10 text-[#f472b6]" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}>
-                            <Check className="w-4 h-4" />
+                          <div className={`p-2 rounded-xl ${
+                            log.completed === false
+                              ? "bg-red-500/10 text-red-500"
+                              : isMe
+                              ? "bg-[#f472b6]/10 text-[#f472b6]"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          }`}>
+                            {log.completed === false ? (
+                              <X className="w-4 h-4" />
+                            ) : (
+                              <Check className="w-4 h-4" />
+                            )}
                           </div>
                           <div>
                             <p className="text-xs font-bold text-foreground">
                               {log.label}
                             </p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">
-                              Completed by <span className="font-semibold text-foreground/80">{log.display_name || (isMe ? "Me" : "Partner")}</span>
+                              {log.completed === false ? "Abandoned by " : "Completed by "}
+                              <span className="font-semibold text-foreground/80">{log.display_name || (isMe ? "Me" : "Partner")}</span>
                             </p>
                           </div>
                         </div>
