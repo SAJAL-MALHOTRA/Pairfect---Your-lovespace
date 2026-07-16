@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: Request) {
   try {
@@ -75,22 +74,39 @@ Respond in JSON exactly matching this structure:
 
 Provide ONLY the raw JSON output. Do not wrap it in markdown code blocks.`;
 
-    // 5. Invoke Gemini API
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (!geminiKey) {
-      return NextResponse.json({ error: "Gemini API key is not configured" }, { status: 500 });
+    // 5. Invoke Groq API (OpenAI-compatible chat completions)
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (!groqApiKey) {
+      return NextResponse.json({ error: "Groq API key is not configured" }, { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
+    console.log("[VibeJudge] Sending request to Groq API using model llama-3.3-70b-versatile");
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${groqApiKey}`,
       },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+      }),
     });
 
-    const response = await model.generateContent(prompt);
-    const textOutput = response.response.text();
+    if (!groqResponse.ok) {
+      const errorText = await groqResponse.text();
+      throw new Error(`Groq API error (status ${groqResponse.status}): ${errorText}`);
+    }
+
+    const completion = await groqResponse.json();
+    const textOutput = completion.choices[0].message.content;
+    console.log("[VibeJudge] Groq API response received:", textOutput);
     const result = JSON.parse(textOutput);
 
     const winnerLetter = result.winner; // "A" or "B"
