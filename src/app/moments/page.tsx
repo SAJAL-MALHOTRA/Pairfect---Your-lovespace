@@ -5,12 +5,64 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { format, parseISO } from "date-fns";
-import { BookOpen, Calendar, Plus, Camera, Loader2, AlertCircle, Trash2, X, Image as ImageIcon } from "lucide-react";
+import { BookOpen, Calendar, Plus, Camera, Loader2, AlertCircle, Trash2, X, Image as ImageIcon, Lock } from "lucide-react";
+
+// Image optimization utility: Convert to WebP, resize max side to 1200px, compress to ~200-250KB
+const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        const MAX_SIDE = 1200;
+
+        if (width > height) {
+          if (width > MAX_SIDE) {
+            height = Math.round((height * MAX_SIDE) / width);
+            width = MAX_SIDE;
+          }
+        } else {
+          if (height > MAX_SIDE) {
+            width = Math.round((width * MAX_SIDE) / height);
+            height = MAX_SIDE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Quality 0.8 is standard for high quality and optimized size (~200KB)
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Canvas toBlob output is empty"));
+            }
+          },
+          "image/webp",
+          0.8
+        );
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
 
 export default function MomentsPage() {
   const { user, pair, profile, partner, loading } = useAuth();
   const [moments, setMoments] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [isEligible, setIsEligible] = useState(true);
+  const [checkingEligibility, setCheckingEligibility] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   
   // Form states
@@ -28,7 +80,28 @@ export default function MomentsPage() {
     if (!pair) return;
     setFetching(true);
     try {
-      // 1. Fetch moments
+      // 1. Check eligibility (must be in first 100 users created_at index)
+      if (user?.id) {
+        const { data: userData, error: userErr } = await supabase
+          .from("users")
+          .select("created_at")
+          .eq("id", user.id)
+          .single();
+
+        if (!userErr && userData?.created_at) {
+          const { count, error: countErr } = await supabase
+            .from("users")
+            .select("id", { count: "exact", head: true })
+            .lte("created_at", userData.created_at);
+
+          if (!countErr && count !== null) {
+            setIsEligible(count <= 100);
+          }
+        }
+      }
+      setCheckingEligibility(false);
+
+      // 2. Fetch moments
       const { data: momentsData, error: momentsErr } = await supabase
         .from("shared_moments")
         .select("*")
@@ -37,7 +110,7 @@ export default function MomentsPage() {
 
       if (momentsErr) throw momentsErr;
 
-      // 2. Resolve signed URLs for private images
+      // 3. Resolve signed URLs for private images
       const resolvedMoments = await Promise.all(
         (momentsData || []).map(async (moment: any) => {
           if (moment.photo_url) {
@@ -66,10 +139,10 @@ export default function MomentsPage() {
   };
 
   useEffect(() => {
-    if (!loading && pair) {
+    if (!loading && pair && profile) {
       fetchMomentsAndUrls();
     }
-  }, [pair, loading]);
+  }, [pair, loading, profile]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -93,17 +166,26 @@ export default function MomentsPage() {
     try {
       let storagePath: string | null = null;
 
-      // 1. Upload photo if provided
+      // 1. Upload photo if provided (optimized to WebP, max 1200px side)
       if (photoFile) {
-        const fileExt = photoFile.name.split(".").pop();
-        const filename = `${Date.now()}.${fileExt}`;
+        console.log("[MomentsPage] Compressing selected file:", photoFile.name, "size:", photoFile.size);
+        let compressedBlob: Blob = photoFile;
+        try {
+          compressedBlob = await compressImage(photoFile);
+          console.log("[MomentsPage] Image compressed successfully to WebP! Size:", compressedBlob.size);
+        } catch (compressErr) {
+          console.warn("[MomentsPage] Image compression failed, falling back to original upload:", compressErr);
+        }
+
+        const filename = `${Date.now()}.webp`;
         storagePath = `${pair.id}/${filename}`;
 
         const { error: uploadError } = await supabase.storage
           .from("memories")
-          .upload(storagePath, photoFile, {
+          .upload(storagePath, compressedBlob, {
             cacheControl: "3600",
             upsert: false,
+            contentType: "image/webp",
           });
 
         if (uploadError) throw uploadError;
@@ -164,7 +246,7 @@ export default function MomentsPage() {
     }
   };
 
-  if (loading || fetching) {
+  if (loading || fetching || checkingEligibility) {
     return (
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
@@ -175,12 +257,47 @@ export default function MomentsPage() {
     );
   }
 
+  if (!isEligible) {
+    return (
+      <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
+        <Navigation />
+        <main className="max-w-md w-full mx-auto px-4 py-24 flex-1 flex flex-col justify-center items-center text-center space-y-6">
+          <div className="mx-auto flex items-center justify-center w-20 h-20 rounded-2xl bg-accent/40 border border-border text-primary shadow-inner">
+            <Lock className="w-10 h-10 text-pink-500" />
+          </div>
+          <div className="space-y-3">
+            <h1 className="text-2xl font-sans font-black tracking-tight text-foreground">Early Access Full</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
+              Thank you for your interest! Moments is currently in early access for our first 100 registered users (50 couples).
+            </p>
+            <p className="text-xs text-muted-foreground/80 leading-relaxed text-pretty">
+              The current access window is full. Moments will be available for all couples with the upcoming **Pairfect Premium** plan!
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
       <Navigation />
 
-      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-8">
+      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start space-y-8 animate-fade-in">
         
+        {moments.length >= 25 && (
+          <div className="p-4 rounded-xl border border-pink-500/20 bg-pink-500/5 dark:bg-pink-500/10 text-foreground text-sm flex items-start space-x-2.5 relative overflow-hidden animate-fade-in">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-pink-500" />
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-pink-500" />
+            <div className="space-y-1">
+              <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono text-pink-500">Scrapbook Limit Reached</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                You've reached the maximum of 25 memories. Unlimited memories will be available with **Pairfect Premium**.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div>
@@ -191,11 +308,17 @@ export default function MomentsPage() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Document your milestones, dates, and sweet memories.
             </p>
+            <div className="mt-2 flex items-center space-x-2">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${moments.length >= 25 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400'}`}>
+                {moments.length} / 25 memories used
+              </span>
+            </div>
           </div>
 
           <button
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
+            disabled={moments.length >= 25}
+            className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:opacity-40"
           >
             <Plus className="w-4 h-4" />
             <span>Add Moment</span>
