@@ -5,12 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, Lock, Mail, AlertCircle, Check } from "lucide-react";
+import { OtpInput } from "@/components/otp-input";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [emailUnconfirmed, setEmailUnconfirmed] = useState(false);
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [cooldown, setCooldown] = useState(0);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -78,11 +80,36 @@ export default function LoginPage() {
         email: email.trim(),
       });
       if (resendErr) throw resendErr;
-      setResendStatus("Verification link resent! Check your inbox.");
+      setResendStatus("Verification code resent! Check your inbox.");
       setCooldown(60);
     } catch (err: any) {
       console.error("Resend error:", err);
       setError(err.message || "Failed to resend confirmation email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const enteredCode = otp.join("");
+    if (enteredCode.length < 6 || !email) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: verifyErr } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: enteredCode,
+        type: "signup",
+      });
+
+      if (verifyErr) throw verifyErr;
+
+      // Successfully verified - redirect to dashboard
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error("Verification error on login:", err);
+      setError("Incorrect code, please try again.");
     } finally {
       setLoading(false);
     }
@@ -125,26 +152,37 @@ export default function LoginPage() {
           )}
 
           {emailUnconfirmed && (
-            <div className="mb-6 p-4 rounded-xl border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-3 relative overflow-hidden">
+            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-xl border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-4 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-red-500" />
               <div className="flex items-start space-x-2 text-red-500">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono">Verify Your Email</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Please verify your email first — check your inbox, or click below to resend the confirmation link.
+                    Please verify your email first — enter the 6-digit verification code sent to <span className="font-bold text-foreground">{email}</span>
                   </p>
                 </div>
               </div>
+
+              <OtpInput value={otp} onChange={setOtp} disabled={loading} />
+
+              <button
+                type="submit"
+                disabled={loading || otp.join("").length < 6}
+                className="w-full py-2.5 px-4 rounded-md shadow-md text-xs font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center"
+              >
+                {loading ? "Verifying..." : "Verify Code"}
+              </button>
+
               <button
                 type="button"
                 disabled={loading || cooldown > 0}
                 onClick={handleResendEmail}
-                className="w-full py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-wider text-white bg-foreground hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center"
+                className="w-full py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center"
               >
-                {cooldown > 0 ? `Resend Link in ${cooldown}s` : "Resend Confirmation Link"}
+                {cooldown > 0 ? `Resend Code in ${cooldown}s` : "Resend Code"}
               </button>
-            </div>
+            </form>
           )}
 
           {resendStatus && (

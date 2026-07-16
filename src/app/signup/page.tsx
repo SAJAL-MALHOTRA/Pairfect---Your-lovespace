@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, Lock, Mail, User, AlertCircle, Check } from "lucide-react";
+import { OtpInput } from "@/components/otp-input";
 
 export default function SignupPage() {
   const [displayName, setDisplayName] = useState("");
@@ -14,6 +15,7 @@ export default function SignupPage() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [cooldown, setCooldown] = useState(0);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -88,11 +90,36 @@ export default function SignupPage() {
         email: verificationEmail,
       });
       if (resendErr) throw resendErr;
-      setResendStatus("Verification link sent! Check your inbox.");
+      setResendStatus("Verification code sent! Check your inbox.");
       setCooldown(60);
     } catch (err: any) {
       console.error("Resend error:", err);
       setError(err.message || "Failed to resend confirmation email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const enteredCode = otp.join("");
+    if (enteredCode.length < 6 || !verificationEmail) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: verifyErr } = await supabase.auth.verifyOtp({
+        email: verificationEmail,
+        token: enteredCode,
+        type: "signup",
+      });
+
+      if (verifyErr) throw verifyErr;
+
+      // Direct redirect to onboarding page on success
+      router.push("/onboarding");
+    } catch (err: any) {
+      console.error("Verification error:", err);
+      setError("Incorrect code, please try again.");
     } finally {
       setLoading(false);
     }
@@ -142,20 +169,19 @@ export default function SignupPage() {
           {/* 3px top gradient accent bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
 
-          {needsVerification ? (
-            <div className="space-y-6 text-center py-4 animate-fade-in">
+           {needsVerification ? (
+            <form onSubmit={handleVerifyOtp} className="space-y-6 text-center py-4 animate-fade-in">
               <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary">
-                <Mail className="w-8 h-8" />
+                <Lock className="w-8 h-8" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold tracking-tight text-foreground">Verify your email</h3>
+                <h3 className="text-xl font-bold tracking-tight text-foreground">Confirm your email</h3>
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed text-pretty">
-                  We've sent a confirmation link to <span className="font-bold text-foreground">{verificationEmail}</span>.
-                </p>
-                <p className="text-xs text-muted-foreground/80 max-w-xs mx-auto text-pretty">
-                  Click the link in that email to activate your account.
+                  Enter the 6-digit verification code sent to <span className="font-bold text-foreground">{verificationEmail}</span>
                 </p>
               </div>
+
+              <OtpInput value={otp} onChange={setOtp} disabled={loading} />
 
               {error && (
                 <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs flex items-center justify-center gap-2">
@@ -173,23 +199,23 @@ export default function SignupPage() {
 
               <div className="pt-4 border-t border-border space-y-3">
                 <button
-                  type="button"
-                  disabled={loading || cooldown > 0}
-                  onClick={handleResendEmail}
-                  className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-foreground hover:opacity-90 disabled:opacity-40 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center"
+                  type="submit"
+                  disabled={loading || otp.join("").length < 6}
+                  className="w-full flex justify-center py-3 px-4 rounded-md shadow-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer shadow-pink-500/10 dark:shadow-none"
                 >
-                  {cooldown > 0 ? `Resend Email in ${cooldown}s` : "Resend Email"}
+                  {loading ? "Verifying..." : "Verify"}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setNeedsVerification(false)}
-                  className="w-full text-center py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                  disabled={loading || cooldown > 0}
+                  onClick={handleResendEmail}
+                  className="w-full text-center py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50"
                 >
-                  Back to Sign Up
+                  {cooldown > 0 ? `Resend Code in ${cooldown}s` : "Resend Code"}
                 </button>
               </div>
-            </div>
+            </form>
           ) : (
             <>
               {error && (
