@@ -22,6 +22,15 @@ export default function SignupPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Debug logging for mount and loading changes
+  useEffect(() => {
+    console.log("[SignupPage] Mounted");
+  }, []);
+
+  useEffect(() => {
+    console.log("[SignupPage] loading state changed:", loading);
+  }, [loading]);
+
   useEffect(() => {
     if (cooldown > 0) {
       const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -53,6 +62,7 @@ export default function SignupPage() {
           // Email confirmation is enabled
           setVerificationEmail(email);
           setNeedsVerification(true);
+          setLoading(false); // Fix: set loading to false so OTP inputs are enabled!
         } else {
           // Direct login after signup if confirmation is disabled
           router.push("/onboarding");
@@ -103,10 +113,12 @@ export default function SignupPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const enteredCode = otp.join("");
+    console.log("[SignupPage] handleVerifyOtp called with token:", enteredCode);
     if (enteredCode.length < 6 || !verificationEmail) return;
     setLoading(true);
     setError(null);
     try {
+      console.log("[SignupPage] calling supabase.auth.verifyOtp with email:", verificationEmail, "and token:", enteredCode);
       const { data, error: verifyErr } = await supabase.auth.verifyOtp({
         email: verificationEmail,
         token: enteredCode,

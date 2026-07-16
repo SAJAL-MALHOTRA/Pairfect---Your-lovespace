@@ -19,6 +19,15 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Debug logging for mount and loading changes
+  useEffect(() => {
+    console.log("[LoginPage] Mounted");
+  }, []);
+
+  useEffect(() => {
+    console.log("[LoginPage] loading state changed:", loading);
+  }, [loading]);
+
   useEffect(() => {
     if (cooldown > 0) {
       const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -93,10 +102,12 @@ export default function LoginPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const enteredCode = otp.join("");
+    console.log("[LoginPage] handleVerifyOtp called with token:", enteredCode);
     if (enteredCode.length < 6 || !email) return;
     setLoading(true);
     setError(null);
     try {
+      console.log("[LoginPage] calling supabase.auth.verifyOtp with email:", email.trim(), "and token:", enteredCode);
       const { data, error: verifyErr } = await supabase.auth.verifyOtp({
         email: email.trim(),
         token: enteredCode,
