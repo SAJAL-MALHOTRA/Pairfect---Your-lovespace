@@ -44,9 +44,12 @@ export default function SignupPage() {
     setError(null);
     setIsRateLimited(false);
 
+    const cleanEmail = email.trim().toLowerCase();
+
     try {
+      console.log("[SignupPage] handleSignup calling signUp with cleanEmail:", cleanEmail);
       const { data, error: signupError } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
           data: {
@@ -59,10 +62,17 @@ export default function SignupPage() {
         throw signupError;
       } else {
         if (data.user && !data.session) {
-          // Email confirmation is enabled
-          setVerificationEmail(email);
+          // Email confirmation is enabled. Resend code to guarantee dispatch (bypasses silent suppression for existing unconfirmed accounts)
+          console.log("[SignupPage] signUp succeeded. Dispatching explicit resend to cleanEmail:", cleanEmail);
+          const { data: resendData, error: resendError } = await supabase.auth.resend({
+            type: "signup",
+            email: cleanEmail,
+          });
+          console.log("[SignupPage] Explicit resend outcome:", { data: resendData, error: resendError });
+
+          setVerificationEmail(cleanEmail);
           setNeedsVerification(true);
-          setLoading(false); // Fix: set loading to false so OTP inputs are enabled!
+          setLoading(false);
         } else {
           // Direct login after signup if confirmation is disabled
           router.push("/onboarding");
