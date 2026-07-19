@@ -40,7 +40,6 @@ export default function RiddlePage() {
   // 1. Fetch Riddles & Historic Sessions
   const fetchLobbyData = async () => {
     if (!pair) return;
-    setFetching(true);
     try {
       // Fetch riddles pool
       const { data: rData } = await supabase.from("riddles").select("*");

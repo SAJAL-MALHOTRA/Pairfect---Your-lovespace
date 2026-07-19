@@ -39,7 +39,6 @@ export default function VibeJudgePage() {
   // 1. Fetch Disputes List
   const fetchDisputes = async () => {
     if (!pair) return;
-    setFetching(true);
     try {
       const { data, error: err } = await supabase
         .from("vibe_disputes")

@@ -68,7 +68,6 @@ export default function StoriesPage() {
 
   // ── Fetch Stories & Profiles ─────────────────────────────────────
   const fetchStories = async () => {
-    setFetching(true);
     try {
       // 1. Get stories
       const { data: storyData, error: storyErr } = await supabase

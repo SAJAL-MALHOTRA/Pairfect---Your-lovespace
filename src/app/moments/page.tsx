@@ -78,7 +78,6 @@ export default function MomentsPage() {
 
   const fetchMomentsAndUrls = async () => {
     if (!pair) return;
-    setFetching(true);
     try {
       // 1. Check eligibility: first 50 unique couples to active the feature (claim a slot by having at least 1 moment)
       const { data: allActiveMoments, error: claimErr } = await supabase

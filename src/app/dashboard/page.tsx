@@ -156,7 +156,6 @@ export default function DashboardPage() {
 
   const fetchTodayData = async () => {
     if (!pair) return;
-    setFetching(true);
     try {
       // 1. Fetch Mood Logs
       const { data: moodLogs, error } = await supabase

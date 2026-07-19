@@ -189,7 +189,6 @@ export default function LoveLetterPage() {
   // Fetch initial details
   const fetchData = async () => {
     if (!pair) return;
-    setFetching(true);
     try {
       const res = await fetch(`/api/love-letters?pairId=${pair.id}`);
       const data = await res.json();
