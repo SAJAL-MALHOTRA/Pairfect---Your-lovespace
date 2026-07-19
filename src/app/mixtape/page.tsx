@@ -1,31 +1,38 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
+import PhysicalCassetteTape, { CassettePattern, CassetteSticker } from "@/components/cassette-tape";
 import {
   Loader2, Plus, X, ArrowLeft, ChevronUp, ChevronDown,
   Trash2, Music, Heart, Moon, Sun, Guitar, Sparkles,
   Play, MapPin, Calendar as CalendarIcon, ExternalLink,
+  List, Clock, Disc, Smile, Check, Share2, CornerDownRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ── Cover Theme Definitions ─────────────────────────────────────────────────
-const COVER_THEMES: { key: string; icon: any; label: string }[] = [
-  { key: "music", icon: Music, label: "Classic" },
-  { key: "heart", icon: Heart, label: "Romantic" },
-  { key: "moon", icon: Moon, label: "Late Night" },
-  { key: "sun", icon: Sun, label: "Summer" },
-  { key: "guitar", icon: Guitar, label: "Acoustic" },
-  { key: "sparkles", icon: Sparkles, label: "Magic" },
+// ── Handmade Cassette Shell Options ─────────────────────────────────────────
+const CASSETTE_PATTERNS: { key: CassettePattern; label: string; icon: string }[] = [
+  { key: "gingham",  label: "Rose Gingham", icon: "🌸" },
+  { key: "clover",   label: "Wildflower",   icon: "🌿" },
+  { key: "grid",     label: "Vintage Grid", icon: "🏷️" },
+  { key: "midnight", label: "Midnight",     icon: "🌙" },
+  { key: "velvet",   label: "Golden Velvet",icon: "📜" },
+  { key: "classic",  label: "Classic Cream",icon: "☕" },
 ];
 
-function getCoverIcon(themeKey: string) {
-  return COVER_THEMES.find((t) => t.key === themeKey)?.icon || Music;
-}
+// ── Sticker Decals ──────────────────────────────────────────────────────────
+const DECAL_OPTIONS: { key: CassetteSticker; label: string; icon: string }[] = [
+  { key: "eucalyptus", label: "Eucalyptus", icon: "🌿" },
+  { key: "daisy",      label: "Daisies",    icon: "🌼" },
+  { key: "ribbon",     label: "Gingham Bow",icon: "🎀" },
+  { key: "seal",       label: "Wax Seal",   icon: "📜" },
+  { key: "heart",      label: "Love Heart", icon: "💖" },
+];
 
-// ── Pookie Emojis for song thumbnails (matches Moments) ─────────────────────
+// ── Pookie Emojis for song thumbnails ───────────────────────────────────────
 const POOKIE_EMOJIS = [
   "💖", "🥰", "💘", "💝", "💗", "💓", "💞", "💕",
   "💌", "🧸", "🌹", "✨", "👩‍❤️‍👨", "🌅", "🍰", "🍷",
@@ -77,86 +84,65 @@ const EMPTY_DRAFT: DraftSong = {
   story: "", photo_emoji: "", date_memory: "", location_text: "",
 };
 
-// ── Spotify / Apple Music embed helpers ─────────────────────────────────────
+// ── Embed Helpers ────────────────────────────────────────────────────────────
 function getSpotifyEmbedUrl(url: string): string | null {
-  // https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh → embed url
   const m = url.match(/open\.spotify\.com\/track\/([a-zA-Z0-9]+)/);
   return m ? `https://open.spotify.com/embed/track/${m[1]}?utm_source=generator&theme=0` : null;
 }
 
 function getAppleMusicEmbedUrl(url: string): string | null {
-  // https://music.apple.com/us/album/song/123?i=456 → embed url
   if (url.includes("music.apple.com")) {
     return url.replace("music.apple.com", "embed.music.apple.com");
   }
   return null;
 }
 
-// ── Cassette SVG Illustration ───────────────────────────────────────────────
-function CassetteIllustration({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 120 80" fill="none" className={className} aria-hidden>
-      {/* Body */}
-      <rect x="10" y="12" width="100" height="56" rx="8" stroke="var(--burgundy)" strokeWidth="2" fill="none" />
-      {/* Window */}
-      <rect x="30" y="22" width="60" height="24" rx="4" stroke="var(--rose)" strokeWidth="1.5" fill="none" />
-      {/* Left reel */}
-      <circle cx="48" cy="34" r="8" stroke="var(--burgundy)" strokeWidth="1.5" fill="none" />
-      <circle cx="48" cy="34" r="3" fill="var(--rose)" opacity="0.4" />
-      {/* Right reel */}
-      <circle cx="72" cy="34" r="8" stroke="var(--burgundy)" strokeWidth="1.5" fill="none" />
-      <circle cx="72" cy="34" r="3" fill="var(--rose)" opacity="0.4" />
-      {/* Tape line */}
-      <path d="M40 34 C44 42, 56 26, 60 34 C64 42, 76 26, 80 34" stroke="var(--rose)" strokeWidth="1" opacity="0.5" />
-      {/* Label area */}
-      <rect x="36" y="50" width="48" height="10" rx="2" stroke="var(--border)" strokeWidth="1" fill="none" />
-      {/* Screws */}
-      <circle cx="18" cy="20" r="2" stroke="var(--border)" strokeWidth="1" fill="none" />
-      <circle cx="102" cy="20" r="2" stroke="var(--border)" strokeWidth="1" fill="none" />
-      <circle cx="18" cy="60" r="2" stroke="var(--border)" strokeWidth="1" fill="none" />
-      <circle cx="102" cy="60" r="2" stroke="var(--border)" strokeWidth="1" fill="none" />
-    </svg>
-  );
-}
-
-// ── Main Component ──────────────────────────────────────────────────────────
+// ── Main Page Component ─────────────────────────────────────────────────────
 export default function MixtapePage() {
   const { user, profile, pair, partner, loading } = useAuth();
   const supabase = createClient();
 
-  // View state
+  // Navigation View State
   type View = "list" | "create" | "detail";
   const [view, setView] = useState<View>("list");
   const [createStep, setCreateStep] = useState(1);
+  const [detailMode, setDetailMode] = useState<"tracklist" | "timeline">("tracklist");
 
   // Data
   const [mixtapes, setMixtapes] = useState<Mixtape[]>([]);
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [fetching, setFetching] = useState(true);
 
-  // Create flow state
+  // Creation Wizard State
   const [newTitle, setNewTitle] = useState("");
-  const [newCoverTheme, setNewCoverTheme] = useState("music");
+  const [newPattern, setNewPattern] = useState<CassettePattern>("gingham");
+  const [selectedStickers, setSelectedStickers] = useState<CassetteSticker[]>(["eucalyptus"]);
+  const [notebookNote, setNotebookNote] = useState("Made with love, just for you ♡");
   const [draftSongs, setDraftSongs] = useState<DraftSong[]>([]);
   const [currentDraft, setCurrentDraft] = useState<DraftSong>({ ...EMPTY_DRAFT });
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Detail view state
+  // Detail View State
   const [selectedMixtape, setSelectedMixtape] = useState<Mixtape | null>(null);
   const [detailSongs, setDetailSongs] = useState<Song[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [embedType, setEmbedType] = useState<"spotify" | "apple">("spotify");
+  const [isPlaying, setIsPlaying] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Adding song from detail view
+  // Reaction state
+  const [reactions, setReactions] = useState<Record<string, number>>({});
+
+  // Adding song in detail
   const [addingSongInDetail, setAddingSongInDetail] = useState(false);
   const [detailDraft, setDetailDraft] = useState<DraftSong>({ ...EMPTY_DRAFT });
   const [detailShowEmojiPicker, setDetailShowEmojiPicker] = useState(false);
   const [detailSaving, setDetailSaving] = useState(false);
 
-  // Nav hide/show
+  // Navigation Hide/Show listener
   useEffect(() => {
     if (view === "create" || view === "detail") {
       window.dispatchEvent(new CustomEvent("navigation-hide"));
@@ -165,7 +151,7 @@ export default function MixtapePage() {
     }
   }, [view]);
 
-  // ── Fetch mixtapes ──────────────────────────────────────────────────────
+  // ── Fetch Mixtapes + All Songs for Statistics ─────────────────────────────
   const fetchMixtapes = useCallback(async () => {
     if (!pair) return;
     setFetching(true);
@@ -177,19 +163,23 @@ export default function MixtapePage() {
         .order("created_at", { ascending: false });
 
       if (tapes && tapes.length > 0) {
-        // Get song counts per mixtape
-        const withCounts = await Promise.all(
-          tapes.map(async (t: any) => {
-            const { count } = await supabase
-              .from("mixtape_songs")
-              .select("id", { count: "exact", head: true })
-              .eq("mixtape_id", t.id);
-            return { ...t, song_count: count || 0 };
-          })
-        );
+        const tapeIds = tapes.map((t: any) => t.id);
+        const { data: songsData } = await supabase
+          .from("mixtape_songs")
+          .select("*")
+          .in("mixtape_id", tapeIds)
+          .order("created_at", { ascending: true });
+
+        setAllSongs(songsData || []);
+
+        const withCounts = tapes.map((t: any) => {
+          const count = songsData?.filter((s: any) => s.mixtape_id === t.id).length || 0;
+          return { ...t, song_count: count };
+        });
         setMixtapes(withCounts);
       } else {
         setMixtapes([]);
+        setAllSongs([]);
       }
     } catch (e) {
       console.error("Failed to fetch mixtapes:", e);
@@ -202,12 +192,60 @@ export default function MixtapePage() {
     if (pair && !loading) fetchMixtapes();
   }, [pair, loading, fetchMixtapes]);
 
-  // ── Fetch detail songs ──────────────────────────────────────────────────
+  // ── Emotional Statistics Calculation ──────────────────────────────────────
+  const stats = useMemo(() => {
+    if (allSongs.length === 0) return null;
+
+    // Most added artist
+    const artistCounts: Record<string, number> = {};
+    allSongs.forEach(s => {
+      if (s.artist) {
+        const a = s.artist.trim();
+        artistCounts[a] = (artistCounts[a] || 0) + 1;
+      }
+    });
+
+    let topArtist = "—";
+    let maxCount = 0;
+    Object.entries(artistCounts).forEach(([art, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        topArtist = art;
+      }
+    });
+
+    // Oldest memory song
+    const withDates = allSongs.filter(s => s.date_memory);
+    let oldestDateStr = "—";
+    if (withDates.length > 0) {
+      withDates.sort((a, b) => new Date(a.date_memory!).getTime() - new Date(b.date_memory!).getTime());
+      try {
+        oldestDateStr = new Date(withDates[0].date_memory!).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      } catch { oldestDateStr = "—"; }
+    }
+
+    // Latest addition
+    const sortedLatest = [...allSongs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    let latestStr = "Recently";
+    if (sortedLatest.length > 0 && sortedLatest[0].created_at) {
+      latestStr = new Date(sortedLatest[0].created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }
+
+    return {
+      topArtist,
+      oldestDateStr,
+      latestStr,
+      totalSongs: allSongs.length,
+    };
+  }, [allSongs]);
+
+  // ── Fetch Detail Songs ────────────────────────────────────────────────────
   const openDetail = useCallback(async (mixtape: Mixtape) => {
     setSelectedMixtape(mixtape);
     setView("detail");
     setDetailLoading(true);
     setEmbedUrl(null);
+    setIsPlaying(false);
     try {
       const { data } = await supabase
         .from("mixtape_songs")
@@ -216,26 +254,32 @@ export default function MixtapePage() {
         .order("position", { ascending: true });
       setDetailSongs(data || []);
     } catch (e) {
-      console.error("Failed to fetch songs:", e);
+      console.error("Failed to fetch detail songs:", e);
     } finally {
       setDetailLoading(false);
     }
   }, [supabase]);
 
-  // ── Create flow handlers ────────────────────────────────────────────────
+  // ── Draft Helpers ─────────────────────────────────────────────────────────
+  const toggleSticker = (key: CassetteSticker) => {
+    setSelectedStickers(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
   const addDraftSong = () => {
     if (!currentDraft.title.trim()) return;
-    setDraftSongs((prev) => [...prev, { ...currentDraft }]);
+    setDraftSongs(prev => [...prev, { ...currentDraft }]);
     setCurrentDraft({ ...EMPTY_DRAFT });
     setShowEmojiPicker(false);
   };
 
   const removeDraftSong = (idx: number) => {
-    setDraftSongs((prev) => prev.filter((_, i) => i !== idx));
+    setDraftSongs(prev => prev.filter((_, i) => i !== idx));
   };
 
   const moveDraftSong = (idx: number, dir: -1 | 1) => {
-    setDraftSongs((prev) => {
+    setDraftSongs(prev => {
       const arr = [...prev];
       const target = idx + dir;
       if (target < 0 || target >= arr.length) return arr;
@@ -244,16 +288,20 @@ export default function MixtapePage() {
     });
   };
 
+  // ── Save Mixtape ──────────────────────────────────────────────────────────
   const saveMixtape = async () => {
     if (!pair || !user || !newTitle.trim() || draftSongs.length === 0) return;
     setSaving(true);
     try {
+      // Store pattern + stickers in cover_theme as JSON
+      const themeConfig = JSON.stringify({ pattern: newPattern, stickers: selectedStickers, note: notebookNote });
+
       const { data: tape, error: tapeErr } = await supabase
         .from("mixtapes")
         .insert({
           pair_id: pair.id,
           title: newTitle.trim(),
-          cover_theme: newCoverTheme,
+          cover_theme: themeConfig,
           created_by: user.id,
         })
         .select("id, title, cover_theme, created_by, created_at")
@@ -278,14 +326,15 @@ export default function MixtapePage() {
 
       await supabase.from("mixtape_songs").insert(songRows);
 
-      // Reset create state
+      // Reset
       setNewTitle("");
-      setNewCoverTheme("music");
+      setNewPattern("gingham");
+      setSelectedStickers(["eucalyptus"]);
+      setNotebookNote("Made with love, just for you ♡");
       setDraftSongs([]);
       setCurrentDraft({ ...EMPTY_DRAFT });
       setCreateStep(1);
 
-      // Open the new mixtape
       openDetail({ ...tape, song_count: draftSongs.length });
       fetchMixtapes();
     } catch (e) {
@@ -295,7 +344,7 @@ export default function MixtapePage() {
     }
   };
 
-  // ── Add song from detail view ───────────────────────────────────────────
+  // ── Add Song from Detail View ──────────────────────────────────────────────
   const addSongFromDetail = async () => {
     if (!selectedMixtape || !user || !detailDraft.title.trim()) return;
     setDetailSaving(true);
@@ -318,7 +367,7 @@ export default function MixtapePage() {
       setDetailDraft({ ...EMPTY_DRAFT });
       setAddingSongInDetail(false);
       setDetailShowEmojiPicker(false);
-      // Re-fetch songs
+
       const { data } = await supabase
         .from("mixtape_songs")
         .select("*")
@@ -333,7 +382,7 @@ export default function MixtapePage() {
     }
   };
 
-  // ── Delete mixtape ──────────────────────────────────────────────────────
+  // ── Delete Mixtape ────────────────────────────────────────────────────────
   const deleteMixtape = async () => {
     if (!selectedMixtape) return;
     setDeleting(true);
@@ -351,23 +400,66 @@ export default function MixtapePage() {
     }
   };
 
-  // ── Embed player ────────────────────────────────────────────────────────
+  // ── Play Song Player Helper ───────────────────────────────────────────────
   const playSong = (song: Song) => {
     if (song.spotify_url) {
       const url = getSpotifyEmbedUrl(song.spotify_url);
-      if (url) { setEmbedUrl(url); setEmbedType("spotify"); return; }
+      if (url) {
+        setEmbedUrl(url);
+        setEmbedType("spotify");
+        setIsPlaying(true);
+        return;
+      }
     }
     if (song.apple_music_url) {
       const url = getAppleMusicEmbedUrl(song.apple_music_url);
-      if (url) { setEmbedUrl(url); setEmbedType("apple"); return; }
+      if (url) {
+        setEmbedUrl(url);
+        setEmbedType("apple");
+        setIsPlaying(true);
+        return;
+      }
     }
-    // Fallback: open YouTube
     if (song.youtube_url) {
       window.open(song.youtube_url, "_blank", "noopener");
     }
   };
 
-  // ── Loading / Auth gate ─────────────────────────────────────────────────
+  // ── Toggle Heart Reaction ─────────────────────────────────────────────────
+  const handleReaction = (songId: string) => {
+    setReactions(prev => ({ ...prev, [songId]: (prev[songId] || 0) + 1 }));
+  };
+
+  // ── Parse Cover Theme JSON helper ─────────────────────────────────────────
+  const parseTheme = (coverThemeStr?: string): { pattern: CassettePattern; stickers: CassetteSticker[]; note: string } => {
+    if (!coverThemeStr) return { pattern: "classic", stickers: [], note: "" };
+    try {
+      if (coverThemeStr.startsWith("{")) {
+        return JSON.parse(coverThemeStr);
+      }
+    } catch {}
+    const p = (CASSETTE_PATTERNS.find((t: any) => t.key === coverThemeStr)?.key || "classic") as CassettePattern;
+    return { pattern: p, stickers: ["eucalyptus"], note: "Mixtape for you ♡" };
+  };
+
+  // ── Timeline grouping helper ──────────────────────────────────────────────
+  const timelineGroups = useMemo(() => {
+    const groups: Record<string, Song[]> = {};
+    detailSongs.forEach(song => {
+      let key = "Memories";
+      if (song.date_memory) {
+        try {
+          key = new Date(song.date_memory).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        } catch {}
+      }
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(song);
+    });
+    return groups;
+  }, [detailSongs]);
+
+  const partnerName = partner?.display_name || "Partner";
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
@@ -376,22 +468,7 @@ export default function MixtapePage() {
     );
   }
 
-  if (!pair) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
-        <Navigation />
-        <div className="text-center max-w-xs space-y-3 px-6">
-          <CassetteIllustration className="w-24 h-16 mx-auto opacity-60" />
-          <p className="font-heading text-lg text-[var(--text)]">Link with your partner first</p>
-          <p className="text-xs text-[var(--text-soft)] font-sans">Create a pair to start building mixtapes together</p>
-        </div>
-      </div>
-    );
-  }
-
-  const partnerName = partner?.display_name || "Partner";
-
-  // ── Song Form (reused in Create step 2 and Detail add-song) ─────────
+  // ── Form Renderer (Reused in Create Step 3 & Detail view) ────────────────
   const renderSongForm = (
     draft: DraftSong,
     setDraft: (d: DraftSong) => void,
@@ -401,10 +478,10 @@ export default function MixtapePage() {
     isSaving: boolean,
     label: string,
   ) => (
-    <div className="space-y-3 p-4 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)]">
+    <div className="space-y-3 p-4 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs">
       <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">{label}</p>
 
-      {/* Title + Artist */}
+      {/* Title & Artist */}
       <div className="grid grid-cols-2 gap-3">
         <input
           type="text" placeholder="Song title *"
@@ -420,58 +497,61 @@ export default function MixtapePage() {
         />
       </div>
 
+      {/* Guided Memory Prompt Question */}
+      <div className="space-y-1">
+        <label className="text-[10px] font-mono text-[var(--burgundy)] font-bold block">
+          Why does this song matter?
+        </label>
+        <textarea
+          placeholder="You played this after our first fight because you knew I'd smile."
+          value={draft.story}
+          onChange={(e) => setDraft({ ...draft, story: e.target.value })}
+          maxLength={1000}
+          rows={2}
+          className="w-full px-3 py-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-sm font-quote italic text-[var(--text)] placeholder:text-[var(--ink-light)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30 resize-none"
+        />
+      </div>
+
       {/* Streaming URLs */}
       <div className="space-y-2">
         <input
-          type="url" placeholder="Spotify URL (optional)"
+          type="url" placeholder="Spotify Link (optional)"
           value={draft.spotify_url}
           onChange={(e) => setDraft({ ...draft, spotify_url: e.target.value })}
           className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)] placeholder:text-[var(--ink-light)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
         />
-        <input
-          type="url" placeholder="YouTube URL (optional)"
-          value={draft.youtube_url}
-          onChange={(e) => setDraft({ ...draft, youtube_url: e.target.value })}
-          className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)] placeholder:text-[var(--ink-light)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
-        />
-        <input
-          type="url" placeholder="Apple Music URL (optional)"
-          value={draft.apple_music_url}
-          onChange={(e) => setDraft({ ...draft, apple_music_url: e.target.value })}
-          className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)] placeholder:text-[var(--ink-light)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
-        />
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="url" placeholder="YouTube Link (optional)"
+            value={draft.youtube_url}
+            onChange={(e) => setDraft({ ...draft, youtube_url: e.target.value })}
+            className="px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)] placeholder:text-[var(--ink-light)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
+          />
+          <input
+            type="url" placeholder="Apple Music Link (optional)"
+            value={draft.apple_music_url}
+            onChange={(e) => setDraft({ ...draft, apple_music_url: e.target.value })}
+            className="px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)] placeholder:text-[var(--ink-light)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
+          />
+        </div>
       </div>
 
-      {/* Story */}
-      <textarea
-        placeholder="Why does this song matter to you? (optional)"
-        value={draft.story}
-        onChange={(e) => setDraft({ ...draft, story: e.target.value })}
-        maxLength={1000}
-        rows={2}
-        className="w-full px-3 py-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-sm font-quote italic text-[var(--text)] placeholder:text-[var(--ink-light)] placeholder:not-italic focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30 resize-none"
-      />
-
-      {/* Photo Emoji + Date + Location row */}
+      {/* Photo Emoji + Date + Location */}
       <div className="grid grid-cols-3 gap-2">
-        {/* Emoji picker trigger */}
+        {/* Emoji picker */}
         <div className="relative">
           <button
             type="button"
             onClick={() => setEmojiOpen(!emojiOpen)}
             className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-sm text-center cursor-pointer hover:border-[var(--burgundy)]/40 transition-colors"
           >
-            {draft.photo_emoji ? (
-              <span className="text-lg">{draft.photo_emoji}</span>
-            ) : (
-              <span className="text-[10px] font-mono text-[var(--ink-light)]">🎵 Emoji</span>
-            )}
+            {draft.photo_emoji ? <span className="text-lg">{draft.photo_emoji}</span> : <span className="text-[10px] font-mono text-[var(--ink-light)]">📸 Emoji</span>}
           </button>
           <AnimatePresence>
             {emojiOpen && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-                className="absolute bottom-full left-0 mb-2 z-30 p-3 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-lg grid grid-cols-6 gap-1.5 w-56"
+                className="absolute bottom-full left-0 mb-2 z-40 p-3 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-lg grid grid-cols-6 gap-1.5 w-56"
               >
                 {POOKIE_EMOJIS.map((e) => (
                   <button
@@ -482,15 +562,6 @@ export default function MixtapePage() {
                     {e}
                   </button>
                 ))}
-                {draft.photo_emoji && (
-                  <button
-                    type="button"
-                    onClick={() => { setDraft({ ...draft, photo_emoji: "" }); setEmojiOpen(false); }}
-                    className="col-span-6 text-[10px] font-mono text-[var(--burgundy)] py-1 hover:underline"
-                  >
-                    Clear
-                  </button>
-                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -502,12 +573,12 @@ export default function MixtapePage() {
           value={draft.date_memory}
           onChange={(e) => setDraft({ ...draft, date_memory: e.target.value })}
           className="px-2 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
-          title="When did this song matter?"
+          title="When did this happen?"
         />
 
         {/* Location */}
         <input
-          type="text" placeholder="Where?"
+          type="text" placeholder="Where? (e.g. Shimla)"
           value={draft.location_text}
           onChange={(e) => setDraft({ ...draft, location_text: e.target.value })}
           maxLength={200}
@@ -515,7 +586,6 @@ export default function MixtapePage() {
         />
       </div>
 
-      {/* Add button */}
       <button
         type="button"
         disabled={!draft.title.trim() || isSaving}
@@ -523,79 +593,136 @@ export default function MixtapePage() {
         className="btn-primary w-full py-2.5 text-sm"
       >
         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-        Add Song
+        Add Song Memory
       </button>
     </div>
   );
 
   // ════════════════════════════════════════════════════════════════════════
-  // RENDER
+  // RENDER MAIN APP
   // ════════════════════════════════════════════════════════════════════════
   return (
     <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
       <Navigation />
 
       <AnimatePresence mode="wait">
-        {/* ══════════════ LIST VIEW ══════════════ */}
+
+        {/* ══════════════ LIST VIEW (TODAY'S SOUNDTRACK HERO) ══════════════ */}
         {view === "list" && (
           <motion.main
             key="list"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }}
             className="max-w-lg mx-auto px-5 py-20 pb-36"
           >
-            {/* Header */}
+            {/* Header Title */}
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center space-y-3 mb-8"
+              className="text-center space-y-2 mb-6"
             >
-              <CassetteIllustration className="w-28 h-20 mx-auto" />
-              <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Your Collection</p>
-              <h1 className="font-heading font-bold text-3xl text-[var(--text)]">Mixtape Studio</h1>
-              <p className="font-quote italic text-sm text-[var(--text-soft)]">Songs that tell your story</p>
+              <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Pairfect Audio Scrapbook</p>
+              <h1 className="font-heading font-bold text-3xl text-[var(--text)] flex items-center justify-center gap-2">
+                Today&apos;s soundtrack <span className="text-[var(--burgundy)] font-normal">♡</span>
+              </h1>
+              <p className="font-quote italic text-sm text-[var(--text-soft)]">
+                Songs & memories that belong to both of you
+              </p>
             </motion.div>
 
-            {/* Mixtape grid */}
+            {/* Hero Featured Cassette Stack */}
+            {mixtapes.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                className="mb-8 p-6 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-md flex flex-col items-center text-center space-y-4"
+              >
+                {(() => {
+                  const featured = mixtapes[0];
+                  const tConf = parseTheme(featured.cover_theme);
+                  return (
+                    <>
+                      <PhysicalCassetteTape
+                        pattern={tConf.pattern}
+                        stickers={tConf.stickers}
+                        noteText={tConf.note || "Today's featured memory ♡"}
+                        tapeTitle={featured.title}
+                        size="md"
+                      />
+                      <div className="space-y-1">
+                        <span className="text-[9px] font-mono uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[var(--burgundy)]/10 text-[var(--burgundy)]">
+                          Featured Tape
+                        </span>
+                        <h2 className="font-heading font-bold text-xl text-[var(--text)] pt-1">{featured.title}</h2>
+                        <p className="font-quote italic text-xs text-[var(--text-soft)]">
+                          {featured.song_count || 0} songs · Created by {featured.created_by === user?.id ? "You" : partnerName}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => openDetail(featured)}
+                        className="btn-primary py-2.5 px-6 text-xs inline-flex items-center gap-2"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-current" /> Continue Mixtape →
+                      </button>
+                    </>
+                  );
+                })()}
+              </motion.div>
+            )}
+
+            {/* Emotional Statistics Bar */}
+            {stats && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                className="grid grid-cols-3 gap-2 mb-8 p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] text-center shadow-xs"
+              >
+                <div className="space-y-0.5 p-1">
+                  <p className="text-[8px] font-mono uppercase tracking-widest text-[var(--text-soft)]">Top Artist</p>
+                  <p className="font-sans font-bold text-xs text-[var(--burgundy)] truncate">{stats.topArtist}</p>
+                </div>
+                <div className="space-y-0.5 p-1 border-x border-[var(--border)]">
+                  <p className="text-[8px] font-mono uppercase tracking-widest text-[var(--text-soft)]">Oldest Memory</p>
+                  <p className="font-sans font-bold text-xs text-[var(--text)] truncate">{stats.oldestDateStr}</p>
+                </div>
+                <div className="space-y-0.5 p-1">
+                  <p className="text-[8px] font-mono uppercase tracking-widest text-[var(--text-soft)]">Latest Addition</p>
+                  <p className="font-sans font-bold text-xs text-[var(--text)] truncate">{stats.latestStr}</p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Mixtape Collection List */}
             {fetching ? (
-              <div className="flex justify-center py-16">
+              <div className="flex justify-center py-12">
                 <Loader2 className="w-5 h-5 animate-spin text-[var(--burgundy)]" />
               </div>
             ) : mixtapes.length === 0 ? (
               <motion.div
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-center space-y-4 py-12"
+                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                className="text-center py-12 space-y-4"
               >
-                <div className="w-16 h-16 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
-                  <Music className="w-7 h-7 text-[var(--rose)]" />
-                </div>
-                <p className="font-sans text-sm text-[var(--text-soft)]">No mixtapes yet</p>
-                <p className="font-quote italic text-xs text-[var(--ink-light)]">
-                  Create your first mixtape with {partnerName}
-                </p>
+                <PhysicalCassetteTape pattern="gingham" stickers={["eucalyptus", "heart"]} noteText="Start your story..." tapeTitle="Mixtape #1" size="sm" />
+                <p className="font-heading text-lg text-[var(--text)]">Your mixtape shelf is empty</p>
+                <p className="font-quote italic text-xs text-[var(--text-soft)]">Build your first handmade tape with {partnerName}</p>
                 <button
                   onClick={() => { setView("create"); setCreateStep(1); }}
                   className="btn-primary px-6 py-2.5 text-sm mx-auto"
                 >
-                  <Plus className="w-4 h-4" /> New Mixtape
+                  <Plus className="w-4 h-4" /> Create a Mixtape
                 </button>
               </motion.div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] px-1">All Mixtapes</p>
                 {mixtapes.map((tape, i) => {
-                  const Icon = getCoverIcon(tape.cover_theme);
+                  const tConf = parseTheme(tape.cover_theme);
                   return (
                     <motion.button
                       key={tape.id}
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.06 }}
+                      transition={{ delay: i * 0.05 }}
                       onClick={() => openDetail(tape)}
-                      className="w-full p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center gap-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+                      className="w-full p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center gap-4 shadow-xs hover:shadow-md hover:translate-y-[-2px] transition-all cursor-pointer text-left"
                     >
-                      <div className="w-12 h-12 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-5 h-5 text-[var(--burgundy)]" />
-                      </div>
+                      <PhysicalCassetteTape pattern={tConf.pattern} stickers={tConf.stickers} tapeTitle={tape.title} size="sm" showCase={false} className="py-0" />
                       <div className="min-w-0 flex-1">
                         <p className="font-heading font-bold text-base text-[var(--text)] truncate">{tape.title}</p>
                         <p className="text-[10px] font-mono text-[var(--text-soft)] mt-0.5">
@@ -609,14 +736,12 @@ export default function MixtapePage() {
               </div>
             )}
 
-            {/* FAB */}
+            {/* FAB button */}
             {mixtapes.length > 0 && (
               <motion.button
                 initial={{ scale: 0 }} animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.3 }}
                 onClick={() => { setView("create"); setCreateStep(1); }}
                 className="fixed bottom-24 right-6 w-14 h-14 rounded-full btn-primary flex items-center justify-center shadow-lg z-30"
-                aria-label="Create new mixtape"
               >
                 <Plus className="w-6 h-6" />
               </motion.button>
@@ -624,236 +749,247 @@ export default function MixtapePage() {
           </motion.main>
         )}
 
-        {/* ══════════════ CREATE VIEW ══════════════ */}
+        {/* ══════════════ 4-STEP PHYSICAL CREATION STEPPER ══════════════ */}
         {view === "create" && (
           <motion.main
             key="create"
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
             className="max-w-lg mx-auto px-5 py-20 pb-36"
           >
-            {/* Header */}
+            {/* Top Bar */}
             <div className="flex items-center justify-between mb-6">
               <button
                 onClick={() => {
-                  if (createStep === 2) setCreateStep(1);
-                  else { setView("list"); setNewTitle(""); setNewCoverTheme("music"); setDraftSongs([]); setCreateStep(1); }
+                  if (createStep > 1) setCreateStep(createStep - 1);
+                  else { setView("list"); setCreateStep(1); }
                 }}
-                className="flex items-center gap-1.5 text-sm font-sans text-[var(--text-soft)] hover:text-[var(--text)] transition-colors"
+                className="flex items-center gap-1 text-sm font-sans text-[var(--text-soft)] hover:text-[var(--text)] transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
-                {createStep === 2 ? "Back" : "Cancel"}
+                <ArrowLeft className="w-4 h-4" /> {createStep > 1 ? "Back" : "Cancel"}
               </button>
               <span className="text-[10px] font-mono tracking-widest uppercase text-[var(--ink-light)]">
-                Step {createStep} / 2
+                Step {createStep} of 4
               </span>
             </div>
 
+            {/* Live Cassette Preview */}
+            <div className="mb-6 flex justify-center">
+              <PhysicalCassetteTape
+                pattern={newPattern}
+                stickers={selectedStickers}
+                noteText={notebookNote}
+                tapeTitle={newTitle || "My Mixtape"}
+                size="md"
+              />
+            </div>
+
             <AnimatePresence mode="wait">
-              {/* ── Step 1: Details ── */}
+
+              {/* ── STEP 1: CASSETTE SHELL PATTERN ── */}
               {createStep === 1 && (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                  className="space-y-6"
-                >
-                  <div>
-                    <h2 className="font-heading font-bold text-2xl text-[var(--text)]">Create a Mixtape</h2>
-                    <p className="font-quote italic text-sm text-[var(--text-soft)] mt-1">Give your collection a name and vibe</p>
+                <motion.div key="step1" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="font-heading font-bold text-2xl text-[var(--text)]">Pick Cassette Shell</h2>
+                    <p className="font-quote italic text-xs text-[var(--text-soft)]">Select a warm handmade paper pattern</p>
                   </div>
 
-                  {/* Title input */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                      Mixtape Title
-                    </label>
+                  {/* Title Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block">Mixtape Title</label>
                     <input
-                      type="text"
-                      placeholder="e.g. Songs That Remind Me of You"
+                      type="text" placeholder="e.g. Late Night Drives"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      maxLength={100}
-                      className="w-full px-4 py-3 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] text-base font-heading text-[var(--text)] placeholder:text-[var(--ink-light)] placeholder:font-sans placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
+                      className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] font-heading text-lg text-[var(--text)] placeholder:font-sans placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
                     />
                   </div>
 
-                  {/* Cover theme picker */}
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                      Cover Theme
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {COVER_THEMES.map((theme) => {
-                        const Icon = theme.icon;
-                        const isSelected = newCoverTheme === theme.key;
-                        return (
-                          <button
-                            key={theme.key}
-                            type="button"
-                            onClick={() => setNewCoverTheme(theme.key)}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-[var(--radius-card)] border transition-all ${
-                              isSelected
-                                ? "bg-[var(--paper-warm)] border-[var(--burgundy)]/40 shadow-md"
-                                : "bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--rose)] hover:shadow-sm"
-                            }`}
-                          >
-                            <div
-                              className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
-                                isSelected ? "bg-[var(--burgundy)]/10" : "bg-[var(--bg-secondary)]"
-                              }`}
-                            >
-                              <Icon className={`w-5 h-5 ${isSelected ? "text-[var(--burgundy)]" : "text-[var(--text-soft)]"}`} />
-                            </div>
-                            <span className={`text-[10px] font-mono ${isSelected ? "text-[var(--burgundy)] font-bold" : "text-[var(--text-soft)]"}`}>
-                              {theme.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {/* Pattern Picker Swatches */}
+                  <div className="grid grid-cols-3 gap-2.5 pt-1">
+                    {CASSETTE_PATTERNS.map((p) => {
+                      const isSel = newPattern === p.key;
+                      return (
+                        <button
+                          key={p.key}
+                          type="button"
+                          onClick={() => setNewPattern(p.key)}
+                          className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                            isSel ? "bg-[var(--paper-warm)] border-[var(--burgundy)] ring-1 ring-[var(--burgundy)] shadow-xs" : "bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--rose)]"
+                          }`}
+                        >
+                          <span className="text-xl block mb-1">{p.icon}</span>
+                          <span className={`text-[10px] font-mono block ${isSel ? "font-bold text-[var(--burgundy)]" : "text-[var(--text-soft)]"}`}>{p.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {/* Next button */}
                   <button
-                    type="button"
                     disabled={!newTitle.trim()}
                     onClick={() => setCreateStep(2)}
-                    className="btn-primary w-full py-3 text-sm"
+                    className="btn-primary w-full py-3 text-sm mt-4"
                   >
-                    Next — Add Songs
+                    Next — Add Stickers & Decals →
                   </button>
                 </motion.div>
               )}
 
-              {/* ── Step 2: Add Songs ── */}
+              {/* ── STEP 2: STICKERS & DECALS ── */}
               {createStep === 2 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                  className="space-y-5"
-                >
-                  <div>
-                    <h2 className="font-heading font-bold text-2xl text-[var(--text)]">{newTitle}</h2>
-                    <p className="font-quote italic text-sm text-[var(--text-soft)] mt-1">
-                      Add songs that tell your story — at least one to save
-                    </p>
+                <motion.div key="step2" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="font-heading font-bold text-2xl text-[var(--text)]">Add Keepsakes & Decals</h2>
+                    <p className="font-quote italic text-xs text-[var(--text-soft)]">Tap stickers to place them on your acrylic cassette case</p>
                   </div>
 
-                  {/* Existing draft songs */}
+                  <div className="grid grid-cols-5 gap-2 p-3 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)]">
+                    {DECAL_OPTIONS.map((d) => {
+                      const isSelected = selectedStickers.includes(d.key);
+                      return (
+                        <button
+                          key={d.key}
+                          type="button"
+                          onClick={() => toggleSticker(d.key)}
+                          className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border transition-all cursor-pointer ${
+                            isSelected ? "bg-[var(--rose)]/20 border-[var(--burgundy)] scale-105" : "bg-[var(--bg)] border-[var(--border)] hover:scale-102"
+                          }`}
+                        >
+                          <span className="text-2xl">{d.icon}</span>
+                          <span className="text-[9px] font-mono text-[var(--text-soft)]">{d.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button onClick={() => setCreateStep(3)} className="btn-primary w-full py-3 text-sm">
+                    Next — Add Songs & Memories →
+                  </button>
+                </motion.div>
+              )}
+
+              {/* ── STEP 3: ADD SONGS & GUIDED MEMORY PROMPT ── */}
+              {createStep === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="font-heading font-bold text-2xl text-[var(--text)]">Add Songs & Memories</h2>
+                    <p className="font-quote italic text-xs text-[var(--text-soft)]">Answer why each song matters to you both</p>
+                  </div>
+
+                  {/* Draft Songs List */}
                   {draftSongs.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                        Tracklist ({draftSongs.length})
-                      </p>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">Tracklist ({draftSongs.length})</p>
                       {draftSongs.map((s, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]"
-                        >
-                          {/* Emoji or number */}
-                          <div className="w-8 h-8 rounded-lg bg-[var(--paper-warm)] flex items-center justify-center flex-shrink-0 text-sm">
-                            {s.photo_emoji || (i + 1)}
-                          </div>
+                        <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                          <span className="w-6 h-6 rounded-md bg-[var(--paper-warm)] flex items-center justify-center text-xs font-bold text-[var(--burgundy)]">{s.photo_emoji || (i + 1)}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="font-sans text-sm text-[var(--text)] font-semibold truncate">{s.title}</p>
-                            {s.artist && <p className="text-[10px] text-[var(--text-soft)] font-mono truncate">{s.artist}</p>}
+                            <p className="font-sans font-bold text-xs text-[var(--text)] truncate">{s.title}</p>
+                            {s.story && <p className="font-quote italic text-[10px] text-[var(--text-soft)] truncate">&ldquo;{s.story}&rdquo;</p>}
                           </div>
-                          <div className="flex items-center gap-0.5 flex-shrink-0">
-                            <button onClick={() => moveDraftSong(i, -1)} disabled={i === 0}
-                              className="p-1 rounded hover:bg-[var(--paper-warm)] disabled:opacity-30 transition-colors">
-                              <ChevronUp className="w-3.5 h-3.5 text-[var(--text-soft)]" />
-                            </button>
-                            <button onClick={() => moveDraftSong(i, 1)} disabled={i === draftSongs.length - 1}
-                              className="p-1 rounded hover:bg-[var(--paper-warm)] disabled:opacity-30 transition-colors">
-                              <ChevronDown className="w-3.5 h-3.5 text-[var(--text-soft)]" />
-                            </button>
-                            <button onClick={() => removeDraftSong(i)}
-                              className="p-1 rounded hover:bg-[var(--rose)]/10 transition-colors ml-1">
-                              <Trash2 className="w-3.5 h-3.5 text-[var(--rose)]" />
-                            </button>
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => moveDraftSong(i, -1)} disabled={i === 0} className="p-1 disabled:opacity-30"><ChevronUp className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => moveDraftSong(i, 1)} disabled={i === draftSongs.length - 1} className="p-1 disabled:opacity-30"><ChevronDown className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => removeDraftSong(i)} className="p-1 text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Song form */}
-                  {renderSongForm(currentDraft, setCurrentDraft, showEmojiPicker, setShowEmojiPicker, addDraftSong, false, "Add a Song")}
+                  {/* Song Form */}
+                  {renderSongForm(currentDraft, setCurrentDraft, showEmojiPicker, setShowEmojiPicker, addDraftSong, false, "Add Song to Tape")}
 
-                  {/* Save mixtape */}
                   <button
-                    type="button"
-                    disabled={draftSongs.length === 0 || saving}
-                    onClick={saveMixtape}
-                    className="btn-primary w-full py-3 text-sm"
+                    disabled={draftSongs.length === 0}
+                    onClick={() => setCreateStep(4)}
+                    className="btn-primary w-full py-3 text-sm mt-4"
                   >
-                    {saving ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
-                    ) : (
-                      <>Save Mixtape · {draftSongs.length} song{draftSongs.length !== 1 ? "s" : ""}</>
-                    )}
+                    Next — Handwritten Note →
                   </button>
                 </motion.div>
               )}
+
+              {/* ── STEP 4: HANDWRITTEN NOTEBOOK NOTE & FINISH ── */}
+              {createStep === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="font-heading font-bold text-2xl text-[var(--text)]">Handwritten Note</h2>
+                    <p className="font-quote italic text-xs text-[var(--text-soft)]">Write a short note on the notebook card for {partnerName}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block">Notebook Message</label>
+                    <textarea
+                      value={notebookNote}
+                      onChange={(e) => setNotebookNote(e.target.value)}
+                      maxLength={150}
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-2xl bg-[#FAF6EE] dark:bg-[#201A16] border border-[#EAE3D5] dark:border-[#382E26] font-handwriting text-base text-[#4A3B32] dark:text-[#D4C8B8] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30 resize-none shadow-xs"
+                    />
+                  </div>
+
+                  <button
+                    disabled={saving || draftSongs.length === 0}
+                    onClick={saveMixtape}
+                    className="btn-primary w-full py-3.5 text-sm"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : `Create Mixtape · ${draftSongs.length} song${draftSongs.length !== 1 ? "s" : ""}`}
+                  </button>
+                </motion.div>
+              )}
+
             </AnimatePresence>
           </motion.main>
         )}
 
-        {/* ══════════════ DETAIL VIEW ══════════════ */}
+        {/* ══════════════ DETAIL / PLAYBACK VIEW (TRACKLIST vs TIMELINE) ══════════════ */}
         {view === "detail" && selectedMixtape && (
           <motion.main
             key="detail"
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
             className="max-w-lg mx-auto px-5 py-20 pb-36"
           >
-            {/* Back button */}
-            <button
-              onClick={() => { setView("list"); setSelectedMixtape(null); setEmbedUrl(null); setAddingSongInDetail(false); }}
-              className="flex items-center gap-1.5 text-sm font-sans text-[var(--text-soft)] hover:text-[var(--text)] transition-colors mb-6"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to Mixtapes
-            </button>
-
-            {/* Header card */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              className="relative p-6 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-sm mb-6"
-            >
-              <div className="flex items-start gap-4">
-                {(() => { const Icon = getCoverIcon(selectedMixtape.cover_theme); return (
-                  <div className="w-14 h-14 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-6 h-6 text-[var(--burgundy)]" />
-                  </div>
-                ); })()}
-                <div className="min-w-0 flex-1">
-                  <h1 className="font-heading font-bold text-2xl text-[var(--text)] leading-tight">{selectedMixtape.title}</h1>
-                  <p className="text-[10px] font-mono text-[var(--text-soft)] mt-1.5">
-                    {selectedMixtape.song_count || detailSongs.length} song{(selectedMixtape.song_count || detailSongs.length) !== 1 ? "s" : ""} · Created {new Date(selectedMixtape.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                  </p>
-                </div>
-              </div>
-
-              {/* Delete button */}
+            {/* Top Bar Navigation */}
+            <div className="flex items-center justify-between mb-6">
               <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-[var(--rose)]/10 transition-colors"
-                aria-label="Delete mixtape"
+                onClick={() => { setView("list"); setSelectedMixtape(null); setEmbedUrl(null); setIsPlaying(false); }}
+                className="flex items-center gap-1.5 text-sm font-sans text-[var(--text-soft)] hover:text-[var(--text)] transition-colors"
               >
-                <Trash2 className="w-4 h-4 text-[var(--rose)]" />
+                <ArrowLeft className="w-4 h-4" /> Back to Collection
               </button>
-            </motion.div>
+              <button onClick={() => setShowDeleteConfirm(true)} className="p-2 text-red-400 hover:text-red-600 transition-colors">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
 
-            {/* Embed player */}
+            {/* Physical Cassette Jewel Case Showcase */}
+            {(() => {
+              const tConf = parseTheme(selectedMixtape.cover_theme);
+              return (
+                <div className="flex justify-center mb-6">
+                  <PhysicalCassetteTape
+                    pattern={tConf.pattern}
+                    stickers={tConf.stickers}
+                    noteText={tConf.note}
+                    tapeTitle={selectedMixtape.title}
+                    isPlaying={isPlaying}
+                    size="lg"
+                  />
+                </div>
+              );
+            })()}
+
+            {/* Embed Player */}
             <AnimatePresence>
               {embedUrl && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 overflow-hidden rounded-[var(--radius-card)]"
+                  className="mb-6 overflow-hidden rounded-[var(--radius-card)]"
                 >
                   <div className="relative">
                     <button
-                      onClick={() => setEmbedUrl(null)}
-                      className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                      onClick={() => { setEmbedUrl(null); setIsPlaying(false); }}
+                      className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -865,170 +1001,186 @@ export default function MixtapePage() {
                       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                       loading="lazy"
                       className="rounded-[var(--radius-card)]"
-                      style={{ borderRadius: "var(--radius-card)" }}
                     />
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Song list */}
-            {detailLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-5 h-5 animate-spin text-[var(--burgundy)]" />
+            {/* Mode Switcher: Tracklist vs Relationship Memory Timeline */}
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3 mb-6">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDetailMode("tracklist")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-mono flex items-center gap-1.5 transition-all ${
+                    detailMode === "tracklist" ? "bg-[var(--burgundy)] text-white font-bold shadow-xs" : "bg-[var(--bg-secondary)] text-[var(--text-soft)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" /> Tracklist
+                </button>
+                <button
+                  onClick={() => setDetailMode("timeline")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-mono flex items-center gap-1.5 transition-all ${
+                    detailMode === "timeline" ? "bg-[var(--burgundy)] text-white font-bold shadow-xs" : "bg-[var(--bg-secondary)] text-[var(--text-soft)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" /> Memory Timeline
+                </button>
               </div>
-            ) : detailSongs.length === 0 ? (
-              <div className="text-center py-8 space-y-2">
-                <p className="text-sm text-[var(--text-soft)] font-sans">No songs yet</p>
-              </div>
-            ) : (
+              <span className="text-[10px] font-mono text-[var(--text-soft)]">{detailSongs.length} songs</span>
+            </div>
+
+            {/* ── TRACKLIST MODE ── */}
+            {detailMode === "tracklist" && (
               <div className="space-y-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">Tracklist</p>
                 {detailSongs.map((song, i) => (
                   <motion.div
                     key={song.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] space-y-3 shadow-sm"
+                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                    className="p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] space-y-3 shadow-xs"
                   >
-                    {/* Song header row */}
                     <div className="flex items-start gap-3">
-                      {/* Track number / emoji */}
-                      <div className="w-9 h-9 rounded-lg bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
-                        {song.photo_emoji ? (
-                          <span className="text-lg">{song.photo_emoji}</span>
-                        ) : (
-                          <span className="text-xs font-mono font-bold text-[var(--burgundy)]">{i + 1}</span>
-                        )}
+                      <div className="w-9 h-9 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-center flex-shrink-0 text-sm">
+                        {song.photo_emoji || (i + 1)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-sans font-bold text-sm text-[var(--text)] truncate">{song.title}</p>
                         {song.artist && <p className="text-[10px] font-mono text-[var(--text-soft)] mt-0.5">{song.artist}</p>}
                       </div>
-                      {/* Play button */}
                       {(song.spotify_url || song.apple_music_url || song.youtube_url) && (
                         <button
                           onClick={() => playSong(song)}
-                          className="w-8 h-8 rounded-full bg-[var(--burgundy)]/10 flex items-center justify-center flex-shrink-0 hover:bg-[var(--burgundy)]/20 transition-colors"
-                          title="Play"
+                          className="w-8 h-8 rounded-full bg-[var(--burgundy)]/10 text-[var(--burgundy)] flex items-center justify-center hover:bg-[var(--burgundy)]/20 transition-colors"
                         >
-                          <Play className="w-3.5 h-3.5 text-[var(--burgundy)] ml-0.5" />
+                          <Play className="w-3.5 h-3.5 ml-0.5 fill-current" />
                         </button>
                       )}
                     </div>
 
-                    {/* Story */}
+                    {/* Guided Prompt Answer */}
                     {song.story && (
-                      <p className="font-quote italic text-xs text-[var(--text-soft)] leading-relaxed pl-12">
-                        &ldquo;{song.story}&rdquo;
-                      </p>
+                      <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)]">
+                        <p className="text-[9px] font-mono text-[var(--burgundy)] uppercase tracking-wider font-bold mb-1">Why this song matters</p>
+                        <p className="font-quote italic text-xs text-[var(--text)] leading-relaxed">
+                          &ldquo;{song.story}&rdquo;
+                        </p>
+                      </div>
                     )}
 
-                    {/* Date + Location */}
-                    {(song.date_memory || song.location_text) && (
-                      <div className="flex items-center gap-3 pl-12 text-[10px] font-mono text-[var(--ink-light)]">
+                    {/* Metadata line */}
+                    <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-light)] pt-1">
+                      <div className="flex items-center gap-3">
                         {song.date_memory && (
                           <span className="flex items-center gap-1">
-                            <CalendarIcon className="w-3 h-3" />
-                            {new Date(song.date_memory).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            <CalendarIcon className="w-3 h-3 text-[var(--rose)]" />
+                            {new Date(song.date_memory).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                           </span>
                         )}
                         {song.location_text && (
                           <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
+                            <MapPin className="w-3 h-3 text-[var(--rose)]" />
                             {song.location_text}
                           </span>
                         )}
                       </div>
-                    )}
-
-                    {/* Streaming links */}
-                    <div className="flex items-center gap-2 pl-12">
-                      {song.spotify_url && (
-                        <a href={song.spotify_url} target="_blank" rel="noopener noreferrer"
-                          className="text-[9px] font-mono px-2.5 py-1 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--burgundy)] hover:border-[var(--burgundy)]/30 transition-colors flex items-center gap-1">
-                          Spotify <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      )}
-                      {song.youtube_url && (
-                        <a href={song.youtube_url} target="_blank" rel="noopener noreferrer"
-                          className="text-[9px] font-mono px-2.5 py-1 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--burgundy)] hover:border-[var(--burgundy)]/30 transition-colors flex items-center gap-1">
-                          YouTube <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      )}
-                      {song.apple_music_url && (
-                        <a href={song.apple_music_url} target="_blank" rel="noopener noreferrer"
-                          className="text-[9px] font-mono px-2.5 py-1 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--burgundy)] hover:border-[var(--burgundy)]/30 transition-colors flex items-center gap-1">
-                          Apple Music <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      )}
+                      <button
+                        onClick={() => handleReaction(song.id)}
+                        className="flex items-center gap-1 text-[var(--rose)] hover:scale-110 transition-transform cursor-pointer"
+                      >
+                        <Heart className="w-3.5 h-3.5 fill-current" />
+                        <span>{reactions[song.id] || 0}</span>
+                      </button>
                     </div>
                   </motion.div>
                 ))}
               </div>
             )}
 
-            {/* Add song from detail */}
-            <div className="mt-6">
+            {/* ── RELATIONSHIP MEMORY TIMELINE MODE ── */}
+            {detailMode === "timeline" && (
+              <div className="relative pl-6 space-y-8 border-l-2 border-[var(--rose)]/30 ml-2">
+                {Object.entries(timelineGroups).map(([monthYear, groupSongs]) => (
+                  <div key={monthYear} className="relative space-y-4">
+                    {/* Timeline Node Badge */}
+                    <div className="absolute -left-[31px] top-0.5 w-4 h-4 rounded-full bg-[var(--burgundy)] border-2 border-[var(--bg)] flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    </div>
+                    <h3 className="font-heading font-bold text-lg text-[var(--burgundy)] flex items-center gap-2">
+                      {monthYear} <span className="text-[var(--rose)] text-xs font-normal">♡</span>
+                    </h3>
+
+                    {/* Songs in month */}
+                    <div className="space-y-3">
+                      {groupSongs.map((song) => (
+                        <motion.div
+                          key={song.id}
+                          initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                          className="p-4 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)] paper-grain space-y-2 shadow-xs"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-sans font-bold text-sm text-[var(--text)]">{song.title}</p>
+                              {song.artist && <p className="text-[10px] font-mono text-[var(--text-soft)]">{song.artist}</p>}
+                            </div>
+                            {song.photo_emoji && <span className="text-xl">{song.photo_emoji}</span>}
+                          </div>
+
+                          {song.story && (
+                            <p className="font-quote italic text-xs text-[var(--text-soft)] leading-relaxed pt-1">
+                              &ldquo;{song.story}&rdquo;
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-light)] pt-2 border-t border-[var(--border)]">
+                            <span className="flex items-center gap-1">
+                              {song.location_text ? <><MapPin className="w-3 h-3 text-[var(--burgundy)]" /> {song.location_text}</> : "Memory"}
+                            </span>
+                            {(song.spotify_url || song.apple_music_url || song.youtube_url) && (
+                              <button onClick={() => playSong(song)} className="text-[var(--burgundy)] font-bold flex items-center gap-1 hover:underline">
+                                <Play className="w-3 h-3 fill-current" /> Play
+                              </button>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add song in detail */}
+            <div className="mt-8">
               {addingSongInDetail ? (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">Add Another Song</p>
-                    <button onClick={() => { setAddingSongInDetail(false); setDetailDraft({ ...EMPTY_DRAFT }); }}
-                      className="text-[var(--text-soft)] hover:text-[var(--text)] transition-colors">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">Add Song to Tape</p>
+                    <button onClick={() => setAddingSongInDetail(false)} className="text-[var(--text-soft)] hover:text-[var(--text)]">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  {renderSongForm(detailDraft, setDetailDraft, detailShowEmojiPicker, setDetailShowEmojiPicker, addSongFromDetail, detailSaving, "New Song")}
+                  {renderSongForm(detailDraft, setDetailDraft, detailShowEmojiPicker, setDetailShowEmojiPicker, addSongFromDetail, detailSaving, "New Song Memory")}
                 </motion.div>
               ) : (
                 <button
                   onClick={() => setAddingSongInDetail(true)}
-                  className="btn-secondary w-full py-2.5 text-sm"
+                  className="btn-secondary w-full py-3 text-sm"
                 >
-                  <Plus className="w-4 h-4" /> Add Song
+                  <Plus className="w-4 h-4" /> Add Song Memory
                 </button>
               )}
             </div>
 
-            {/* Delete confirmation modal */}
+            {/* Delete Modal */}
             <AnimatePresence>
               {showDeleteConfirm && (
-                <motion.div
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                >
-                  <motion.div
-                    initial={{ y: 30, opacity: 0, scale: 0.96 }}
-                    animate={{ y: 0, opacity: 1, scale: 1 }}
-                    exit={{ y: 30, opacity: 0, scale: 0.96 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                    className="bg-[var(--bg)] rounded-[var(--radius-card)] p-6 max-w-xs w-full border border-[var(--border)] shadow-xl space-y-4"
-                  >
-                    <div className="text-center space-y-2">
-                      <div className="w-12 h-12 rounded-full bg-[var(--rose)]/10 flex items-center justify-center mx-auto">
-                        <Trash2 className="w-5 h-5 text-[var(--rose)]" />
-                      </div>
-                      <h3 className="font-heading font-bold text-lg text-[var(--text)]">Delete Mixtape?</h3>
-                      <p className="text-xs text-[var(--text-soft)] font-sans">
-                        This will permanently delete &ldquo;{selectedMixtape.title}&rdquo; and all its songs. This cannot be undone.
-                      </p>
-                    </div>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-[var(--bg)] p-6 rounded-[var(--radius-card)] border border-[var(--border)] max-w-xs w-full text-center space-y-4 shadow-xl">
+                    <h3 className="font-heading font-bold text-lg text-[var(--text)]">Delete Mixtape?</h3>
+                    <p className="text-xs text-[var(--text-soft)] font-sans">This will permanently delete &ldquo;{selectedMixtape.title}&rdquo; and all memory tracks.</p>
                     <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="btn-secondary flex-1 py-2.5 text-sm"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={deleteMixtape}
-                        disabled={deleting}
-                        className="btn-primary flex-1 py-2.5 text-sm"
-                      >
-                        {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
-                      </button>
+                      <button onClick={() => setShowDeleteConfirm(false)} className="btn-secondary flex-1 py-2 text-xs">Cancel</button>
+                      <button onClick={deleteMixtape} disabled={deleting} className="btn-primary flex-1 py-2 text-xs">{deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}</button>
                     </div>
                   </motion.div>
                 </motion.div>
@@ -1036,6 +1188,7 @@ export default function MixtapePage() {
             </AnimatePresence>
           </motion.main>
         )}
+
       </AnimatePresence>
     </div>
   );

@@ -1057,38 +1057,48 @@ export default function DashboardPage() {
 
         </div>
 
-        {/* ─── MIXTAPE STUDIO WIDGET ─── */}
+        {/* ─── MIXTAPE STUDIO WIDGET (ALIVE PHYSICAL CASSETTE) ─── */}
         <Link
           href="/mixtape"
           className="block p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
         >
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-              <Music className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-              <span>Mixtape Studio</span>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+                <Music className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                <span>Mixtape Studio</span>
+              </div>
+              <h3 className="font-heading font-bold text-2xl text-[var(--text)] leading-none pt-0.5">
+                {latestMixtape ? latestMixtape.title : "Your Soundtrack ♡"}
+              </h3>
             </div>
-            <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
-              {mixtapeCount} Mixtape{mixtapeCount !== 1 ? "s" : ""}
-            </h3>
+            <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)]">
+              {mixtapeCount} Tape{mixtapeCount !== 1 ? "s" : ""}
+            </span>
           </div>
-          <div className="pt-3 mt-3 border-t border-[var(--border)] space-y-2">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Latest</p>
+
+          <div className="pt-3 mt-3 border-t border-[var(--border)]">
             {latestMixtape ? (
-              <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center gap-3 shadow-xs">
-                <div className="w-9 h-9 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
-                  <Music className="w-4 h-4 text-[var(--burgundy)]" />
+              <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-[var(--burgundy)]/10 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
+                    <Music className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-heading font-bold text-sm text-[var(--text)] truncate">{latestMixtape.title}</p>
+                    <p className="text-[9px] font-mono text-[var(--text-soft)]">
+                      Last updated · {new Date(latestMixtape.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-heading font-bold text-xs text-[var(--text)] truncate">{latestMixtape.title}</p>
-                  <p className="text-[9px] font-mono text-[var(--text-soft)]">
-                    {new Date(latestMixtape.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </p>
-                </div>
+                <span className="btn-primary py-1.5 px-3 text-[10px] font-sans flex-shrink-0">
+                  Continue →
+                </span>
               </div>
             ) : (
               <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
-                <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No mixtapes yet</p>
-                <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Create one →</p>
+                <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No mixtapes created yet</p>
+                <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Create your first tape →</p>
               </div>
             )}
           </div>
