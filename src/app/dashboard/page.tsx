@@ -5,7 +5,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Gamepad2, Send, Sparkles, PenTool } from "lucide-react";
+import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Gamepad2, Send, Sparkles, PenTool, Music } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 
@@ -275,6 +275,8 @@ export default function DashboardPage() {
   const [latestLetter, setLatestLetter] = useState<any>(null);
   const [latestMoment, setLatestMoment] = useState<any>(null);
   const [latestGratitude, setLatestGratitude] = useState<any>(null);
+  const [mixtapeCount, setMixtapeCount] = useState(0);
+  const [latestMixtape, setLatestMixtape] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
   const supabase = createClient();
 
@@ -300,13 +302,15 @@ export default function DashboardPage() {
     if (!pair || loading) return;
     (async () => {
       try {
-        const [letRes, momRes, gratRes, recentLet, recentMom, recentGrat] = await Promise.all([
+        const [letRes, momRes, gratRes, recentLet, recentMom, recentGrat, mixRes, recentMix] = await Promise.all([
           supabase.from("love_letters").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
           supabase.from("shared_moments").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
           supabase.from("gratitude_entries").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
           supabase.from("love_letters").select("id, sender_id, sent_at, content").eq("pair_id", pair.id).order("sent_at", { ascending: false }).limit(2),
           supabase.from("shared_moments").select("id, title, photo_url, moment_date, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
           supabase.from("gratitude_entries").select("id, sender_id, content, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
+          supabase.from("mixtapes").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
+          supabase.from("mixtapes").select("id, title, cover_theme, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(1),
         ]);
 
         if (letRes.count !== null) setLettersCount(letRes.count);
@@ -316,6 +320,8 @@ export default function DashboardPage() {
         if (recentLet.data && recentLet.data.length > 0) setLatestLetter(recentLet.data[0]);
         if (recentMom.data && recentMom.data.length > 0) setLatestMoment(recentMom.data[0]);
         if (recentGrat.data && recentGrat.data.length > 0) setLatestGratitude(recentGrat.data[0]);
+        if (mixRes.count !== null) setMixtapeCount(mixRes.count);
+        if (recentMix.data && recentMix.data.length > 0) setLatestMixtape(recentMix.data[0]);
 
         // Calculate partner's latest feeling
         const { data: partnerMood } = await supabase
@@ -1050,6 +1056,43 @@ export default function DashboardPage() {
           </Link>
 
         </div>
+
+        {/* ─── MIXTAPE STUDIO WIDGET ─── */}
+        <Link
+          href="/mixtape"
+          className="block p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
+        >
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+              <Music className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+              <span>Mixtape Studio</span>
+            </div>
+            <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
+              {mixtapeCount} Mixtape{mixtapeCount !== 1 ? "s" : ""}
+            </h3>
+          </div>
+          <div className="pt-3 mt-3 border-t border-[var(--border)] space-y-2">
+            <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Latest</p>
+            {latestMixtape ? (
+              <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center gap-3 shadow-xs">
+                <div className="w-9 h-9 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
+                  <Music className="w-4 h-4 text-[var(--burgundy)]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-xs text-[var(--text)] truncate">{latestMixtape.title}</p>
+                  <p className="text-[9px] font-mono text-[var(--text-soft)]">
+                    {new Date(latestMixtape.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
+                <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No mixtapes yet</p>
+                <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Create one →</p>
+              </div>
+            )}
+          </div>
+        </Link>
 
         {/* ─── QUICK ACTIONS ROW (BOTTOM) ─── */}
         <div className="pt-6 border-t border-[var(--border)] space-y-3">

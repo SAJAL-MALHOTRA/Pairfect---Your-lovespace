@@ -17,6 +17,7 @@ import {
   Gamepad2,
   User,
   Settings,
+  Music,
 } from "lucide-react";
 
 const CLUSTERS = [
@@ -26,7 +27,8 @@ const CLUSTERS = [
   [
     { href: "/love-letter", icon: Mail, label: "Letters" },
     { href: "/checkin", icon: BookOpen, label: "Journal" },
-    { href: "/moments", icon: ImageIcon, label: "Memories" }
+    { href: "/moments", icon: ImageIcon, label: "Memories" },
+    { href: "/mixtape", icon: Music, label: "Mixtape" }
   ],
   [
     { href: "/play", icon: Gamepad2, label: "Playroom" },
