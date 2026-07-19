@@ -86,19 +86,19 @@ export default function Navigation() {
         </Link>
       </div>
 
-      {/* ─── FLOATING BOTTOM DOCK ─── */}
+      {/* ─── FLOATING LEFT VERTICAL DOCK ─── */}
       <AnimatePresence>
         {visible && (
           <motion.nav
-            initial={{ y: 80, opacity: 0, x: "-50%" }}
-            animate={{ y: 0, opacity: 1, x: "-50%" }}
-            exit={{ y: 80, opacity: 0, x: "-50%" }}
+            initial={{ x: -80, opacity: 0, y: "-50%" }}
+            animate={{ x: 0, opacity: 1, y: "-50%" }}
+            exit={{ x: -80, opacity: 0, y: "-50%" }}
             transition={{ type: "spring", stiffness: 380, damping: 38 }}
-            className="fixed bottom-6 left-1/2 z-50"
+            className="fixed left-6 top-1/2 z-50"
             aria-label="Main navigation"
           >
             <div
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full"
+              className="flex flex-col items-center gap-2 py-4 px-2.5 rounded-full"
               style={{
                 background: "rgba(255, 255, 255, 0.55)",
                 backdropFilter: "blur(14px)",
@@ -111,11 +111,11 @@ export default function Navigation() {
                 <React.Fragment key={cIdx}>
                   {cIdx > 0 && (
                     <div
-                      className="w-px h-5 self-center"
+                      className="w-5 h-px self-center"
                       style={{ backgroundColor: "var(--border)" }}
                     />
                   )}
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-col items-center gap-1">
                     {cluster.map((item) => {
                       const Icon = item.icon;
                       const isActive =
