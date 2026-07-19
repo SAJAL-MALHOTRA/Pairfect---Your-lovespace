@@ -5,7 +5,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart } from "lucide-react";
+import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Gamepad2, Send, Sparkles, PenTool } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 
@@ -21,6 +21,95 @@ export const moodDetails = {
   loved:    { label: "Loved",    emoji: "💖", color: "text-rose-600    bg-rose-50    dark:bg-rose-950/20    border-rose-100   dark:border-rose-900/25" },
   distant:  { label: "Distant",  emoji: "😶", color: "text-teal-600    bg-teal-50    dark:bg-teal-950/20    border-teal-100   dark:border-teal-900/25" },
 };
+
+// ── Milestone Calculator ──
+const MILESTONES = [
+  { days: 7, label: "1 Week" },
+  { days: 14, label: "2 Weeks" },
+  { days: 30, label: "1 Month" },
+  { days: 50, label: "50 Days" },
+  { days: 100, label: "100 Days" },
+  { days: 180, label: "6 Months" },
+  { days: 200, label: "200 Days" },
+  { days: 365, label: "1 Year" },
+  { days: 500, label: "500 Days" },
+  { days: 730, label: "2 Years" },
+  { days: 1000, label: "1,000 Days" },
+];
+
+function getUpcomingMilestone(currentDays: number) {
+  const next = MILESTONES.find((m) => m.days > currentDays) || {
+    days: currentDays + 100,
+    label: `${currentDays + 100} Days`,
+  };
+  const daysToGo = next.days - currentDays;
+  const percent = Math.min(100, Math.max(5, Math.round((currentDays / next.days) * 100)));
+  return { next, daysToGo, percent };
+}
+
+// ── Live Countdown Timer Component ──
+function LiveCountdownTimer({ targetDateISO }: { targetDateISO?: string | null }) {
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    function calculate() {
+      if (!targetDateISO) return;
+      const targetDate = new Date(targetDateISO);
+      if (isNaN(targetDate.getTime())) return;
+
+      const today = new Date();
+      let nextAnniv = new Date(today.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0);
+      if (nextAnniv.getTime() <= today.getTime()) {
+        nextAnniv.setFullYear(nextAnniv.getFullYear() + 1);
+      }
+
+      const diffMs = nextAnniv.getTime() - today.getTime();
+      if (diffMs <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+      const seconds = Math.floor((diffMs / 1000) % 60);
+
+      setTimeLeft({ days, hours, minutes, seconds });
+    }
+
+    calculate();
+    const interval = setInterval(calculate, 1000);
+    return () => clearInterval(interval);
+  }, [targetDateISO]);
+
+  return (
+    <div className="grid grid-cols-4 gap-2 text-center select-none w-full max-w-[280px]">
+      {[
+        { val: timeLeft.days, label: "Days" },
+        { val: timeLeft.hours, label: "Hours" },
+        { val: timeLeft.minutes, label: "Minutes" },
+        { val: timeLeft.seconds, label: "Seconds" },
+      ].map((seg) => (
+        <div
+          key={seg.label}
+          className="bg-[var(--bg)] border border-[var(--border)] rounded-xl py-2 px-1.5 flex flex-col items-center justify-center shadow-xs"
+        >
+          <span className="font-heading font-bold text-xl md:text-2xl text-[var(--text)] tabular-nums leading-none">
+            {String(seg.val).padStart(2, "0")}
+          </span>
+          <span className="text-[8px] font-sans font-semibold uppercase tracking-wider text-[var(--text-soft)] mt-1">
+            {seg.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // ── Dried Botanical Sprig SVG behind envelope ──
 function BotanicalFlower({ className = "" }: { className?: string }) {
@@ -57,6 +146,16 @@ function Sparkle({ className = "", delay = 0 }: { className?: string; delay?: nu
       <path d="M12 3v4M12 17v4M3 12h4M17 12h4" strokeLinecap="round" />
     </motion.svg>
   );
+}
+
+function getExcerpt(text: any, maxLen = 75): string {
+  if (!text) return "";
+  if (typeof text === "string") return text.slice(0, maxLen);
+  if (Array.isArray(text)) {
+    const textObj = text.find((item: any) => item && item.type === "text" && item.value);
+    if (textObj && textObj.value) return String(textObj.value).slice(0, maxLen);
+  }
+  return "";
 }
 
 // ── Wax Seal Monogram ──
@@ -173,6 +272,9 @@ export default function DashboardPage() {
   const [anniversaryDaysToGo, setAnniversaryDaysToGo] = useState(0);
   const [anniversaryDateFormatted, setAnniversaryDateFormatted] = useState("");
   const [anniversaryNotSet, setAnniversaryNotSet] = useState(false);
+  const [latestLetter, setLatestLetter] = useState<any>(null);
+  const [latestMoment, setLatestMoment] = useState<any>(null);
+  const [latestGratitude, setLatestGratitude] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
   const supabase = createClient();
 
@@ -202,14 +304,18 @@ export default function DashboardPage() {
           supabase.from("love_letters").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
           supabase.from("shared_moments").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
           supabase.from("gratitude_entries").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
-          supabase.from("love_letters").select("id, sender_id, sent_at").eq("pair_id", pair.id).order("sent_at", { ascending: false }).limit(2),
-          supabase.from("shared_moments").select("id, title, moment_date, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
-          supabase.from("gratitude_entries").select("id, sender_id, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
+          supabase.from("love_letters").select("id, sender_id, sent_at, content").eq("pair_id", pair.id).order("sent_at", { ascending: false }).limit(2),
+          supabase.from("shared_moments").select("id, title, photo_url, moment_date, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
+          supabase.from("gratitude_entries").select("id, sender_id, content, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
         ]);
 
         if (letRes.count !== null) setLettersCount(letRes.count);
         if (momRes.count !== null) setMomentsCount(momRes.count);
         if (gratRes.count !== null) setGratitudeCount(gratRes.count);
+
+        if (recentLet.data && recentLet.data.length > 0) setLatestLetter(recentLet.data[0]);
+        if (recentMom.data && recentMom.data.length > 0) setLatestMoment(recentMom.data[0]);
+        if (recentGrat.data && recentGrat.data.length > 0) setLatestGratitude(recentGrat.data[0]);
 
         // Calculate partner's latest feeling
         const { data: partnerMood } = await supabase
@@ -573,9 +679,61 @@ export default function DashboardPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="relative max-w-6xl mx-auto w-full px-6 py-16 pb-36 pt-24 space-y-12"
+        className="relative max-w-6xl mx-auto w-full px-6 py-16 pb-36 pt-24 space-y-10"
         style={{ zIndex: 10 }}
       >
+        {/* ─── 1. QUICK ACTIONS ROW ─── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          {[
+            {
+              label: "Write a Love Letter",
+              desc: "Express your feelings",
+              icon: Mail,
+              href: "/love-letter",
+            },
+            {
+              label: "View Calendar",
+              desc: "See important dates",
+              icon: Calendar,
+              href: "/calendar",
+            },
+            {
+              label: "Send a Surprise",
+              desc: "Make them smile",
+              icon: Gift,
+              href: "/love-letter?surprise=true",
+            },
+            {
+              label: "Couple Game",
+              desc: "Play & have fun",
+              icon: Gamepad2,
+              href: "/play",
+            },
+          ].map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center gap-3.5 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer select-none"
+              >
+                <div className="w-10 h-10 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="text-left min-w-0">
+                  <p className="font-sans font-bold text-xs text-[var(--text)] leading-snug truncate">
+                    {action.label}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-soft)] font-mono leading-tight mt-0.5 truncate">
+                    {action.desc}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* ─── MAIN HERO & WIDGETS GRID ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           
           {/* ─── LEFT COLUMN (HERO) ─── */}
@@ -619,38 +777,6 @@ export default function DashboardPage() {
                 Open Letter →
               </Link>
             </div>
-
-            {/* Status Line */}
-            <div className="pt-2 border-t border-[var(--border)] w-full lg:w-auto">
-              <p className="text-[13px] text-[var(--text-soft)] font-sans tracking-wide">
-                <span className="text-[var(--burgundy)] font-semibold">{daysTogether}</span> days together ·{" "}
-                <span className="text-[var(--burgundy)] font-semibold">{lettersCount}</span> letters ·{" "}
-                {partnerFeeling}
-              </p>
-            </div>
-
-            {/* Shortcut row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full pt-4">
-              {[
-                { href: "/moments", label: "Memory of the Day", desc: "Rediscover special memories" },
-                { href: "/checkin", label: "Tonight's Journal", desc: "Write your thoughts together" },
-                { href: "/play", label: "Date Night", desc: "Play something fun together" },
-                { href: "/stories", label: "Timeline", desc: "See your journey together" },
-              ].map((card) => (
-                <Link
-                  key={card.label}
-                  href={card.href}
-                  className="p-4 rounded-[20px] border flex flex-col justify-between text-left transition-all hover:translate-y-[-2px] hover:shadow-sm"
-                  style={{
-                    backgroundColor: "var(--bg-secondary)",
-                    borderColor: "var(--border)",
-                  }}
-                >
-                  <p className="font-heading text-xs font-bold text-[var(--text)] leading-tight">{card.label}</p>
-                  <p className="text-[9px] text-[var(--text-soft)] mt-2 leading-relaxed">{card.desc} →</p>
-                </Link>
-              ))}
-            </div>
           </div>
 
           {/* ─── RIGHT COLUMN (WIDGETS) ─── */}
@@ -675,7 +801,6 @@ export default function DashboardPage() {
 
               {/* Memory content layout */}
               <div className="flex gap-4 items-center">
-                {/* Micro polaroid container */}
                 <div
                   className="polaroid p-2 z-10 rotate-[-2deg] flex-shrink-0"
                   style={{ width: "95px", boxShadow: "0 4px 10px var(--shadow)" }}
@@ -691,12 +816,11 @@ export default function DashboardPage() {
                   <p className="font-heading text-sm text-[var(--text)] italic leading-tight">
                     You watched the sunset together.
                   </p>
-                  <Link
-                    href="/moments"
+                  <span
                     className="inline-flex items-center gap-1 text-[9px] font-mono uppercase text-[var(--burgundy)] hover:underline pt-1"
                   >
                     View Memory <ArrowRight className="w-2.5 h-2.5" />
-                  </Link>
+                  </span>
                 </div>
               </div>
             </Link>
@@ -704,7 +828,6 @@ export default function DashboardPage() {
             {/* Widget 2: Split Row (Gratitude Jar & Recent Activity) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* Gratitude Jar Card */}
               <Link
                 href="/gratitude-jar"
                 className="p-5 rounded-[20px] border flex flex-col items-center text-center justify-between space-y-3 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md"
@@ -715,7 +838,7 @@ export default function DashboardPage() {
                 }}
               >
                 <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                  <Gift className="w-3 h-3" />
+                  <Gift className="w-3.5 h-3.5 text-[var(--burgundy)]" />
                   <span>Gratitude Jar</span>
                 </div>
 
@@ -723,12 +846,11 @@ export default function DashboardPage() {
 
                 <div>
                   <p className="font-heading text-sm text-[var(--text)] font-semibold">{gratitudeCount} notes inside</p>
-                  <Link
-                    href="/gratitude-jar"
+                  <span
                     className="text-[9px] font-mono uppercase text-[var(--burgundy)] hover:underline block mt-1"
                   >
                     Open a random note →
-                  </Link>
+                  </span>
                 </div>
               </Link>
 
@@ -766,67 +888,218 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Widget 3: Upcoming Anniversary */}
-            <Link
-              href="/settings"
-              className="block p-6 rounded-[20px] border flex items-center justify-between gap-4 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md"
-              style={{
-                backgroundColor: "var(--bg-secondary)",
-                borderColor: "var(--border)",
-                boxShadow: "0 4px 16px var(--shadow)",
-              }}
+            {/* Widget 3: Live Countdown Anniversary Banner */}
+            <div
+              className="p-6 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col gap-4 shadow-sm"
             >
-              <div className="flex items-center gap-4">
-                <AnniversaryCakeSketch />
-                
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono uppercase text-[var(--text-soft)] tracking-wider">Our Anniversary</p>
-                  {anniversaryNotSet ? (
-                    <p className="text-sm font-heading text-[var(--burgundy)] font-medium">Add your anniversary date →</p>
-                  ) : (
-                    <>
-                      <h3 className="font-heading text-lg font-bold text-[var(--text)] leading-tight">
-                        {anniversaryDaysToGo} days to go
-                      </h3>
-                      <p className="text-[10px] font-mono text-[var(--rose)]">{anniversaryDateFormatted}</p>
-                    </>
-                  )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-5 h-5 fill-current" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-mono uppercase text-[var(--text-soft)] tracking-wider flex items-center gap-1">
+                      Upcoming Anniversary <span className="text-[var(--rose)]">♥</span>
+                    </p>
+                    <h3 className="font-heading text-lg font-bold text-[var(--text)] leading-tight">
+                      {anniversaryNotSet ? "Set Anniversary Date" : "First Anniversary"}
+                    </h3>
+                  </div>
                 </div>
+
+                <Link
+                  href="/calendar"
+                  className="py-2 px-3 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--burgundy)] bg-[var(--rose)]/15 hover:bg-[var(--rose)]/25 border border-[var(--rose)]/30 transition-all flex items-center gap-1"
+                >
+                  <Calendar className="w-3 h-3" /> View all special dates
+                </Link>
               </div>
-            </Link>
+
+              {/* Live Countdown Segments */}
+              <div className="flex items-center justify-between gap-4 pt-2 border-t border-[var(--border)]">
+                {anniversaryNotSet ? (
+                  <Link
+                    href="/settings"
+                    className="py-2.5 px-5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-white bg-[var(--burgundy)] hover:opacity-90 transition-all"
+                  >
+                    Set Date in Settings →
+                  </Link>
+                ) : (
+                  <>
+                    <LiveCountdownTimer targetDateISO={pair?.started_dating_date} />
+                    <p className="text-[10px] font-mono text-[var(--rose)] text-right font-medium">
+                      {anniversaryDateFormatted}
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
 
           </div>
         </div>
 
-        {/* ─── FULL-WIDTH STATS CARD ROW AT THE BOTTOM ─── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-[var(--border)]">
-          {[
-            { label: `${daysTogether} Days`, desc: "Together", icon: Calendar, href: "/checkin" },
-            { label: `${lettersCount} Letters`, desc: "Sent & Sealed", icon: Mail, href: "/love-letter" },
-            { label: `${momentsCount} Memories`, desc: "In Scrapbook", icon: ImageIcon, href: "/moments" },
-            { label: `${gratitudeCount} Notes`, desc: "In Gratitude Jar", icon: Gift, href: "/gratitude-jar" },
-          ].map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Link
-                key={stat.label}
-                href={stat.href}
-                className="p-4 rounded-[20px] border flex items-center gap-3 text-left cursor-pointer transition-all hover:translate-y-[-1px] hover:shadow-sm"
-                style={{
-                  backgroundColor: "var(--bg-secondary)",
-                  borderColor: "var(--border)",
-                }}
-              >
-                <div className="w-9 h-9 rounded-full bg-[var(--burgundy)]/10 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4 h-4" />
+        {/* ─── 3. STAT CARDS WITH CONTENT PREVIEWS ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-8 border-t border-[var(--border)]">
+          
+          {/* Card 1: Days Together */}
+          <Link
+            href="/checkin"
+            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+                <Calendar className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                <span>Days Together</span>
+              </div>
+              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
+                {daysTogether} Days
+              </h3>
+              <p className="text-xs font-handwriting text-[var(--rose)] italic">Together 🧡</p>
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border)] space-y-2">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Next Milestone</p>
+              {(() => {
+                const { next, daysToGo, percent } = getUpcomingMilestone(daysTogether);
+                return (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-sans font-semibold text-[var(--text)]">✨ {next.label}</span>
+                      <span className="text-[10px] font-mono text-[var(--rose)]">in {daysToGo} days</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-[var(--border)] overflow-hidden">
+                      <div className="h-full rounded-full bg-[var(--burgundy)] transition-all" style={{ width: `${percent}%` }} />
+                    </div>
+                    <p className="text-[9px] font-mono text-[var(--text-soft)] text-right">{percent}%</p>
+                  </div>
+                );
+              })()}
+              <p className="text-[9px] font-mono text-[var(--text-soft)] pt-1">
+                Started on {anniversaryDateFormatted || "Recently"}
+              </p>
+            </div>
+          </Link>
+
+          {/* Card 2: Love Letters */}
+          <Link
+            href="/love-letter"
+            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+                <Mail className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                <span>Love Letters</span>
+              </div>
+              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
+                {lettersCount} {lettersCount === 1 ? "Letter" : "Letters"}
+              </h3>
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border)] space-y-2">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Latest Letter</p>
+              {latestLetter ? (
+                <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-2 relative shadow-xs">
+                  <p className="font-quote italic text-xs text-[var(--text)] line-clamp-2 leading-relaxed">
+                    "{getExcerpt(latestLetter.content) || "Goodnight, sunshine. You make my world so much brighter."}"
+                  </p>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[9px] font-mono text-[var(--text-soft)]">
+                      {latestLetter.sent_at ? new Date(latestLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] text-[9px] font-mono font-semibold flex items-center gap-1">
+                      2 new reactions ♥
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-heading text-sm font-bold text-[var(--text)] leading-tight">{stat.label}</p>
-                  <p className="text-[9px] text-[var(--text-soft)] mt-0.5 font-mono uppercase tracking-wider">{stat.desc}</p>
+              ) : (
+                <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
+                  <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No letters sent yet</p>
+                  <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Write first letter →</p>
                 </div>
-              </Link>
-            );
-          })}
+              )}
+            </div>
+          </Link>
+
+          {/* Card 3: Memories */}
+          <Link
+            href="/moments"
+            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+                <ImageIcon className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                <span>Memories</span>
+              </div>
+              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
+                {momentsCount} {momentsCount === 1 ? "Memory" : "Memories"}
+              </h3>
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border)] space-y-2">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Latest Memory</p>
+              {latestMoment ? (
+                <div className="polaroid p-2 bg-[var(--card)] border border-[var(--border)] rounded-xl flex flex-col items-center shadow-xs">
+                  <div className="w-full h-20 bg-[var(--paper-deep)] rounded-md overflow-hidden flex items-center justify-center">
+                    {latestMoment.photo_url ? (
+                      <img src={latestMoment.photo_url} alt={latestMoment.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl">🌅</span>
+                    )}
+                  </div>
+                  <p className="font-handwriting text-xs text-[var(--text)] font-bold mt-1.5 truncate max-w-full">
+                    {latestMoment.title || "Sunset Walk 🌊"}
+                  </p>
+                  <p className="text-[9px] font-mono text-[var(--text-soft)]">
+                    {latestMoment.moment_date ? new Date(latestMoment.moment_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Recently"}
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
+                  <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No memories saved yet</p>
+                  <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Add a memory →</p>
+                </div>
+              )}
+            </div>
+          </Link>
+
+          {/* Card 4: Gratitude Jar */}
+          <Link
+            href="/gratitude-jar"
+            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+                <Gift className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                <span>Gratitude Jar</span>
+              </div>
+              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
+                {gratitudeCount} Notes
+              </h3>
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border)] space-y-2">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Today's Gratitude</p>
+              {latestGratitude ? (
+                <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-2 relative shadow-xs">
+                  <p className="font-quote italic text-xs text-[var(--text)] line-clamp-2 leading-relaxed">
+                    "{getExcerpt(latestGratitude.content) || "I'm grateful for your patience and the little things you do everyday."}"
+                  </p>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[9px] font-mono text-[var(--text-soft)]">
+                      {latestGratitude.created_at ? new Date(latestGratitude.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
+                    </span>
+                    <span className="text-xs text-[var(--rose)]">♥</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
+                  <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No gratitude added today</p>
+                  <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Add a note →</p>
+                </div>
+              )}
+            </div>
+          </Link>
+
         </div>
 
       </motion.main>
