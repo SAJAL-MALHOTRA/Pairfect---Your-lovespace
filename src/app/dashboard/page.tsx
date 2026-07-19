@@ -330,27 +330,27 @@ export default function DashboardPage() {
     { left: "80%", top: "10%", size: 450, color: "rgba(255, 235, 200, 0.015)", dx: [-15, 15, -15], dy: [15, -15, 15], duration: 50 },
   ];
 
-  // Translucent glass hearts with custom colors, blur levels (depth), opacities, and shimmer delays
+  // Translucent glass hearts with custom colors, blur levels (depth, in pixels), opacities, and shimmer delays
   const glassHearts = [
     // Foregrounds (Sharp, bright, highest glow)
-    { size: 72, left: "81%", top: "12%", color: "#FFD3E2", blur: "blur-[0.5px]", glow: 0.28, duration: 32, delay: 0, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, 8, 0], shimmerDelay: 1, shimmerInterval: 9 },
-    { size: 60, left: "11%", top: "72%", color: "#FFE8E2", blur: "blur-[0.5px]", glow: 0.28, duration: 38, delay: 2, dx: [-15, 15, -15], dy: [-18, 18, -18], rot: [0, -12, 0], shimmerDelay: 4, shimmerInterval: 12 },
-    { size: 42, left: "91%", top: "45%", color: "#EEDAF5", blur: "blur-[1px]", glow: 0.22, duration: 28, delay: 1, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, 15, 0], shimmerDelay: 3, shimmerInterval: 11 },
+    { size: 72, left: "81%", top: "12%", color: "#FFD3E2", blur: 0, glow: 0.28, duration: 32, delay: 0, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, 8, 0], shimmerDelay: 1, shimmerInterval: 9 },
+    { size: 60, left: "11%", top: "72%", color: "#FFE8E2", blur: 0, glow: 0.28, duration: 38, delay: 2, dx: [-15, 15, -15], dy: [-18, 18, -18], rot: [0, -12, 0], shimmerDelay: 4, shimmerInterval: 12 },
+    { size: 42, left: "91%", top: "45%", color: "#EEDAF5", blur: 1, glow: 0.22, duration: 28, delay: 1, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, 15, 0], shimmerDelay: 3, shimmerInterval: 11 },
     
     // Middleground (Slight blur)
-    { size: 26, left: "84%", top: "26%", color: "#FFF0EB", blur: "blur-[2px]", glow: 0.18, duration: 24, delay: 3, dx: [-10, 10, -10], dy: [-8, 8, -8], rot: [0, -6, 0], shimmerDelay: 0.5, shimmerInterval: 10 },
-    { size: 22, left: "21%", top: "14%", color: "#FFD6E8", blur: "blur-[2.5px]", glow: 0.18, duration: 30, delay: 1.5, dx: [-15, 15, -15], dy: [-12, 12, -12], rot: [0, 10, 0], shimmerDelay: 2.5, shimmerInterval: 13 },
-    { size: 24, left: "75%", top: "79%", color: "#E6F5FA", blur: "blur-[2.5px]", glow: 0.18, duration: 35, delay: 4, dx: [-20, 20, -20], dy: [-15, 15, -15], rot: [0, -10, 0], shimmerDelay: 5, shimmerInterval: 14 },
-    { size: 28, left: "6%", top: "43%", color: "#FFF9F5", blur: "blur-[2px]", glow: 0.18, duration: 27, delay: 2.5, dx: [-14, 14, -14], dy: [-10, 10, -10], rot: [0, 8, 0], shimmerDelay: 3.5, shimmerInterval: 11.5 },
-    { size: 20, left: "88%", top: "83%", color: "#FFDFE6", blur: "blur-[2.5px]", glow: 0.18, duration: 29, delay: 0.8, dx: [-12, 12, -12], dy: [-14, 14, -14], rot: [0, -8, 0], shimmerDelay: 1.8, shimmerInterval: 10.5 },
+    { size: 26, left: "84%", top: "26%", color: "#FFF0EB", blur: 2, glow: 0.18, duration: 24, delay: 3, dx: [-10, 10, -10], dy: [-8, 8, -8], rot: [0, -6, 0], shimmerDelay: 0.5, shimmerInterval: 10 },
+    { size: 22, left: "21%", top: "14%", color: "#FFD6E8", blur: 2.5, glow: 0.18, duration: 30, delay: 1.5, dx: [-15, 15, -15], dy: [-12, 12, -12], rot: [0, 10, 0], shimmerDelay: 2.5, shimmerInterval: 13 },
+    { size: 24, left: "75%", top: "79%", color: "#E6F5FA", blur: 2.5, glow: 0.18, duration: 35, delay: 4, dx: [-20, 20, -20], dy: [-15, 15, -15], rot: [0, -10, 0], shimmerDelay: 5, shimmerInterval: 14 },
+    { size: 28, left: "6%", top: "43%", color: "#FFF9F5", blur: 2, glow: 0.18, duration: 27, delay: 2.5, dx: [-14, 14, -14], dy: [-10, 10, -10], rot: [0, 8, 0], shimmerDelay: 3.5, shimmerInterval: 11.5 },
+    { size: 20, left: "88%", top: "83%", color: "#FFDFE6", blur: 2.5, glow: 0.18, duration: 29, delay: 0.8, dx: [-12, 12, -12], dy: [-14, 14, -14], rot: [0, -8, 0], shimmerDelay: 1.8, shimmerInterval: 10.5 },
 
     // Background (Heavy blur, very faint, some almost disappear)
-    { size: 14, left: "9%", top: "18%", color: "#FFDEEB", blur: "blur-[4px]", glow: 0.12, duration: 22, delay: 5, dx: [-8, 8, -8], dy: [-6, 6, -6], rot: [0, 5, 0], shimmerDelay: 6, shimmerInterval: 14 },
-    { size: 12, left: "78%", top: "30%", color: "#F0FAFF", blur: "blur-[5px]", glow: 0.10, duration: 31, delay: 2, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, -5, 0], shimmerDelay: 0, shimmerInterval: 16 },
-    { size: 10, left: "27%", top: "83%", color: "#FFF6FA", blur: "blur-[5px]", glow: 0.08, duration: 34, delay: 3.2, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 12, 0], shimmerDelay: 4.5, shimmerInterval: 13.5 },
-    { size: 8, left: "67%", top: "15%", color: "#FFEAE6", blur: "blur-[6px]", glow: 0.06, duration: 26, delay: 1.2, dx: [-6, 6, -6], dy: [-8, 8, -8], rot: [0, -15, 0], shimmerDelay: 2, shimmerInterval: 11.5 },
-    { size: 12, left: "3%", top: "27%", color: "#FFF0F5", blur: "blur-[5px]", glow: 0.08, duration: 33, delay: 0.5, dx: [-15, 15, -15], dy: [-15, 15, -15], rot: [0, 4, 0], shimmerDelay: 1.2, shimmerInterval: 12 },
-    { size: 14, left: "93%", top: "19%", color: "#FFDCE6", blur: "blur-[4px]", glow: 0.10, duration: 36, delay: 4.5, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, -4, 0], shimmerDelay: 5.2, shimmerInterval: 15 },
+    { size: 14, left: "9%", top: "18%", color: "#FFDEEB", blur: 4, glow: 0.12, duration: 22, delay: 5, dx: [-8, 8, -8], dy: [-6, 6, -6], rot: [0, 5, 0], shimmerDelay: 6, shimmerInterval: 14 },
+    { size: 12, left: "78%", top: "30%", color: "#F0FAFF", blur: 5, glow: 0.10, duration: 31, delay: 2, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, -5, 0], shimmerDelay: 0, shimmerInterval: 16 },
+    { size: 10, left: "27%", top: "83%", color: "#FFF6FA", blur: 5, glow: 0.08, duration: 34, delay: 3.2, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 12, 0], shimmerDelay: 4.5, shimmerInterval: 13.5 },
+    { size: 8, left: "67%", top: "15%", color: "#FFEAE6", blur: 6, glow: 0.06, duration: 26, delay: 1.2, dx: [-6, 6, -6], dy: [-8, 8, -8], rot: [0, -15, 0], shimmerDelay: 2, shimmerInterval: 11.5 },
+    { size: 12, left: "3%", top: "27%", color: "#FFF0F5", blur: 5, glow: 0.08, duration: 33, delay: 0.5, dx: [-15, 15, -15], dy: [-15, 15, -15], rot: [0, 4, 0], shimmerDelay: 1.2, shimmerInterval: 12 },
+    { size: 14, left: "93%", top: "19%", color: "#FFDCE6", blur: 4, glow: 0.10, duration: 36, delay: 4.5, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, -4, 0], shimmerDelay: 5.2, shimmerInterval: 15 },
   ];
 
   // Sparkles (tiny 2-4px dots and faint 4-point stars)
@@ -371,7 +371,11 @@ export default function DashboardPage() {
       style={{ backgroundColor: "var(--bg)" }}
     >
       {/* ─── AMBIENT BACKGROUND PARTICLES ─── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none" aria-hidden="true">
+      <div 
+        className="absolute inset-0 pointer-events-none overflow-hidden select-none" 
+        style={{ zIndex: 1 }}
+        aria-hidden="true"
+      >
         {/* 1. Large Blurred Background Glass Blobs */}
         {glassBlobs.map((blob, idx) => {
           const blobAnim: any = reducedMotion || !tabActive
@@ -384,13 +388,15 @@ export default function DashboardPage() {
           return (
             <motion.div
               key={`blob-${idx}`}
-              className="absolute rounded-full pointer-events-none select-none blur-[110px] opacity-[0.55]"
+              className="absolute rounded-full pointer-events-none select-none"
               style={{
                 left: blob.left,
                 top: blob.top,
                 width: `${blob.size}px`,
                 height: `${blob.size}px`,
                 background: blob.color,
+                filter: "blur(110px)",
+                opacity: 0.55,
               }}
               animate={blobAnim}
               transition={{
@@ -427,14 +433,16 @@ export default function DashboardPage() {
           return (
             <motion.div
               key={`heart-${idx}`}
-              className={`absolute ${p.blur} select-none pointer-events-none`}
+              className="absolute select-none pointer-events-none"
               style={{
                 left: p.left,
                 top: p.top,
                 width: `${p.size}px`,
                 height: `${p.size}px`,
-                // Soft glow bloom matching user settings
-                filter: `drop-shadow(0 0 10px rgba(255, 220, 230, ${p.glow * 0.65}))`,
+                // Soft glow bloom + Gaussian blur combined to avoid Tailwind config dependencies
+                filter: p.blur > 0
+                  ? `blur(${p.blur}px) drop-shadow(0 4px 12px rgba(255, 220, 230, ${p.glow * 0.7}))`
+                  : `drop-shadow(0 4px 12px rgba(255, 220, 230, ${p.glow * 0.7}))`,
                 zIndex: p.size > 50 ? 2 : 1,
               }}
               {...animationProps}
@@ -474,7 +482,6 @@ export default function DashboardPage() {
                   fill={`url(#glassGrad-${idx})`}
                   stroke={`url(#edgeGrad-${idx})`}
                   strokeWidth="1.2"
-                  style={{ backdropFilter: "blur(1.5px)" }}
                 />
 
                 {/* Specular Inner Refraction highlight */}
@@ -557,12 +564,13 @@ export default function DashboardPage() {
 
       <Navigation />
 
-      {/* Main Container: two-column layout on large screens */}
+      {/* Main Container: stacked layered zIndex above background particles */}
       <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="max-w-6xl mx-auto w-full px-6 py-16 pb-36 pt-24 space-y-12"
+        className="relative max-w-6xl mx-auto w-full px-6 py-16 pb-36 pt-24 space-y-12"
+        style={{ zIndex: 10 }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           
