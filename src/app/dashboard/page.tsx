@@ -184,6 +184,14 @@ export default function DashboardPage() {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
+  // Tab active/inactive state to pause animations when tab is backgrounded
+  const [tabActive, setTabActive] = useState(true);
+  useEffect(() => {
+    const handleVisibility = () => setTabActive(!document.hidden);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
   useEffect(() => {
     if (!pair || loading) return;
     (async () => {
@@ -315,20 +323,46 @@ export default function DashboardPage() {
   const greetingLine = getGreeting();
   const recipientName = partner?.display_name || "partner";
 
-  // Ambient particles concentrated in whitespace/edges, avoiding the center envelope area
-  const particles = [
-    { type: "heart", size: 12, left: "8%", top: "12%", color: "var(--rose)", blur: "blur-[3px]", duration: 25, delay: 0, dx: [-15, 15, -15], dy: [-10, 10, -10], rot: [0, 15, 0] },
-    { type: "dot", size: 16, left: "85%", top: "15%", color: "var(--text-soft)", blur: "blur-[6px]", duration: 32, delay: 1.5, dx: [-20, 20, -20], dy: [-15, 15, -15], rot: [0, 0, 0] },
-    { type: "sparkle", size: 14, left: "10%", top: "75%", color: "var(--rose)", blur: "blur-[2px]", duration: 22, delay: 3, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 45, 0] },
-    { type: "heart", size: 20, left: "88%", top: "82%", color: "var(--rose)", blur: "blur-[5px]", duration: 38, delay: 0.5, dx: [-25, 25, -25], dy: [-20, 20, -20], rot: [0, -20, 0] },
-    { type: "dot", size: 12, left: "5%", top: "42%", color: "var(--text-soft)", blur: "blur-[4px]", duration: 20, delay: 2.2, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, 0, 0] },
-    { type: "sparkle", size: 18, left: "92%", top: "48%", color: "var(--rose)", blur: "blur-[3px]", duration: 28, delay: 4, dx: [-18, 18, -18], dy: [-15, 15, -15], rot: [0, -35, 0] },
-    { type: "heart", size: 14, left: "24%", top: "16%", color: "var(--rose)", blur: "blur-[4px]", duration: 26, delay: 1, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 10, 0] },
-    { type: "dot", size: 22, left: "74%", top: "20%", color: "var(--text-soft)", blur: "blur-[8px]", duration: 40, delay: 5, dx: [-28, 28, -28], dy: [-22, 22, -22], rot: [0, 0, 0] },
-    { type: "sparkle", size: 12, left: "26%", top: "78%", color: "var(--rose)", blur: "blur-[2px]", duration: 24, delay: 2.7, dx: [-12, 12, -12], dy: [-8, 8, -8], rot: [0, 90, 0] },
-    { type: "heart", size: 16, left: "76%", top: "80%", color: "var(--rose)", blur: "blur-[5px]", duration: 34, delay: 1.8, dx: [-22, 22, -22], dy: [-18, 18, -18], rot: [0, -15, 0] },
-    { type: "dot", size: 18, left: "4%", top: "28%", color: "var(--text-soft)", blur: "blur-[7px]", duration: 30, delay: 3.5, dx: [-16, 16, -16], dy: [-20, 20, -20], rot: [0, 0, 0] },
-    { type: "sparkle", size: 16, left: "94%", top: "26%", color: "var(--rose)", blur: "blur-[3px]", duration: 36, delay: 0.8, dx: [-20, 20, -20], dy: [-16, 16, -16], rot: [0, 60, 0] },
+  // Faint, large, heavily blurred background glass blobs (opacity < 5% for deep depth)
+  const glassBlobs = [
+    { left: "10%", top: "20%", size: 380, color: "rgba(255, 200, 215, 0.02)", dx: [-25, 25, -25], dy: [-15, 15, -15], duration: 40 },
+    { left: "75%", top: "55%", size: 340, color: "rgba(235, 215, 255, 0.02)", dx: [20, -20, 20], dy: [-20, 20, -20], duration: 45 },
+    { left: "80%", top: "10%", size: 450, color: "rgba(255, 235, 200, 0.015)", dx: [-15, 15, -15], dy: [15, -15, 15], duration: 50 },
+  ];
+
+  // Translucent glass hearts with custom colors, blur levels (depth), opacities, and shimmer delays
+  const glassHearts = [
+    // Foregrounds (Sharp, bright, highest glow)
+    { size: 72, left: "81%", top: "12%", color: "#FFD3E2", blur: "blur-[0.5px]", glow: 0.28, duration: 32, delay: 0, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, 8, 0], shimmerDelay: 1, shimmerInterval: 9 },
+    { size: 60, left: "11%", top: "72%", color: "#FFE8E2", blur: "blur-[0.5px]", glow: 0.28, duration: 38, delay: 2, dx: [-15, 15, -15], dy: [-18, 18, -18], rot: [0, -12, 0], shimmerDelay: 4, shimmerInterval: 12 },
+    { size: 42, left: "91%", top: "45%", color: "#EEDAF5", blur: "blur-[1px]", glow: 0.22, duration: 28, delay: 1, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, 15, 0], shimmerDelay: 3, shimmerInterval: 11 },
+    
+    // Middleground (Slight blur)
+    { size: 26, left: "84%", top: "26%", color: "#FFF0EB", blur: "blur-[2px]", glow: 0.18, duration: 24, delay: 3, dx: [-10, 10, -10], dy: [-8, 8, -8], rot: [0, -6, 0], shimmerDelay: 0.5, shimmerInterval: 10 },
+    { size: 22, left: "21%", top: "14%", color: "#FFD6E8", blur: "blur-[2.5px]", glow: 0.18, duration: 30, delay: 1.5, dx: [-15, 15, -15], dy: [-12, 12, -12], rot: [0, 10, 0], shimmerDelay: 2.5, shimmerInterval: 13 },
+    { size: 24, left: "75%", top: "79%", color: "#E6F5FA", blur: "blur-[2.5px]", glow: 0.18, duration: 35, delay: 4, dx: [-20, 20, -20], dy: [-15, 15, -15], rot: [0, -10, 0], shimmerDelay: 5, shimmerInterval: 14 },
+    { size: 28, left: "6%", top: "43%", color: "#FFF9F5", blur: "blur-[2px]", glow: 0.18, duration: 27, delay: 2.5, dx: [-14, 14, -14], dy: [-10, 10, -10], rot: [0, 8, 0], shimmerDelay: 3.5, shimmerInterval: 11.5 },
+    { size: 20, left: "88%", top: "83%", color: "#FFDFE6", blur: "blur-[2.5px]", glow: 0.18, duration: 29, delay: 0.8, dx: [-12, 12, -12], dy: [-14, 14, -14], rot: [0, -8, 0], shimmerDelay: 1.8, shimmerInterval: 10.5 },
+
+    // Background (Heavy blur, very faint, some almost disappear)
+    { size: 14, left: "9%", top: "18%", color: "#FFDEEB", blur: "blur-[4px]", glow: 0.12, duration: 22, delay: 5, dx: [-8, 8, -8], dy: [-6, 6, -6], rot: [0, 5, 0], shimmerDelay: 6, shimmerInterval: 14 },
+    { size: 12, left: "78%", top: "30%", color: "#F0FAFF", blur: "blur-[5px]", glow: 0.10, duration: 31, delay: 2, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, -5, 0], shimmerDelay: 0, shimmerInterval: 16 },
+    { size: 10, left: "27%", top: "83%", color: "#FFF6FA", blur: "blur-[5px]", glow: 0.08, duration: 34, delay: 3.2, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 12, 0], shimmerDelay: 4.5, shimmerInterval: 13.5 },
+    { size: 8, left: "67%", top: "15%", color: "#FFEAE6", blur: "blur-[6px]", glow: 0.06, duration: 26, delay: 1.2, dx: [-6, 6, -6], dy: [-8, 8, -8], rot: [0, -15, 0], shimmerDelay: 2, shimmerInterval: 11.5 },
+    { size: 12, left: "3%", top: "27%", color: "#FFF0F5", blur: "blur-[5px]", glow: 0.08, duration: 33, delay: 0.5, dx: [-15, 15, -15], dy: [-15, 15, -15], rot: [0, 4, 0], shimmerDelay: 1.2, shimmerInterval: 12 },
+    { size: 14, left: "93%", top: "19%", color: "#FFDCE6", blur: "blur-[4px]", glow: 0.10, duration: 36, delay: 4.5, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, -4, 0], shimmerDelay: 5.2, shimmerInterval: 15 },
+  ];
+
+  // Sparkles (tiny 2-4px dots and faint 4-point stars)
+  const sparkles = [
+    { type: "dot", size: 3, left: "18%", top: "16%" },
+    { type: "star", size: 8, left: "84%", top: "34%" },
+    { type: "dot", size: 4, left: "4%", top: "67%" },
+    { type: "star", size: 10, left: "89%", top: "77%" },
+    { type: "dot", size: 2, left: "14%", top: "87%" },
+    { type: "star", size: 7, left: "76%", top: "7%" },
+    { type: "dot", size: 3, left: "33%", top: "89%" },
+    { type: "star", size: 9, left: "64%", top: "11%" },
   ];
 
   return (
@@ -338,10 +372,41 @@ export default function DashboardPage() {
     >
       {/* ─── AMBIENT BACKGROUND PARTICLES ─── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none" aria-hidden="true">
-        {particles.map((p, idx) => {
-          const animationProps: any = reducedMotion
+        {/* 1. Large Blurred Background Glass Blobs */}
+        {glassBlobs.map((blob, idx) => {
+          const blobAnim: any = reducedMotion || !tabActive
+            ? {}
+            : {
+                x: blob.dx,
+                y: blob.dy,
+              };
+
+          return (
+            <motion.div
+              key={`blob-${idx}`}
+              className="absolute rounded-full pointer-events-none select-none blur-[110px] opacity-[0.55]"
+              style={{
+                left: blob.left,
+                top: blob.top,
+                width: `${blob.size}px`,
+                height: `${blob.size}px`,
+                background: blob.color,
+              }}
+              animate={blobAnim}
+              transition={{
+                duration: blob.duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          );
+        })}
+
+        {/* 2. Glass Hearts */}
+        {glassHearts.map((p, idx) => {
+          const animationProps: any = reducedMotion || !tabActive
             ? {
-                animate: { opacity: 0.05 },
+                animate: { opacity: p.glow * 0.4 },
                 transition: { duration: 1 }
               }
             : {
@@ -349,7 +414,7 @@ export default function DashboardPage() {
                   x: p.dx,
                   y: p.dy,
                   rotate: p.rot,
-                  opacity: [0.03, 0.12, 0.03],
+                  opacity: [p.glow * 0.3, p.glow * 0.9, p.glow * 0.3],
                 },
                 transition: {
                   duration: p.duration,
@@ -361,30 +426,129 @@ export default function DashboardPage() {
 
           return (
             <motion.div
-              key={idx}
-              className={`absolute ${p.blur}`}
+              key={`heart-${idx}`}
+              className={`absolute ${p.blur} select-none pointer-events-none`}
               style={{
                 left: p.left,
                 top: p.top,
                 width: `${p.size}px`,
                 height: `${p.size}px`,
-                color: p.color,
-                opacity: 0.05,
+                // Soft glow bloom matching user settings
+                filter: `drop-shadow(0 0 10px rgba(255, 220, 230, ${p.glow * 0.65}))`,
+                zIndex: p.size > 50 ? 2 : 1,
               }}
               {...animationProps}
             >
-              {p.type === "heart" && (
+              <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
+                <defs>
+                  {/* Glass texture gradient */}
+                  <radialGradient id={`glassGrad-${idx}`} cx="35%" cy="30%" r="65%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
+                    <stop offset="50%" stopColor={p.color} stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="#D38CA2" stopOpacity="0.08" />
+                  </radialGradient>
+                  {/* Glass edge stroke gradient */}
+                  <linearGradient id={`edgeGrad-${idx}`} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75" />
+                    <stop offset="45%" stopColor="#FFFFFF" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor={p.color} stopOpacity="0.45" />
+                  </linearGradient>
+                  {/* Specular sunlight shimmer sweep gradient */}
+                  <linearGradient id={`shimmerGrad-${idx}`} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
+                    <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                {/* Soft background shape shadow/bloom blur */}
+                <path
+                  d="M 50 86 C 25 63, 6 43, 6 27 C 6 12, 23 5, 50 31 C 77 5, 94 12, 94 27 C 94 43, 75 63, 50 86 Z"
+                  fill="rgba(255, 218, 224, 0.15)"
+                  filter="blur(3px)"
+                />
+
+                {/* Main Glass Heart Body */}
+                <path
+                  d="M 50 84 C 25 61, 8 41, 8 26 C 8 11, 25 4, 50 29 C 75 4, 92 11, 92 26 C 92 41, 75 61, 50 84 Z"
+                  fill={`url(#glassGrad-${idx})`}
+                  stroke={`url(#edgeGrad-${idx})`}
+                  strokeWidth="1.2"
+                  style={{ backdropFilter: "blur(1.5px)" }}
+                />
+
+                {/* Specular Inner Refraction highlight */}
+                <path
+                  d="M 50 76 C 31 57, 15 39, 15 26 C 15 15, 27 10, 50 31"
+                  stroke="#FFFFFF"
+                  strokeOpacity="0.35"
+                  strokeWidth="0.8"
+                  strokeLinecap="round"
+                />
+
+                {/* Top Left Glass Curved highlight */}
+                <path
+                  d="M 24 23 C 28 15, 38 13, 47 23"
+                  stroke="#FFFFFF"
+                  strokeOpacity="0.65"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+
+                {/* Specular Shine catch: sweeps across the surface dynamically */}
+                <g style={{ mixBlendMode: "overlay" }}>
+                  <rect
+                    className="shimmer-active"
+                    x="-20"
+                    y="-20"
+                    width="15"
+                    height="120"
+                    fill={`url(#shimmerGrad-${idx})`}
+                    style={{
+                      animationDelay: `${p.shimmerDelay}s`,
+                      animationDuration: `${p.shimmerInterval}s`,
+                    }}
+                  />
+                </g>
+              </svg>
+            </motion.div>
+          );
+        })}
+
+        {/* 3. Sparkles */}
+        {sparkles.map((sp, idx) => {
+          const sparkleAnim: any = reducedMotion || !tabActive
+            ? { opacity: 0.05 }
+            : {
+                opacity: [0.03, 0.18, 0.03],
+                scale: [0.9, 1.15, 0.9],
+              };
+
+          return (
+            <motion.div
+              key={`sparkle-${idx}`}
+              className="absolute pointer-events-none select-none text-[var(--rose)]"
+              style={{
+                left: sp.left,
+                top: sp.top,
+                width: `${sp.size}px`,
+                height: `${sp.size}px`,
+                opacity: 0.05,
+              }}
+              animate={sparkleAnim}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: idx * 0.7,
+              }}
+            >
+              {sp.type === "star" ? (
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  <path d="M12 2l2.4 7.2 7.2 2.4-7.2 2.4-2.4 7.2-2.4-7.2-7.2-2.4 7.2-2.4z" />
                 </svg>
-              )}
-              {p.type === "dot" && (
+              ) : (
                 <div className="w-full h-full rounded-full bg-current" />
-              )}
-              {p.type === "sparkle" && (
-                <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" className="w-full h-full">
-                  <path d="M12 3v4M12 17v4M3 12h4M17 12h4" strokeLinecap="round" />
-                </svg>
               )}
             </motion.div>
           );
