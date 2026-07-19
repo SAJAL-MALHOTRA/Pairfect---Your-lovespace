@@ -109,12 +109,7 @@ export default function Navigation() {
             className="fixed left-6 top-1/2 z-50"
             aria-label="Main navigation"
           >
-            <div
-              className="flex flex-col items-center gap-2 py-4 px-2.5 rounded-full bg-[rgba(255,255,255,0.55)] dark:bg-[rgba(30,20,14,0.65)] border border-[rgba(255,255,255,0.6)] dark:border-[rgba(61,48,40,0.6)] backdrop-blur-md"
-              style={{
-                boxShadow: "0 10px 30px var(--shadow)",
-              }}
-            >
+            <div className="nav-dock flex flex-col items-center gap-2 py-4 px-2.5 rounded-full">
               {CLUSTERS.map((cluster, cIdx) => (
                 <React.Fragment key={cIdx}>
                   {cIdx > 0 && (

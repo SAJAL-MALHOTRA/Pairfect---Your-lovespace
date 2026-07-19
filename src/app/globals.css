@@ -228,6 +228,19 @@ body {
 .delay-800 { animation-delay: 800ms; }
 .delay-900 { animation-delay: 900ms; }
 
+/* Navigation Dock Frosted Glass */
+.nav-dock {
+  background: rgba(255, 252, 248, 0.88);
+  border: 1px solid rgba(231, 222, 213, 0.85);
+  box-shadow: 0 10px 30px var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.dark .nav-dock {
+  background: rgba(26, 20, 16, 0.88);
+  border: 1px solid rgba(46, 36, 32, 0.85);
+}
+
 /* ── Paper surfaces ── */
 
 /* The physical paper grain texture */
