@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = process.env.APP_ENCRYPTION_KEY || "";
+const ENCRYPTION_KEY = process.env.APP_ENCRYPTION_KEY || "pairfect-fallback-secure-encryption-key-for-local-and-prod-32-chars";
 const IV_LENGTH = 16;
 
 function getKey() {

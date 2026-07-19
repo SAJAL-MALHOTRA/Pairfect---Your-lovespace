@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
+import { useTheme } from "@/components/providers/theme-provider";
 import {
   Check, Loader2, AlertCircle, ShieldAlert, ChevronRight
 } from "lucide-react";
@@ -80,6 +81,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
 export default function SettingsPage() {
   const { user, profile, pair, partner, refreshSession, signOut, loading } = useAuth();
   const supabase = createClient();
+  const { theme, toggleTheme } = useTheme();
 
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -311,6 +313,20 @@ export default function SettingsPage() {
               </div>
             </form>
           )}
+        </Section>
+
+        {/* Preferences section */}
+        <Section title="Preferences">
+          <SettingsRow
+            label="Dark Mode"
+            description="Toggle dark and light physical tones"
+            right={
+              <Toggle
+                checked={theme === "dark"}
+                onChange={toggleTheme}
+              />
+            }
+          />
         </Section>
 
         {/* Notifications section */}
