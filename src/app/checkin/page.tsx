@@ -9,13 +9,6 @@ import { moodDetails } from "@/app/dashboard/page";
 import { Loader2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const fallbackTracks = [
-  { id: "1", name: "Cozy Coffee",    artist: "Lo-Fi Lullabies", albumArt: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=80&h=80&fit=crop" },
-  { id: "2", name: "Rainy Sunday",   artist: "Acoustic Dreams", albumArt: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=80&h=80&fit=crop" },
-  { id: "3", name: "Warm Hugs",      artist: "Sweet Melodies",  albumArt: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=80&h=80&fit=crop" },
-  { id: "4", name: "Starlight Dance", artist: "Vibe Selector",  albumArt: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=80&h=80&fit=crop" },
-];
-
 // Dried flower — bottom-right corner of the page
 function PageFlower({ className = "" }: { className?: string }) {
   return (
@@ -42,8 +35,6 @@ export default function CheckinPage() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [intensity, setIntensity] = useState(3);
   const [note, setNote] = useState("");
-  const [cozyTracks] = useState(fallbackTracks);
-  const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -64,10 +55,6 @@ export default function CheckinPage() {
         mood: selectedMood as any,
         mood_intensity: intensity,
         note: note.trim() || null,
-        spotify_track_id: selectedTrack?.id || null,
-        spotify_track_name: selectedTrack?.name || null,
-        spotify_artist_name: selectedTrack?.artist || null,
-        spotify_album_art: selectedTrack?.albumArt || null,
       });
       if (insertErr) throw insertErr;
       window.dispatchEvent(new CustomEvent("navigation-show"));
@@ -197,31 +184,7 @@ export default function CheckinPage() {
             </motion.div>
           </motion.div>
 
-          {/* Music — compact horizontal scroll, subordinate */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-            <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">Listening to</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {cozyTracks.map((track) => {
-                const sel = selectedTrack?.id === track.id;
-                return (
-                  <motion.button key={track.id} type="button" onClick={() => setSelectedTrack(sel ? null : track)}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex-shrink-0 flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border text-left cursor-pointer transition-all ${
-                      sel
-                        ? "bg-[var(--paper-mid)] border-[var(--ink-light)] shadow-sm"
-                        : "bg-[var(--card-bg)] border-[var(--border-mid)] hover:bg-[var(--paper-warm)]"
-                    }`}
-                  >
-                    <img src={track.albumArt} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-[var(--ink-dark)] truncate max-w-[96px]">{track.name}</p>
-                      <p className="text-[9px] text-[var(--ink-light)] truncate max-w-[96px]">{track.artist}</p>
-                    </div>
-                  </motion.button>
-                );
-              })}
-            </div>
-          </motion.div>
+
 
           {error && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
