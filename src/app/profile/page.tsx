@@ -8,6 +8,8 @@ import { calculateStreak } from "@/lib/utils/streak";
 import { Check, Plus, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
+import Link from "next/link";
+import { ChibiAvatar, parseAvatarConfig } from "@/components/chibi-avatar";
 
 export default function ProfilePage() {
   const { user, profile, pair, partner, loading } = useAuth();
@@ -153,11 +155,20 @@ export default function ProfilePage() {
                 style={{ background: WASHI[i], transform: `translateX(-50%) rotate(${i === 0 ? -1.5 : 1.5}deg)` }} />
 
               {/* Photo area */}
-              <div className="aspect-square bg-[var(--border-mid)] overflow-hidden flex items-center justify-center">
-                {person.avatarUrl ? (
+              <div className="aspect-square bg-[var(--border-mid)] overflow-hidden flex items-center justify-center relative group">
+                {person.avatarUrl && !person.avatarUrl.startsWith("{") ? (
                   <img src={person.avatarUrl} alt={person.displayName || ""} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="font-display font-black text-2xl text-[var(--ink-light)]">{getInitials(person.displayName)}</span>
+                  <ChibiAvatar config={parseAvatarConfig(person.avatarUrl)} pose="profile" className="w-full h-full" />
+                )}
+                {/* Customize link overlay on hover for current user */}
+                {i === 0 && (
+                  <Link
+                    href="/profile/avatar-builder"
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[9px] uppercase tracking-wider font-mono font-bold"
+                  >
+                    Customize
+                  </Link>
                 )}
               </div>
 
