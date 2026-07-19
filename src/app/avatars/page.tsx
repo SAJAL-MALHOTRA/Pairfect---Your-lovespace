@@ -7,7 +7,7 @@ import Navigation from "@/components/navigation";
 import { format } from "date-fns";
 import {
   Camera, Loader2, AlertCircle, RefreshCw, Sparkles,
-  BookOpen, Check, Video, VideoOff, Zap, LayoutTemplate, Palette as PaletteIcon
+  BookOpen, Check, Video, VideoOff, Zap, LayoutTemplate, Palette as PaletteIcon, Download
 } from "lucide-react";
 
 // ─── Filter Presets ───────────────────────────────────────────────────
@@ -625,6 +625,15 @@ export default function PhotoboothPage() {
     finally { setSaving(false); }
   };
 
+  // ── Download strip to device ──────────────────────────────────────
+  const handleDownload = () => {
+    if (!stripUrl) return;
+    const link = document.createElement("a");
+    link.download = `pairfect-photobooth-${Date.now()}.png`;
+    link.href = stripUrl;
+    link.click();
+  };
+
   const handleReset = () => {
     stopCamera();
     setScreen("lobby");
@@ -1057,34 +1066,63 @@ export default function PhotoboothPage() {
 
         {/* ── FINAL STRIP SCREEN ────────────────────────────────────── */}
         {screen === "strip" && stripUrl && (
-          <div className="space-y-5 animate-fade-in">
+          <div className="py-12 flex flex-col items-center gap-8 max-w-sm mx-auto animate-fade-in w-full">
             <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase text-center">Your Photobooth Strip ✨</p>
 
-            <div className="bg-white shadow-2xl rounded-sm p-4 pb-14 mx-auto max-w-sm">
-              <div className="h-1 bg-gradient-to-r from-[#f472b6] to-[#60a5fa] mb-3 rounded-full" />
-              <img src={stripUrl} alt="Photobooth strip" className="w-full rounded-sm" />
-              <p className="mt-4 text-center text-gray-600 text-sm" style={{ fontFamily: "'Caveat', cursive" }}>
-                {caption || "Our moment 💕"}
-              </p>
-              <p className="text-center text-gray-400 text-xs mt-1">{format(new Date(), "MMM d, yyyy")}</p>
+            <div className="relative bg-white shadow-2xl rounded-sm p-6 pb-12 mx-auto w-full border border-gray-100/50">
+              {/* Polaroid-style scalloped edge decorations (hearts along sides) */}
+              <div className="absolute left-2.5 top-0 bottom-0 flex flex-col justify-between py-8 text-[9px] text-pink-400/40 select-none pointer-events-none">
+                {Array.from({ length: 12 }).map((_, idx) => (
+                  <span key={idx}>♥</span>
+                ))}
+              </div>
+              <div className="absolute right-2.5 top-0 bottom-0 flex flex-col justify-between py-8 text-[9px] text-pink-400/40 select-none pointer-events-none">
+                {Array.from({ length: 12 }).map((_, idx) => (
+                  <span key={idx}>♥</span>
+                ))}
+              </div>
+
+              {/* Decorative top bar */}
+              <div className="h-1.5 bg-gradient-to-r from-[#f472b6] to-[#60a5fa] mb-6 rounded-full" />
+              
+              {/* Image with padding */}
+              <div className="px-3">
+                <img src={stripUrl} alt="Photobooth strip" className="w-full rounded-sm shadow-sm border border-gray-100" />
+              </div>
+
+              {/* Caption and Date with clear vertical spacing */}
+              <div className="mt-8 text-center space-y-2">
+                <p className="text-gray-700 text-xl font-bold font-sans" style={{ fontFamily: "'Caveat', cursive" }}>
+                  {caption || "Our moment 💕"}
+                </p>
+                <p className="text-gray-400 text-xs font-mono uppercase tracking-wider">{format(new Date(), "MMM d, yyyy")}</p>
+              </div>
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={() => setScreen("customize")}
-                className="flex-1 py-3 rounded-2xl text-sm font-bold text-muted-foreground border border-border bg-card hover:bg-accent transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                <PaletteIcon className="w-4 h-4" /> Re-customize
-              </button>
-              <button onClick={handleSaveToMoments} disabled={saving}
-                className="flex-1 py-3 rounded-2xl font-bold text-white text-sm bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] disabled:opacity-60 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
-                {saving ? "Saving…" : "Save to Moments"}
-              </button>
-            </div>
+            <div className="w-full space-y-4">
+              <div className="flex gap-4">
+                <button onClick={() => setScreen("customize")}
+                  className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-muted-foreground border border-border bg-card hover:bg-accent transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                  <PaletteIcon className="w-4 h-4" /> Re-customize
+                </button>
+                <button onClick={handleSaveToMoments} disabled={saving}
+                  className="flex-1 py-3 px-4 rounded-xl font-bold text-white text-xs bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] disabled:opacity-60 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
+                  {saving ? "Saving…" : "Save to Moments"}
+                </button>
+              </div>
 
-            <button onClick={handleReset}
-              className="w-full py-3 rounded-2xl text-sm font-bold text-muted-foreground border border-border bg-card hover:bg-accent transition-all flex items-center justify-center gap-2 cursor-pointer">
-              <RefreshCw className="w-4 h-4" /> Take Another
-            </button>
+              <div className="flex gap-4">
+                <button onClick={handleDownload}
+                  className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-foreground border border-foreground/30 bg-transparent hover:bg-foreground/5 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                  <Download className="w-4 h-4" /> Download Strip
+                </button>
+                <button onClick={handleReset}
+                  className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-muted-foreground border border-border bg-card hover:bg-accent transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                  <RefreshCw className="w-4 h-4" /> Take Another
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

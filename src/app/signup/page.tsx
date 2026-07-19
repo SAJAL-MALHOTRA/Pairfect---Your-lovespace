@@ -187,7 +187,7 @@ export default function SignupPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-8 shadow-sm">
+        <div className="relative overflow-hidden rounded-card border border-border bg-card p-8 shadow-sm">
           {/* 3px top gradient accent bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
 
@@ -206,14 +206,14 @@ export default function SignupPage() {
               <OtpInput value={otp} onChange={setOtp} disabled={loading} />
 
               {error && (
-                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs flex items-center justify-center gap-2">
+                <div className="p-3 rounded-button bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs flex items-center justify-center gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {resendStatus && (
-                <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400 text-xs flex items-center justify-center gap-2">
+                <div className="p-3 rounded-button bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400 text-xs flex items-center justify-center gap-2">
                   <Check className="w-4 h-4 flex-shrink-0" />
                   <span>{resendStatus}</span>
                 </div>
@@ -223,7 +223,7 @@ export default function SignupPage() {
                 <button
                   type="submit"
                   disabled={loading || otp.join("").length < 6}
-                  className="w-full flex justify-center py-3 px-4 rounded-md shadow-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer shadow-pink-500/10 dark:shadow-none"
+                  className="w-full btn-primary"
                 >
                   {loading ? "Verifying..." : "Verify"}
                 </button>
@@ -232,7 +232,7 @@ export default function SignupPage() {
                   type="button"
                   disabled={loading || cooldown > 0}
                   onClick={handleResendEmail}
-                  className="w-full text-center py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50"
+                  className="w-full btn-tertiary py-2 text-xs font-bold uppercase tracking-wider"
                 >
                   {cooldown > 0 ? `Resend Code in ${cooldown}s` : "Resend Code"}
                 </button>
@@ -241,7 +241,7 @@ export default function SignupPage() {
           ) : (
             <>
               {error && (
-                <div className="mb-6 p-4 rounded-xl bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
+                <div className="mb-6 p-4 rounded-button bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
                   <AlertCircle className="w-5 h-5 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -249,7 +249,7 @@ export default function SignupPage() {
 
               {isRateLimited ? (
                 <div className="space-y-6 animate-fade-in">
-                  <div className="p-5 rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-3 relative overflow-hidden">
+                  <div className="p-5 rounded-button border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-3 relative overflow-hidden">
                     {/* top highlight border */}
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-red-500" />
                     
@@ -271,7 +271,7 @@ export default function SignupPage() {
                       type="button"
                       disabled={loading}
                       onClick={signInWithGoogle}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 px-4 pill-primary cursor-pointer shadow-md text-xs uppercase tracking-wider font-extrabold shadow-pink-500/10 dark:shadow-none transition-all active:scale-[0.98]"
+                      className="w-full btn-primary py-3 px-4 text-xs font-extrabold shadow-md uppercase tracking-wider"
                     >
                       <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="currentColor"/>
@@ -285,7 +285,7 @@ export default function SignupPage() {
                     <button
                       type="button"
                       onClick={() => setIsRateLimited(false)}
-                      className="w-full text-center py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                      className="w-full btn-tertiary text-xs font-bold uppercase tracking-wider py-2.5"
                     >
                       Try Email Signup Again
                     </button>
@@ -298,7 +298,7 @@ export default function SignupPage() {
                       <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
                         What should your partner call you?
                       </label>
-                      <div className="relative rounded-md shadow-sm">
+                      <div className="relative rounded-button shadow-sm">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
                           <User className="h-5 w-5" />
                         </div>
@@ -307,7 +307,7 @@ export default function SignupPage() {
                           required
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
-                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
                           placeholder="e.g. Sunny, Alex, Bun"
                         />
                       </div>
@@ -317,7 +317,7 @@ export default function SignupPage() {
                       <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
                         Email Address
                       </label>
-                      <div className="relative rounded-md shadow-sm">
+                      <div className="relative rounded-button shadow-sm">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
                           <Mail className="h-5 w-5" />
                         </div>
@@ -326,7 +326,7 @@ export default function SignupPage() {
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
                           placeholder="name@example.com"
                         />
                       </div>
@@ -336,7 +336,7 @@ export default function SignupPage() {
                       <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
                         Password
                       </label>
-                      <div className="relative rounded-md shadow-sm">
+                      <div className="relative rounded-button shadow-sm">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
                           <Lock className="h-5 w-5" />
                         </div>
@@ -345,7 +345,7 @@ export default function SignupPage() {
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
                           placeholder="At least 6 characters"
                           minLength={6}
                         />
@@ -356,7 +356,7 @@ export default function SignupPage() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 rounded-md shadow-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer shadow-pink-500/10 dark:shadow-none"
+                        className="w-full btn-primary"
                       >
                         {loading ? "Creating space..." : "Sign Up"}
                       </button>
@@ -376,7 +376,7 @@ export default function SignupPage() {
                     type="button"
                     disabled={loading}
                     onClick={signInWithGoogle}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 pill-secondary cursor-pointer shadow-sm text-sm disabled:opacity-50"
+                    className="w-full btn-secondary text-sm"
                   >
                     <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

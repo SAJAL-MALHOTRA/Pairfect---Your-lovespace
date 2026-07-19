@@ -10,6 +10,10 @@ interface UserProfile {
   display_name: string;
   avatar_url: string | null;
   spotify_connected: boolean;
+  notification_settings?: {
+    partner_check_in?: boolean;
+    new_gratitude?: boolean;
+  } | null;
 }
 
 interface Pair {
@@ -17,7 +21,7 @@ interface Pair {
   user_a_id: string;
   user_b_id: string | null;
   invite_code: string;
-  status: "pending" | "active" | "archived";
+  status: "pending" | "active" | "archived" | "unlinked";
   started_dating_date: string | null;
 }
 
@@ -63,18 +67,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileErr) throw profileErr;
       setProfile(profileData);
 
-      // 2. Fetch active/pending pair
-      const { data: pairData, error: pairErr } = await supabase
+      // 2. Fetch active/pending pair defensively, prioritizing active status
+      const { data: pairsList, error: pairErr } = await supabase
         .from("pairs")
         .select("*")
         .or(`user_a_id.eq.${currentUser.id},user_b_id.eq.${currentUser.id}`)
         .in("status", ["pending", "active"])
-        .maybeSingle();
+        .order("status", { ascending: true }) // 'active' (starts with A) before 'pending' (starts with P)
+        .order("created_at", { ascending: false }) // newest first
+        .limit(1);
 
       if (pairErr) throw pairErr;
 
+      const pairData = pairsList && pairsList.length > 0 ? pairsList[0] : null;
+
       if (pairData) {
         setPair(pairData);
+
 
         // 3. If pair is active, fetch partner details
         const partnerId =
@@ -141,20 +150,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Listen for real-time changes to the user's pair row (e.g. partner joins) to synchronize sessions instantly
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`auth-user-pairs-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pairs",
+        },
+        () => {
+          refreshSession();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   // Redirect users on onboarding checks
   useEffect(() => {
     if (!loading && user) {
-      const isPendingOnboarding = !pair || pair.status === "pending";
+
+      const isPendingOnboarding = !pair || pair.status !== "active";
       const isOnboardingRoute = pathname.startsWith("/onboarding");
       const isProtectedRoute =
         pathname.startsWith("/dashboard") ||
         pathname.startsWith("/checkin") ||
         pathname.startsWith("/history") ||
         pathname.startsWith("/recap") ||
-        pathname.startsWith("/moments") ||
-        pathname.startsWith("/settings");
+        pathname.startsWith("/moments");
+      const isSettingsRoute = pathname.startsWith("/settings");
 
       if (isPendingOnboarding && isProtectedRoute) {
+        router.push("/onboarding");
+      } else if (isPendingOnboarding && isSettingsRoute && !profile) {
         router.push("/onboarding");
       } else if (!isPendingOnboarding && isOnboardingRoute) {
         router.push("/dashboard");

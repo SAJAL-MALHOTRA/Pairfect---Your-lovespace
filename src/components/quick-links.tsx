@@ -35,9 +35,9 @@ export function QuickLinks() {
         <a
           key={title}
           href={href}
-          className="group flex items-center gap-4 rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40"
+          className="group flex items-center gap-4 rounded-card border border-border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40"
         >
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-accent text-primary">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-button border border-border bg-accent text-primary">
             <Icon className="size-6" />
           </span>
           <span className="min-w-0 flex-1">

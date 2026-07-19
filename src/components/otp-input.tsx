@@ -38,11 +38,15 @@ export function OtpInput({ value, onChange, disabled }: OtpInputProps) {
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
-    if (pastedData.length === 6) {
-      const newValue = pastedData.split("");
+    const pastedData = e.clipboardData.getData("text").replace(/[^0-9]/g, "");
+    if (pastedData.length > 1) {
+      const newValue = Array(6).fill("");
+      for (let i = 0; i < Math.min(pastedData.length, 6); i++) {
+        newValue[i] = pastedData[i];
+      }
       onChange(newValue);
-      inputsRef.current[5]?.focus();
+      const focusIndex = Math.min(pastedData.length, 5);
+      inputsRef.current[focusIndex]?.focus();
     }
   };
 
@@ -62,7 +66,7 @@ export function OtpInput({ value, onChange, disabled }: OtpInputProps) {
             disabled={disabled}
             onChange={(e) => handleChange(e.target.value, idx)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            onPaste={idx === 0 ? handlePaste : undefined}
+            onPaste={handlePaste}
             className="w-full h-full text-center bg-card text-foreground font-sans text-xl font-bold rounded-[10px] focus:outline-none transition-colors disabled:opacity-50"
           />
         </div>

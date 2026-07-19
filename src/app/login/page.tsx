@@ -151,19 +151,19 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-8 shadow-sm">
+        <div className="relative overflow-hidden rounded-card border border-border bg-card p-8 shadow-sm">
           {/* 3px top gradient accent bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
+            <div className="mb-6 p-4 rounded-button bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {emailUnconfirmed && (
-            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-xl border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-4 relative overflow-hidden">
+            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-button border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-4 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-red-500" />
               <div className="flex items-start space-x-2 text-red-500">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -180,7 +180,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading || otp.join("").length < 6}
-                className="w-full py-2.5 px-4 rounded-md shadow-md text-xs font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center"
+                className="w-full btn-primary py-2.5 text-xs"
               >
                 {loading ? "Verifying..." : "Verify Code"}
               </button>
@@ -189,7 +189,7 @@ export default function LoginPage() {
                 type="button"
                 disabled={loading || cooldown > 0}
                 onClick={handleResendEmail}
-                className="w-full py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center"
+                className="w-full btn-tertiary py-2 text-xs font-bold uppercase tracking-wider"
               >
                 {cooldown > 0 ? `Resend Code in ${cooldown}s` : "Resend Code"}
               </button>
@@ -197,7 +197,7 @@ export default function LoginPage() {
           )}
 
           {resendStatus && (
-            <div className="mb-6 p-4 rounded-xl border border-green-500/20 bg-green-500/5 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-sm flex items-center gap-2">
+            <div className="mb-6 p-4 rounded-button border border-green-500/20 bg-green-500/5 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-sm flex items-center gap-2">
               <Check className="w-4.5 h-4.5 flex-shrink-0" />
               <span>{resendStatus}</span>
             </div>
@@ -208,7 +208,7 @@ export default function LoginPage() {
               <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
                 Email Address
               </label>
-              <div className="relative rounded-md shadow-sm">
+              <div className="relative rounded-button shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
                   <Mail className="h-5 w-5" />
                 </div>
@@ -217,7 +217,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
+                  className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
                   placeholder="name@example.com"
                 />
               </div>
@@ -227,7 +227,7 @@ export default function LoginPage() {
               <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
                 Password
               </label>
-              <div className="relative rounded-md shadow-sm">
+              <div className="relative rounded-button shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
                   <Lock className="h-5 w-5" />
                 </div>
@@ -236,7 +236,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
+                  className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
                   placeholder="••••••••"
                 />
               </div>
@@ -246,7 +246,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 rounded-md shadow-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer shadow-pink-500/10 dark:shadow-none"
+                className="w-full btn-primary"
               >
                 {loading ? "Signing in..." : "Sign In"}
               </button>
@@ -266,7 +266,7 @@ export default function LoginPage() {
             type="button"
             disabled={loading}
             onClick={signInWithGoogle}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 pill-secondary cursor-pointer shadow-sm text-sm disabled:opacity-50"
+            className="w-full btn-secondary text-sm"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export async function POST(req: Request) {
   try {
@@ -51,8 +52,8 @@ export async function POST(req: Request) {
     const argAObj = args.find((a: any) => a.user_id === pair.user_a_id);
     const argBObj = args.find((a: any) => a.user_id === pair.user_b_id);
 
-    const argA = argAObj?.argument_text || "No argument provided";
-    const argB = argBObj?.argument_text || "No argument provided";
+    const argA = decrypt(argAObj?.argument_text) || "No argument provided";
+    const argB = decrypt(argBObj?.argument_text) || "No argument provided";
 
     // 4. Construct Prompt
     const prompt = `You are a playful, warm relationship judge for a couples app called Pairfect. 
@@ -118,7 +119,7 @@ Provide ONLY the raw JSON output. Do not wrap it in markdown code blocks.`;
       .insert({
         dispute_id: disputeId,
         winner_user_id: winnerUserId,
-        verdict_text: result.verdict,
+        verdict_text: encrypt(result.verdict),
         playful_sentence: result.sentence
       })
       .select()

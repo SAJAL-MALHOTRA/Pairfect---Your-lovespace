@@ -120,7 +120,7 @@ export default function CheckinPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-accent/40 border border-border/60 text-primary text-sm flex items-start space-x-2">
+          <div className="mb-6 p-4 rounded-button bg-accent/40 border border-border/60 text-primary text-sm flex items-start space-x-2">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -144,7 +144,7 @@ export default function CheckinPage() {
                       setSelectedMood(key);
                       setError(null);
                     }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-md border text-center transition-all active:scale-[0.96] cursor-pointer ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-button border text-center transition-all active:scale-[0.96] cursor-pointer ${
                       isSelected
                         ? `${value.color} ring-2 ring-primary scale-[1.03] shadow-sm`
                         : "border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -159,7 +159,7 @@ export default function CheckinPage() {
           </div>
 
           {/* Intensity Slider */}
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+          <div className="rounded-card border border-border bg-card p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">
                 2. MOOD INTENSITY
@@ -176,7 +176,7 @@ export default function CheckinPage() {
               step="1"
               value={intensity}
               onChange={(e) => setIntensity(parseInt(e.target.value))}
-              className="w-full h-2 bg-border/60 rounded-lg appearance-none cursor-pointer accent-primary"
+              className="w-full h-2 bg-border/60 rounded-chip appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground font-semibold uppercase tracking-wider px-1">
               <span>Very Low</span>
@@ -202,12 +202,12 @@ export default function CheckinPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="What is making you feel this way? (e.g. coffee dates, study stress, cozy evening...)"
-              className="block w-full h-24 p-4 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/30 transition-all resize-none"
+              className="block w-full h-24 p-4 border border-border rounded-button bg-card focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/30 transition-all resize-none"
             />
           </div>
 
           {/* Cozy Song Attachment */}
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-3">
+          <div className="rounded-card border border-border bg-card p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
                 <Music className="w-3.5 h-3.5 text-primary" />
@@ -225,7 +225,7 @@ export default function CheckinPage() {
             </div>
 
             {selectedTrack ? (
-              <div className="flex items-center space-x-4 bg-muted/40 border border-border p-4 rounded-md">
+              <div className="flex items-center space-x-4 bg-muted/40 border border-border p-4 rounded-button">
                 <img
                   src={selectedTrack.albumArt}
                   alt={selectedTrack.name}
@@ -252,7 +252,7 @@ export default function CheckinPage() {
                       key={track.id}
                       type="button"
                       onClick={() => setSelectedTrack(track)}
-                      className="flex items-center space-x-3 p-2.5 rounded-md border border-border bg-card hover:bg-muted text-left transition-all group cursor-pointer"
+                      className="flex items-center space-x-3 p-2.5 rounded-button border border-border bg-card hover:bg-muted text-left transition-all group cursor-pointer"
                     >
                       <img
                         src={track.albumArt}
@@ -278,7 +278,7 @@ export default function CheckinPage() {
           <button
             type="submit"
             disabled={submitting || !selectedMood}
-            className="w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-md text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
+            className="w-full btn-primary"
           >
             {submitting ? (
               <>

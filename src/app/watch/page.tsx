@@ -266,7 +266,7 @@ export default function WatchPage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-accent/40 border border-border text-primary text-sm flex items-start space-x-2 animate-fade-in">
+          <div className="p-4 rounded-button bg-accent/40 border border-border text-primary text-sm flex items-start space-x-2 animate-fade-in">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -274,7 +274,7 @@ export default function WatchPage() {
 
         {/* Input Bar */}
         <form onSubmit={handleLoadVideo} className="flex gap-3">
-          <div className="relative flex-1 rounded-md shadow-sm">
+          <div className="relative flex-1 rounded-button shadow-sm">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
               <Link2 className="h-5 w-5" />
             </div>
@@ -283,19 +283,19 @@ export default function WatchPage() {
               placeholder="Paste any YouTube video URL (e.g. https://www.youtube.com/watch?v=...)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
-              className="block w-full pl-10 pr-4 py-3 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
+              className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-card focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
             />
           </div>
           <button
             type="submit"
-            className="px-5 py-3 rounded-md bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 text-white font-bold text-sm active:scale-95 transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
+            className="btn-primary px-5 py-3 text-sm"
           >
             Load Video
           </button>
         </form>
 
         {/* Sync Player Screen */}
-        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border border-border shadow-md relative">
+        <div className="aspect-video w-full rounded-card overflow-hidden bg-black border border-border shadow-md relative">
           {/* 3px top gradient accent bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa] z-20 pointer-events-none" />
           
@@ -303,7 +303,7 @@ export default function WatchPage() {
         </div>
 
         {/* Note on sync behaviors */}
-        <div className="p-4 rounded-lg border border-border bg-card text-xs text-muted-foreground leading-relaxed shadow-sm">
+        <div className="p-4 rounded-card border border-border bg-card text-xs text-muted-foreground leading-relaxed shadow-sm">
           💡 **How synchronization works**: When you play, pause, or change the video, websocket signals are broadcasted instantly to your partner. If the connection drops, reloading the page will query the database to sync both screens back onto the last played state automatically.
         </div>
 

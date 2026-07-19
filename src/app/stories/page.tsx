@@ -303,7 +303,7 @@ export default function StoriesPage() {
 
           <button
             onClick={openShareModal}
-            className="inline-flex items-center justify-center space-x-2 py-3 px-5 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10"
+            className="inline-flex items-center justify-center space-x-2 py-3 px-5 btn-primary"
           >
             <Plus className="w-4 h-4" />
             <span>{stories.some(s => s.author_id === user?.id) ? "Edit Our Story" : "Share Our Story"}</span>
@@ -312,7 +312,7 @@ export default function StoriesPage() {
 
         {/* ── STORIES GRID ────────────────────────────────────────── */}
         {stories.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-2xl border border-border/60 p-8 space-y-4">
+          <div className="text-center py-16 bg-card rounded-card border border-border/60 p-8 space-y-4">
             <CelestialSparks className="w-28 h-28 mx-auto" />
             <h3 className="text-base font-bold text-foreground">No stories shared yet</h3>
             <p className="text-xs text-muted-foreground max-w-xs mx-auto">
@@ -336,7 +336,7 @@ export default function StoriesPage() {
                 <div
                   key={story.id}
                   onClick={() => setSelectedStory(story)}
-                  className="flex flex-col bg-card border border-border/60 rounded-2xl overflow-hidden hover:shadow-md hover:border-[#f472b6]/20 transition-all cursor-pointer group relative"
+                  className="flex flex-col bg-card border border-border/60 rounded-card overflow-hidden hover:shadow-md hover:border-[#f472b6]/20 transition-all cursor-pointer group relative"
                 >
                   {/* Cover picture */}
                   <div className="aspect-video w-full bg-stone-100 overflow-hidden relative">
@@ -348,7 +348,7 @@ export default function StoriesPage() {
                       </div>
                     )}
                     {/* Status Badge */}
-                    <span className="absolute top-3 left-3 bg-white/95 dark:bg-black/80 backdrop-blur-sm text-foreground text-[10px] font-mono font-bold px-2.5 py-1 rounded-full shadow-sm">
+                    <span className="absolute top-3 left-3 bg-white/95 dark:bg-black/80 backdrop-blur-sm text-foreground text-[10px] font-mono font-bold px-2.5 py-1 rounded-chip shadow-sm">
                       {badge}
                     </span>
                   </div>
@@ -403,7 +403,7 @@ export default function StoriesPage() {
 
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-card border border-border/80 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl relative flex flex-col">
+              <div className="bg-card border border-border/80 rounded-card w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl relative flex flex-col">
                 {/* Header image */}
                 <div className="relative aspect-video w-full bg-stone-100 flex-shrink-0">
                   {selectedStory.resolved_cover ? (
@@ -420,7 +420,7 @@ export default function StoriesPage() {
                   >
                     ×
                   </button>
-                  <span className="absolute bottom-4 left-4 bg-white/95 dark:bg-black/90 backdrop-blur-sm text-foreground text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow">
+                  <span className="absolute bottom-4 left-4 bg-white/95 dark:bg-black/90 backdrop-blur-sm text-foreground text-[10px] font-mono font-bold px-3 py-1.5 rounded-chip shadow">
                     {badge}
                   </span>
                 </div>
@@ -451,7 +451,7 @@ export default function StoriesPage() {
                   <div className="flex items-center justify-between pt-6 border-t border-border/50">
                     <button
                       onClick={(e) => handleLike(e, selectedStory.id, selectedStory.likes)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 text-red-500 text-xs font-bold hover:bg-red-500/15 active:scale-95 transition-all"
+                      className="flex items-center gap-2 px-4 py-2 rounded-button bg-red-500/10 text-red-500 text-xs font-bold hover:bg-red-500/15 active:scale-95 transition-all"
                     >
                       <Heart className="w-4 h-4 fill-red-500" />
                       <span>{selectedStory.likes} Likes</span>
@@ -461,7 +461,7 @@ export default function StoriesPage() {
                       {isMyOwn && (
                         <button
                           onClick={() => handleDeleteStory(selectedStory.id, selectedStory.cover_image_url)}
-                          className="p-2.5 rounded-xl border border-red-200 dark:border-red-950 text-red-500 hover:bg-red-500/5 active:scale-95 transition-all cursor-pointer"
+                          className="p-2.5 rounded-button border border-red-200 dark:border-red-950 text-red-500 hover:bg-red-500/5 active:scale-95 transition-all cursor-pointer"
                           title="Delete Story"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -469,7 +469,7 @@ export default function StoriesPage() {
                       )}
                       <button
                         onClick={() => setSelectedStory(null)}
-                        className="px-5 py-2.5 rounded-xl text-xs font-bold text-muted-foreground border border-border bg-card hover:bg-accent transition-all cursor-pointer"
+                        className="px-5 py-2.5 rounded-button text-xs font-bold text-muted-foreground border border-border bg-card hover:bg-accent transition-all cursor-pointer"
                       >
                         Close
                       </button>
@@ -486,7 +486,7 @@ export default function StoriesPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
             <form
               onSubmit={handleShareStory}
-              className="bg-card border border-border/80 rounded-2xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative space-y-5"
+              className="bg-card border border-border/80 rounded-card w-full max-w-lg p-6 sm:p-8 shadow-2xl relative space-y-5"
             >
               <button
                 type="button"
@@ -507,7 +507,7 @@ export default function StoriesPage() {
               </div>
 
               {error && (
-                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                <div className="p-3 rounded-button bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" /> {error}
                 </div>
               )}
@@ -521,7 +521,7 @@ export default function StoriesPage() {
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   placeholder="e.g. How we closed the distance after 3 years ✈️"
-                  className="w-full px-4 py-3 border border-border rounded-xl bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full px-4 py-3 border border-border rounded-button bg-muted/30 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -534,7 +534,7 @@ export default function StoriesPage() {
                       key={opt.id}
                       type="button"
                       onClick={() => setStatusBadge(opt.label)}
-                      className={`py-2 px-3 rounded-xl border text-[11px] font-bold transition-all text-center cursor-pointer
+                      className={`py-2 px-3 rounded-button border text-[11px] font-bold transition-all text-center cursor-pointer
                         ${statusBadge === opt.label
                           ? "border-primary bg-primary/5 text-primary"
                           : "border-border bg-card text-muted-foreground hover:border-primary/40"
@@ -550,13 +550,13 @@ export default function StoriesPage() {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Cover Picture (optional)</label>
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 py-2 px-4 border border-dashed border-border rounded-xl cursor-pointer hover:bg-accent text-xs font-bold text-muted-foreground">
+                  <label className="flex items-center gap-2 py-2 px-4 border border-dashed border-border rounded-button cursor-pointer hover:bg-accent text-xs font-bold text-muted-foreground">
                     <ImageIcon className="w-4 h-4" />
                     <span>Choose Photo</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
                   </label>
                   {coverPreview && (
-                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-border relative">
+                    <div className="w-12 h-12 rounded-button overflow-hidden border border-border relative">
                       <img src={coverPreview} className="w-full h-full object-cover" />
                       <button
                         type="button"
@@ -579,14 +579,14 @@ export default function StoriesPage() {
                   value={content}
                   onChange={e => setContent(e.target.value)}
                   placeholder="Tell your story... how did you meet? What challenges did you face? How did you celebrate?"
-                  className="w-full px-4 py-3 border border-border rounded-xl bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  className="w-full px-4 py-3 border border-border rounded-button bg-muted/30 text-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-2xl font-sans font-black text-white text-sm bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full btn-primary py-3 flex items-center justify-center gap-2"
               >
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 {submitting 

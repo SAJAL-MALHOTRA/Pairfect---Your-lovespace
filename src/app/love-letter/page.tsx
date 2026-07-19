@@ -12,8 +12,6 @@ import {
 import { format, parseISO } from "date-fns";
 import { LoveLetterEnvelope, WaxSealStamp } from "@/components/cozy-illustrations";
 
-const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "";
-
 // Isolated Giphy Renderer component to resolve URLs on-the-fly at runtime
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -22,12 +20,12 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
   useEffect(() => {
     const fetchUrl = async () => {
       try {
-        const res = await fetch(`https://api.giphy.com/v1/gifs/${giphyId}?api_key=${GIPHY_API_KEY}`);
+        const res = await fetch(`/api/giphy/resolve?id=${encodeURIComponent(giphyId)}`);
         const json = await res.json();
-        if (json.meta && json.meta.status !== 200) {
-          throw new Error("Invalid Giphy key or status: " + json.meta.status);
+        if (!res.ok) {
+          throw new Error(json.error || "Failed to load sticker");
         }
-        setUrl(json.data?.images?.fixed_height?.url || null);
+        setUrl(json.url || null);
       } catch (e) {
         console.error("Giphy resolve error:", e);
       } finally {
@@ -125,14 +123,10 @@ export default function LoveLetterPage() {
     if (!pair) return;
     setFetching(true);
     try {
-      const { data: lData, error: lErr } = await supabase
-        .from("love_letters")
-        .select("*")
-        .eq("pair_id", pair.id)
-        .order("sent_at", { ascending: false });
-
-      if (lErr) throw lErr;
-      setLettersList(lData || []);
+      const res = await fetch(`/api/love-letters?pairId=${pair.id}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load letters");
+      setLettersList(data || []);
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to load letter details.");
@@ -170,16 +164,14 @@ export default function LoveLetterPage() {
     latestSearchQuery.current = query;
     try {
       const q = query.trim() ? `cat ${query}` : "cat happy";
-      const res = await fetch(
-        `https://api.giphy.com/v1/stickers/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(q)}&limit=20&rating=g`
-      );
+      const res = await fetch(`/api/giphy/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       
       // If query changed while in flight, discard outdated response to prevent race conditions
       if (query !== latestSearchQuery.current) return;
 
-      if (data.meta && data.meta.status !== 200) {
-        throw new Error(`GIPHY API Error (${data.meta.status}): ${data.meta.msg || "Unauthorized"}. Please check/add NEXT_PUBLIC_GIPHY_API_KEY in your .env.local file.`);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to query GIPHY sticker list.");
       }
       setGiphyStickers(data.data || []);
     } catch (err: any) {
@@ -241,18 +233,19 @@ export default function LoveLetterPage() {
     setError(null);
 
     try {
-      const { error: err } = await supabase
-        .from("love_letters")
-        .insert({
-          pair_id: pair.id,
-          sender_id: user.id,
-          recipient_name: recipientName.trim(),
-          sender_name: senderName.trim() || "Me",
+      const res = await fetch("/api/love-letters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pairId: pair.id,
+          recipientName: recipientName.trim(),
+          senderName: senderName.trim() || "Me",
           content: cleanBlocks,
-          envelope_style: envelopeStyle
-        });
-
-      if (err) throw err;
+          envelopeStyle
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send letter");
 
       // Reset states
       setContentBlocks([{ type: "text", value: "" }]);

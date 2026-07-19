@@ -53,7 +53,7 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-border/60 bg-background/70 px-4 sm:px-6 lg:px-8 py-3 backdrop-blur-xl animate-fade-in select-none">
+    <nav className="sticky top-0 z-40 glass-panel px-4 sm:px-6 lg:px-8 py-3 animate-fade-in select-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         
         {/* Logo (left-aligned) */}
@@ -63,7 +63,7 @@ export default function Navigation() {
             alt="Pairfect" 
             className="w-8 h-8 object-contain group-hover:scale-105 transition-transform" 
           />
-          <span className="font-sans text-lg font-black tracking-tight text-foreground">
+          <span className="font-sans text-lg font-black tracking-tight text-foreground gradient-text">
             Pairfect
           </span>
         </Link>
@@ -77,9 +77,9 @@ export default function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-2 rounded-button text-xs font-bold transition-all ${
                   isActive
-                    ? "bg-accent text-accent-foreground shadow-sm"
+                    ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
@@ -93,7 +93,7 @@ export default function Navigation() {
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={`flex items-center space-x-1 px-3 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer ${
+              className={`flex items-center space-x-1 px-3 py-2 rounded-button text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer ${
                 dropdownOpen ? "bg-muted" : ""
               }`}
             >
@@ -107,7 +107,7 @@ export default function Navigation() {
                   className="fixed inset-0 z-30 cursor-default" 
                   onClick={() => setDropdownOpen(false)} 
                 />
-                <div className="absolute top-full right-0 mt-2 w-48 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-xl p-2.5 shadow-lg z-40 animate-fade-in flex flex-col space-y-1">
+                <div className="absolute top-full right-0 mt-2 w-48 rounded-card border border-border bg-card p-2 shadow-lg z-40 animate-fade-in flex flex-col space-y-1">
                   {activityLinks.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href;
@@ -116,9 +116,9 @@ export default function Navigation() {
                         key={item.href}
                         href={item.href}
                         onClick={() => setDropdownOpen(false)}
-                        className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                        className={`flex items-center space-x-2 px-3 py-2 rounded-button text-xs font-bold transition-all ${
                           isActive
-                            ? "bg-accent text-accent-foreground"
+                            ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
                             : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                       >
@@ -132,6 +132,7 @@ export default function Navigation() {
             )}
           </div>
         </div>
+
 
         {/* Avatars & Actions (right-aligned) */}
         <div className="flex items-center space-x-3 shrink-0">
@@ -175,7 +176,7 @@ export default function Navigation() {
           <button
             onClick={toggleTheme}
             title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted active:scale-95 transition-all cursor-pointer"
+            className="p-2 text-muted-foreground hover:text-foreground rounded-button hover:bg-muted active:scale-95 transition-all cursor-pointer"
           >
             {theme === "dark" ? (
               <Sun className="w-4 h-4 text-amber-500 fill-amber-500/10" />
@@ -188,7 +189,7 @@ export default function Navigation() {
           <button
             onClick={signOut}
             title="Sign Out"
-            className="p-2 text-muted-foreground hover:text-red-500 rounded-lg hover:bg-muted active:scale-95 transition-all cursor-pointer"
+            className="p-2 text-muted-foreground hover:text-red-500 rounded-button hover:bg-muted active:scale-95 transition-all cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -196,7 +197,7 @@ export default function Navigation() {
       </div>
 
       {/* Mobile Navigation bar at the bottom */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-border/60 px-4 py-2 flex justify-around items-center bg-background/80 backdrop-blur-lg z-50">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-background/90 backdrop-blur-lg px-4 py-2 flex justify-around items-center z-50">
         {mobileLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
@@ -204,7 +205,7 @@ export default function Navigation() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center p-2 rounded-button transition-all ${
                 isActive
                   ? "text-primary scale-105 font-bold"
                   : "text-muted-foreground hover:text-foreground"
@@ -219,3 +220,4 @@ export default function Navigation() {
     </nav>
   );
 }
+

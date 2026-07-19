@@ -7,6 +7,7 @@ create table public.users (
   display_name text not null,
   avatar_url text,
   spotify_connected boolean default false not null,
+  notification_settings jsonb default '{"partner_check_in": true, "new_gratitude": true}'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -18,7 +19,7 @@ create table public.user_secrets (
 );
 
 -- 4. CREATE public.pairs TABLE
-create type pair_status as enum ('pending', 'active', 'archived');
+create type pair_status as enum ('pending', 'active', 'archived', 'unlinked');
 
 create table public.pairs (
   id uuid default uuid_generate_v4() primary key,
@@ -127,11 +128,23 @@ returns trigger as $$
 begin
   if OLD.user_a_id != NEW.user_a_id
      or OLD.invite_code != NEW.invite_code then
-    raise exception 'Cannot modify core pair identity fields';
+    if not (
+      NEW.status = 'unlinked'
+      and OLD.user_b_id is not null
+      and NEW.user_b_id is null
+      and (
+        NEW.user_a_id = OLD.user_a_id
+        or NEW.user_a_id = OLD.user_b_id
+      )
+    ) then
+      raise exception 'Cannot modify core pair identity fields';
+    end if;
   end if;
 
   if OLD.user_b_id is not null and OLD.user_b_id != NEW.user_b_id then
-    raise exception 'Cannot reassign an already-paired partner';
+    if not (NEW.status = 'unlinked' and NEW.user_b_id is null) then
+      raise exception 'Cannot reassign an already-paired partner';
+    end if;
   end if;
 
   return NEW;

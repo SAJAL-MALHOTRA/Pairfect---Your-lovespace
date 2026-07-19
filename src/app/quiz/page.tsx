@@ -677,7 +677,7 @@ export default function QuizPage() {
               </div>
 
               {/* Status widget */}
-              <div className="flex items-center space-x-3 px-4 py-2.5 rounded-xl bg-card border border-border">
+              <div className="flex items-center space-x-3 px-4 py-2.5 rounded-button bg-card border border-border">
                 <Users className="w-5 h-5 text-primary" />
                 <div className="text-left">
                   <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest">
@@ -709,7 +709,7 @@ export default function QuizPage() {
                   return (
                     <div 
                       key={pack.id} 
-                      className={`rounded-2xl border p-5 shadow-sm transition-all hover:scale-[1.01] flex flex-col justify-between ${packColor}`}
+                      className={`rounded-card border p-5 shadow-sm transition-all hover:scale-[1.01] flex flex-col justify-between ${packColor}`}
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -731,7 +731,7 @@ export default function QuizPage() {
                       <button
                         onClick={() => handleStartGame(pack)}
                         disabled={!partnerOnline}
-                        className="w-full mt-4 flex items-center justify-center space-x-1.5 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 disabled:opacity-40 disabled:scale-100 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/5 dark:shadow-none"
+                        className="w-full mt-4 btn-primary py-2.5 text-xs"
                       >
                         <span>Start the quiz</span>
                       </button>
@@ -827,7 +827,7 @@ export default function QuizPage() {
                       <button
                         onClick={handleLockIn}
                         disabled={!myAnswerInput.trim()}
-                        className="w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 disabled:opacity-50 disabled:scale-100 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
+                        className="w-full btn-primary"
                       >
                         <Lock className="w-4 h-4" />
                         <span>Lock In Answer 🔒</span>
@@ -875,7 +875,7 @@ export default function QuizPage() {
                   </div>
 
                   {/* Grading panel (Subject decides if guess is correct) */}
-                  <div className="max-w-md mx-auto rounded-xl border border-border/80 bg-background/50 p-5 space-y-4">
+                  <div className="max-w-md mx-auto rounded-button border border-border/80 bg-background/50 p-5 space-y-4">
                     {gameState.turnOwnerId === user.id ? (
                       <div className="space-y-3.5">
                         <p className="text-xs font-bold text-foreground">
@@ -993,7 +993,7 @@ export default function QuizPage() {
               </div>
 
               {/* Summary table of answers */}
-              <div className="border border-border/80 rounded-xl overflow-hidden text-left bg-background/40">
+              <div className="border border-border/80 rounded-button overflow-hidden text-left bg-background/40">
                 <div className="bg-muted px-4 py-3 border-b border-border/80 text-xs font-mono font-bold text-muted-foreground uppercase tracking-widest">
                   Match Summary
                 </div>
@@ -1034,7 +1034,7 @@ export default function QuizPage() {
               {/* Primary action return to lobby */}
               <button
                 onClick={handleExitGame}
-                className="w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
+                className="w-full btn-primary"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Return to Lobby</span>

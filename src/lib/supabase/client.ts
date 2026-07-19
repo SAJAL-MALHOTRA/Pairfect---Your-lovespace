@@ -32,6 +32,11 @@ const createDummyClient = () => {
           })
         };
       }
+      if (prop === "functions") {
+        return {
+          invoke: async () => ({ data: null, error: null }),
+        };
+      }
       return handler;
     }
   }) as any;

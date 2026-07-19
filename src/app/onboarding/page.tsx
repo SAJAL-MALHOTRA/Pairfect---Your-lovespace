@@ -166,9 +166,9 @@ export default function OnboardingPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="cozy-card p-8 bg-white/70 dark:bg-[#1e1a19]/70 backdrop-blur-md min-h-[300px] flex flex-col justify-between">
+        <div className="card-standard p-8 bg-white/70 dark:bg-[#1e1a19]/70 backdrop-blur-md min-h-[300px] flex flex-col justify-between">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
+            <div className="mb-6 p-4 rounded-button bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -176,7 +176,7 @@ export default function OnboardingPage() {
           {mode === "choice" && (
             <div className="space-y-6 my-auto">
               {/* Profile Display Name Update */}
-              <form onSubmit={handleUpdateDisplayName} className="space-y-2 border-b border-card-border pb-6">
+              <form onSubmit={handleUpdateDisplayName} className="space-y-2 border-b border-border pb-6">
                 <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
                   Your Display Name (What partner calls you)
                 </label>
@@ -190,12 +190,12 @@ export default function OnboardingPage() {
                       setDisplayNameSaved(false);
                     }}
                     placeholder="e.g. Sunny, Alex, Bun"
-                    className="flex-1 px-4 py-2.5 border border-card-border rounded-xl bg-background/50 text-xs focus:outline-none focus:ring-2 focus:ring-brand-rose-300 text-foreground"
+                    className="flex-1 px-4 py-2.5 border border-border rounded-button bg-background/50 text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
                   />
                   <button
                     type="submit"
                     disabled={loading || !tempDisplayName.trim() || tempDisplayName.trim() === profile?.display_name}
-                    className="px-4 py-2 bg-foreground hover:bg-foreground/90 disabled:opacity-40 text-background text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center"
+                    className="px-4 py-2 bg-foreground hover:bg-foreground/90 disabled:opacity-40 text-background text-xs font-bold rounded-button transition-all cursor-pointer active:scale-95 flex items-center justify-center"
                   >
                     {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save"}
                   </button>
@@ -210,7 +210,7 @@ export default function OnboardingPage() {
               <button
                 onClick={handleCreatePair}
                 disabled={loading}
-                className="w-full flex items-center justify-between p-5 rounded-2xl border border-card-border bg-background/50 hover:bg-brand-rose-50/50 dark:hover:bg-brand-rose-950/10 group active:scale-[0.99] transition-all text-left"
+                className="w-full flex items-center justify-between p-5 rounded-card border border-border bg-background/50 hover:bg-brand-rose-50/50 dark:hover:bg-brand-rose-950/10 group active:scale-[0.99] transition-all text-left"
               >
                 <div>
                   <h3 className="font-semibold text-lg text-foreground flex items-center">
@@ -226,7 +226,7 @@ export default function OnboardingPage() {
 
               <button
                 onClick={() => setMode("join")}
-                className="w-full flex items-center justify-between p-5 rounded-2xl border border-card-border bg-background/50 hover:bg-brand-lavender-50/50 dark:hover:bg-brand-lavender-950/10 group active:scale-[0.99] transition-all text-left"
+                className="w-full flex items-center justify-between p-5 rounded-card border border-border bg-background/50 hover:bg-brand-lavender-50/50 dark:hover:bg-brand-lavender-950/10 group active:scale-[0.99] transition-all text-left"
               >
                 <div>
                   <h3 className="font-semibold text-lg text-foreground flex items-center">
@@ -248,7 +248,7 @@ export default function OnboardingPage() {
                 <p className="text-sm font-semibold text-brand-rose-500 tracking-wider uppercase">
                   Your Invite Code
                 </p>
-                <div className="flex items-center justify-center space-x-2 bg-background border border-card-border rounded-2xl py-4 px-6 select-all font-mono text-3xl font-bold tracking-wider text-foreground">
+                <div className="flex items-center justify-center space-x-2 bg-background border border-border rounded-card py-4 px-6 select-all font-mono text-3xl font-bold tracking-wider text-foreground">
                   <span>{inviteCode}</span>
                 </div>
               </div>
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={copyCode}
-                  className="flex items-center space-x-2 py-3 px-6 rounded-xl border border-card-border bg-background/50 hover:bg-background transition-all text-sm font-medium text-foreground"
+                  className="flex items-center space-x-2 py-3 px-6 rounded-button border border-border bg-background/50 hover:bg-background transition-all text-sm font-medium text-foreground"
                 >
                   {copied ? (
                     <>
@@ -272,7 +272,7 @@ export default function OnboardingPage() {
                 </button>
               </div>
 
-              <div className="pt-6 border-t border-card-border flex flex-col items-center">
+              <div className="pt-6 border-t border-border flex flex-col items-center">
                 <Loader2 className="w-6 h-6 text-brand-rose-400 animate-spin mb-2" />
                 <p className="text-xs text-muted-foreground">
                   Waiting for your partner to join.
@@ -303,16 +303,16 @@ export default function OnboardingPage() {
                   placeholder="E.G. A1B2C3"
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value)}
-                  className="block w-full text-center uppercase tracking-widest font-mono text-2xl py-4 border border-card-border rounded-2xl bg-background/50 focus:outline-none focus:ring-2 focus:ring-brand-lavender-300 dark:focus:ring-brand-lavender-800 text-foreground"
+                  className="block w-full text-center uppercase tracking-widest font-mono text-2xl py-4 border border-border rounded-card bg-background/50 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || !inputCode}
-                className="w-full flex items-center justify-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-lavender-500 hover:bg-brand-lavender-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-lavender-400 active:scale-[0.98] disabled:opacity-50 transition-all"
+                className="w-full btn-primary"
               >
-                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 <span>Link Accounts</span>
               </button>
 
