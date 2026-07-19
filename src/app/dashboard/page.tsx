@@ -682,57 +682,6 @@ export default function DashboardPage() {
         className="relative max-w-6xl mx-auto w-full px-6 py-16 pb-36 pt-24 space-y-10"
         style={{ zIndex: 10 }}
       >
-        {/* ─── 1. QUICK ACTIONS ROW ─── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-          {[
-            {
-              label: "Write a Love Letter",
-              desc: "Express your feelings",
-              icon: Mail,
-              href: "/love-letter",
-            },
-            {
-              label: "View Calendar",
-              desc: "See important dates",
-              icon: Calendar,
-              href: "/calendar",
-            },
-            {
-              label: "Send a Surprise",
-              desc: "Make them smile",
-              icon: Gift,
-              href: "/love-letter?surprise=true",
-            },
-            {
-              label: "Couple Game",
-              desc: "Play & have fun",
-              icon: Gamepad2,
-              href: "/play",
-            },
-          ].map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link
-                key={action.label}
-                href={action.href}
-                className="p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center gap-3.5 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer select-none"
-              >
-                <div className="w-10 h-10 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div className="text-left min-w-0">
-                  <p className="font-sans font-bold text-xs text-[var(--text)] leading-snug truncate">
-                    {action.label}
-                  </p>
-                  <p className="text-[10px] text-[var(--text-soft)] font-mono leading-tight mt-0.5 truncate">
-                    {action.desc}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
         {/* ─── MAIN HERO & WIDGETS GRID ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           
@@ -1100,6 +1049,62 @@ export default function DashboardPage() {
             </div>
           </Link>
 
+        </div>
+
+        {/* ─── QUICK ACTIONS ROW (BOTTOM) ─── */}
+        <div className="pt-6 border-t border-[var(--border)] space-y-3">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] px-1">
+            Quick Actions
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+            {[
+              {
+                label: "Write a Love Letter",
+                desc: "Express your feelings",
+                icon: Mail,
+                href: "/love-letter",
+              },
+              {
+                label: "View Calendar",
+                desc: "See important dates",
+                icon: Calendar,
+                href: "/calendar",
+              },
+              {
+                label: "Send a Surprise",
+                desc: "Make them smile",
+                icon: Gift,
+                href: "/love-letter?surprise=true",
+              },
+              {
+                label: "Couple Game",
+                desc: "Play & have fun",
+                icon: Gamepad2,
+                href: "/play",
+              },
+            ].map((action) => {
+              const Icon = action.icon;
+              return (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center gap-3.5 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer select-none"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <p className="font-sans font-bold text-xs text-[var(--text)] leading-snug truncate">
+                      {action.label}
+                    </p>
+                    <p className="text-[10px] text-[var(--text-soft)] font-mono leading-tight mt-0.5 truncate">
+                      {action.desc}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
       </motion.main>
