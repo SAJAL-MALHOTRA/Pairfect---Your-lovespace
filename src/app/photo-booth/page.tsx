@@ -1142,21 +1142,12 @@ export default function PhotoBoothPage() {
               </button>
 
               <button
-                disabled={savingScrapbook || savedSuccess}
-                onClick={saveToScrapbook}
-                className="btn-secondary py-3 text-xs inline-flex items-center justify-center gap-2"
-              >
-                {savingScrapbook ? <Loader2 className="w-4 h-4 animate-spin" /> : savedSuccess ? <Check className="w-4 h-4 text-green-600" /> : <Heart className="w-4 h-4 text-[var(--burgundy)]" />}
-                {savedSuccess ? "Saved to Memories!" : "Save to Memories"}
-              </button>
-
-              <button
                 onClick={() => {
                   setCapturedPhotos([]);
                   setPlacedStickers([]);
                   setStep(1);
                 }}
-                className="btn-secondary py-3 text-xs inline-flex items-center justify-center gap-2"
+                className="btn-secondary sm:col-span-2 py-3 text-xs inline-flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" /> Create Another Strip
               </button>
