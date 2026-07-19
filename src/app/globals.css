@@ -89,20 +89,30 @@
 
 /* ── Color tokens ── */
 :root {
-  --background:         #FCFBF9;
-  --foreground:         #1E1A15;
+  /* Design Tokens */
+  --bg:                 #F8F3EE;
+  --bg-secondary:       #F2EBE3;
+  --text:               #2C1E1A;
+  --text-soft:          #6B564F;
+  --burgundy:           #8E2B45;
+  --rose:               #D38CA2;
+  --border:             #E7DED5;
+  --shadow:             rgba(67,34,28,0.08);
+
+  --background:         var(--bg);
+  --foreground:         var(--text);
   --paper-warm:         #FAF5EB;
   --paper-mid:          #F5EDD8;
   --paper-deep:         #EDE0C4;
-  --ink-dark:           #1E1A15;
-  --ink-mid:            #7A6E62;
+  --ink-dark:           var(--text);
+  --ink-mid:            var(--text-soft);
   --ink-light:          #B0A496;
-  --seal-red:           #802030;
+  --seal-red:           var(--burgundy);
   --seal-red-hover:     #6E1B29;
   --washi-warm:         rgba(196, 164, 130, 0.38);
   --border-warm:        #E5D9C5;
-  --border-mid:         #EAE3D5;
-  --card-bg:            #FAF6EE;
+  --border-mid:         var(--border);
+  --card-bg:            var(--bg-secondary);
 
   color-scheme: light;
   --primary:            #802030;
