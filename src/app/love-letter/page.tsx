@@ -155,6 +155,41 @@ export default function LoveLetterPage() {
     }
   }, [loading, pair]);
 
+  // Load draft from localStorage on page mount
+  useEffect(() => {
+    if (pair) {
+      const saved = localStorage.getItem(`pairfect-love-letter-draft-${pair.id}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.contentBlocks) setContentBlocks(parsed.contentBlocks);
+          if (parsed.envelopeStyle) setEnvelopeStyle(parsed.envelopeStyle);
+          if (parsed.recipientName) setRecipientName(parsed.recipientName);
+          if (parsed.senderName) setSenderName(parsed.senderName);
+        } catch (e) {
+          console.error("Failed to load letter draft", e);
+        }
+      }
+    }
+  }, [pair]);
+
+  // Auto-save draft as user edits
+  useEffect(() => {
+    if (pair && activeStep === 1) {
+      const hasContent = contentBlocks.some(b => b.type === "cat" || (b.type === "text" && b.value.trim() !== ""));
+      if (hasContent || recipientName.trim() || senderName.trim()) {
+        localStorage.setItem(`pairfect-love-letter-draft-${pair.id}`, JSON.stringify({
+          contentBlocks,
+          envelopeStyle,
+          recipientName,
+          senderName
+        }));
+      } else {
+        localStorage.removeItem(`pairfect-love-letter-draft-${pair.id}`);
+      }
+    }
+  }, [contentBlocks, envelopeStyle, recipientName, senderName, pair, activeStep]);
+
   // Search Giphy stickers on query input change
   const latestSearchQuery = useRef("");
 
@@ -255,6 +290,7 @@ export default function LoveLetterPage() {
       setActiveStep(1);
 
       fetchData();
+      localStorage.removeItem(`pairfect-love-letter-draft-${pair.id}`);
       alert("Love Letter sent successfully! 💌🐾");
     } catch (e: any) {
       console.error(e);

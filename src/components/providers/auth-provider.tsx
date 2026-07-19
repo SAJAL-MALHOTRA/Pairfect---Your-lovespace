@@ -23,6 +23,7 @@ interface Pair {
   invite_code: string;
   status: "pending" | "active" | "archived" | "unlinked";
   started_dating_date: string | null;
+  created_at: string;
 }
 
 interface AuthContextType {

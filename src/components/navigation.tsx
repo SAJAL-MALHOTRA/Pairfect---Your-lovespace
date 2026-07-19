@@ -8,48 +8,79 @@ import { useTheme } from "@/components/providers/theme-provider";
 import { 
   Heart, Home, BookOpen, Settings, LogOut, Gamepad2, 
   Tv, Sun, Moon, Timer, Scale, HelpCircle, Gift, 
-  Brain, Camera, Compass, ChevronDown
+  Brain, Camera, Compass, ChevronDown, Smile, Menu, X 
 } from "lucide-react";
 
 export default function Navigation() {
   const pathname = usePathname();
   const { profile, partner, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileDropdowns, setMobileDropdowns] = useState<{ [key: string]: boolean }>({});
 
-  // 5 core navigation elements visible in the main header row
-  const primaryLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/gratitude-jar", label: "Gratitude Jar", icon: Gift },
-    { href: "/moments", label: "Moments", icon: BookOpen },
-    { href: "/stories", label: "Stories", icon: Compass },
-    { href: "/settings", label: "Settings", icon: Settings },
-  ];
+  const toggleMobileDropdown = (name: string) => {
+    setMobileDropdowns(prev => ({ ...prev, [name]: !prev[name] }));
+  };
 
-  // Secondary tools and games hidden under the "More" dropdown to avoid wrapping bugs
-  const activityLinks = [
-    { href: "/avatars", label: "Photobooth", icon: Camera },
-    { href: "/love-letter", label: "Love Letter", icon: Heart },
-    { href: "/quiz", label: "Vibe Quiz", icon: Gamepad2 },
-    { href: "/watch", label: "Watch Together", icon: Tv },
-    { href: "/focus", label: "Focus Timer", icon: Timer },
-    { href: "/vibe-judge", label: "AI Vibe Judge", icon: Scale },
-    { href: "/riddle", label: "Riddle Night", icon: HelpCircle },
-    { href: "/iq-duel", label: "IQ Duel", icon: Brain },
-  ];
-
-  // Combine links for mobile navigation filter fallback
-  const mobileLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/gratitude-jar", label: "Jar", icon: Gift },
-    { href: "/moments", label: "Moments", icon: BookOpen },
-    { href: "/stories", label: "Stories", icon: Compass },
-    { href: "/settings", label: "Settings", icon: Settings },
+  const navGroups = [
+    {
+      id: "journal",
+      label: "Journal",
+      icon: BookOpen,
+      links: [
+        { href: "/love-letter", label: "Love Letter", icon: Heart },
+        { href: "/gratitude-jar", label: "Gratitude Jar", icon: Gift },
+        { href: "/checkin", label: "Mood Check-in", icon: Smile },
+      ]
+    },
+    {
+      id: "play",
+      label: "Play",
+      icon: Gamepad2,
+      links: [
+        { href: "/riddle", label: "Riddle Night", icon: HelpCircle },
+        { href: "/iq-duel", label: "IQ Duel", icon: Brain },
+        { href: "/quiz", label: "Vibe Quiz", icon: Gamepad2 },
+        { href: "/vibe-judge", label: "Between the Lines", icon: Scale },
+      ]
+    },
+    {
+      id: "memories",
+      label: "Memories",
+      icon: Compass,
+      links: [
+        { href: "/avatars", label: "Photobooth", icon: Camera },
+        { href: "/moments", label: "Moments", icon: BookOpen },
+        { href: "/stories", label: "Stories", icon: Compass },
+      ]
+    },
+    {
+      id: "together",
+      label: "Together",
+      icon: Tv,
+      links: [
+        { href: "/watch", label: "Watch Together", icon: Tv },
+        { href: "/focus", label: "Focus Session", icon: Timer },
+      ]
+    },
+    {
+      id: "more",
+      label: "More",
+      icon: Settings,
+      links: [
+        { href: "/settings", label: "Settings", icon: Settings },
+      ]
+    }
   ];
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "??";
     return name.slice(0, 2).toUpperCase();
+  };
+
+  const isGroupActive = (group: typeof navGroups[0]) => {
+    return group.links.some(link => pathname === link.href);
   };
 
   return (
@@ -68,71 +99,74 @@ export default function Navigation() {
           </span>
         </Link>
 
-        {/* Links (center-aligned flex layout) */}
-        <div className="hidden md:flex items-center space-x-1.5 flex-1 justify-center max-w-xl">
-          {primaryLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
+        {/* Links (center-aligned desktop nav) */}
+        <div className="hidden md:flex items-center space-x-1.5 flex-1 justify-center max-w-2xl">
+          {/* Home / Dashboard Link */}
+          <Link
+            href="/dashboard"
+            className={`flex items-center space-x-1.5 px-3 py-2 rounded-button text-xs font-bold transition-all ${
+              pathname === "/dashboard"
+                ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span>Home</span>
+          </Link>
+
+          {/* Group Dropdowns */}
+          {navGroups.map((group) => {
+            const isActive = isGroupActive(group);
+            const isOpen = activeDropdown === group.id;
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center space-x-1.5 px-3 py-2 rounded-button text-xs font-bold transition-all ${
-                  isActive
-                    ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{link.label}</span>
-              </Link>
+              <div key={group.id} className="relative">
+                <button
+                  onClick={() => setActiveDropdown(isOpen ? null : group.id)}
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-button text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : isOpen
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-30 cursor-default" 
+                      onClick={() => setActiveDropdown(null)} 
+                    />
+                    <div className="absolute top-full left-0 mt-2 w-48 rounded-card border border-border bg-card p-2 shadow-lg z-40 animate-fade-in flex flex-col space-y-1">
+                      {group.links.map((link) => {
+                        const Icon = link.icon;
+                        const isLinkActive = pathname === link.href;
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setActiveDropdown(null)}
+                            className={`flex items-center space-x-2 px-3 py-2 rounded-button text-xs font-bold transition-all ${
+                              isLinkActive
+                                ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            <span>{link.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             );
           })}
-
-          {/* Activities Dropdown for extra features */}
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={`flex items-center space-x-1 px-3 py-2 rounded-button text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer ${
-                dropdownOpen ? "bg-muted" : ""
-              }`}
-            >
-              <span>More</span>
-              <ChevronDown className={`w-3 h-3 transition-transform duration-250 ${dropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            {dropdownOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-30 cursor-default" 
-                  onClick={() => setDropdownOpen(false)} 
-                />
-                <div className="absolute top-full right-0 mt-2 w-48 rounded-card border border-border bg-card p-2 shadow-lg z-40 animate-fade-in flex flex-col space-y-1">
-                  {activityLinks.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setDropdownOpen(false)}
-                        className={`flex items-center space-x-2 px-3 py-2 rounded-button text-xs font-bold transition-all ${
-                          isActive
-                            ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
         </div>
-
 
         {/* Avatars & Actions (right-aligned) */}
         <div className="flex items-center space-x-3 shrink-0">
@@ -189,35 +223,125 @@ export default function Navigation() {
           <button
             onClick={signOut}
             title="Sign Out"
-            className="p-2 text-muted-foreground hover:text-red-500 rounded-button hover:bg-muted active:scale-95 transition-all cursor-pointer"
+            className="hidden md:block p-2 text-muted-foreground hover:text-red-500 rounded-button hover:bg-muted active:scale-95 transition-all cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
+          </button>
+
+          {/* Mobile Hamburger menu toggle button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
+            className="md:hidden p-2 text-muted-foreground hover:text-foreground rounded-button hover:bg-muted active:scale-95 transition-all cursor-pointer"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Navigation bar at the bottom */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-background/90 backdrop-blur-lg px-4 py-2 flex justify-around items-center z-50">
-        {mobileLinks.map((link) => {
-          const Icon = link.icon;
-          const isActive = pathname === link.href;
-          return (
+      {/* Mobile collapsible navigation drawer */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden bg-background/98 backdrop-blur-lg p-6 flex flex-col animate-fade-in overflow-y-auto">
+          <div className="flex items-center justify-between">
+            <Link href="/dashboard" className="flex items-center space-x-2" onClick={() => setMobileMenuOpen(false)}>
+              <img 
+                src="/logo-book.png" 
+                alt="Pairfect" 
+                className="w-8 h-8 object-contain" 
+              />
+              <span className="font-sans text-lg font-black tracking-tight text-foreground gradient-text">
+                Pairfect
+              </span>
+            </Link>
+            <button 
+              onClick={() => setMobileMenuOpen(false)} 
+              aria-label="Close Menu"
+              className="p-2 text-muted-foreground hover:text-foreground rounded-button hover:bg-muted active:scale-[0.95]"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="mt-8 flex-1 flex flex-col space-y-4 pb-12">
+            {/* Direct Home Link */}
             <Link
-              key={link.href}
-              href={link.href}
-              className={`flex flex-col items-center justify-center p-2 rounded-button transition-all ${
-                isActive
-                  ? "text-primary scale-105 font-bold"
-                  : "text-muted-foreground hover:text-foreground"
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-button text-sm font-bold transition-all ${
+                pathname === "/dashboard"
+                  ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <Icon className="w-4.5 h-4.5" />
-              <span className="text-[9px] mt-1 font-semibold">{link.label}</span>
+              <Home className="w-4 h-4" />
+              <span>Home</span>
             </Link>
-          );
-        })}
-      </div>
+
+            {/* Accordion Groups */}
+            {navGroups.map((group) => {
+              const GroupIcon = group.icon;
+              const isExpanded = mobileDropdowns[group.id];
+              const isGroupAct = isGroupActive(group);
+              return (
+                <div key={group.id} className="border border-border/40 rounded-card bg-card/50 overflow-hidden">
+                  <button
+                    onClick={() => toggleMobileDropdown(group.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${
+                      isGroupAct 
+                        ? "text-primary bg-primary/5" 
+                        : "text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <GroupIcon className="w-4 h-4" />
+                      <span>{group.label}</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {isExpanded && (
+                    <div className="bg-muted/10 border-t border-border/20 p-2 flex flex-col space-y-1">
+                      {group.links.map((link) => {
+                        const Icon = link.icon;
+                        const isLinkActive = pathname === link.href;
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`flex items-center space-x-2 px-3 py-2 rounded-button text-xs font-bold transition-all ${
+                              isLinkActive
+                                ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            <span>{link.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Logout Mobile */}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                signOut();
+              }}
+              className="flex items-center space-x-3 px-4 py-3 rounded-button text-sm font-bold text-red-500 hover:bg-red-500/10 transition-all cursor-pointer border border-red-500/20"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
+
 
