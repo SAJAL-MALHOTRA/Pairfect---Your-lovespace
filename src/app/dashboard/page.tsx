@@ -213,24 +213,26 @@ export default function DashboardPage() {
         if (recentLet.data) {
           recentLet.data.forEach((l: any) => {
             const isMe = l.sender_id === user?.id;
+            const t = l.sent_at ? new Date(l.sent_at).getTime() : 0;
             activities.push({
               id: l.id,
               type: "letter",
               text: isMe ? "You wrote a letter" : `${partnerName} sent you a letter`,
               timeStr: "Recently",
-              timestamp: new Date(l.sent_at).getTime(),
+              timestamp: isNaN(t) ? 0 : t,
             });
           });
         }
 
         if (recentMom.data) {
           recentMom.data.forEach((m: any) => {
+            const t = m.created_at ? new Date(m.created_at).getTime() : 0;
             activities.push({
               id: m.id,
               type: "moment",
               text: `Added memory: "${m.title}"`,
               timeStr: "Recently",
-              timestamp: new Date(m.created_at).getTime(),
+              timestamp: isNaN(t) ? 0 : t,
             });
           });
         }
@@ -238,12 +240,13 @@ export default function DashboardPage() {
         if (recentGrat.data) {
           recentGrat.data.forEach((g: any) => {
             const isMe = g.sender_id === user?.id;
+            const t = g.created_at ? new Date(g.created_at).getTime() : 0;
             activities.push({
               id: g.id,
               type: "gratitude",
               text: isMe ? "You added a gratitude note" : `${partnerName} added a gratitude note`,
               timeStr: "Recently",
-              timestamp: new Date(g.created_at).getTime(),
+              timestamp: isNaN(t) ? 0 : t,
             });
           });
         }
@@ -252,19 +255,23 @@ export default function DashboardPage() {
         activities.sort((a, b) => b.timestamp - a.timestamp);
         setRecentActivities(activities.slice(0, 3));
 
-        // Anniversary countdown calculations
-        const anniversaryDate = new Date(pair.created_at);
-        const today = new Date();
-        let nextAnniversary = new Date(today.getFullYear(), anniversaryDate.getMonth(), anniversaryDate.getDate());
-        if (nextAnniversary.getTime() < today.getTime()) {
-          nextAnniversary.setFullYear(nextAnniversary.getFullYear() + 1);
-        }
-        const diffTime = Math.abs(nextAnniversary.getTime() - today.getTime());
-        const daysToGo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setAnniversaryDaysToGo(daysToGo);
+        // Anniversary countdown calculations (defended against undefined/invalid created_at)
+        if (pair.created_at) {
+          const anniversaryDate = new Date(pair.created_at);
+          if (!isNaN(anniversaryDate.getTime())) {
+            const today = new Date();
+            let nextAnniversary = new Date(today.getFullYear(), anniversaryDate.getMonth(), anniversaryDate.getDate());
+            if (nextAnniversary.getTime() < today.getTime()) {
+              nextAnniversary.setFullYear(nextAnniversary.getFullYear() + 1);
+            }
+            const diffTime = Math.abs(nextAnniversary.getTime() - today.getTime());
+            const daysToGo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            setAnniversaryDaysToGo(daysToGo);
 
-        const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric" };
-        setAnniversaryDateFormatted(nextAnniversary.toLocaleDateString("en-US", options));
+            const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric" };
+            setAnniversaryDateFormatted(nextAnniversary.toLocaleDateString("en-US", options));
+          }
+        }
 
       } catch (e) {
         console.error(e);
