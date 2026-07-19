@@ -10,27 +10,16 @@ const ThemeContext = createContext<{
 } | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
+  const theme: Theme = "light";
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme;
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.classList.toggle("dark", saved === "dark");
-    } else {
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(systemDark ? "dark" : "light");
-      document.documentElement.classList.toggle("dark", systemDark);
-    }
-    setMounted(true);
+    // Force light mode on document root and clear previous settings
+    document.documentElement.classList.remove("dark");
+    localStorage.removeItem("theme");
   }, []);
 
   const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("theme", next);
-    document.documentElement.classList.toggle("dark", next === "dark");
+    // No-op to disable changing themes
   };
 
   return (
