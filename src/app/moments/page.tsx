@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import { format, parseISO } from "date-fns";
 import { Loader2, Plus, X, Trash2, Upload, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { LookingAtPhotos } from "@/components/cozy-illustrations";
 
 // Each photo gets a deterministic-random rotation and washi tape color
 const ROTATIONS = [-1.8, 2.4, -0.6, 1.8, -2.6, 0.8, -1.4, 2.1, -0.4, 1.6];
@@ -248,19 +249,34 @@ export default function MomentsPage() {
 
         {/* THE HERO: the photographs — organic scattered collage */}
         {moments.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            className="text-center py-40">
-            <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-3">Your scrapbook is waiting.</p>
-            <p className="text-xs text-[var(--ink-light)] font-mono mb-8">Every moment deserves a place here.</p>
-            <button onClick={() => setAddOpen(true)} className="btn-primary py-3 px-8 text-[10px] uppercase tracking-widest cursor-pointer">
-              Add your first memory
-            </button>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
+            className="text-center py-16 flex flex-col items-center gap-5">
+            <LookingAtPhotos className="w-48 h-48 rounded-3xl" />
+            <div>
+              <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-3">Your scrapbook is waiting.</p>
+              <p className="text-xs text-[var(--ink-light)] font-mono mb-6">Every moment deserves a place here.</p>
+              <button onClick={() => setAddOpen(true)} className="btn-primary py-3 px-8 text-[10px] uppercase tracking-widest cursor-pointer">
+                Add your first memory
+              </button>
+            </div>
           </motion.div>
         ) : (
-          <div className="flex flex-wrap gap-6 md:gap-8 justify-center md:justify-start items-start pt-4">
+          <div className="space-y-6">
+            {/* Header illustration */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex justify-center mb-6"
+            >
+              <LookingAtPhotos className="w-44 h-44 rounded-3xl" />
+            </motion.div>
+
+            <div className="flex flex-wrap gap-6 md:gap-8 justify-center md:justify-start items-start pt-4">
             {moments.map((m, i) => (
               <Polaroid key={m.id} moment={m} index={i} onOpen={() => setLightbox({ m, i })} />
             ))}
+          </div>
           </div>
         )}
       </main>

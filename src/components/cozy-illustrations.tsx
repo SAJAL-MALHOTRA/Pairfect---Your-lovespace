@@ -7,6 +7,7 @@ export type CozyIllustrationProps = React.SVGProps<SVGSVGElement> & {
 const a11y = (title?: string) =>
   title ? { role: "img", "aria-hidden": undefined } : { "aria-hidden": true };
 
+// Decorative Elements (kept from V1 for safety)
 export function LoveLetterEnvelope({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
   const id = useId();
   return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
@@ -44,7 +45,6 @@ export function OpenScrapbook({ title, className = "h-40 w-40", ...props }: Cozy
       <g transform="rotate(5 165 118)"><rect x="139" y="88" width="54" height="69" rx="4" fill="#fff" stroke="#91bdf7" strokeWidth="2"/><rect x="145" y="95" width="42" height="43" rx="3" fill="#fce7f3"/><path d="M153 126c9-24 18-24 27 0" fill="none" stroke="#f472b6" strokeWidth="5"/><circle cx="157" cy="107" r="5" fill="#f7c35f"/><path d="M151 83h31v12h-31z" fill="#bfdbfe" opacity=".85"/></g>
     </g>
     <g fill="none" stroke="#d59b72" strokeWidth="2" strokeLinecap="round"><path d="M44 164c14-3 20 3 24 18m-13-16c-7 2-10 6-11 12m17-9c7 0 11 3 14 8"/><path d="M196 164c-14-3-20 3-24 18m13-16c7 2 10 6 11 12m-17-9c-7 0-11 3-14 8"/></g>
-    <g fill="#f7c35f"><path d="m30 48 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/><path d="m213 75 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/></g>
   </svg>;
 }
 
@@ -57,104 +57,402 @@ export function PhotoboothFilmStrip({ title, className = "h-40 w-40", ...props }
       <g><rect x="88" y="96" width="64" height="48" rx="8" fill="#dbeafe"/><circle cx="120" cy="117" r="17" fill="#fff" opacity=".75"/><path d="M111 118c5 5 13 5 18 0" fill="none" stroke="#f472b6" strokeWidth="3" strokeLinecap="round"/><circle cx="113" cy="112" r="2" fill="#374151"/><circle cx="127" cy="112" r="2" fill="#374151"/><path d="m144 101 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="#f7c35f"/></g>
       <g><rect x="88" y="151" width="64" height="48" rx="8" fill="#fff3d1"/><path d="M120 187c-3-5-15-11-15-21 0-9 11-12 15-4 4-8 15-5 15 4 0 10-12 16-15 21Z" fill="#f472b6"/><circle cx="98" cy="160" r="5" fill="#60a5fa"/></g>
     </g>
-    <g transform="translate(161 43)" stroke="#d85c99" strokeWidth="2"><rect x="0" y="7" width="42" height="30" rx="8" fill="#fff"/><path d="m10 7 5-7h13l5 7" fill="#f9a8d4"/><circle cx="21" cy="22" r="9" fill="#bfdbfe"/><circle cx="21" cy="22" r="4" fill="#60a5fa"/></g>
-    <g fontFamily="system-ui" fontSize="16"><text x="44" y="79">😊</text><text x="177" y="113">✨</text><text x="46" y="164">💕</text></g>
   </svg>;
 }
 
-export function MilestoneCompass({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
+// ============================================================================
+// SIGNATURE STORYBOOK ILLUSTRATION SYSTEM
+// Hand-painted, watercolor, cozy cream style with minimal characters
+// ============================================================================
+
+// Global shared paper texture filter
+const PaperFilter = ({ id }: { id: string }) => (
+  <defs>
+    <filter id={id} x="-10%" y="-10%" width="120%" height="120%">
+      {/* Light drop shadow */}
+      <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#5C4D3C" floodOpacity="0.08" />
+      {/* Soft paper grain texture overlay */}
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.03 0" />
+      <feBlend mode="multiply" in="SourceGraphic" in2="noise" />
+    </filter>
+  </defs>
+);
+
+// 1. Profile / Us: The primary Pairfect Portrait of the couple
+export function PairfectPortrait({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
   const id = useId();
-  return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
-    {title && <title>{title}</title>}<defs><radialGradient id={`${id}-g`}><stop stopColor="#fff"/><stop offset=".72" stopColor="#fce7f3"/><stop offset="1" stopColor="#f9a8d4"/></radialGradient><filter id={`${id}-s`}><feDropShadow dy="7" stdDeviation="7" floodColor="#765363" floodOpacity=".2"/></filter></defs>
-    <circle cx="120" cy="123" r="82" fill={`url(#${id}-g)`} stroke="#d8a5b9" strokeWidth="4" filter={`url(#${id}-s)`}/><circle cx="120" cy="123" r="66" fill="none" stroke="#60a5fa" strokeWidth="2" strokeDasharray="2 7"/><circle cx="120" cy="123" r="52" fill="#fffafc" stroke="#edb7cf" strokeWidth="2"/>
-    <g fill="#566279" fontFamily="serif" fontWeight="700" fontSize="13" textAnchor="middle"><text x="120" y="64">N</text><text x="120" y="190">S</text><text x="182" y="128">E</text><text x="58" y="128">W</text></g>
-    <path d="m120 76 13 43-13 8-13-8Z" fill="#60a5fa"/><path d="m120 170-13-43 13-8 13 8Z" fill="#f9a8d4"/>
-    <path d="M120 139c-3-4-13-9-13-18 0-8 10-10 13-4 3-6 13-4 13 4 0 9-10 14-13 18Z" fill="#f472b6" stroke="#fff" strokeWidth="2"/>
-    <g fill="#f7c35f"><path d="m38 57 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z"/><path d="m200 171 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/></g>
-    <path d="M182 47a18 18 0 1 0 17 28 22 22 0 0 1-17-28Z" fill="#fde68a" stroke="#e8b753" strokeWidth="2"/><g fill="none" stroke="#c9a9b7" strokeWidth="2"><circle cx="63" cy="198" r="6"/><path d="M79 202a8 8 0 0 1 0-16M94 184a10 10 0 1 0 0 20"/></g>
-  </svg>;
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Pairfect Portrait")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      
+      {/* Warm Cream Canvas Background */}
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+      
+      <g transform="translate(10, 5)">
+        {/* Character A (Left - Pinkish Sweater) */}
+        <g id="left-character" transform="translate(65, 95)">
+          {/* Hair */}
+          <path d="M 12 -3 C 5 -12, 50 -12, 44 -3 C 50 15, 6 15, 12 -3" fill="#6E5A44" />
+          {/* Head */}
+          <circle cx="28" cy="12" r="20" fill="#FCEBE3" />
+          <path d="M 23 -2 C 26 -7, 30 -7, 33 -2" fill="#6E5A44" /> {/* Fringe */}
+          {/* Face details (minimalist eyes & blush) */}
+          <circle cx="21" cy="14" r="1.5" fill="#5C4D3C" /> {/* Eye L */}
+          <circle cx="35" cy="14" r="1.5" fill="#5C4D3C" /> {/* Eye R */}
+          <circle cx="16" cy="18" r="3.5" fill="#EFAFAF" opacity="0.6" /> {/* Blush L */}
+          <circle cx="40" cy="18" r="3.5" fill="#EFAFAF" opacity="0.6" /> {/* Blush R */}
+          <path d="M 25 19 Q 28 22 31 19" stroke="#5C4D3C" strokeWidth="1.2" fill="none" strokeLinecap="round" /> {/* Smile */}
+          {/* Cozy Oversized Sweater */}
+          <path d="M 4 32 C 10 24, 46 24, 52 32 C 54 48, 54 85, 52 105 L 4 105 C 2 85, 2 48, 4 32 Z" fill="#E0B8B8" />
+          {/* Knit Collar details */}
+          <path d="M 16 32 C 20 28, 36 28, 40 32" stroke="#FAF6EE" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        </g>
+
+        {/* Character B (Right - Sage Green Sweater) */}
+        <g id="right-character" transform="translate(145, 95)">
+          {/* Hair */}
+          <path d="M 8 -4 C 2 -18, 52 -18, 48 -4 C 54 14, 2 14, 8 -4" fill="#4F3C2C" />
+          {/* Head */}
+          <circle cx="28" cy="12" r="20" fill="#FCEBE3" />
+          <path d="M 16 -1 C 28 -6, 32 -6, 38 -1" fill="#4F3C2C" /> {/* Fringe */}
+          {/* Face details */}
+          <circle cx="21" cy="14" r="1.5" fill="#5C4D3C" />
+          <circle cx="35" cy="14" r="1.5" fill="#5C4D3C" />
+          <circle cx="16" cy="18" r="3.5" fill="#EFAFAF" opacity="0.6" />
+          <circle cx="40" cy="18" r="3.5" fill="#EFAFAF" opacity="0.6" />
+          <path d="M 25 19 Q 28 22 31 19" stroke="#5C4D3C" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          {/* Cozy Oversized Sweater */}
+          <path d="M 4 32 C 10 24, 46 24, 52 32 C 54 48, 54 85, 52 105 L 4 105 C 2 85, 2 48, 4 32 Z" fill="#A8BDB2" />
+          {/* Knit Collar */}
+          <path d="M 16 32 C 20 28, 36 28, 40 32" stroke="#FAF6EE" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        </g>
+        
+        {/* Floating Heart between them */}
+        <path d="M 130 96 C 122 84, 110 94, 130 110 C 150 94, 138 84, 130 96 Z" fill="#C98892" />
+      </g>
+      
+      {/* Decorative botanical details in corners */}
+      <path d="M 25 220 Q 35 210 40 225 M 35 210 Q 45 200 48 212" stroke="#A6B3A8" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <circle cx="48" cy="212" r="2.5" fill="#DDBFBF" />
+      <circle cx="40" cy="225" r="2" fill="#DDBFBF" />
+    </svg>
+  );
 }
 
-export function AnniversaryCalendar({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
+// 2. Dashboard: Couple sharing a warm, quiet coffee date on a window sill
+export function DashboardWelcoming({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
   const id = useId();
-  return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
-    {title && <title>{title}</title>}<defs><linearGradient id={`${id}-g`} x1="52" y1="42" x2="185" y2="201"><stop stopColor="#bfdbfe"/><stop offset="1" stopColor="#fbcfe8"/></linearGradient><filter id={`${id}-s`}><feDropShadow dy="8" stdDeviation="7" floodColor="#895b71" floodOpacity=".2"/></filter></defs>
-    <rect x="37" y="35" width="166" height="174" rx="29" fill={`url(#${id}-g)`} opacity=".48"/>
-    <g filter={`url(#${id}-s)`}><rect x="50" y="49" width="140" height="143" rx="19" fill="#fffdfa"/><path d="M50 70c0-12 8-21 20-21h100c12 0 20 9 20 21v23H50Z" fill="#f472b6"/><g stroke="#fff" strokeWidth="5" strokeLinecap="round"><path d="M80 42v22M160 42v22"/></g>
-      <g fill="#768095" fontFamily="system-ui" fontSize="12" textAnchor="middle"><text x="72" y="111">S</text><text x="88" y="111">M</text><text x="104" y="111">T</text><text x="120" y="111">W</text><text x="136" y="111">T</text><text x="152" y="111">F</text><text x="168" y="111">S</text></g>
-      <g fill="#40506b" fontFamily="system-ui" fontSize="13" textAnchor="middle"><text x="72" y="133">10</text><text x="88" y="133">11</text><text x="104" y="133">12</text><text x="120" y="133">13</text><text x="136" y="133">14</text><text x="152" y="133">15</text><text x="168" y="133">16</text><text x="72" y="158">17</text><text x="88" y="158">18</text><text x="104" y="158">19</text><text x="120" y="158" fill="#d9468f" fontWeight="700">20</text><text x="136" y="158">21</text><text x="152" y="158">22</text><text x="168" y="158">23</text><text x="72" y="181">24</text><text x="88" y="181">25</text><text x="104" y="181">26</text><text x="120" y="181">27</text><text x="136" y="181">28</text><text x="152" y="181">29</text><text x="168" y="181">30</text></g>
-      <path d="M120 170c-7-4-19-11-20-22-1-13 14-18 20-7 6-11 21-6 20 7-1 11-13 18-20 22Z" fill="none" stroke="#f472b6" strokeWidth="3" strokeLinecap="round"/>
-    </g>
-    <g fill="#f472b6"><path d="M29 115c-2-3-9-6-9-12 0-6 7-8 9-3 3-5 10-3 10 3 0 6-7 9-10 12Z"/><path d="M210 150c-2-3-8-6-8-11 0-6 6-8 8-3 3-5 9-3 9 3 0 5-6 8-9 11Z"/></g><path d="m207 71 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="#f7c35f"/>
-  </svg>;
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Welcome to Pairfect")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+
+      <g transform="translate(10, -5)">
+        {/* Window Sill Line */}
+        <line x1="45" y1="205" x2="225" y2="205" stroke="#E2D4C3" strokeWidth="3" strokeLinecap="round" />
+        
+        {/* Cozy Mugs sitting on the window sill */}
+        <g transform="translate(112, 172)">
+          <path d="M 10 16 H 26 V 32 Q 26 40 18 40 Q 10 40 10 32 Z" fill="#E0B8B8" stroke="#CD8D8D" strokeWidth="1.5" />
+          <path d="M 26 20 Q 32 20 32 26 Q 32 32 26 32" stroke="#CD8D8D" strokeWidth="1.5" fill="none" />
+          <path d="M 32 16 H 48 V 32 Q 48 40 40 40 Q 32 40 32 32 Z" fill="#A8BDB2" stroke="#8CA699" strokeWidth="1.5" />
+          <path d="M 32 20 Q 26 20 26 26 Q 26 32 32 32" stroke="#8CA699" strokeWidth="1.5" fill="none" />
+          {/* Steam rising */}
+          <path d="M 16 10 Q 18 5 15 0" stroke="#CD8D8D" strokeWidth="1" fill="none" opacity="0.6" strokeLinecap="round" />
+          <path d="M 42 10 Q 40 5 43 0" stroke="#8CA699" strokeWidth="1" fill="none" opacity="0.6" strokeLinecap="round" />
+        </g>
+
+        {/* Character A (Left, leaning in) */}
+        <g transform="translate(50, 90)">
+          {/* Hair */}
+          <path d="M 15 -2 C 8 -12, 48 -12, 42 -2 C 48 10, 10 10, 15 -2" fill="#6E5A44" />
+          <circle cx="28" cy="12" r="18" fill="#FCEBE3" />
+          <circle cx="22" cy="14" r="1.2" fill="#5C4D3C" />
+          <circle cx="34" cy="14" r="1.2" fill="#5C4D3C" />
+          <circle cx="18" cy="18" r="3" fill="#EFAFAF" opacity="0.6" />
+          <circle cx="38" cy="18" r="3" fill="#EFAFAF" opacity="0.6" />
+          <path d="M 25 19 Q 28 21 31 19" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 6 30 C 12 24, 44 24, 50 30 Q 55 60 48 115 H 8 Z" fill="#D2C4D8" />
+        </g>
+
+        {/* Character B (Right, leaning in) */}
+        <g transform="translate(160, 90)">
+          {/* Hair */}
+          <path d="M 10 -4 C 4 -16, 46 -16, 42 -4 C 48 10, 6 10, 10 -4" fill="#8C6E53" />
+          <circle cx="28" cy="12" r="18" fill="#FCEBE3" />
+          <circle cx="22" cy="14" r="1.2" fill="#5C4D3C" />
+          <circle cx="34" cy="14" r="1.2" fill="#5C4D3C" />
+          <circle cx="18" cy="18" r="3" fill="#EFAFAF" opacity="0.6" />
+          <circle cx="38" cy="18" r="3" fill="#EFAFAF" opacity="0.6" />
+          <path d="M 25 19 Q 28 21 31 19" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 6 30 C 12 24, 44 24, 50 30 Q 43 60 48 115 H 8 Z" fill="#C09878" />
+        </g>
+      </g>
+    </svg>
+  );
 }
 
-export function CozyCoupleMugs({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
+// 3. Love Letters: Couple sitting back-to-back, sending handwritten letters
+export function WritingLetters({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
   const id = useId();
-  return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
-    {title && <title>{title}</title>}<defs><linearGradient id={`${id}-p`} x1="50" y1="105" x2="109" y2="185"><stop stopColor="#fbcfe8"/><stop offset="1" stopColor="#f472b6"/></linearGradient><linearGradient id={`${id}-b`} x1="125" y1="105" x2="188" y2="186"><stop stopColor="#dbeafe"/><stop offset="1" stopColor="#60a5fa"/></linearGradient><filter id={`${id}-s`}><feDropShadow dy="7" stdDeviation="6" floodColor="#664a55" floodOpacity=".18"/></filter></defs>
-    <ellipse cx="120" cy="190" rx="88" ry="13" fill="#c9afa7" opacity=".25"/>
-    <g filter={`url(#${id}-s)`}><path d="M42 105h72v54c0 20-13 31-36 31s-36-11-36-31Z" fill={`url(#${id}-p)`} stroke="#d95b98" strokeWidth="3"/><path d="M114 118h10c19 0 20 35 0 35h-10" fill="none" stroke="#d95b98" strokeWidth="8"/>
-      <path d="M126 105h72v54c0 20-13 31-36 31s-36-11-36-31Z" fill={`url(#${id}-b)`} stroke="#438bd9" strokeWidth="3"/><path d="M198 118h7c20 0 20 35 0 35h-7" fill="none" stroke="#438bd9" strokeWidth="8"/>
-      <ellipse cx="78" cy="106" rx="36" ry="9" fill="#fff7f5" stroke="#d95b98" strokeWidth="3"/><ellipse cx="78" cy="106" rx="29" ry="5" fill="#9b604c"/><ellipse cx="162" cy="106" rx="36" ry="9" fill="#fff" stroke="#438bd9" strokeWidth="3"/><ellipse cx="162" cy="106" rx="29" ry="5" fill="#9b604c"/>
-    </g>
-    <g fill="none" stroke="#d7a6b8" strokeWidth="4" strokeLinecap="round"><path d="M76 93c-17-22 7-28 7-45 0-11-14-16-20-5-8 14 21 33 57 61"/><path d="M164 93c17-22-7-28-7-45 0-11 14-16 20-5 8 14-21 33-57 61"/></g>
-    <g fill="#4b5563"><circle cx="69" cy="143" r="2.5"/><circle cx="86" cy="143" r="2.5"/><path d="M70 153c5 5 11 5 16 0" fill="none" stroke="#4b5563" strokeWidth="2" strokeLinecap="round"/><circle cx="153" cy="143" r="2.5"/><circle cx="170" cy="143" r="2.5"/><path d="M154 153c5 5 11 5 16 0" fill="none" stroke="#4b5563" strokeWidth="2" strokeLinecap="round"/></g>
-  </svg>;
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Writing Letters")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+
+      <g transform="translate(5, 5)">
+        {/* Soft ground line */}
+        <path d="M 40 215 C 80 210, 200 210, 240 215" stroke="#E6DFD3" strokeWidth="2" fill="none" strokeLinecap="round" />
+
+        {/* Character A (Left, holding envelope) */}
+        <g transform="translate(60, 95)">
+          <path d="M 12 -5 C 5 -15, 45 -15, 38 -5 C 45 10, 5 10, 12 -5" fill="#6E5A44" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 48 45, 48 85, 42 120 L 8 120 Z" fill="#E0B8B8" />
+          {/* Envelope in lap */}
+          <path d="M 16 75 H 42 V 92 H 16 Z" fill="#FAF6EE" stroke="#CD8D8D" strokeWidth="1.2" />
+          <path d="M 16 75 L 29 84 L 42 75" fill="none" stroke="#CD8D8D" strokeWidth="1.2" />
+        </g>
+
+        {/* Character B (Right, writing with pencil) */}
+        <g transform="translate(160, 95)">
+          <path d="M 10 -4 C 4 -16, 46 -16, 40 -4 C 46 10, 4 10, 10 -4" fill="#4F3C2C" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 42 45, 42 85, 46 120 L 12 120 Z" fill="#A8BDB2" />
+          {/* Notebook sheet in lap */}
+          <path d="M 6 72 H 30 V 94 H 6 Z" fill="#FAF6EE" stroke="#8CA699" strokeWidth="1.2" />
+          <line x1="10" y1="78" x2="26" y2="78" stroke="#8CA699" strokeWidth="1" />
+          <line x1="10" y1="84" x2="26" y2="84" stroke="#8CA699" strokeWidth="1" />
+        </g>
+      </g>
+    </svg>
+  );
 }
 
-export function WaxSealStamp({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
+// 4. Journal: One partner writing in a journal while the other watches with a warm smile
+export function JournalingTogether({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
   const id = useId();
-  return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
-    {title && <title>{title}</title>}<defs><linearGradient id={`${id}-wax`} x1="74" y1="100" x2="168" y2="205"><stop stopColor="#fa9ccb"/><stop offset=".55" stopColor="#f472b6"/><stop offset="1" stopColor="#c94282"/></linearGradient><linearGradient id={`${id}-wood`} x1="102" y1="21" x2="141" y2="130"><stop stopColor="#f1c18f"/><stop offset="1" stopColor="#9a5d3d"/></linearGradient><filter id={`${id}-s`}><feDropShadow dy="8" stdDeviation="7" floodOpacity=".23"/></filter></defs>
-    <g filter={`url(#${id}-s)`}><path d="M106 116 97 69c-2-12 7-23 19-24l6-1c13-1 23 9 22 22l-5 50Z" fill={`url(#${id}-wood)`} stroke="#825038" strokeWidth="3"/><rect x="93" y="106" width="56" height="24" rx="8" fill="#c98c62" stroke="#825038" strokeWidth="3"/><ellipse cx="121" cy="126" rx="43" ry="13" fill="#7f4c38"/>
-      <path d="M120 111c13-8 24 5 37 6 15 2 28 12 25 26-2 10 8 20 0 30-8 9-4 24-17 29-12 5-23 15-36 9-11-5-22 5-33-2-11-6-25-7-29-20-4-12-13-21-7-33 5-11 0-24 11-31 10-7 21-17 34-13Z" fill={`url(#${id}-wax)`} stroke="#c94282" strokeWidth="3"/>
-      <circle cx="121" cy="163" r="36" fill="none" stroke="#ffd0e5" strokeWidth="2" opacity=".75"/>
-      <path d="M120 185c-2-14 1-28 10-39m-10 24c-10-2-17-7-20-15m24 2c10-1 16-7 19-16m-15 7c-1-10-8-15-15-17-4 9-1 16 8 22m9-6c8 3 14 0 18-7-6-6-13-6-18 0" fill="none" stroke="#fff0f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-    </g><path d="m55 94 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="#f7c35f"/><circle cx="193" cy="187" r="4" fill="#60a5fa"/>
-  </svg>;
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Journaling Together")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+
+      <g transform="translate(5, 5)">
+        {/* Soft floor shadow */}
+        <ellipse cx="140" cy="210" rx="90" ry="10" fill="#E2D4C3" opacity="0.4" />
+
+        {/* Character A (Left, looking over) */}
+        <g transform="translate(65, 95)">
+          <path d="M 12 -5 C 5 -15, 45 -15, 38 -5 Q 45 10 25 10 T 12 -5" fill="#6E5A44" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          <circle cx="17" cy="13" r="1.2" fill="#5C4D3C" />
+          <circle cx="33" cy="13" r="1.2" fill="#5C4D3C" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 Q 52 65 42 115 H 10 Z" fill="#D2C4D8" />
+        </g>
+
+        {/* Character B (Right, journaling on lap) */}
+        <g transform="translate(150, 95)">
+          <path d="M 10 -4 C 4 -16, 46 -16, 40 -4 C 46 10, 4 10, 10 -4" fill="#8C6E53" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          <circle cx="17" cy="13" r="1.2" fill="#5C4D3C" />
+          <circle cx="33" cy="13" r="1.2" fill="#5C4D3C" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 Q 40 65 46 115 H 14 Z" fill="#C09878" />
+          {/* Open Journal */}
+          <path d="M -16 68 C -8 63, 0 63, 8 68 L 8 92 C 0 87, -8 87, -16 92 Z" fill="#FAF6EE" stroke="#A88B73" strokeWidth="1.5" />
+          <path d="M -8 72 L -2 72 M -8 78 L -2 78 M -8 84 L -2 84" stroke="#A88B73" strokeWidth="1" />
+        </g>
+      </g>
+    </svg>
+  );
 }
 
-export function HeartBalloonBouquet({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
+// 5. Memories: Couple looking at polaroid snapshots
+export function LookingAtPhotos({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
   const id = useId();
-  return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
-    {title && <title>{title}</title>}<defs><linearGradient id={`${id}-p`} x1="53" y1="35" x2="116" y2="131"><stop stopColor="#fbcfe8"/><stop offset="1" stopColor="#f472b6"/></linearGradient><linearGradient id={`${id}-b`} x1="129" y1="32" x2="191" y2="129"><stop stopColor="#dbeafe"/><stop offset="1" stopColor="#60a5fa"/></linearGradient><filter id={`${id}-s`}><feDropShadow dy="6" stdDeviation="5" floodColor="#6d5361" floodOpacity=".18"/></filter></defs>
-    <g filter={`url(#${id}-s)`}><path d="M84 135C71 118 46 99 46 67c0-35 43-46 58-16 15-30 58-19 58 16 0 32-25 51-58 78Z" fill={`url(#${id}-p)`} stroke="#dd5f9e" strokeWidth="3" transform="translate(-13 -8) scale(.86)"/><path d="M84 135C71 118 46 99 46 67c0-35 43-46 58-16 15-30 58-19 58 16 0 32-25 51-58 78Z" fill={`url(#${id}-b)`} stroke="#4c92df" strokeWidth="3" transform="translate(70 -5) scale(.78)"/><path d="M84 135C71 118 46 99 46 67c0-35 43-46 58-16 15-30 58-19 58 16 0 32-25 51-58 78Z" fill="#ffd9a8" stroke="#e8ae61" strokeWidth="3" transform="translate(30 40) scale(.58)"/></g>
-    <g fill="none" strokeLinecap="round"><path d="M76 113c11 38 38 48 47 105" stroke="#da77a6" strokeWidth="2"/><path d="M163 104c-5 43-34 66-40 114" stroke="#659fe0" strokeWidth="2"/><path d="M116 130c4 34 13 53 7 88" stroke="#d7a25b" strokeWidth="2"/><path d="M123 218c-14-12-22-5-16 4 6 8 18 3 27-4 13-10 21 4 10 10" stroke="#c7809f" strokeWidth="3"/></g>
-    <g fill="#fff" opacity=".65"><ellipse cx="58" cy="51" rx="8" ry="13" transform="rotate(30 58 51)"/><ellipse cx="155" cy="49" rx="7" ry="12" transform="rotate(28 155 49)"/></g><path d="m201 89 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="#f7c35f"/>
-  </svg>;
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Looking at Photos")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+
+      <g transform="translate(5, 5)">
+        {/* Character A (Left) */}
+        <g transform="translate(60, 95)">
+          <path d="M 12 -5 C 5 -15, 45 -15, 38 -5 C 45 10, 5 10, 12 -5" fill="#6E5A44" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <circle cx="19" cy="12" r="1.2" fill="#5C4D3C" />
+          <circle cx="31" cy="12" r="1.2" fill="#5C4D3C" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 48 45, 48 85, 42 120 H 8 Z" fill="#E0B8B8" />
+        </g>
+
+        {/* Character B (Right) */}
+        <g transform="translate(155, 95)">
+          <path d="M 10 -4 C 4 -16, 46 -16, 40 -4 C 46 10, 4 10, 10 -4" fill="#4F3C2C" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <circle cx="19" cy="12" r="1.2" fill="#5C4D3C" />
+          <circle cx="31" cy="12" r="1.2" fill="#5C4D3C" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 42 45, 42 85, 46 120 H 12 Z" fill="#A8BDB2" />
+        </g>
+
+        {/* Polaroid held in center */}
+        <g transform="translate(112, 160) rotate(-4)">
+          <rect x="0" y="0" width="46" height="54" rx="3" fill="#FFF" stroke="#E6DFD3" strokeWidth="1.5" />
+          <rect x="4" y="4" width="38" height="36" fill="#FDF3F5" />
+          <path d="M 23 16 C 18 10, 10 16, 23 28 C 36 16, 28 10, 23 16 Z" fill="#CD8D8D" />
+        </g>
+      </g>
+    </svg>
+  );
 }
 
-export function MusicVinylWave({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
+// 6. Timeline: Evolving relationship timeline illustration showing walking together
+export function TimelineStory({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
   const id = useId();
-  return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
-    {title && <title>{title}</title>}<defs><radialGradient id={`${id}-r`}><stop offset="0" stopColor="#fff"/><stop offset=".08" stopColor="#f472b6"/><stop offset=".2" stopColor="#2d2630"/><stop offset=".55" stopColor="#5c354b"/><stop offset="1" stopColor="#201b24"/></radialGradient><filter id={`${id}-s`}><feDropShadow dy="8" stdDeviation="7" floodOpacity=".25"/></filter></defs>
-    <circle cx="116" cy="116" r="78" fill={`url(#${id}-r)`} filter={`url(#${id}-s)`}/><g fill="none" stroke="#f9a8d4" opacity=".38"><circle cx="116" cy="116" r="67"/><circle cx="116" cy="116" r="55"/><circle cx="116" cy="116" r="42"/></g><circle cx="116" cy="116" r="23" fill="#f472b6"/><circle cx="116" cy="116" r="6" fill="#fff"/>
-    <path d="M116 80c-3-4-13-9-13-17 0-8 10-11 13-4 4-7 14-4 14 4 0 8-11 14-14 17Z" fill="#fff" opacity=".9"/>
-    <g fill="none" stroke="#60a5fa" strokeWidth="6" strokeLinecap="round"><path d="M39 188v-18M54 188v-31M69 188v-45M84 188v-25M99 188v-38M114 188v-20M129 188v-34M144 188v-48M159 188v-28M174 188v-40M189 188v-19"/></g><path d="M34 188h160" stroke="#f472b6" strokeWidth="3" strokeLinecap="round"/>
-    <g fill="#f472b6"><path d="M190 48v28c-13-2-17 11-8 15 8 4 16-3 16-12V57l18-5v17c-13-2-17 11-8 15 8 4 16-3 16-12V39Z"/><path d="M43 75v20c-10-2-13 8-6 11 6 3 12-2 12-9V79l12-3v-8Z"/></g>
-  </svg>;
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Timeline Journey")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+
+      <g transform="translate(5, 5)">
+        {/* Soft winding path */}
+        <path d="M 30 220 Q 140 200 250 220" stroke="#E2D4C3" strokeWidth="4" fill="none" strokeLinecap="round" />
+
+        {/* Character A (Left, walking side-by-side) */}
+        <g transform="translate(75, 85)">
+          <path d="M 12 -5 C 5 -15, 45 -15, 38 -5 C 45 10, 5 10, 12 -5" fill="#6E5A44" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 48 45, 48 85, 42 125 H 8 Z" fill="#D2C4D8" />
+        </g>
+
+        {/* Character B (Right, arm tucked in) */}
+        <g transform="translate(145, 85)">
+          <path d="M 10 -4 C 4 -16, 46 -16, 40 -4 C 46 10, 4 10, 10 -4" fill="#8C6E53" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 42 45, 42 85, 46 125 H 12 Z" fill="#C09878" />
+        </g>
+      </g>
+    </svg>
+  );
 }
 
-export function CelestialSparks({ title, className = "h-40 w-40", ...props }: CozyIllustrationProps) {
+// 7. Playroom: Couple sharing single headphones, gaming or listening together
+export function PlayfulMoments({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
   const id = useId();
-  return <svg viewBox="0 0 240 240" className={className} {...a11y(title)} {...props}>
-    {title && <title>{title}</title>}<defs><linearGradient id={`${id}-m`} x1="63" y1="55" x2="148" y2="166"><stop stopColor="#fff0ad"/><stop offset="1" stopColor="#f3bb50"/></linearGradient><linearGradient id={`${id}-p`} x1="130" y1="65" x2="195" y2="170"><stop stopColor="#fbcfe8"/><stop offset="1" stopColor="#f472b6"/></linearGradient><filter id={`${id}-s`} x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dy="5" stdDeviation="5" floodColor="#8b6270" floodOpacity=".2"/></filter></defs>
-    <g filter={`url(#${id}-s)`}><path d="M127 38a68 68 0 1 0 57 105 79 79 0 0 1-57-105Z" fill={`url(#${id}-m)`} stroke="#e8b24c" strokeWidth="3"/><path d="m169 43 8 20 20 8-20 8-8 20-8-20-20-8 20-8Z" fill={`url(#${id}-p)`}/><path d="m197 121 5 13 13 5-13 5-5 13-5-13-13-5 13-5Z" fill="#60a5fa"/><path d="m64 42 4 11 11 4-11 4-4 11-4-11-11-4 11-4Z" fill="#f472b6"/><path d="m57 163 6 16 16 6-16 6-6 16-6-16-16-6 16-6Z" fill="#f7c35f"/></g>
-    <g fill="#f9a8d4"><circle cx="211" cy="74" r="4"/><circle cx="99" cy="202" r="5"/></g><g fill="#60a5fa"><circle cx="34" cy="109" r="5"/><circle cx="160" cy="201" r="3"/></g>
-    <g fill="none" strokeLinecap="round"><path d="m32 144 11-2m-5 8 7 5M205 185l10 5m-13 2 3 9" stroke="#f472b6" strokeWidth="3"/><path d="m109 29 2-11m8 15 7-7" stroke="#60a5fa" strokeWidth="3"/></g>
-  </svg>;
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Playroom Moments")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+
+      <g transform="translate(5, 5)">
+        {/* Character A (Left, holding controller) */}
+        <g transform="translate(60, 95)">
+          <path d="M 12 -5 C 5 -15, 45 -15, 38 -5 C 45 10, 5 10, 12 -5" fill="#6E5A44" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1.2" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 Q 50 65 42 115 H 10 Z" fill="#E0B8B8" />
+          
+          {/* Game controller wire/hands */}
+          <rect x="14" y="65" width="22" height="14" rx="4" fill="#FAF6EE" stroke="#CD8D8D" strokeWidth="1.5" />
+          <circle cx="19" cy="72" r="1.5" fill="#CD8D8D" />
+          <circle cx="31" cy="72" r="1.5" fill="#CD8D8D" />
+        </g>
+
+        {/* Character B (Right, leaning in laughing) */}
+        <g transform="translate(155, 95)">
+          <path d="M 10 -4 C 4 -16, 46 -16, 40 -4 C 46 10, 4 10, 10 -4" fill="#4F3C2C" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1.2" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 Q 40 65 46 115 H 14 Z" fill="#A8BDB2" />
+        </g>
+
+        {/* Headphone band connecting them */}
+        <path d="M 98 96 C 100 80, 175 80, 177 96" fill="none" stroke="#5C4D3C" strokeWidth="2.5" />
+        <rect x="94" y="94" width="6" height="12" rx="2" fill="#5C4D3C" />
+        <rect x="175" y="94" width="6" height="12" rx="2" fill="#5C4D3C" />
+      </g>
+    </svg>
+  );
+}
+
+// 8. Gratitude Jar Ritual: Signature Visual of drop-note ritual
+export function GratitudeJarRitual({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
+  const id = useId();
+  return (
+    <svg viewBox="0 0 280 280" className={className} {...a11y("Gratitude Jar Ritual")} {...props}>
+      <PaperFilter id={`${id}-paper`} />
+      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+
+      <g transform="translate(5, 5)">
+        {/* The Glass Jar in the center */}
+        <g transform="translate(112, 130)">
+          {/* Base shadow */}
+          <ellipse cx="28" cy="72" rx="26" ry="6" fill="#E2D4C3" opacity="0.7" />
+          {/* Jar body */}
+          <path d="M 12 12 Q 4 12 4 20 L 4 64 Q 4 72 12 72 H 44 Q 52 72 52 64 L 52 20 Q 52 12 44 12 Z" fill="rgba(255, 255, 255, 0.2)" stroke="#A88B73" strokeWidth="1.5" />
+          {/* Lid (cork) */}
+          <rect x="14" y="4" width="28" height="8" rx="2" fill="#8C6A48" stroke="#60472E" strokeWidth="1" />
+          {/* Filled paper notes inside */}
+          <rect x="14" y="55" width="8" height="8" rx="1.5" fill="#E0B8B8" opacity="0.8" transform="rotate(15 14 55)" />
+          <rect x="26" y="58" width="8" height="8" rx="1.5" fill="#A8BDB2" opacity="0.8" transform="rotate(-10 26 58)" />
+          <rect x="34" y="52" width="8" height="8" rx="1.5" fill="#D2C4D8" opacity="0.8" transform="rotate(25 34 52)" />
+        </g>
+
+        {/* Character A (Left, dropping a folded slip of paper) */}
+        <g transform="translate(45, 95)">
+          <path d="M 12 -5 C 5 -15, 45 -15, 38 -5 C 45 10, 5 10, 12 -5" fill="#6E5A44" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 48 45, 48 85, 42 120 H 8 Z" fill="#E0B8B8" />
+          {/* Paper slip flying from hand */}
+          <rect x="52" y="55" width="10" height="10" rx="2" fill="#D2C4D8" stroke="#8A6EA8" strokeWidth="1" transform="rotate(-15 52 55)" />
+        </g>
+
+        {/* Character B (Right, watching with a soft smile and hand on chest) */}
+        <g transform="translate(175, 95)">
+          <path d="M 10 -4 C 4 -16, 46 -16, 40 -4 C 46 10, 4 10, 10 -4" fill="#4F3C2C" />
+          <circle cx="25" cy="10" r="17" fill="#FCEBE3" />
+          <path d="M 21 16 Q 25 18 29 16" stroke="#5C4D3C" strokeWidth="1" fill="none" />
+          {/* Sweater */}
+          <path d="M 4 27 C 10 21, 40 21, 46 27 C 42 45, 42 85, 46 120 H 12 Z" fill="#A8BDB2" />
+        </g>
+      </g>
+    </svg>
+  );
 }
 
 export const cozyCouplesIllustrations = {
   LoveLetterEnvelope,
   OpenScrapbook,
   PhotoboothFilmStrip,
-  MilestoneCompass,
-  AnniversaryCalendar,
-  CozyCoupleMugs,
-  WaxSealStamp,
-  HeartBalloonBouquet,
-  MusicVinylWave,
-  CelestialSparks,
+  
+  // Custom Storybook Illustrations
+  PairfectPortrait,
+  DashboardWelcoming,
+  WritingLetters,
+  JournalingTogether,
+  LookingAtPhotos,
+  TimelineStory,
+  PlayfulMoments,
+  GratitudeJarRitual,
 } as const;

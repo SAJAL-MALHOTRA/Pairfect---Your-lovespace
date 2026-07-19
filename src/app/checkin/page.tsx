@@ -8,6 +8,7 @@ import Navigation from "@/components/navigation";
 import { moodDetails } from "@/app/dashboard/page";
 import { Loader2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { JournalingTogether } from "@/components/cozy-illustrations";
 
 // Dried flower — bottom-right corner of the page
 function PageFlower({ className = "" }: { className?: string }) {
@@ -85,6 +86,16 @@ export default function CheckinPage() {
           {/* Date stamp — Caveat, barely there */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
             <p className="font-handwriting text-base text-[var(--ink-light)]">{today}</p>
+          </motion.div>
+
+          {/* Welcoming Illustration */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.05 }}
+            className="flex justify-center"
+          >
+            <JournalingTogether className="w-44 h-44 rounded-3xl" />
           </motion.div>
 
           {/* Page title */}

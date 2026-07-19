@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { calculateStreak } from "@/lib/utils/streak";
 import { Check, Plus, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { PairfectPortrait } from "@/components/cozy-illustrations";
 
 export default function ProfilePage() {
   const { user, profile, pair, partner, loading } = useAuth();
@@ -117,6 +118,16 @@ export default function ProfilePage() {
               {streak} day streak 🔥
             </motion.p>
           )}
+
+          {/* Signature Illustration */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="mt-6 flex justify-center"
+          >
+            <PairfectPortrait className="w-56 h-56 rounded-3xl" />
+          </motion.div>
         </motion.div>
 
         {/* Two Polaroid portraits — subordinate to the number */}

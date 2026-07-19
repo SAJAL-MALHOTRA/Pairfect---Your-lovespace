@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, isToday } from "date-fns";
+import { DashboardWelcoming } from "@/components/cozy-illustrations";
 
 export const moodDetails = {
   joyful:   { label: "Joyful",   emoji: "😊", color: "text-yellow-600  bg-yellow-50  dark:bg-yellow-950/20  border-yellow-100 dark:border-yellow-900/25" },
@@ -280,7 +281,7 @@ export default function DashboardPage() {
 
         {/* Three quiet stats — subordinate, never competing */}
         <motion.div
-          className="flex items-center gap-8"
+          className="flex items-center gap-8 animate-fade-in"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.1 }}
@@ -298,6 +299,16 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+        </motion.div>
+
+        {/* Dashboard Welcoming Storybook Illustration */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.3 }}
+          className="pt-4 flex justify-center w-full"
+        >
+          <DashboardWelcoming className="w-44 h-44 rounded-3xl" />
         </motion.div>
       </main>
     </div>

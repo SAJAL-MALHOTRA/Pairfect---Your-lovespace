@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import { formatDistanceToNow, format } from "date-fns";
 import { Loader2, Plus, X, Trash2, Heart, Sparkles, Filter, Archive, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { GratitudeJarRitual } from "@/components/cozy-illustrations";
 
 // Natural colors for paper slips
 const SLIP_COLORS = [
@@ -195,6 +196,16 @@ export default function GratitudeJarPage() {
 
       <main className="max-w-xl mx-auto px-5 py-12 pb-36 space-y-12 flex flex-col items-center">
         
+        {/* Signature Ritual Illustration */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.05 }}
+          className="flex justify-center"
+        >
+          <GratitudeJarRitual className="w-44 h-44 rounded-3xl" />
+        </motion.div>
+
         {/* Title */}
         <div className="text-center space-y-1">
           <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Appreciation Room</p>

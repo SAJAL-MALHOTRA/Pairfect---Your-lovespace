@@ -4,6 +4,7 @@ import Navigation from "@/components/navigation";
 import Link from "next/link";
 import { HelpCircle, Brain, Gamepad2, Scale, Tv, Timer, Gift } from "lucide-react";
 import { motion } from "framer-motion";
+import { PlayfulMoments } from "@/components/cozy-illustrations";
 
 const GAMES = [
   { href: "/gratitude-jar", title: "Gratitude Jar",     desc: "A living collection of handwritten appreciation.", icon: Gift, tag: "Bonding", accent: "#802030" },
@@ -20,10 +21,13 @@ export default function PlayLobbyPage() {
     <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
       <Navigation />
       <main className="max-w-xl mx-auto px-5 py-16 pb-36">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-12">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-10 text-center flex flex-col items-center gap-4">
           <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Connection rituals</p>
-          <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)] mt-0.5">Our Playroom</h1>
-          <p className="font-handwriting text-sm text-[var(--ink-mid)] mt-2">Rituals that bring us closer.</p>
+          <PlayfulMoments className="w-44 h-44 rounded-3xl" />
+          <div>
+            <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)] mt-0.5">Our Playroom</h1>
+            <p className="font-handwriting text-sm text-[var(--ink-mid)] mt-2">Rituals that bring us closer.</p>
+          </div>
         </motion.div>
 
         {/* THE HERO: the games */}

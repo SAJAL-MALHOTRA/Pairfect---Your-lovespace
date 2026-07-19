@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import { Loader2, ArrowLeft, BookOpen, Plus, Smile, Search, X, Mail, Gift } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { WritingLetters } from "@/components/cozy-illustrations";
 
 // ── Giphy block ──────────────────────────────────────────────────────────────
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
@@ -322,12 +323,26 @@ export default function LoveLetterPage() {
           </motion.div>
 
           {lettersList.length === 0 ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center py-28">
-              <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-2">The box is empty.</p>
-              <p className="text-[10px] font-mono text-[var(--ink-light)]">Write the first letter.</p>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }} className="text-center py-16 flex flex-col items-center gap-5">
+              <WritingLetters className="w-48 h-48 rounded-3xl" />
+              <div>
+                <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-2">The box is empty.</p>
+                <p className="text-[10px] font-mono text-[var(--ink-light)]">Write the first letter.</p>
+              </div>
             </motion.div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Header illustration */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="flex justify-center mb-6"
+              >
+                <WritingLetters className="w-44 h-44 rounded-3xl" />
+              </motion.div>
+
+              <div className="space-y-3">
               {unread.map((l, i) => (
                 <motion.button key={l.id} onClick={() => handleUnseal(l)} className="w-full text-left"
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
@@ -378,7 +393,8 @@ export default function LoveLetterPage() {
                 </motion.button>
               ))}
             </div>
-          )}
+          </div>
+        )}
         </main>
       </div>
     );

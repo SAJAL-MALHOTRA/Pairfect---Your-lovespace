@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import { format } from "date-fns";
 import { Plus, X, Loader2, Heart, Trash2, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
+import { TimelineStory } from "@/components/cozy-illustrations";
 
 const STATUS_OPTIONS = [
   { id: "dating",    label: "Dating & Strong 💖" },
@@ -226,13 +227,27 @@ export default function StoriesPage() {
         </motion.div>
 
         {stories.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center py-40">
-            <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-3">Your story hasn't begun yet.</p>
-            <p className="text-xs text-[var(--ink-light)] font-mono mb-8">Every great love has a first chapter.</p>
-            <button onClick={openModal} className="btn-primary py-3 px-8 text-[10px] uppercase tracking-widest cursor-pointer">Begin your story</button>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }} className="text-center py-16 flex flex-col items-center gap-5">
+            <TimelineStory className="w-48 h-48 rounded-3xl" />
+            <div>
+              <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-3">Your story hasn't begun yet.</p>
+              <p className="text-xs text-[var(--ink-light)] font-mono mb-8">Every great love has a first chapter.</p>
+              <button onClick={openModal} className="btn-primary py-3 px-8 text-[10px] uppercase tracking-widest cursor-pointer">Begin your story</button>
+            </div>
           </motion.div>
         ) : (
-          <div className="relative">
+          <div className="space-y-6">
+            {/* Header illustration */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex justify-center mb-6"
+            >
+              <TimelineStory className="w-44 h-44 rounded-3xl" />
+            </motion.div>
+
+            <div className="relative">
             {/* The vertical rail — draws itself from top */}
             <motion.div
               className="absolute top-2 bottom-0 bg-[var(--border-mid)]"
@@ -254,6 +269,7 @@ export default function StoriesPage() {
                 onLike={() => handleLike(story.id, story.likes || 0)}
               />
             ))}
+          </div>
           </div>
         )}
       </main>
