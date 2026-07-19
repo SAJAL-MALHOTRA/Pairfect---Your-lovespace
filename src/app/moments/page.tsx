@@ -9,6 +9,14 @@ import { Loader2, Plus, X, Trash2, Upload, ChevronLeft, ChevronRight, AlertCircl
 import { motion, AnimatePresence } from "framer-motion";
 import { LookingAtPhotos } from "@/components/cozy-illustrations";
 
+// 24+ Pookie & Heart Emojis for Memory Thumbnails
+const POOKIE_EMOJIS = [
+  "💖", "🥰", "💘", "💝", "💗", "💓", "💞", "💕",
+  "💌", "🧸", "🌹", "✨", "👩‍❤️‍👨", "🌅", "🍰", "🍷",
+  "🕯️", "💍", "🥐", "☕", "🎡", "🏖️", "🚗", "🌌",
+  "🎀", "🐣", "🍓", "📸", "💐", "⭐"
+];
+
 // Each photo gets a deterministic-random rotation and washi tape color
 const ROTATIONS = [-1.8, 2.4, -0.6, 1.8, -2.6, 0.8, -1.4, 2.1, -0.4, 1.6];
 const WASHI = [
@@ -30,9 +38,12 @@ function Polaroid({ moment, index, onOpen }: { moment: Moment; index: number; on
   const washi = WASHI[index % WASHI.length];
   const [loaded, setLoaded] = useState(false);
 
-  const src = moment.photo_url
-    ? moment.photo_url.startsWith("http") ? moment.photo_url : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url)}`
+  const isImageUrl = moment.photo_url && (moment.photo_url.startsWith("http") || moment.photo_url.startsWith("/") || moment.photo_url.startsWith("data:"));
+  const src = isImageUrl
+    ? moment.photo_url!.startsWith("http") ? moment.photo_url! : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url!)}`
     : null;
+
+  const displayEmoji = !isImageUrl ? (moment.photo_url?.replace("emoji:", "") || "🌅") : null;
 
   const dateStr = (() => { try { return format(parseISO(moment.moment_date), "MMM d, ''yy"); } catch { return ""; } })();
 
@@ -58,7 +69,7 @@ function Polaroid({ moment, index, onOpen }: { moment: Moment; index: number; on
               className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`} />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-[var(--paper-mid)]">
-              <span className="text-2xl opacity-30">📷</span>
+              <span className="text-4xl select-none">{displayEmoji}</span>
             </div>
           )}
           {src && !loaded && <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin text-[var(--ink-light)]" /></div>}
@@ -77,9 +88,11 @@ function Lightbox({ moment, index, total, onClose, onPrev, onNext, onDelete }: {
   moment: Moment; index: number; total: number;
   onClose: () => void; onPrev: () => void; onNext: () => void; onDelete: (id: string) => void;
 }) {
-  const src = moment.photo_url
-    ? moment.photo_url.startsWith("http") ? moment.photo_url : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url)}`
+  const isImageUrl = moment.photo_url && (moment.photo_url.startsWith("http") || moment.photo_url.startsWith("/") || moment.photo_url.startsWith("data:"));
+  const src = isImageUrl
+    ? moment.photo_url!.startsWith("http") ? moment.photo_url! : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url!)}`
     : null;
+  const displayEmoji = !isImageUrl ? (moment.photo_url?.replace("emoji:", "") || "🌅") : null;
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); if (e.key === "ArrowLeft") onPrev(); if (e.key === "ArrowRight") onNext(); };
@@ -112,7 +125,7 @@ function Lightbox({ moment, index, total, onClose, onPrev, onNext, onDelete }: {
             <img src={src} alt={moment.title} className="w-full object-cover" style={{ maxHeight: "55vh" }} />
           ) : (
             <div className="w-full h-52 flex items-center justify-center bg-[var(--paper-mid)]">
-              <span className="text-4xl opacity-25">📷</span>
+              <span className="text-6xl select-none">{displayEmoji}</span>
             </div>
           )}
           <div className="pt-4 pb-1 space-y-1">
@@ -164,6 +177,7 @@ export default function MomentsPage() {
   const [title, setTitle]         = useState("");
   const [description, setDesc]    = useState("");
   const [momentDate, setDate]     = useState(new Date().toISOString().split("T")[0]);
+  const [selectedEmoji, setEmoji] = useState("💖");
   const [photoFile, setFile]      = useState<File | null>(null);
   const [photoPreview, setPreview]= useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -200,10 +214,13 @@ export default function MomentsPage() {
         const { error: upErr } = await supabase.storage.from("moment-photos").upload(path, photoFile, { upsert: true });
         if (upErr) throw upErr;
         photoUrl = supabase.storage.from("moment-photos").getPublicUrl(path).data?.publicUrl || null;
+      } else {
+        photoUrl = selectedEmoji;
       }
+
       const { error: insErr } = await supabase.from("shared_moments").insert({ pair_id: pair.id, title: title.trim(), description: description.trim() || null, moment_date: momentDate, photo_url: photoUrl });
       if (insErr) throw insErr;
-      setTitle(""); setDesc(""); setFile(null); setPreview(null); setDate(new Date().toISOString().split("T")[0]);
+      setTitle(""); setDesc(""); setFile(null); setPreview(null); setEmoji("💖"); setDate(new Date().toISOString().split("T")[0]);
       setAddOpen(false); fetchMoments();
     } catch (err: any) { setError(err.message || "Failed to save."); }
     finally { setUploading(false); }
@@ -304,7 +321,7 @@ export default function MomentsPage() {
             <motion.div
               initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
               transition={{ type: "spring", stiffness: 380, damping: 38 }}
-              className="rounded-3xl max-w-md w-full border overflow-hidden shadow-2xl"
+              className="rounded-3xl max-w-md w-full border overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
               style={{ background: "var(--background)", borderColor: "var(--border-mid)" }}
             >
               <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--border-mid)" }}>
@@ -312,24 +329,78 @@ export default function MomentsPage() {
                 <button onClick={() => setAddOpen(false)} className="p-1.5 rounded-lg text-[var(--ink-mid)] hover:bg-[var(--muted)] cursor-pointer"><X className="w-4 h-4" /></button>
               </div>
 
-              <form onSubmit={handleAdd} className="p-5 space-y-4">
-                {/* Photo upload */}
-                <div onClick={() => fileRef.current?.click()} className="cursor-pointer relative rounded-2xl border-dashed border overflow-hidden flex flex-col items-center justify-center transition-colors hover:bg-[var(--paper-warm)]"
-                  style={{ borderColor: "var(--ink-light)", background: "var(--card-bg)", aspectRatio: "16 / 9" }}>
+              <form onSubmit={handleAdd} className="p-5 space-y-4 overflow-y-auto flex-1">
+                {/* Polaroid Live Preview Box */}
+                <div className="relative rounded-2xl border overflow-hidden flex flex-col items-center justify-center shadow-inner"
+                  style={{ borderColor: "var(--border-mid)", background: "var(--paper-warm)", height: "140px" }}>
                   {photoPreview ? (
                     <img src={photoPreview} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <>
-                      <Upload className="w-7 h-7 text-[var(--ink-light)] mb-2" />
-                      <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]">Tap to add photo</p>
-                    </>
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <span className="text-5xl select-none animate-bounce">{selectedEmoji}</span>
+                      <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mt-1">Thumbnail Preview</p>
+                    </div>
                   )}
-                  <input ref={fileRef} type="file" accept="image/*" className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (!f) return; setFile(f); const r = new FileReader(); r.onload = ev => setPreview(ev.target?.result as string); r.readAsDataURL(f); }} />
+                </div>
+
+                {/* 20+ Pookie & Heart Emojis Selector Grid */}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">
+                    Choose Thumbnail Emoji ({POOKIE_EMOJIS.length} Pookie Options)
+                  </label>
+                  <div className="grid grid-cols-6 gap-2 p-2 rounded-2xl border bg-[var(--card-bg)] max-h-36 overflow-y-auto"
+                    style={{ borderColor: "var(--border-mid)" }}>
+                    {POOKIE_EMOJIS.map((emoji) => {
+                      const isSelected = !photoPreview && selectedEmoji === emoji;
+                      return (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            setEmoji(emoji);
+                            setFile(null);
+                            setPreview(null);
+                          }}
+                          className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-[var(--rose)]/20 border-2 border-[var(--burgundy)] scale-110 shadow-xs"
+                              : "hover:bg-[var(--muted)] hover:scale-105"
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Optional Custom File Upload Trigger */}
+                <div className="pt-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="text-[10px] font-mono text-[var(--ink-light)] hover:text-[var(--burgundy)] underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <Upload className="w-3 h-3" /> {photoFile ? `File: ${photoFile.name}` : "Or upload custom photo file..."}
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      setFile(f);
+                      const r = new FileReader();
+                      r.onload = (ev) => setPreview(ev.target?.result as string);
+                      r.readAsDataURL(f);
+                    }}
+                  />
                 </div>
 
                 {[
-                  { label: "Title", val: title, set: setTitle, placeholder: "What was this moment?" },
+                  { label: "Title", val: title, set: setTitle, placeholder: "e.g. Our First Date 💕" },
                 ].map(f => (
                   <div key={f.label} className="space-y-1.5">
                     <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">{f.label}</label>
