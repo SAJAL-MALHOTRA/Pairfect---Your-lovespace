@@ -174,6 +174,16 @@ export default function DashboardPage() {
   const [fetching, setFetching] = useState(true);
   const supabase = createClient();
 
+  // prefers-reduced-motion hook (declared before early returns)
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
+
   useEffect(() => {
     if (!pair || loading) return;
     (async () => {
@@ -304,16 +314,6 @@ export default function DashboardPage() {
 
   const greetingLine = getGreeting();
   const recipientName = partner?.display_name || "partner";
-
-  // prefers-reduced-motion hook
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
 
   // Ambient particles concentrated in whitespace/edges, avoiding the center envelope area
   const particles = [
