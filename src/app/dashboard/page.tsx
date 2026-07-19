@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import Link from "next/link";
 import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart } from "lucide-react";
 import { motion } from "framer-motion";
+import { PairfectPortrait } from "@/components/cozy-illustrations";
 
 export const moodDetails = {
   joyful:   { label: "Joyful",   emoji: "😊", color: "text-yellow-600  bg-yellow-50  dark:bg-yellow-950/20  border-yellow-100 dark:border-yellow-900/25" },
@@ -576,17 +577,22 @@ export default function DashboardPage() {
           
           {/* ─── LEFT COLUMN (HERO) ─── */}
           <div className="lg:col-span-7 flex flex-col items-center text-center lg:items-start lg:text-left space-y-10">
-            {/* Header Greeting */}
-            <div className="space-y-1">
-              <p className="font-handwriting text-lg text-[var(--rose)] italic">
-                {greetingLine} <span className="font-sans text-[11px] not-italic ml-0.5">♥</span>
-              </p>
-              <h2 className="font-heading font-semibold text-[42px] text-[var(--text)] leading-none">
-                {profile?.display_name || "Love"}
-              </h2>
-              <p className="text-[13px] text-[var(--text-soft)] font-mono tracking-wide mt-1">
-                {daysTogether} days together ♥
-              </p>
+            {/* Header Greeting & Us Portrait */}
+            <div className="flex flex-row items-center justify-between w-full pb-4 border-b border-[var(--border)] gap-6">
+              <div className="space-y-1 text-left">
+                <p className="font-handwriting text-lg text-[var(--rose)] italic">
+                  {greetingLine} <span className="font-sans text-[11px] not-italic ml-0.5">♥</span>
+                </p>
+                <h2 className="font-heading font-semibold text-[42px] text-[var(--text)] leading-none">
+                  {profile?.display_name || "Love"}
+                </h2>
+                <p className="text-[13px] text-[var(--text-soft)] font-mono tracking-wide mt-1">
+                  {daysTogether} days together ♥
+                </p>
+              </div>
+              <Link href="/profile" className="flex-shrink-0 transition-transform hover:scale-[1.03] active:scale-[0.97]" title="Customize Us / Profile">
+                <PairfectPortrait className="w-24 h-24 rounded-2xl shadow-sm border border-[var(--border)]" />
+              </Link>
             </div>
 
             {/* Envelope Centerpiece */}
