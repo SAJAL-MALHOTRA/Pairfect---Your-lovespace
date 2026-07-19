@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Home, Mail, BookOpen, Image, Clock, Gamepad2, User, Settings, Sun, Moon,
+  Home, Mail, BookOpen, Gift, Image, Clock, Gamepad2, User, Settings, Sun, Moon,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/dashboard",    icon: Home,      label: "Home"     },
   { href: "/love-letter",  icon: Mail,      label: "Letters"  },
   { href: "/checkin",      icon: BookOpen,  label: "Journal"  },
+  { href: "/gratitude-jar", icon: Gift,     label: "Jar"      },
   { href: "/moments",      icon: Image,     label: "Memories" },
   { href: "/stories",      icon: Clock,     label: "Timeline" },
   { href: "/play",         icon: Gamepad2,  label: "Play"     },

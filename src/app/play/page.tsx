@@ -2,15 +2,16 @@
 
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { HelpCircle, Brain, Gamepad2, Scale, Tv, Timer } from "lucide-react";
+import { HelpCircle, Brain, Gamepad2, Scale, Tv, Timer, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 
 const GAMES = [
+  { href: "/gratitude-jar", title: "Gratitude Jar",     desc: "A living collection of handwritten appreciation.", icon: Gift, tag: "Bonding", accent: "#802030" },
   { href: "/riddle",     title: "Riddle Night",        desc: "Crack mind-bending riddles together.", icon: HelpCircle, tag: "Cooperative",   accent: "#6B4F8A" },
   { href: "/iq-duel",   title: "IQ Duel",              desc: "A friendly intelligence challenge.",   icon: Brain,       tag: "Competitive",   accent: "#2E6E9E" },
   { href: "/quiz",      title: "Vibe Quiz",             desc: "Compare compatibility question by question.", icon: Gamepad2, tag: "Bonding",  accent: "#8A5A3A" },
   { href: "/vibe-judge",title: "Between the Lines",     desc: "Settle disputes with an AI judge.",   icon: Scale,       tag: "AI Judge",     accent: "#2E7A60" },
-  { href: "/watch",     title: "Watch Together",        desc: "Sync and watch YouTube in real-time.", icon: Tv,         tag: "Entertainment", accent: "#802030" },
+  { href: "/watch",     title: "Watch Together",        desc: "Sync and watch YouTube in real-time.", icon: Tv,         tag: "Entertainment", accent: "#8B5A3A" },
   { href: "/focus",     title: "Focus Session",         desc: "Work together with Pomodoro timers.", icon: Timer,       tag: "Productivity",  accent: "#5A6E2E" },
 ];
 
