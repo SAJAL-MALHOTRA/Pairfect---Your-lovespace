@@ -150,6 +150,30 @@ export default function DashboardPage() {
   const supabase = createClient();
   const ambience = getTimeAmbience();
 
+  // Spotify Playlists state
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [loadingPlaylists, setLoadingPlaylists] = useState(true);
+  const [playlistError, setPlaylistError] = useState<string | null>(null);
+  const [selectedMood, setSelectedMood] = useState<string>("All");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/spotify/playlists");
+        const data = await res.json();
+        if (data.error) {
+          setPlaylistError(data.error);
+        } else {
+          setPlaylists(data.playlists || []);
+        }
+      } catch (err) {
+        setPlaylistError("Failed to fetch playlists");
+      } finally {
+        setLoadingPlaylists(false);
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     if (!pair || loading) return;
     (async () => {
@@ -280,7 +304,7 @@ export default function DashboardPage() {
 
         {/* Three quiet stats — subordinate, never competing */}
         <motion.div
-          className="flex items-center gap-8"
+          className="flex items-center gap-8 animate-fade-in"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.1 }}
@@ -298,6 +322,111 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+        </motion.div>
+
+        {/* ── LISTENING TOGETHER ── */}
+        <motion.div
+          className="w-full max-w-lg pt-4 space-y-6"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.3 }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">LISTENING TOGETHER</p>
+            
+            {/* Filter pills */}
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {["All", "Cozy", "Romantic", "Focus", "Chill"].map((m) => {
+                const isSel = selectedMood === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => setSelectedMood(m)}
+                    className={`text-[9px] uppercase font-mono tracking-wider px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                      isSel
+                        ? "bg-[var(--ink-dark)] text-[var(--background)] border-[var(--ink-dark)]"
+                        : "bg-[var(--card-bg)] text-[var(--ink-mid)] border-[var(--border-mid)] hover:bg-[var(--paper-warm)]"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Content state */}
+          {loadingPlaylists ? (
+            <div className="py-10 flex justify-center items-center">
+              <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
+            </div>
+          ) : playlistError || playlists.length === 0 ? (
+            <div className="py-8 px-6 rounded-3xl border border-dashed border-[var(--border-mid)] bg-[var(--card-bg)] text-center">
+              <p className="text-xs text-[var(--ink-mid)] leading-relaxed">
+                Music unavailable right now — open Spotify to listen together 🎵
+              </p>
+              <a
+                href="https://open.spotify.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-3 text-[9px] font-mono uppercase tracking-widest text-[var(--seal-red)] hover:underline"
+              >
+                Go to Spotify
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Horizontal Scroll row of playlist cards */}
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+                {playlists
+                  .filter((p) => selectedMood === "All" || p.mood === selectedMood)
+                  .map((p) => (
+                    <a
+                      key={p.id}
+                      href={p.spotifyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 w-32 md:w-36 snap-start group block text-left space-y-2.5 transition-transform duration-200 active:scale-98"
+                    >
+                      {/* Cover Art */}
+                      <div className="aspect-square w-full rounded-2xl overflow-hidden bg-[var(--border-mid)] border border-[var(--border-mid)] relative shadow-sm">
+                        {p.imageUrl ? (
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-[var(--paper-mid)] flex items-center justify-center">
+                            <span className="text-xl">🎵</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="space-y-1 px-0.5">
+                        <div className="flex items-center justify-between">
+                          <span className="inline-block text-[8px] font-mono uppercase tracking-wider text-[var(--ink-light)]">
+                            {p.trackCount} tracks
+                          </span>
+                          <span className="text-[7px] font-mono font-bold bg-[var(--border-mid)] text-[var(--ink-mid)] px-1.5 py-0.5 rounded uppercase">
+                            {p.mood}
+                          </span>
+                        </div>
+                        <p className="font-heading italic font-bold text-sm text-[var(--ink-dark)] truncate leading-tight group-hover:underline">
+                          {p.name}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
+              </div>
+
+              {/* Attribution */}
+              <p className="text-[8px] font-mono text-center tracking-widest text-[var(--ink-light)] uppercase">
+                Powered by Spotify
+              </p>
+            </div>
+          )}
         </motion.div>
       </main>
     </div>
