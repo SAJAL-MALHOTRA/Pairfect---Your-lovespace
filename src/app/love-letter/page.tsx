@@ -555,7 +555,9 @@ export default function LoveLetterPage() {
                   </div>
                 </div>
                 <div className="p-4 overflow-y-auto flex-1">
-                  {searching ? <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--ink-light)]" /></div> : (
+                  {searching ? (
+                    <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--ink-light)]" /></div>
+                  ) : stickers.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2">
                       {stickers.map((s: any) => (
                         <button key={s.id} onClick={() => { setBlocks([...blocks, { type: "cat", giphy_id: s.id }]); setGalleryOpen(false); }}
@@ -564,6 +566,8 @@ export default function LoveLetterPage() {
                         </button>
                       ))}
                     </div>
+                  ) : (
+                    <p className="text-xs font-mono text-[var(--ink-light)] text-center py-8">No stickers found</p>
                   )}
                 </div>
                 <div className="px-4 py-2 border-t border-[var(--border-mid)] text-center">
