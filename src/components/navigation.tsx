@@ -53,9 +53,11 @@ export default function Navigation() {
     };
   }, []);
 
+  const currentPath = pathname || "";
+
   // Don't render on auth / onboarding pages
   const hiddenRoutes = ["/login", "/signup", "/onboarding", "/auth/callback", "/avatars"];
-  if (hiddenRoutes.some((r) => pathname.startsWith(r))) return null;
+  if (hiddenRoutes.some((r) => currentPath.startsWith(r))) return null;
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -119,8 +121,8 @@ export default function Navigation() {
                     {cluster.map((item) => {
                       const Icon = item.icon;
                       const isActive =
-                        pathname === item.href ||
-                        (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                        currentPath === item.href ||
+                        (item.href !== "/dashboard" && currentPath.startsWith(item.href));
 
                       return (
                         <Link
