@@ -18,6 +18,7 @@ import {
   User,
   Settings,
   Music,
+  Camera,
 } from "lucide-react";
 
 const CLUSTERS = [
@@ -31,6 +32,7 @@ const CLUSTERS = [
     { href: "/mixtape", icon: Music, label: "Mixtape" }
   ],
   [
+    { href: "/photo-booth", icon: Camera, label: "Photo Booth" },
     { href: "/play", icon: Gamepad2, label: "Playroom" },
     { href: "/gratitude-jar", icon: Gift, label: "Gratitude" },
     { href: "/stories", icon: Clock, label: "Timeline" }
