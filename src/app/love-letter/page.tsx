@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { 
   Heart, Check, X, Loader2, AlertCircle, 
-  Sparkles, Send, ArrowLeft, Clock, MailOpen, Mail,
+  Send, ArrowLeft, Clock, MailOpen, Mail,
   BookOpen, Plus, Trash2, Smile, Gift, Lock, Search
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -29,6 +29,7 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
       } catch (e) {
         console.error("Giphy resolve error:", e);
       } finally {
+        setUrl(null);
         setLoading(false);
       }
     };
@@ -46,13 +47,13 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
   if (!url) {
     return (
       <div className="text-[10px] text-stone-400 font-mono p-4 text-center">
-        Sticker unavailable (403/Banned)
+        Sticker unavailable
       </div>
     );
   }
 
   return (
-    <img src={url} alt="Cat sticker" className="rounded-xl max-h-48 object-contain w-full shadow-inner" />
+    <img src={url} alt="Cat sticker" className="rounded-xl max-h-48 object-contain w-full" />
   );
 }
 
@@ -65,10 +66,8 @@ const playTypewriterClick = () => {
     const gain = ctx.createGain();
 
     osc.type = "sine";
-    // Slight randomization in pitch to sound organic
     osc.frequency.setValueAtTime(600 + Math.random() * 500, ctx.currentTime);
 
-    // Click envelop
     gain.gain.setValueAtTime(0.012, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
 
@@ -77,18 +76,15 @@ const playTypewriterClick = () => {
 
     osc.start();
     osc.stop(ctx.currentTime + 0.04);
-  } catch (e) {
-    // Fail silently to avoid interrupting typing
-  }
+  } catch (e) {}
 };
 
-// Custom component for typewriter-style text presentation with inline audio synthesis
+// Custom typewriter effect component
 function TypewriterText({ text, speed = 35, playSound = false, onComplete }: { text: string; speed?: number; playSound?: boolean; onComplete?: () => void }) {
   const [displayedText, setDisplayedText] = useState("");
   const indexRef = useRef(0);
   const textRef = useRef(text);
   
-  // Reset if text changes
   useEffect(() => {
     setDisplayedText("");
     indexRef.current = 0;
@@ -97,7 +93,6 @@ function TypewriterText({ text, speed = 35, playSound = false, onComplete }: { t
 
   useEffect(() => {
     let timer: any;
-    
     const type = () => {
       if (indexRef.current < textRef.current.length) {
         const nextChar = textRef.current[indexRef.current];
@@ -107,13 +102,11 @@ function TypewriterText({ text, speed = 35, playSound = false, onComplete }: { t
         if (playSound && nextChar !== " " && nextChar !== "\n") {
           playTypewriterClick();
         }
-        
-        timer = setTimeout(type, speed + Math.random() * 15); // Add slight organic jitter
+        timer = setTimeout(type, speed + Math.random() * 15);
       } else if (onComplete) {
         onComplete();
       }
     };
-    
     timer = setTimeout(type, speed);
     return () => clearTimeout(timer);
   }, [text, speed, playSound, onComplete]);
@@ -129,7 +122,8 @@ export default function LoveLetterPage() {
   const [activeLetter, setActiveLetter] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
 
-  // Multi-step builder state (Steps: 1 | 2 | 3)
+  // Composing Mode States
+  const [isWriting, setIsWriting] = useState(false);
   const [activeStep, setActiveStep] = useState<number>(1);
   const [contentBlocks, setContentBlocks] = useState<any[]>([{ type: "text", value: "" }]);
   const [envelopeStyle, setEnvelopeStyle] = useState<string>("classic");
@@ -143,7 +137,7 @@ export default function LoveLetterPage() {
   const [giphyStickers, setGiphyStickers] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Reveal / Unseal screen state
+  // Reading States
   const [isUnsealed, setIsUnsealed] = useState(false);
   const [unsealAnimating, setUnsealAnimating] = useState(false);
   const [revealedBlocksCount, setRevealedBlocksCount] = useState(0);
@@ -151,42 +145,60 @@ export default function LoveLetterPage() {
   const [isTypewriterEnabled, setIsTypewriterEnabled] = useState(false);
   const [isTypewriterSoundEnabled, setIsTypewriterSoundEnabled] = useState(false);
   const [isCandlelightEnabled, setIsCandlelightEnabled] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
 
-  // Envelope styles configuration
+  // Triggering hide navigation triggers dynamically
+  useEffect(() => {
+    if (isWriting || activeLetter !== null) {
+      window.dispatchEvent(new CustomEvent("navigation-hide"));
+    } else {
+      window.dispatchEvent(new CustomEvent("navigation-show"));
+    }
+  }, [isWriting, activeLetter]);
+
+  // Check URL parameters for write trigger
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("write") === "true") {
+        setIsWriting(true);
+        setActiveStep(1);
+      }
+    }
+  }, []);
+
+  // Envelope configurations
   const envelopeStyles: { [key: string]: { name: string; bg: string; border: string; text: string; seal: string } } = {
     classic: {
       name: "Classic Gold",
-      bg: "bg-[#fdfbf7] dark:bg-slate-900",
-      border: "border-amber-400/40",
-      text: "text-amber-900 dark:text-amber-200",
-      seal: "bg-amber-600 hover:bg-amber-700 shadow-amber-600/30"
+      bg: "bg-[#FAF6EE] dark:bg-[#28221D]",
+      border: "border-[#EAE3D5] dark:border-[#3E352E]",
+      text: "text-[#2E2A25] dark:text-[#E8E2D5]",
+      seal: "bg-amber-700 hover:bg-amber-800"
     },
     velvet: {
       name: "Velvet Romance",
-      bg: "bg-rose-50 dark:bg-rose-950/20",
-      border: "border-rose-300",
-      text: "text-rose-800 dark:text-rose-300",
-      seal: "bg-rose-600 hover:bg-rose-700 shadow-rose-600/30"
+      bg: "bg-rose-50/80 dark:bg-rose-950/20",
+      border: "border-rose-200 dark:border-rose-900/30",
+      text: "text-rose-900 dark:text-rose-200",
+      seal: "bg-rose-700 hover:bg-rose-800"
     },
     midnight: {
       name: "Midnight Stars",
-      bg: "bg-gradient-to-br from-slate-950 via-slate-900 to-[#0a0f1e]",
-      border: "border-blue-900/40",
-      text: "text-blue-200",
-      seal: "bg-blue-600 hover:bg-blue-700 shadow-blue-600/30"
+      bg: "bg-slate-900 dark:bg-[#151B26]",
+      border: "border-slate-800 dark:border-slate-800",
+      text: "text-slate-100 dark:text-slate-200",
+      seal: "bg-indigo-700 hover:bg-indigo-800"
     },
     kraft: {
-      name: "Kraft Heart",
-      bg: "bg-[#f5e6d3] dark:bg-amber-950/10",
-      border: "border-[#c4a482]",
+      name: "Kraft Vintage",
+      bg: "bg-[#F3EDE2] dark:bg-amber-950/10",
+      border: "border-[#D6CBB7] dark:border-amber-900/20",
       text: "text-amber-950 dark:text-amber-100",
-      seal: "bg-[#b05a46] hover:bg-[#9d4d3b] shadow-amber-800/30"
+      seal: "bg-[#802030] hover:bg-[#6E1B29]"
     }
   };
 
-  // Fetch initial details
   const fetchData = async () => {
     if (!pair) return;
     try {
@@ -196,7 +208,7 @@ export default function LoveLetterPage() {
       setLettersList(data || []);
     } catch (e: any) {
       console.error(e);
-      setError(e.message || "Failed to load letter details.");
+      setError(e.message || "Failed to load letters.");
     } finally {
       setFetching(false);
     }
@@ -222,7 +234,7 @@ export default function LoveLetterPage() {
     }
   }, [loading, pair]);
 
-  // Load draft from localStorage on page mount
+  // Load draft from localStorage
   useEffect(() => {
     if (pair) {
       const saved = localStorage.getItem(`pairfect-love-letter-draft-${pair.id}`);
@@ -240,9 +252,9 @@ export default function LoveLetterPage() {
     }
   }, [pair]);
 
-  // Auto-save draft as user edits
+  // Auto-save draft
   useEffect(() => {
-    if (pair && activeStep === 1) {
+    if (pair && isWriting && activeStep === 1) {
       const hasContent = contentBlocks.some(b => b.type === "cat" || (b.type === "text" && b.value.trim() !== ""));
       if (hasContent || recipientName.trim() || senderName.trim()) {
         localStorage.setItem(`pairfect-love-letter-draft-${pair.id}`, JSON.stringify({
@@ -255,43 +267,31 @@ export default function LoveLetterPage() {
         localStorage.removeItem(`pairfect-love-letter-draft-${pair.id}`);
       }
     }
-  }, [contentBlocks, envelopeStyle, recipientName, senderName, pair, activeStep]);
-
-  // Search Giphy stickers on query input change
-  const latestSearchQuery = useRef("");
+  }, [contentBlocks, envelopeStyle, recipientName, senderName, pair, activeStep, isWriting]);
 
   const performStickerSearch = async (query: string) => {
     setSearching(true);
     setError(null);
-    latestSearchQuery.current = query;
     try {
       const q = query.trim() ? `cat ${query}` : "cat happy";
       const res = await fetch(`/api/giphy/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
-      
-      // If query changed while in flight, discard outdated response to prevent race conditions
-      if (query !== latestSearchQuery.current) return;
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to query GIPHY sticker list.");
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to query stickers");
       setGiphyStickers(data.data || []);
     } catch (err: any) {
-      console.error("Giphy Search Error:", err);
+      console.error(err);
       setError(err.message || "Failed to query GIPHY sticker list.");
     } finally {
       setSearching(false);
     }
   };
 
-  // Perform a default load on picker modal open
   useEffect(() => {
     if (galleryOpen) {
       performStickerSearch(searchQuery);
     }
   }, [galleryOpen]);
 
-  // Block Editing Handlers
   const handleUpdateBlockValue = (index: number, val: string) => {
     const updated = [...contentBlocks];
     updated[index].value = val;
@@ -316,24 +316,19 @@ export default function LoveLetterPage() {
     setSearchQuery("");
   };
 
-  // Send Love Letter
   const handleSendLetter = async () => {
     if (!pair || !user || sendingLetter) return;
-    
-    // Filter empty text blocks
     const cleanBlocks = contentBlocks.filter(b => b.type === "cat" || b.value.trim() !== "");
     if (cleanBlocks.length === 0) {
-      alert("Please write some content inside your letter first!");
+      alert("Please write some content first!");
       return;
     }
     if (!recipientName.trim()) {
-      alert("Please write the recipient's name!");
+      alert("Please specify the recipient's name!");
       return;
     }
 
     setSendingLetter(true);
-    setError(null);
-
     try {
       const res = await fetch("/api/love-letters", {
         method: "POST",
@@ -349,16 +344,16 @@ export default function LoveLetterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to send letter");
 
-      // Reset states
+      // Reset
       setContentBlocks([{ type: "text", value: "" }]);
       setEnvelopeStyle("classic");
       setRecipientName("");
       setSenderName("");
+      setIsWriting(false);
       setActiveStep(1);
 
       fetchData();
       localStorage.removeItem(`pairfect-love-letter-draft-${pair.id}`);
-      alert("Love Letter sent successfully! 💌🐾");
     } catch (e: any) {
       console.error(e);
       alert(e.message || "Failed to send letter.");
@@ -367,7 +362,6 @@ export default function LoveLetterPage() {
     }
   };
 
-  // Open / Unseal animation
   const handleUnsealLetter = async (letter: any) => {
     setActiveLetter(letter);
     setIsUnsealed(false);
@@ -386,11 +380,10 @@ export default function LoveLetterPage() {
 
     const blocksCount = letter.content?.length || 0;
     for (let i = 0; i <= blocksCount; i++) {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 600));
       setRevealedBlocksCount(i + 1);
     }
 
-    // Set read status in DB
     if (!letter.is_opened && user?.id !== letter.sender_id) {
       try {
         await supabase
@@ -401,7 +394,6 @@ export default function LoveLetterPage() {
     }
   };
 
-  // Save Letter to scrapbook moments
   const handleSaveToMoments = async () => {
     if (!activeLetter || !pair || !user || savingMoment) return;
     setSavingMoment(true);
@@ -409,7 +401,6 @@ export default function LoveLetterPage() {
     try {
       const partnerName = partner?.display_name || "Partner";
       const isSentByMe = activeLetter.sender_id === user.id;
-
       const firstTextBlock = activeLetter.content.find((b: any) => b.type === "text")?.value || "";
       const summaryText = firstTextBlock.slice(0, 100);
 
@@ -417,16 +408,16 @@ export default function LoveLetterPage() {
         .from("shared_moments")
         .insert({
           pair_id: pair.id,
-          title: "Cat Love Letter 💌",
+          title: "Love Letter 💌",
           description: isSentByMe
-            ? `Sent a Cat Love Letter to ${activeLetter.recipient_name}: "${summaryText}..."`
-            : `Received a Cat Love Letter from ${partnerName}: "${summaryText}..."`,
+            ? `Sent a Love Letter to ${activeLetter.recipient_name}: "${summaryText}..."`
+            : `Received a Love Letter from ${partnerName}: "${summaryText}..."`,
           moment_date: format(new Date(), "yyyy-MM-dd"),
           photo_url: "canvas-default.png"
         });
 
       if (err) throw err;
-      alert("Letter memory successfully logged in your Scrapbook moments! 🎉");
+      alert("Saved successfully to Scrapbook moments!");
     } catch (e: any) {
       console.error(e);
       alert(e.message || "Failed to log moment.");
@@ -437,7 +428,7 @@ export default function LoveLetterPage() {
 
   if (loading || fetching) {
     return (
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen bg-[#FCFBF9] dark:bg-[#1C1713]">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -446,71 +437,120 @@ export default function LoveLetterPage() {
     );
   }
 
-  const partnerName = partner?.display_name || "Partner";
-
   return (
-    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-[#fffcf5] text-foreground transition-colors duration-300">
-      <Navigation />
+    <div className="relative min-h-screen flex flex-col bg-[#FCFBF9] text-[#2E2A25] dark:bg-[#1C1713] dark:text-[#E8E2D5]">
+      {/* Hide navigation header component when composing or reading */}
+      {!isWriting && !activeLetter && <Navigation />}
 
-      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start z-10 animate-fade-in">
+      <main className="max-w-3xl w-full mx-auto px-6 py-12 md:py-20 flex-1 flex flex-col justify-start z-10 animate-fade-in select-none">
         
-        {/* LOBBY / MULTI-STEP LETTER BUILDER */}
-        {!activeLetter && (
-          <div className="space-y-8">
-            
-            {/* Header Title */}
-            <div className="border-b border-border/40 pb-6 space-y-2">
-              <h1 className="text-3xl font-sans font-black tracking-tight text-foreground flex items-center space-x-2">
-                <LoveLetterEnvelope className="w-12 h-12" />
-                <span>Love Letters</span>
-              </h1>
-              <p className="text-sm text-stone-500 max-w-2xl leading-relaxed">
-                Compose custom love letters interspersed with cute cat stickers from GIPHY. Pick an envelope theme, seal it with virtual wax, and send it to your partner!
-              </p>
+        {/* LOBBY LIST VIEW (Minimal Editorial letters list) */}
+        {!activeLetter && !isWriting && (
+          <div className="space-y-12">
+            <div className="border-b border-[#EAE3D5] dark:border-[#3E352E] pb-6 flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#8A7B6E]">
+                  Keepsakes Box
+                </span>
+                <h1 className="text-4xl font-display italic font-black text-[#2E2A25] dark:text-[#E8E2D5] mt-1">
+                  Letters Box
+                </h1>
+              </div>
+              <button
+                onClick={() => {
+                  setIsWriting(true);
+                  setActiveStep(1);
+                }}
+                className="btn-primary py-2.5 px-6 text-xs uppercase font-bold tracking-wider cursor-pointer"
+              >
+                Write Letter
+              </button>
             </div>
 
-            {/* Builder Progression bar */}
-            {activeStep > 1 && (
-              <div className="max-w-md mx-auto flex items-center justify-between border-b border-border/40 pb-4">
-                {[
-                  { num: 1, label: "Write Letter" },
-                  { num: 2, label: "Envelope Style" },
-                  { num: 3, label: "Seal & Send" }
-                ].map((step) => (
-                  <div key={step.num} className="flex flex-col items-center space-y-1">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all ${
-                      activeStep === step.num 
-                        ? "bg-[#db2777] text-white ring-4 ring-pink-100" 
-                        : (activeStep > step.num ? "bg-emerald-500 text-white" : "bg-white text-stone-400 border border-border")
-                    }`}>
-                      {step.num}
-                    </span>
-                    <span className="text-[10px] font-mono font-medium text-stone-500">
-                      {step.label}
-                    </span>
-                  </div>
-                ))}
+            {/* List entries */}
+            {lettersList.length === 0 ? (
+              <div className="text-center py-20 bg-[#FAF6EE] dark:bg-[#28221D] rounded-2xl border border-dashed border-[#EAE3D5] dark:border-[#3E352E] text-sm text-[#7C7267] italic">
+                The letters box is empty. Write the first unsealed moment.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {lettersList.map((l) => {
+                  const isSentByMe = l.sender_id === user?.id;
+                  const dateFormatted = format(parseISO(l.sent_at), "MMM d, yyyy");
+                  const config = envelopeStyles[l.envelope_style] || envelopeStyles.classic;
+
+                  return (
+                    <div
+                      key={l.id}
+                      onClick={() => handleUnsealLetter(l)}
+                      className="group rounded-2xl border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FAF6EE] dark:bg-[#28221D] p-6 cursor-pointer hover:scale-[1.01] transition-all flex items-center justify-between shadow-sm hover:shadow"
+                    >
+                      <div className="flex items-center space-x-4 min-w-0">
+                        <span className={`p-3.5 rounded-xl border ${config.bg} ${config.border} ${config.text}`}>
+                          {isSentByMe ? (
+                            <Mail className="w-4 h-4 text-[#8A7B6E]" />
+                          ) : (
+                            <Gift className={`w-4 h-4 ${!l.is_opened ? "animate-pulse text-[#802030]" : "text-[#8A7B6E]"}`} />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-heading italic text-base text-[#2E2A25] dark:text-[#E8E2D5] font-bold">
+                            {isSentByMe ? `To: ${l.recipient_name}` : `From: ${l.sender_name}`}
+                          </p>
+                          <p className="text-[10px] font-mono text-[#8A7B6E] mt-0.5">
+                            {dateFormatted}
+                          </p>
+                        </div>
+                      </div>
+                      {!isSentByMe && !l.is_opened && (
+                        <span className="bg-[#802030] text-white text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">
+                          Sealed
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
+          </div>
+        )}
 
-            {/* STEP 1: WRITE LETTER (BLOCKS EDITOR) */}
+        {/* WRITE MODE COMPOSER (Spacious paper writing room) */}
+        {isWriting && (
+          <div className="space-y-8 animate-fade-in max-w-xl mx-auto w-full">
+            <div className="flex items-center justify-between border-b border-[#EAE3D5] dark:border-[#3E352E] pb-4">
+              <button
+                onClick={() => {
+                  setIsWriting(false);
+                  setActiveStep(1);
+                }}
+                className="inline-flex items-center gap-1 text-xs font-mono font-bold text-[#8A7B6E] hover:text-[#2E2A25] uppercase cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Cancel</span>
+              </button>
+              <span className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase">
+                Step {activeStep} of 3
+              </span>
+            </div>
+
+            {/* STEP 1: CONTENT BLOCKS */}
             {activeStep === 1 && (
-              <div className="space-y-6 max-w-2xl mx-auto">
-                <div className="space-y-1 text-center">
-                  <h2 className="text-2xl font-serif text-[#db2777] font-black italic">Write Your Love Letter</h2>
-                  <p className="text-xs text-stone-500 font-mono">Mix heartfelt text blocks with GIPHY cat stickers</p>
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <h2 className="font-display italic text-3xl font-black text-[#2E2A25] dark:text-[#E8E2D5]">
+                    Compose Letter
+                  </h2>
+                  <p className="text-xs text-[#8A7B6E] font-mono">Write down your feelings below.</p>
                 </div>
 
-                <div className="rounded-3xl border border-border/60 bg-white p-6 md:p-8 shadow-sm space-y-6">
+                <div className="bg-[#FAF6EE] dark:bg-[#28221D] border border-[#EAE3D5] dark:border-[#3E352E] rounded-3xl p-6 md:p-8 space-y-6 shadow-sm">
                   {contentBlocks.map((block, idx) => (
-                    <div key={idx} className="relative group border-l-2 border-pink-500/20 pl-4 space-y-2 animate-fade-in">
-                      
-                      {/* Delete block trigger */}
+                    <div key={idx} className="relative group border-l-2 border-[#802030] pl-4 space-y-2">
                       <button
-                        type="button"
                         onClick={() => handleRemoveBlock(idx)}
-                        className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-all cursor-pointer"
-                        title="Remove Block"
+                        className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded cursor-pointer transition-all"
+                        title="Delete block"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -519,464 +559,353 @@ export default function LoveLetterPage() {
                         <textarea
                           value={block.value}
                           onChange={(e) => handleUpdateBlockValue(idx, e.target.value)}
-                          placeholder="Type your message section here..."
-                          className="block w-full h-24 px-3 py-2 border border-stone-100 focus:border-pink-500 rounded-xl bg-[#fafafa] text-sm text-foreground focus:outline-none resize-none font-serif italic"
+                          placeholder="Write something sweet here..."
+                          className="block w-full h-28 p-2 bg-transparent text-sm focus:outline-none font-quote italic placeholder-[#8A7B6E]/40"
                         />
                       ) : (
-                        <div className="rounded-xl overflow-hidden border border-border/60 max-w-xs relative bg-[#fafafa] p-2 flex flex-col items-center">
+                        <div className="rounded-xl overflow-hidden border border-[#EAE3D5] dark:border-[#3E352E] max-w-xs p-2 bg-[#FCFBF9] dark:bg-[#1C1713]">
                           <GiphyRenderer giphyId={block.giphy_id} />
-                          <span className="text-[8px] font-mono uppercase bg-pink-500 text-white px-2 py-0.5 rounded-full mt-2 font-bold tracking-wider">
-                            🐾 Embedded Giphy Sticker
+                          <span className="text-[8px] font-mono uppercase bg-[#8A7B6E] text-white px-2 py-0.5 rounded-full mt-2 font-bold block text-center tracking-widest">
+                            Embedded Giphy
                           </span>
                         </div>
                       )}
                     </div>
                   ))}
 
-                  {/* Add block choices */}
-                  <div className="flex flex-wrap gap-3 pt-4 border-t border-border/40 justify-center">
+                  <div className="flex gap-2 justify-center border-t border-[#EAE3D5] dark:border-[#3E352E] pt-4">
                     <button
-                      type="button"
                       onClick={handleAddTextBlock}
-                      className="inline-flex items-center space-x-1.5 py-2.5 px-4 rounded-xl text-xs font-bold text-stone-700 bg-stone-50 border border-stone-200 hover:bg-stone-100 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#EAE3D5] dark:border-[#3E352E] rounded-xl text-xs font-bold text-[#7C7267] hover:bg-[#FCFBF9] dark:hover:bg-[#1C1713] cursor-pointer"
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Text Block 📝</span>
+                      <Plus className="w-3 h-3" />
+                      <span>Add Text</span>
                     </button>
-
                     <button
-                      type="button"
                       onClick={() => setGalleryOpen(true)}
-                      className="inline-flex items-center space-x-1.5 py-2.5 px-4 rounded-xl text-xs font-bold text-[#db2777] bg-pink-50 border border-pink-100 hover:bg-pink-100/60 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#EAE3D5] dark:border-[#3E352E] rounded-xl text-xs font-bold text-[#802030] hover:bg-rose-50 dark:hover:bg-rose-950/15 cursor-pointer"
                     >
-                      <Smile className="w-3.5 h-3.5" />
-                      <span>Insert Giphy Cat 🐾</span>
+                      <Smile className="w-3 h-3" />
+                      <span>Sticker</span>
                     </button>
                   </div>
                 </div>
 
-                <div className="text-center pt-4">
+                <div className="text-center pt-2">
                   <button
                     onClick={() => setActiveStep(2)}
                     disabled={contentBlocks.every(b => b.type === "text" && !b.value.trim())}
-                    className="py-3 px-8 rounded-full text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-[#db2777] to-pink-500 disabled:opacity-40 hover:opacity-95 active:scale-95 transition-all cursor-pointer shadow-md shadow-pink-100"
+                    className="btn-primary py-3 px-8 text-xs uppercase tracking-widest font-bold cursor-pointer disabled:opacity-40"
                   >
-                    Next →
+                    Continue
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 2: CHOOSE ENVELOPE STYLE */}
+            {/* STEP 2: ENVELOPE THEME */}
             {activeStep === 2 && (
-              <div className="max-w-3xl mx-auto text-center space-y-8 animate-fade-in">
+              <div className="space-y-6 text-center">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-serif text-[#db2777] font-black italic">Choose Envelope Style</h2>
-                  <p className="text-xs text-stone-500 font-mono">Select the presentation theme for your sealed letter</p>
+                  <h2 className="font-display italic text-3xl font-black text-[#2E2A25] dark:text-[#E8E2D5]">
+                    Envelope Theme
+                  </h2>
+                  <p className="text-xs text-[#8A7B6E] font-mono">Select the packaging style.</p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {Object.entries(envelopeStyles).map(([key, style]) => {
                     const isSelected = envelopeStyle === key;
                     return (
                       <div
                         key={key}
                         onClick={() => setEnvelopeStyle(key)}
-                        className={`rounded-2xl p-4 text-center cursor-pointer transition-all border hover:scale-[1.02] flex flex-col justify-between h-44 ${
+                        className={`rounded-2xl p-4 cursor-pointer transition-all border flex flex-col justify-between h-40 ${
                           isSelected
-                            ? "border-pink-500 bg-white shadow-lg shadow-pink-100 scale-105"
-                            : "border-border/60 bg-white/70"
+                            ? "border-[#802030] bg-[#FAF6EE] dark:bg-[#28221D] scale-102 shadow-sm"
+                            : "border-[#EAE3D5] dark:border-[#3E352E] bg-transparent opacity-80"
                         }`}
                       >
-                        {/* envelope miniature */}
-                        <div className={`w-full flex-1 rounded-xl shadow-inner border border-border/40 flex items-center justify-center relative ${style.bg}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${style.seal} shadow-md`}>
-                            <Lock className="w-3.5 h-3.5 text-white" />
+                        <div className={`w-full flex-1 rounded-lg border border-[#EAE3D5] dark:border-[#3E352E] flex items-center justify-center relative ${style.bg}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${style.seal} text-white shadow-sm`}>
+                            <Lock className="w-3 h-3" />
                           </div>
                         </div>
-                        <p className="text-xs font-bold text-stone-700 mt-3">{style.name}</p>
+                        <p className="text-xs font-bold text-[#2E2A25] dark:text-[#E8E2D5] mt-2.5">{style.name}</p>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="flex justify-center gap-4 pt-4">
+                <div className="flex justify-center gap-3 pt-4">
                   <button
                     onClick={() => setActiveStep(1)}
-                    className="py-3 px-8 rounded-full text-xs font-bold uppercase tracking-wider text-stone-600 bg-white border border-border hover:bg-stone-50 transition-all cursor-pointer"
+                    className="btn-secondary py-2.5 px-6 text-xs uppercase font-bold tracking-widest cursor-pointer"
                   >
-                    ← Back
+                    Back
                   </button>
                   <button
                     onClick={() => setActiveStep(3)}
-                    className="py-3 px-8 rounded-full text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-[#db2777] to-pink-500 hover:opacity-95 active:scale-95 transition-all cursor-pointer shadow-md"
+                    className="btn-primary py-2.5 px-6 text-xs uppercase font-bold tracking-widest cursor-pointer"
                   >
-                    Next →
+                    Continue
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 3: ENVELOPE DETAILS & SEND */}
+            {/* STEP 3: DETAILS & DISPATCH */}
             {activeStep === 3 && (
-              <div className="max-w-xl mx-auto text-center space-y-8 animate-fade-in">
+              <div className="space-y-6 text-center">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-serif text-[#db2777] font-black italic">Address the Envelope</h2>
-                  <p className="text-xs text-stone-500 font-mono">Fill in names to customize the seal label</p>
+                  <h2 className="font-display italic text-3xl font-black text-[#2E2A25] dark:text-[#E8E2D5]">
+                    Seal & Send
+                  </h2>
+                  <p className="text-xs text-[#8A7B6E] font-mono">Finalize envelope addresses.</p>
                 </div>
 
-                {/* Form fields */}
-                <div className="rounded-3xl border border-border bg-white p-6 shadow-sm text-left space-y-4">
+                <div className="bg-[#FAF6EE] dark:bg-[#28221D] border border-[#EAE3D5] dark:border-[#3E352E] rounded-3xl p-6 space-y-4 text-left shadow-sm">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 font-mono">Recipient's Name (To)</label>
+                    <label className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase">To field (Recipient)</label>
                     <input
                       type="text"
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="e.g. Annie"
-                      className="block w-full px-4 py-3 border border-border rounded-xl bg-stone-50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="e.g. My Love"
+                      className="block w-full px-4 py-3 border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FCFBF9] dark:bg-[#1C1713] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030]"
                     />
                   </div>
-
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 font-mono">Your Name (From)</label>
+                    <label className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase">From field (Sender)</label>
                     <input
                       type="text"
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
-                      placeholder="e.g. Alex"
-                      className="block w-full px-4 py-3 border border-border rounded-xl bg-stone-50 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="e.g. Your Partner"
+                      className="block w-full px-4 py-3 border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FCFBF9] dark:bg-[#1C1713] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030]"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-center gap-4 pt-4">
+                <div className="flex justify-center gap-3 pt-4">
                   <button
                     onClick={() => setActiveStep(2)}
-                    className="py-3 px-8 rounded-full text-xs font-bold uppercase tracking-wider text-stone-600 bg-white border border-border hover:bg-stone-50 transition-all cursor-pointer"
+                    className="btn-secondary py-2.5 px-6 text-xs uppercase font-bold tracking-widest cursor-pointer"
                   >
-                    ← Back
+                    Back
                   </button>
                   <button
                     onClick={handleSendLetter}
                     disabled={sendingLetter || !recipientName.trim()}
-                    className="py-3 px-8 rounded-full text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-[#db2777] to-pink-500 disabled:opacity-40 hover:opacity-95 active:scale-95 transition-all cursor-pointer shadow-md shadow-pink-100"
+                    className="btn-primary py-2.5 px-8 text-xs uppercase font-bold tracking-widest cursor-pointer"
                   >
-                    {sendingLetter ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Love Letter 💌"}
+                    {sendingLetter ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Letter 💌"}
                   </button>
                 </div>
               </div>
             )}
-
-            {/* Historic logs list */}
-            {activeStep === 1 && (
-              <div className="max-w-2xl mx-auto space-y-4 pt-8 border-t border-border/40">
-                <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
-                  <Clock className="w-4 h-4 text-[#db2777]" />
-                  <span>Envelope Log history</span>
-                </h2>
-
-                {lettersList.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-white p-12 text-center text-stone-400 text-xs leading-relaxed">
-                    No letters sent or received yet. Click above to write your first cozy love letter!
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {lettersList.map((l) => {
-                      const isSentByMe = l.sender_id === user?.id;
-                      const dateFormatted = format(parseISO(l.sent_at), "MMM d, h:mm a");
-                      const config = envelopeStyles[l.envelope_style] || envelopeStyles.classic;
-
-                      return (
-                        <div
-                          key={l.id}
-                          onClick={() => handleUnsealLetter(l)}
-                          className="rounded-2xl border border-border bg-white p-5 shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between"
-                        >
-                          <div className="flex items-center space-x-3.5 min-w-0">
-                            <span className={`p-3 rounded-xl border ${config.bg} ${config.border} ${config.text}`}>
-                              {isSentByMe ? <Mail className="w-4 h-4" /> : (l.is_opened ? <MailOpen className="w-4 h-4" /> : <Gift className="w-4 h-4 animate-bounce" />)}
-                            </span>
-
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-stone-800 truncate">
-                                {isSentByMe ? `To: ${l.recipient_name}` : `From: ${l.sender_name}`}
-                              </p>
-                              <p className="text-[10px] text-stone-400 font-mono mt-0.5">
-                                {dateFormatted}
-                              </p>
-                            </div>
-                          </div>
-
-                          {!isSentByMe && !l.is_opened && (
-                            <span className="bg-[#db2777] text-white text-[8px] font-bold font-mono uppercase px-2 py-0.5 rounded animate-pulse">
-                              Seal
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
           </div>
         )}
 
-        {/* FULL SCREEN REVEAL / UNPACK EXPERIENCE */}
+        {/* ENVELOPE UNSEALING & READING (Ceremonial Paper Sheet & settings) */}
         {activeLetter && (
-          <div className="max-w-xl w-full mx-auto space-y-6 animate-fade-in pb-16">
-            
-            {/* Exit header */}
-            <div className="flex items-center justify-between pb-4 border-b border-border/40">
+          <div className="max-w-xl w-full mx-auto space-y-8 animate-fade-in pb-16">
+            <div className="flex items-center justify-between border-b border-[#EAE3D5] dark:border-[#3E352E] pb-4">
               <button
                 onClick={() => {
                   setActiveLetter(null);
                   fetchData();
                 }}
-                className="inline-flex items-center space-x-1.5 text-xs font-bold text-stone-500 hover:text-foreground uppercase font-mono tracking-widest cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#8A7B6E] hover:text-[#2E2A25] uppercase cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Inbox</span>
               </button>
             </div>
 
-            {/* Envelope rendering wrapper */}
             {(() => {
               const config = envelopeStyles[activeLetter.envelope_style] || envelopeStyles.classic;
 
               return (
                 <div className="space-y-8 relative">
                   
-                  {/* CLOSED ENVELOPE SEED VIEW (Wax Seal interaction - Responsive 3D flap & split seal) */}
+                  {/* CLOSED SEED VIEW */}
                   {!isUnsealed && (
-                    <div className="perspective-1000 w-full max-w-lg mx-auto select-none">
-                      <div
-                        className={`relative w-full h-[60vh] rounded-3xl border shadow-xl flex flex-col justify-between items-center transition-all duration-1000 ${
-                          unsealAnimating ? "scale-95 opacity-50" : "scale-100 opacity-100"
-                        } ${config.bg} ${config.border} overflow-hidden`}
-                      >
-                        {/* 3D Envelope Flap Animation Overlay */}
-                        <div
-                          className={`absolute top-0 left-0 right-0 h-1/2 bg-stone-100/50 dark:bg-stone-800/20 border-b border-stone-200/20 origin-top transition-transform duration-700 ease-in-out z-10 ${
-                            unsealAnimating ? "rotate-x-180 pointer-events-none" : ""
-                          }`}
-                          style={{
-                            clipPath: "polygon(0 0, 100% 0, 50% 100%)",
-                            transformStyle: "preserve-3d"
-                          }}
-                        />
-
-                        {/* Top layout metadata */}
-                        <div className="space-y-2 mt-12 z-0">
-                          <p className={`text-2xl font-serif italic font-black ${config.text}`}>
-                            To: {activeLetter.recipient_name}
-                          </p>
-                          <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest mt-1">
-                            Private sealed correspondence
-                          </p>
+                    <div className="w-full max-w-md mx-auto select-none">
+                      <div className={`relative w-full h-80 rounded-2xl border shadow-md flex flex-col justify-between items-center p-8 ${config.bg} ${config.border} overflow-hidden`}>
+                        
+                        {/* Diagonal lines to outline envelope */}
+                        <div className="absolute inset-0 pointer-events-none z-0">
+                          <svg viewBox="0 0 320 208" className="w-full h-full stroke-[#EAE3D5]/50 dark:stroke-[#3E352E]/50 fill-none stroke-1">
+                            <path d="M 0,0 L 160,104 L 320,0" />
+                            <path d="M 0,208 L 110,120" />
+                            <path d="M 320,208 L 210,120" />
+                          </svg>
                         </div>
 
-                        {/* Splitting Wax Seal Button */}
+                        <div className="text-center z-10 space-y-1">
+                          <span className="text-[9px] font-mono text-[#8A7B6E] uppercase tracking-wider block">To:</span>
+                          <span className="font-heading italic text-lg text-[#2E2A25] dark:text-[#E8E2D5] font-black">{activeLetter.recipient_name}</span>
+                        </div>
+
+                        {/* Seal interaction */}
                         <button
                           onClick={() => handleUnsealLetter(activeLetter)}
                           disabled={unsealAnimating}
-                          className="relative w-36 h-36 flex items-center justify-center cursor-pointer select-none z-20 group"
-                          title="Click to unseal letter"
+                          className="relative w-20 h-20 flex items-center justify-center cursor-pointer z-10"
                         >
-                          {/* Split Wax Seal Stamp halves during opening */}
-                          <div className="flex w-full h-full justify-between items-center relative">
-                            <div
-                              className={`w-1/2 h-full overflow-hidden transition-all duration-700 ease-in-out ${
-                                unsealAnimating
-                                  ? "-translate-x-16 -rotate-12 opacity-0"
-                                  : "group-hover:scale-105 active:scale-95 animate-bounce"
-                              }`}
-                              style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
-                            >
-                              <WaxSealStamp className="w-full h-full scale-[2] translate-x-1/4" />
-                            </div>
-                            <div
-                              className={`w-1/2 h-full overflow-hidden transition-all duration-700 ease-in-out ${
-                                unsealAnimating
-                                  ? "translate-x-16 rotate-12 opacity-0"
-                                  : "group-hover:scale-105 active:scale-95 animate-bounce"
-                              }`}
-                              style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
-                            >
-                              <WaxSealStamp className="w-full h-full scale-[2] -translate-x-1/4" />
-                            </div>
+                          <div className={`transition-all duration-700 ${unsealAnimating ? "scale-110 rotate-45 opacity-0" : "hover:scale-105 active:scale-95 animate-pulse"}`}>
+                            <WaxSealStamp className="w-16 h-16" />
                           </div>
                         </button>
 
-                        {/* Bottom layout metadata */}
-                        <div className="space-y-1 mb-12 z-0">
-                          <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest">
-                            Press Wax Seal to Unseal
-                          </p>
-                          <p className="text-xs font-bold text-stone-500">
-                            From: {activeLetter.sender_name}
-                          </p>
+                        <div className="text-center z-10 space-y-1">
+                          <span className="text-[8px] font-mono text-[#8A7B6E] uppercase tracking-widest block">Press Wax Seal to Unseal</span>
+                          <span className="text-xs font-bold text-[#2E2A25] dark:text-[#E8E2D5]">From: {activeLetter.sender_name}</span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* UNROLLED ELEGANT LETTER BLOCK VIEW */}
+                  {/* UNROLLED LUXURY PAPER SHEET */}
                   {isUnsealed && (
-                    <div
-                      className={`rounded-3xl border transition-all duration-500 p-8 md:p-12 shadow-xl space-y-8 relative overflow-hidden font-serif italic text-left min-h-[70vh] flex flex-col justify-between ${
-                        isCandlelightEnabled
-                          ? "border-amber-900/30 bg-gradient-to-br from-[#1a110a] via-[#24170e] to-[#120a06] text-amber-200 animate-candle-flicker"
-                          : "border-border/80 bg-white text-stone-800"
-                      }`}
-                    >
-                      {/* Letter Settings Bar */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/20 pb-4 not-italic select-none">
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                          Aesthetic View Settings
-                        </span>
-                        <div className="flex items-center gap-4 flex-wrap">
-                          {/* Candlelight Toggle */}
-                          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold">
+                    <div className="space-y-6">
+                      {/* Quiet settings bar */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EAE3D5] dark:border-[#3E352E] pb-3 select-none text-[10px] font-mono uppercase tracking-widest text-[#8A7B6E]">
+                        <span>Reading Settings</span>
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-1 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={isCandlelightEnabled}
                               onChange={(e) => setIsCandlelightEnabled(e.target.checked)}
-                              className="rounded border-border text-amber-500 focus:ring-amber-400"
+                              className="rounded border-[#EAE3D5] text-[#802030] focus:ring-[#802030]"
                             />
-                            <span>🕯️ Candlelight</span>
+                            <span>🕯️ Candle</span>
                           </label>
-
-                          {/* Typewriter Toggle */}
-                          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold">
+                          <label className="flex items-center gap-1 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={isTypewriterEnabled}
                               onChange={(e) => setIsTypewriterEnabled(e.target.checked)}
-                              className="rounded border-border text-pink-500 focus:ring-pink-400"
+                              className="rounded border-[#EAE3D5] text-[#802030] focus:ring-[#802030]"
                             />
                             <span>⌨️ Typewriter</span>
                           </label>
-
-                          {/* Sound Toggle (only show if typewriter is enabled) */}
                           {isTypewriterEnabled && (
-                            <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold animate-fade-in">
+                            <label className="flex items-center gap-1 cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={isTypewriterSoundEnabled}
                                 onChange={(e) => setIsTypewriterSoundEnabled(e.target.checked)}
-                                className="rounded border-border text-blue-500 focus:ring-blue-400"
+                                className="rounded border-[#EAE3D5] text-[#802030] focus:ring-[#802030]"
                               />
-                              <span>🔊 sound click</span>
+                              <span>🔊 Sound</span>
                             </label>
                           )}
                         </div>
                       </div>
 
-                      {/* Letter Top Details */}
-                      <div className="flex justify-between items-center text-xs font-mono tracking-wide not-italic select-none opacity-60">
-                        <span>TO: {activeLetter.recipient_name}</span>
-                        <span>{format(parseISO(activeLetter.sent_at), "MMMM d, yyyy")}</span>
-                      </div>
+                      {/* Spacious Luxury stationary view */}
+                      <div className={`relative rounded-2xl border p-10 md:p-16 space-y-8 text-left shadow-lg overflow-hidden min-h-[50vh] ${
+                        isCandlelightEnabled
+                          ? "border-[#3A2A1A] bg-gradient-to-br from-[#1E140C] via-[#2A1C10] to-[#160E08] text-amber-200 animate-candle-flicker"
+                          : "border-[#EAE3D5] bg-[#FAF5EB] text-[#2E2A25]"
+                      }`}>
+                        
+                        {/* Subtle floral svg or clean linen styling: Washi tape at top right */}
+                        <div className="absolute top-4 right-4 washi-tape washi-tape-angle z-10" />
 
-                      {/* Content Blocks mapping */}
-                      <div className="space-y-6 py-6 flex-1">
-                        {activeLetter.content.map((block: any, idx: number) => {
-                          const isVisible = revealedBlocksCount > idx;
-                          if (!isVisible) return null;
-
-                          return (
-                            <div 
-                              key={idx}
-                              className="animate-fade-in transition-all duration-700 ease-out transform translate-y-0"
-                            >
-                              {block.type === "text" ? (
-                                <p className={`text-base leading-relaxed whitespace-pre-wrap ${
-                                  isCandlelightEnabled ? "text-amber-100/90" : "text-stone-800"
-                                } ${!isTypewriterEnabled ? "animate-ink-bleed" : ""}`}>
-                                  {isTypewriterEnabled ? (
-                                    <TypewriterText 
-                                      text={block.value} 
-                                      playSound={isTypewriterSoundEnabled} 
-                                    />
-                                  ) : (
-                                    block.value
-                                  )}
-                                </p>
-                              ) : (
-                                <div className={`rounded-2xl overflow-hidden border border-border/50 max-w-sm my-4 shadow-md p-2 flex flex-col items-center not-italic ${
-                                  isCandlelightEnabled ? "bg-[#18110b] border-amber-950/20" : "bg-stone-50"
-                                }`}>
-                                  <GiphyRenderer giphyId={block.giphy_id} />
-                                  <span className="text-[8px] font-mono uppercase bg-pink-500 text-white px-2 py-0.5 rounded-full mt-2 font-bold tracking-wider">
-                                    🐾 Embedded Giphy Sticker
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Sign-off details */}
-                      {revealedBlocksCount > activeLetter.content.length && (
-                        <div className="border-t border-border/20 pt-6 space-y-4 animate-fade-in">
-                          <p className="text-right text-sm font-bold opacity-90">
-                            With love, {activeLetter.sender_name}
-                          </p>
-
-                          <div className="flex justify-center pt-2">
-                            <button
-                              onClick={handleSaveToMoments}
-                              disabled={savingMoment}
-                              className="flex items-center space-x-1.5 py-2.5 px-5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-[#db2777] to-pink-500 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md not-italic"
-                            >
-                              {savingMoment ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
-                              <span>Save to Moments Scrapbook</span>
-                            </button>
-                          </div>
+                        {/* Top addressed labels (Caveat cursive font) */}
+                        <div className="flex justify-between items-center text-sm tracking-wide text-[#8A7B6E] select-none font-handwriting">
+                          <span>To: {activeLetter.recipient_name}</span>
+                          <span>{format(parseISO(activeLetter.sent_at), "MMMM d, yyyy")}</span>
                         </div>
-                      )}
 
+                        {/* Blocks */}
+                        <div className="space-y-6 py-4 flex-1">
+                          {activeLetter.content.map((block: any, idx: number) => {
+                            if (revealedBlocksCount <= idx) return null;
+
+                            return (
+                              <div key={idx} className="animate-fade-in">
+                                {block.type === "text" ? (
+                                  <p className={`text-base leading-relaxed whitespace-pre-wrap font-sans ${
+                                    isCandlelightEnabled ? "text-amber-100/90" : "text-[#2E2A25]"
+                                  } ${!isTypewriterEnabled ? "animate-ink-bleed" : ""}`}>
+                                    {isTypewriterEnabled ? (
+                                      <TypewriterText 
+                                        text={block.value} 
+                                        playSound={isTypewriterSoundEnabled} 
+                                      />
+                                    ) : (
+                                      block.value
+                                    )}
+                                  </p>
+                                ) : (
+                                  <div className="rounded-xl overflow-hidden border border-[#EAE3D5] dark:border-[#3E352E] max-w-sm my-4 p-2 bg-[#FCFBF9] dark:bg-[#1C1713]">
+                                    <GiphyRenderer giphyId={block.giphy_id} />
+                                    <span className="text-[8px] font-mono uppercase bg-[#8A7B6E] text-white px-2 py-0.5 rounded-full mt-2 font-bold tracking-widest block text-center">
+                                      Embedded Sticker
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Signature (Caveat handwriting font) */}
+                        {revealedBlocksCount > activeLetter.content.length && (
+                          <div className="border-t border-[#EAE3D5]/40 pt-6 space-y-6 animate-fade-in">
+                            <p className="text-right text-lg font-handwriting text-[#2E2A25] dark:text-[#E8E2D5]">
+                              With love, {activeLetter.sender_name}
+                            </p>
+                            
+                            <div className="flex justify-center pt-2">
+                              <button
+                                onClick={handleSaveToMoments}
+                                disabled={savingMoment}
+                                className="flex items-center gap-1.5 py-2.5 px-6 rounded-full text-xs font-bold text-white bg-[#802030] hover:bg-[#6E1B29] active:scale-[0.98] transition-all cursor-pointer shadow-sm"
+                              >
+                                {savingMoment ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
+                                <span>Save to Moments Scrapbook</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
-
                 </div>
               );
             })()}
-
           </div>
         )}
-
       </main>
 
-      {/* GIPHY CAT STICKER SEARCH MODAL (Step 1 sticker tray) */}
+      {/* GIPHY SEARCH DIALOG TRAY */}
       {galleryOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl border border-border animate-scale-up overflow-hidden">
-            
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border/40 flex justify-between items-center bg-stone-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in select-none">
+          <div className="bg-[#FCFBF9] dark:bg-[#1C1713] rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-[#EAE3D5] dark:border-[#3E352E] overflow-hidden">
+            <div className="p-5 border-b border-[#EAE3D5] dark:border-[#3E352E] flex justify-between items-center bg-[#FAF6EE] dark:bg-[#28221D]">
               <div>
-                <h3 className="text-base font-black text-stone-800">Search Cat Stickers</h3>
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">Powered by GIPHY</p>
+                <h3 className="text-sm font-bold text-[#2E2A25] dark:text-[#E8E2D5]">Embed Sticker</h3>
+                <p className="text-[8px] text-[#8A7B6E] font-mono uppercase mt-0.5">Powered by GIPHY</p>
               </div>
               <button
                 onClick={() => {
                   setGalleryOpen(false);
                   setSearchQuery("");
                 }}
-                className="p-1 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
+                className="p-1.5 rounded-lg text-[#8A7B6E] hover:bg-[#FAF6EE] dark:hover:bg-[#1C1713] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Giphy Search input bar */}
-            <div className="px-5 py-3 border-b border-border/40 flex gap-2 items-center bg-white">
-              <div className="relative flex-1">
+            <div className="px-5 py-3 border-b border-[#EAE3D5] dark:border-[#3E352E] bg-[#FCFBF9] dark:bg-[#1C1713]">
+              <div className="relative">
                 <input
                   type="text"
                   value={searchQuery}
@@ -984,41 +913,35 @@ export default function LoveLetterPage() {
                     setSearchQuery(e.target.value);
                     performStickerSearch(e.target.value);
                   }}
-                  placeholder="e.g. happy, sleepy, dance, funny..."
-                  className="block w-full pl-9 pr-4 py-2 border border-border rounded-xl bg-stone-50 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Search stickers (happy, sad, love...)"
+                  className="block w-full pl-8 pr-4 py-2 border border-[#EAE3D5] dark:border-[#3E352E] rounded-xl bg-[#FAF6EE] dark:bg-[#28221D] text-xs focus:outline-none"
                 />
-                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-stone-400" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8A7B6E]" />
               </div>
             </div>
 
-            {/* Search Grid / Sticker list */}
-            <div className="p-5 overflow-y-auto flex-1 bg-stone-50/50">
+            <div className="p-5 overflow-y-auto flex-1 bg-[#FAF6EE]/30">
               {error ? (
-                <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-center space-y-2">
-                  <AlertCircle className="w-5 h-5 text-red-500 mx-auto" />
-                  <p className="text-xs text-red-700 font-medium leading-relaxed">{error}</p>
-                </div>
+                <div className="text-center py-8 text-xs text-red-600">{error}</div>
               ) : searching ? (
                 <div className="text-center py-12">
-                  <Loader2 className="w-6 h-6 text-[#db2777] animate-spin mx-auto" />
-                  <p className="text-xs text-stone-400 mt-2 font-mono">Searching GIPHY...</p>
+                  <Loader2 className="w-5 h-5 text-[#802030] animate-spin mx-auto" />
+                  <p className="text-[10px] text-[#8A7B6E] mt-2 font-mono">Querying stickers...</p>
                 </div>
               ) : giphyStickers.length === 0 ? (
-                <div className="text-center py-12 text-stone-400 text-xs leading-relaxed">
-                  No cat stickers found matching "{searchQuery}". Try searching for something else!
-                </div>
+                <div className="text-center py-12 text-[#8A7B6E] text-xs">No stickers found.</div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   {giphyStickers.map((sticker: any) => (
                     <div
                       key={sticker.id}
                       onClick={() => handleInsertCatBlock(sticker.id)}
-                      className="rounded-2xl border border-border bg-white overflow-hidden p-2 shadow-sm cursor-pointer hover:scale-[1.02] transition-all flex flex-col justify-center items-center h-28 relative"
+                      className="rounded-xl border border-[#EAE3D5] dark:border-[#3E352E] bg-white dark:bg-[#28221D] p-1.5 cursor-pointer hover:scale-102 transition-all flex items-center justify-center h-20"
                     >
                       <img
                         src={sticker.images?.fixed_height_small?.url || sticker.images?.fixed_height?.url}
-                        alt="Cat sticker option"
-                        className="max-h-24 object-contain"
+                        alt="Sticker item"
+                        className="max-h-16 object-contain"
                       />
                     </div>
                   ))}
@@ -1026,17 +949,14 @@ export default function LoveLetterPage() {
               )}
             </div>
 
-            {/* Giphy Attribution Footer */}
-            <div className="p-3 border-t border-border/40 text-center bg-white flex items-center justify-center">
-              <span className="text-[9px] font-mono uppercase tracking-widest text-stone-400 font-bold">
-                Powered By GIPHY
+            <div className="p-3 border-t border-[#EAE3D5] dark:border-[#3E352E] text-center bg-[#FAF6EE] dark:bg-[#28221D]">
+              <span className="text-[8px] font-mono uppercase tracking-widest text-[#8A7B6E] font-bold">
+                GIPHY STICKERS INC
               </span>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

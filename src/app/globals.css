@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-nunito), var(--font-outfit), var(--font-geist-sans), sans-serif;
-  --font-serif: var(--font-nunito), sans-serif;
+  --font-sans: var(--font-sans), sans-serif;
+  --font-display: var(--font-display), serif;
+  --font-heading: var(--font-heading), serif;
+  --font-quote: var(--font-quote), serif;
+  --font-handwriting: var(--font-handwriting), cursive;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -31,7 +34,7 @@
   --radius-chip: 999px;
 
   /* Layered Shadows - Design System v2.0 */
-  --shadow-layered: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 30px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-layered: 0 1px 2px rgba(46, 42, 37, 0.03), 0 8px 30px rgba(46, 42, 37, 0.04), 0 0 0 1px rgba(46, 42, 37, 0.02);
   --shadow-layered-dark: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
 
   /* Typographic Scales */
@@ -57,65 +60,64 @@
 }
 
 :root {
-  --background: #f8f9fb;
-  --foreground: #09090b;
-  --card-bg: #ffffff;
-  --card-border: rgba(9, 9, 11, 0.06);
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(9, 9, 11, 0.06);
-  --shadow-color: rgba(9, 9, 11, 0.04);
+  --background: #FCFBF9;
+  --foreground: #2E2A25;
+  --card-bg: #FAF6EE;
+  --card-border: #EAE3D5;
+  --glass-bg: rgba(252, 251, 249, 0.85);
+  --glass-border: #EAE3D5;
+  --shadow-color: rgba(46, 42, 37, 0.03);
 
   color-scheme: light;
-  --card: #ffffff;
-  --card-foreground: #71717a;
-  --popover: #ffffff;
-  --popover-foreground: #09090b;
-  --primary: #f472b6;
+  --card: #FAF6EE;
+  --card-foreground: #7C7267;
+  --popover: #FCFBF9;
+  --popover-foreground: #2E2A25;
+  --primary: #802030;
   --primary-foreground: #ffffff;
-  --secondary: #60a5fa;
+  --secondary: #8A7B6E;
   --secondary-foreground: #ffffff;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #09090b;
-  --border: rgba(9, 9, 11, 0.06);
-  --input: rgba(9, 9, 11, 0.06);
-  --ring: #f472b6;
-  --chart-1: #f472b6;
-  --chart-2: #60a5fa;
-  --chart-5: #60a5fa;
+  --muted: #FAF6EE;
+  --muted-foreground: #7C7267;
+  --accent: #FAF6EE;
+  --accent-foreground: #2E2A25;
+  --border: #EAE3D5;
+  --input: #EAE3D5;
+  --ring: #802030;
+  --chart-1: #802030;
+  --chart-2: #8A7B6E;
+  --chart-5: #8A7B6E;
   --radius: 20px;
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #f4f4f5;
-  --card-bg: #18181b;
-  --card-border: rgba(255, 255, 255, 0.04);
-  --glass-bg: rgba(24, 24, 27, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.04);
+  --background: #1C1713;
+  --foreground: #E8E2D5;
+  --card-bg: #28221D;
+  --card-border: #3E352E;
+  --glass-bg: rgba(28, 23, 19, 0.85);
+  --glass-border: #3E352E;
   --shadow-color: rgba(0, 0, 0, 0.3);
 
   color-scheme: dark;
-  --card: #18181b;
-  --card-foreground: #a1a1aa;
-  --popover: #18181b;
-  --popover-foreground: #f4f4f5;
-  --primary: #f472b6;
+  --card: #28221D;
+  --card-foreground: #A59B8E;
+  --popover: #1C1713;
+  --popover-foreground: #E8E2D5;
+  --primary: #B03B50;
   --primary-foreground: #ffffff;
-  --secondary: #60a5fa;
+  --secondary: #A28468;
   --secondary-foreground: #ffffff;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --accent: #27272a;
-  --accent-foreground: #f4f4f5;
-  --border: rgba(255, 255, 255, 0.04);
-  --input: rgba(255, 255, 255, 0.04);
-  --ring: #60a5fa;
-  --chart-1: #f472b6;
-  --chart-2: #60a5fa;
-  --chart-5: #f472b6;
-  --radius: 20px;
+  --muted: #28221D;
+  --muted-foreground: #A59B8E;
+  --accent: #28221D;
+  --accent-foreground: #E8E2D5;
+  --border: #3E352E;
+  --input: #3E352E;
+  --ring: #B03B50;
+  --chart-1: #B03B50;
+  --chart-2: #A28468;
+  --chart-5: #A28468;
 }
 
 body {
@@ -382,4 +384,94 @@ body {
 .animate-candle-flicker {
   animation: candle-flicker 5s ease-in-out infinite;
 }
+
+/* Custom Cozy Fonts */
+.font-handwriting {
+  font-family: var(--font-handwriting), cursive;
+}
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+.font-heading {
+  font-family: var(--font-heading), Georgia, serif;
+}
+.font-quote {
+  font-family: var(--font-quote), Georgia, serif;
+}
+
+/* Redesigned Button/Input/Card Overrides - Flat cozy styling */
+.btn-primary {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  box-shadow: 0 4px 14px rgba(128, 32, 48, 0.15);
+  font-family: var(--font-sans);
+  border-radius: var(--radius-button);
+  border: none;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.btn-primary:hover {
+  background: #6E1B29 !important;
+  transform: translateY(-0.5px);
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: var(--card-bg) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-layered) !important;
+  border-radius: var(--radius-button);
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: var(--muted) !important;
+}
+
+.card-hero {
+  border-radius: var(--radius-hero);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(60, 54, 45, 0.04);
+}
+.card-hero::before {
+  display: none !important; /* disable gradient border */
+}
+
+/* Washi Tape styling */
+.washi-tape {
+  position: absolute;
+  width: 90px;
+  height: 24px;
+  background-color: rgba(196, 164, 130, 0.45);
+  backdrop-filter: blur(1.5px);
+  box-shadow: 0 1px 3px rgba(60, 54, 45, 0.05);
+  transform: rotate(-3deg);
+  opacity: 0.85;
+}
+.washi-tape-angle {
+  transform: rotate(4deg);
+}
+
+/* Lined and grid cozy paper sheets */
+.paper-sheet {
+  background-color: #FAF5EB;
+  border: 1px solid #E6DFD3;
+  box-shadow: 0 8px 30px rgba(60, 54, 45, 0.04);
+  background-image: radial-gradient(#d3c9b7 0.7px, transparent 0.7px), radial-gradient(#d3c9b7 0.7px, #FAF5EB 0.7px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+.paper-sheet-lined {
+  background-color: #FAF5EB;
+  border: 1px solid #E6DFD3;
+  box-shadow: 0 8px 30px rgba(60, 54, 45, 0.04);
+  background-image: linear-gradient(#e1d8c7 1px, transparent 1px);
+  background-size: 100% 28px;
+  line-height: 28px;
+}
+
 

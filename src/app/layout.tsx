@@ -1,19 +1,39 @@
 import type { Metadata } from "next";
-import { Outfit, Nunito } from "next/font/google";
+import { Inter, Cormorant_Garamond, Playfair_Display, EB_Garamond, Caveat } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
 });
 
-const nunito = Nunito({ 
+const cormorant = Cormorant_Garamond({ 
   subsets: ["latin"], 
-  variable: "--font-nunito", 
-  display: "swap" 
+  variable: "--font-heading",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"]
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "700", "900"],
+  style: ["normal", "italic"]
+});
+
+const ebGaramond = EB_Garamond({
+  subsets: ["latin"],
+  variable: "--font-quote",
+  weight: ["400", "700"],
+  style: ["normal", "italic"]
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-handwriting",
+  weight: ["400", "700"]
 });
 
 export const metadata: Metadata = {
@@ -29,9 +49,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${nunito.variable} h-full antialiased`}
+      className={`${inter.variable} ${cormorant.variable} ${playfair.variable} ${ebGaramond.variable} ${caveat.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-full flex flex-col font-sans bg-[#FCFBF9] text-[#2E2A25]">
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
