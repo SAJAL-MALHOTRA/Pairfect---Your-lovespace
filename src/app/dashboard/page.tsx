@@ -170,8 +170,9 @@ export default function DashboardPage() {
   const [gratitudeCount, setGratitudeCount] = useState(0);
   const [partnerFeeling, setPartnerFeeling] = useState("feeling peaceful");
   const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([]);
-  const [anniversaryDaysToGo, setAnniversaryDaysToGo] = useState(77);
-  const [anniversaryDateFormatted, setAnniversaryDateFormatted] = useState("September 13, 2026");
+  const [anniversaryDaysToGo, setAnniversaryDaysToGo] = useState(0);
+  const [anniversaryDateFormatted, setAnniversaryDateFormatted] = useState("");
+  const [anniversaryNotSet, setAnniversaryNotSet] = useState(false);
   const [fetching, setFetching] = useState(true);
   const supabase = createClient();
 
@@ -274,22 +275,24 @@ export default function DashboardPage() {
         activities.sort((a, b) => b.timestamp - a.timestamp);
         setRecentActivities(activities.slice(0, 3));
 
-        // Anniversary countdown calculations (defended against undefined/invalid created_at)
-        if (pair.created_at) {
-          const anniversaryDate = new Date(pair.created_at);
+        // Anniversary countdown — use started_dating_date, NOT pair.created_at
+        if (pair.started_dating_date) {
+          const anniversaryDate = new Date(pair.started_dating_date);
           if (!isNaN(anniversaryDate.getTime())) {
             const today = new Date();
             let nextAnniversary = new Date(today.getFullYear(), anniversaryDate.getMonth(), anniversaryDate.getDate());
-            if (nextAnniversary.getTime() < today.getTime()) {
+            if (nextAnniversary.getTime() <= today.getTime()) {
               nextAnniversary.setFullYear(nextAnniversary.getFullYear() + 1);
             }
             const diffTime = Math.abs(nextAnniversary.getTime() - today.getTime());
             const daysToGo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             setAnniversaryDaysToGo(daysToGo);
-
             const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric" };
             setAnniversaryDateFormatted(nextAnniversary.toLocaleDateString("en-US", options));
+            setAnniversaryNotSet(false);
           }
+        } else {
+          setAnniversaryNotSet(true);
         }
 
       } catch (e) {
@@ -654,8 +657,9 @@ export default function DashboardPage() {
           <div className="lg:col-span-5 flex flex-col space-y-6">
             
             {/* Widget 1: On This Day */}
-            <div
-              className="p-6 rounded-[20px] border space-y-4"
+            <Link
+              href="/moments"
+              className="block p-6 rounded-[20px] border space-y-4 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md"
               style={{
                 backgroundColor: "var(--bg-secondary)",
                 borderColor: "var(--border)",
@@ -695,14 +699,15 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Widget 2: Split Row (Gratitude Jar & Recent Activity) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Gratitude Jar Card */}
-              <div
-                className="p-5 rounded-[20px] border flex flex-col items-center text-center justify-between space-y-3"
+              <Link
+                href="/gratitude-jar"
+                className="p-5 rounded-[20px] border flex flex-col items-center text-center justify-between space-y-3 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md"
                 style={{
                   backgroundColor: "var(--bg-secondary)",
                   borderColor: "var(--border)",
@@ -725,7 +730,7 @@ export default function DashboardPage() {
                     Open a random note →
                   </Link>
                 </div>
-              </div>
+              </Link>
 
               {/* Recent Activity Card */}
               <div
@@ -743,12 +748,16 @@ export default function DashboardPage() {
                 <div className="space-y-3 flex-1 flex flex-col justify-center">
                   {recentActivities.length > 0 ? (
                     recentActivities.map((act) => (
-                      <div key={act.id} className="text-[10px] text-[var(--text-soft)] flex items-start gap-1.5 leading-tight">
+                      <Link
+                        key={act.id}
+                        href={act.type === "letter" ? "/love-letter" : act.type === "moment" ? "/moments" : "/gratitude-jar"}
+                        className="text-[10px] text-[var(--text-soft)] flex items-start gap-1.5 leading-tight hover:text-[var(--burgundy)] transition-colors cursor-pointer"
+                      >
                         <span className="text-[var(--burgundy)]">✦</span>
                         <div>
-                          <p className="text-[var(--text)] font-medium">{act.text}</p>
+                          <p className="text-[var(--text)] font-medium group-hover:text-[var(--burgundy)]">{act.text}</p>
                         </div>
-                      </div>
+                      </Link>
                     ))
                   ) : (
                     <p className="text-[9px] font-mono text-[var(--text-soft)] italic">No recent activity</p>
@@ -758,8 +767,9 @@ export default function DashboardPage() {
             </div>
 
             {/* Widget 3: Upcoming Anniversary */}
-            <div
-              className="p-6 rounded-[20px] border flex items-center justify-between gap-4"
+            <Link
+              href="/settings"
+              className="block p-6 rounded-[20px] border flex items-center justify-between gap-4 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md"
               style={{
                 backgroundColor: "var(--bg-secondary)",
                 borderColor: "var(--border)",
@@ -771,13 +781,19 @@ export default function DashboardPage() {
                 
                 <div className="space-y-0.5">
                   <p className="text-[10px] font-mono uppercase text-[var(--text-soft)] tracking-wider">Our Anniversary</p>
-                  <h3 className="font-heading text-lg font-bold text-[var(--text)] leading-tight">
-                    {anniversaryDaysToGo} days to go
-                  </h3>
-                  <p className="text-[10px] font-mono text-[var(--rose)]">{anniversaryDateFormatted}</p>
+                  {anniversaryNotSet ? (
+                    <p className="text-sm font-heading text-[var(--burgundy)] font-medium">Add your anniversary date →</p>
+                  ) : (
+                    <>
+                      <h3 className="font-heading text-lg font-bold text-[var(--text)] leading-tight">
+                        {anniversaryDaysToGo} days to go
+                      </h3>
+                      <p className="text-[10px] font-mono text-[var(--rose)]">{anniversaryDateFormatted}</p>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
+            </Link>
 
           </div>
         </div>
@@ -785,16 +801,17 @@ export default function DashboardPage() {
         {/* ─── FULL-WIDTH STATS CARD ROW AT THE BOTTOM ─── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-[var(--border)]">
           {[
-            { label: `${daysTogether} Days`, desc: "Together", icon: Calendar },
-            { label: `${lettersCount} Letters`, desc: "Sent & Sealed", icon: Mail },
-            { label: `${momentsCount} Memories`, desc: "In Scrapbook", icon: ImageIcon },
-            { label: `${gratitudeCount} Notes`, desc: "In Gratitude Jar", icon: Gift },
+            { label: `${daysTogether} Days`, desc: "Together", icon: Calendar, href: "/checkin" },
+            { label: `${lettersCount} Letters`, desc: "Sent & Sealed", icon: Mail, href: "/love-letter" },
+            { label: `${momentsCount} Memories`, desc: "In Scrapbook", icon: ImageIcon, href: "/moments" },
+            { label: `${gratitudeCount} Notes`, desc: "In Gratitude Jar", icon: Gift, href: "/gratitude-jar" },
           ].map((stat) => {
             const Icon = stat.icon;
             return (
-              <div
+              <Link
                 key={stat.label}
-                className="p-4 rounded-[20px] border flex items-center gap-3 text-left"
+                href={stat.href}
+                className="p-4 rounded-[20px] border flex items-center gap-3 text-left cursor-pointer transition-all hover:translate-y-[-1px] hover:shadow-sm"
                 style={{
                   backgroundColor: "var(--bg-secondary)",
                   borderColor: "var(--border)",
@@ -807,7 +824,7 @@ export default function DashboardPage() {
                   <p className="font-heading text-sm font-bold text-[var(--text)] leading-tight">{stat.label}</p>
                   <p className="text-[9px] text-[var(--text-soft)] mt-0.5 font-mono uppercase tracking-wider">{stat.desc}</p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

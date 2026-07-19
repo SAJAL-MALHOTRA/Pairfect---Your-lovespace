@@ -1,16 +1,18 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/auth-provider";
+import { parseAvatarConfig, ChibiAvatar } from "@/components/chibi-avatar";
 import {
   Home,
   Mail,
   BookOpen,
   Gift,
-  Image,
+  Image as ImageIcon,
   Clock,
   Gamepad2,
   User,
@@ -24,7 +26,7 @@ const CLUSTERS = [
   [
     { href: "/love-letter", icon: Mail, label: "Letters" },
     { href: "/checkin", icon: BookOpen, label: "Journal" },
-    { href: "/moments", icon: Image, label: "Memories" }
+    { href: "/moments", icon: ImageIcon, label: "Memories" }
   ],
   [
     { href: "/play", icon: Gamepad2, label: "Playroom" },
@@ -68,27 +70,35 @@ export default function Navigation() {
 
   return (
     <>
-      {/* ─── GLOBAL TOP BAR ─── */}
+      {/* â”€â”€â”€ GLOBAL TOP BAR â”€â”€â”€ */}
       <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:px-12 flex items-center justify-between pointer-events-none">
-        {/* Left: Wordmark "Pairfect" + small heart */}
+        {/* Left: Logo image */}
         <Link
           href="/dashboard"
-          className="font-heading font-semibold text-2xl text-[var(--burgundy)] flex items-center gap-1.5 pointer-events-auto select-none transition-opacity hover:opacity-85"
+          className="flex items-center pointer-events-auto select-none transition-opacity hover:opacity-85"
         >
-          Pairfect <span className="text-[var(--rose)] font-sans text-lg">♥</span>
+          <Image src="/logo-book.png" alt="Pairfect" height={36} width={36} className="rounded-lg" priority />
         </Link>
 
-        {/* Right: Avatar circle only (initial, burgundy bg) */}
+        {/* Right: Avatar â€” chibi character or initial fallback */}
         <Link
           href="/profile"
-          className="w-9 h-9 rounded-full bg-[var(--burgundy)] text-[#F8F3EE] font-sans flex items-center justify-center text-sm font-bold pointer-events-auto select-none shadow-sm transition-transform hover:scale-105 active:scale-95"
+          className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-[#F8F3EE] font-sans flex items-center justify-center text-sm font-bold pointer-events-auto select-none shadow-sm transition-transform hover:scale-105 active:scale-95"
           style={{ boxShadow: "0 2px 8px var(--shadow)" }}
         >
-          {userInitial}
+          {profile?.avatar_url ? (
+            <ChibiAvatar
+              config={parseAvatarConfig(profile.avatar_url)}
+              pose="profile"
+              className="w-full h-full"
+            />
+          ) : (
+            <span>{userInitial}</span>
+          )}
         </Link>
       </div>
 
-      {/* ─── FLOATING LEFT VERTICAL DOCK ─── */}
+      {/* â”€â”€â”€ FLOATING LEFT VERTICAL DOCK â”€â”€â”€ */}
       <AnimatePresence>
         {visible && (
           <motion.nav
@@ -161,3 +171,4 @@ export default function Navigation() {
     </>
   );
 }
+

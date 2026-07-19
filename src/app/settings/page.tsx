@@ -104,6 +104,9 @@ export default function SettingsPage() {
   const [confirmText, setConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
 
+  const [anniversaryDate, setAnniversaryDate] = useState("");
+  const [updatingAnniversary, setUpdatingAnniversary] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name || "");
@@ -111,7 +114,10 @@ export default function SettingsPage() {
       setPartnerCheckInAlert(settings.partner_check_in);
       setNewGratitudeAlert(settings.new_gratitude);
     }
-  }, [profile]);
+    if (pair?.started_dating_date) {
+      setAnniversaryDate(pair.started_dating_date);
+    }
+  }, [profile, pair]);
 
   const canChangePassword = Boolean(
     user && (user.identities?.some((id: any) => id.provider === "email") || user.app_metadata?.provider !== "google")
@@ -177,6 +183,23 @@ export default function SettingsPage() {
       if (type === "partner_check_in") setPartnerCheckInAlert(!checked);
       else setNewGratitudeAlert(!checked);
     } finally { setUpdatingNotifications(false); }
+  };
+
+  const handleSaveAnniversary = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!anniversaryDate || !pair) return;
+    setUpdatingAnniversary(true); setSuccessMessage(null); setError(null);
+    try {
+      const { error: updateErr } = await supabase
+        .from("pairs")
+        .update({ started_dating_date: anniversaryDate })
+        .eq("id", pair.id);
+      if (updateErr) throw updateErr;
+      setSuccessMessage("Anniversary date saved.");
+      await refreshSession();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to save anniversary date."));
+    } finally { setUpdatingAnniversary(false); }
   };
 
   const handleUnlinkPair = async () => {
@@ -361,13 +384,37 @@ export default function SettingsPage() {
             <SettingsRow
               label="Connected to"
               description={partner?.display_name || "Your partner"}
-              right={<span className="text-[9px] font-mono uppercase tracking-widest text-[#802030] dark:text-[#B03B50]">Active</span>}
+              right={<span className="text-[9px] font-mono uppercase tracking-widest text-[#802030]">Active</span>}
             />
             <SettingsRow
               label="Invite code"
               description="Share to invite your partner"
-              right={<span className="text-[10px] font-mono font-bold bg-[#F5EDD8] dark:bg-[#2E2418] px-2 py-1 rounded-lg border border-[#E5D9C5] dark:border-[#4A3E30]">{pair.invite_code}</span>}
+              right={<span className="text-[10px] font-mono font-bold bg-[#F5EDD8] px-2 py-1 rounded-lg border border-[#E5D9C5]">{pair.invite_code}</span>}
             />
+
+            {/* Anniversary / Start Date */}
+            <form onSubmit={handleSaveAnniversary}>
+              <SettingsRow
+                label="Anniversary date"
+                description={anniversaryDate ? `Set to ${new Date(anniversaryDate + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}` : "Not set yet"}
+              />
+              <div className="pb-4 space-y-3">
+                <input
+                  type="date"
+                  value={anniversaryDate}
+                  onChange={e => setAnniversaryDate(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-[#EAE3D5] bg-[#FCFBF9] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030] text-[#2E2A25]"
+                />
+                <button
+                  type="submit"
+                  disabled={updatingAnniversary || !anniversaryDate}
+                  className="btn-primary py-2 px-5 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-40"
+                >
+                  {updatingAnniversary ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save Date"}
+                </button>
+              </div>
+            </form>
+
             <div className="py-4">
               <button
                 onClick={handleUnlinkPair}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Lock, Mail, AlertCircle, Check } from "lucide-react";
 import { OtpInput } from "@/components/otp-input";
 
@@ -139,6 +140,9 @@ export default function LoginPage() {
       />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
+        <div className="flex justify-center mb-4">
+          <Image src="/logo-book.png" alt="Pairfect" width={72} height={72} className="rounded-2xl shadow-md" priority />
+        </div>
         <h2 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">
           Welcome to Pairfect
         </h2>
