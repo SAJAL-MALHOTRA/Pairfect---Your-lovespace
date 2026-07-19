@@ -56,6 +56,71 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
   );
 }
 
+// Helper to synthesize typewriter click sounds using Web Audio API
+const playTypewriterClick = () => {
+  if (typeof window === "undefined") return;
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    // Slight randomization in pitch to sound organic
+    osc.frequency.setValueAtTime(600 + Math.random() * 500, ctx.currentTime);
+
+    // Click envelop
+    gain.gain.setValueAtTime(0.012, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.04);
+  } catch (e) {
+    // Fail silently to avoid interrupting typing
+  }
+};
+
+// Custom component for typewriter-style text presentation with inline audio synthesis
+function TypewriterText({ text, speed = 35, playSound = false, onComplete }: { text: string; speed?: number; playSound?: boolean; onComplete?: () => void }) {
+  const [displayedText, setDisplayedText] = useState("");
+  const indexRef = useRef(0);
+  const textRef = useRef(text);
+  
+  // Reset if text changes
+  useEffect(() => {
+    setDisplayedText("");
+    indexRef.current = 0;
+    textRef.current = text;
+  }, [text]);
+
+  useEffect(() => {
+    let timer: any;
+    
+    const type = () => {
+      if (indexRef.current < textRef.current.length) {
+        const nextChar = textRef.current[indexRef.current];
+        setDisplayedText(prev => prev + nextChar);
+        indexRef.current += 1;
+        
+        if (playSound && nextChar !== " " && nextChar !== "\n") {
+          playTypewriterClick();
+        }
+        
+        timer = setTimeout(type, speed + Math.random() * 15); // Add slight organic jitter
+      } else if (onComplete) {
+        onComplete();
+      }
+    };
+    
+    timer = setTimeout(type, speed);
+    return () => clearTimeout(timer);
+  }, [text, speed, playSound, onComplete]);
+
+  return <span className="whitespace-pre-wrap">{displayedText}</span>;
+}
+
 export default function LoveLetterPage() {
   const { user, pair, partner, loading } = useAuth();
   const supabase = createClient();
@@ -83,6 +148,9 @@ export default function LoveLetterPage() {
   const [unsealAnimating, setUnsealAnimating] = useState(false);
   const [revealedBlocksCount, setRevealedBlocksCount] = useState(0);
   const [savingMoment, setSavingMoment] = useState(false);
+  const [isTypewriterEnabled, setIsTypewriterEnabled] = useState(false);
+  const [isTypewriterSoundEnabled, setIsTypewriterSoundEnabled] = useState(false);
+  const [isCandlelightEnabled, setIsCandlelightEnabled] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -682,47 +750,134 @@ export default function LoveLetterPage() {
               return (
                 <div className="space-y-8 relative">
                   
-                  {/* CLOSED ENVELOPE SEED VIEW (Wax Seal interaction) */}
+                  {/* CLOSED ENVELOPE SEED VIEW (Wax Seal interaction - Responsive 3D flap & split seal) */}
                   {!isUnsealed && (
-                    <div className={`rounded-3xl border shadow-xl p-12 text-center h-[60vh] flex flex-col justify-between items-center transition-all ${
-                      unsealAnimating ? "scale-95 opacity-50 duration-1000" : "scale-100 opacity-100"
-                    } ${config.bg} ${config.border}`}>
-                      
-                      <div className="space-y-2">
-                        <p className={`text-2xl font-serif italic font-black ${config.text}`}>
-                          To: {activeLetter.recipient_name}
-                        </p>
-                        <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest mt-1">
-                          Private sealed correspondence
-                        </p>
-                      </div>
-
-                      {/* Animated Wax Seal button */}
-                      <button
-                        onClick={() => handleUnsealLetter(activeLetter)}
-                        className="w-36 h-36 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer select-none"
-                        title="Click to unseal letter"
+                    <div className="perspective-1000 w-full max-w-lg mx-auto select-none">
+                      <div
+                        className={`relative w-full h-[60vh] rounded-3xl border shadow-xl flex flex-col justify-between items-center transition-all duration-1000 ${
+                          unsealAnimating ? "scale-95 opacity-50" : "scale-100 opacity-100"
+                        } ${config.bg} ${config.border} overflow-hidden`}
                       >
-                        <WaxSealStamp className="w-full h-full animate-bounce" />
-                      </button>
+                        {/* 3D Envelope Flap Animation Overlay */}
+                        <div
+                          className={`absolute top-0 left-0 right-0 h-1/2 bg-stone-100/50 dark:bg-stone-800/20 border-b border-stone-200/20 origin-top transition-transform duration-700 ease-in-out z-10 ${
+                            unsealAnimating ? "rotate-x-180 pointer-events-none" : ""
+                          }`}
+                          style={{
+                            clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+                            transformStyle: "preserve-3d"
+                          }}
+                        />
 
-                      <div className="space-y-1">
-                        <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest">
-                          Press Wax Seal to Unseal
-                        </p>
-                        <p className="text-xs font-bold text-stone-500">
-                          From: {activeLetter.sender_name}
-                        </p>
+                        {/* Top layout metadata */}
+                        <div className="space-y-2 mt-12 z-0">
+                          <p className={`text-2xl font-serif italic font-black ${config.text}`}>
+                            To: {activeLetter.recipient_name}
+                          </p>
+                          <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest mt-1">
+                            Private sealed correspondence
+                          </p>
+                        </div>
+
+                        {/* Splitting Wax Seal Button */}
+                        <button
+                          onClick={() => handleUnsealLetter(activeLetter)}
+                          disabled={unsealAnimating}
+                          className="relative w-36 h-36 flex items-center justify-center cursor-pointer select-none z-20 group"
+                          title="Click to unseal letter"
+                        >
+                          {/* Split Wax Seal Stamp halves during opening */}
+                          <div className="flex w-full h-full justify-between items-center relative">
+                            <div
+                              className={`w-1/2 h-full overflow-hidden transition-all duration-700 ease-in-out ${
+                                unsealAnimating
+                                  ? "-translate-x-16 -rotate-12 opacity-0"
+                                  : "group-hover:scale-105 active:scale-95 animate-bounce"
+                              }`}
+                              style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
+                            >
+                              <WaxSealStamp className="w-full h-full scale-[2] translate-x-1/4" />
+                            </div>
+                            <div
+                              className={`w-1/2 h-full overflow-hidden transition-all duration-700 ease-in-out ${
+                                unsealAnimating
+                                  ? "translate-x-16 rotate-12 opacity-0"
+                                  : "group-hover:scale-105 active:scale-95 animate-bounce"
+                              }`}
+                              style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
+                            >
+                              <WaxSealStamp className="w-full h-full scale-[2] -translate-x-1/4" />
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Bottom layout metadata */}
+                        <div className="space-y-1 mb-12 z-0">
+                          <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest">
+                            Press Wax Seal to Unseal
+                          </p>
+                          <p className="text-xs font-bold text-stone-500">
+                            From: {activeLetter.sender_name}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* UNROLLED ELEGANT LETTER BLOCK VIEW */}
                   {isUnsealed && (
-                    <div className="rounded-3xl border border-border/80 bg-white p-8 md:p-12 shadow-xl space-y-8 relative overflow-hidden animate-fade-in font-serif italic text-left min-h-[70vh] flex flex-col justify-between">
-                      
+                    <div
+                      className={`rounded-3xl border transition-all duration-500 p-8 md:p-12 shadow-xl space-y-8 relative overflow-hidden font-serif italic text-left min-h-[70vh] flex flex-col justify-between ${
+                        isCandlelightEnabled
+                          ? "border-amber-900/30 bg-gradient-to-br from-[#1a110a] via-[#24170e] to-[#120a06] text-amber-200 animate-candle-flicker"
+                          : "border-border/80 bg-white text-stone-800"
+                      }`}
+                    >
+                      {/* Letter Settings Bar */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/20 pb-4 not-italic select-none">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                          Aesthetic View Settings
+                        </span>
+                        <div className="flex items-center gap-4 flex-wrap">
+                          {/* Candlelight Toggle */}
+                          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold">
+                            <input
+                              type="checkbox"
+                              checked={isCandlelightEnabled}
+                              onChange={(e) => setIsCandlelightEnabled(e.target.checked)}
+                              className="rounded border-border text-amber-500 focus:ring-amber-400"
+                            />
+                            <span>🕯️ Candlelight</span>
+                          </label>
+
+                          {/* Typewriter Toggle */}
+                          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold">
+                            <input
+                              type="checkbox"
+                              checked={isTypewriterEnabled}
+                              onChange={(e) => setIsTypewriterEnabled(e.target.checked)}
+                              className="rounded border-border text-pink-500 focus:ring-pink-400"
+                            />
+                            <span>⌨️ Typewriter</span>
+                          </label>
+
+                          {/* Sound Toggle (only show if typewriter is enabled) */}
+                          {isTypewriterEnabled && (
+                            <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold animate-fade-in">
+                              <input
+                                type="checkbox"
+                                checked={isTypewriterSoundEnabled}
+                                onChange={(e) => setIsTypewriterSoundEnabled(e.target.checked)}
+                                className="rounded border-border text-blue-500 focus:ring-blue-400"
+                              />
+                              <span>🔊 sound click</span>
+                            </label>
+                          )}
+                        </div>
+                      </div>
+
                       {/* Letter Top Details */}
-                      <div className="border-b border-border/40 flex justify-between items-center text-xs text-stone-400 font-mono tracking-wide not-italic select-none">
+                      <div className="flex justify-between items-center text-xs font-mono tracking-wide not-italic select-none opacity-60">
                         <span>TO: {activeLetter.recipient_name}</span>
                         <span>{format(parseISO(activeLetter.sent_at), "MMMM d, yyyy")}</span>
                       </div>
@@ -739,11 +894,22 @@ export default function LoveLetterPage() {
                               className="animate-fade-in transition-all duration-700 ease-out transform translate-y-0"
                             >
                               {block.type === "text" ? (
-                                <p className="text-base leading-relaxed text-stone-800 whitespace-pre-wrap">
-                                  {block.value}
+                                <p className={`text-base leading-relaxed whitespace-pre-wrap ${
+                                  isCandlelightEnabled ? "text-amber-100/90" : "text-stone-800"
+                                } ${!isTypewriterEnabled ? "animate-ink-bleed" : ""}`}>
+                                  {isTypewriterEnabled ? (
+                                    <TypewriterText 
+                                      text={block.value} 
+                                      playSound={isTypewriterSoundEnabled} 
+                                    />
+                                  ) : (
+                                    block.value
+                                  )}
                                 </p>
                               ) : (
-                                <div className="rounded-2xl overflow-hidden border border-border/50 max-w-sm my-4 shadow-md bg-stone-50 p-2 flex flex-col items-center not-italic">
+                                <div className={`rounded-2xl overflow-hidden border border-border/50 max-w-sm my-4 shadow-md p-2 flex flex-col items-center not-italic ${
+                                  isCandlelightEnabled ? "bg-[#18110b] border-amber-950/20" : "bg-stone-50"
+                                }`}>
                                   <GiphyRenderer giphyId={block.giphy_id} />
                                   <span className="text-[8px] font-mono uppercase bg-pink-500 text-white px-2 py-0.5 rounded-full mt-2 font-bold tracking-wider">
                                     🐾 Embedded Giphy Sticker
@@ -757,8 +923,8 @@ export default function LoveLetterPage() {
 
                       {/* Sign-off details */}
                       {revealedBlocksCount > activeLetter.content.length && (
-                        <div className="border-t border-border/40 pt-6 space-y-4 animate-fade-in">
-                          <p className="text-right text-sm font-bold text-stone-700">
+                        <div className="border-t border-border/20 pt-6 space-y-4 animate-fade-in">
+                          <p className="text-right text-sm font-bold opacity-90">
                             With love, {activeLetter.sender_name}
                           </p>
 
