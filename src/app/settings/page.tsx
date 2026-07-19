@@ -32,11 +32,11 @@ function SettingsRow({
   return (
     <div className={`flex items-center justify-between py-4 px-0 ${dangerous ? "text-red-600 dark:text-red-400" : ""}`}>
       <div className="min-w-0 flex-1 pr-4">
-        <p className={`text-sm font-medium leading-tight ${dangerous ? "text-red-600 dark:text-red-400" : "text-[#2E2A25] dark:text-[#EDE7D8]"}`}>
+        <p className={`text-sm font-medium leading-tight ${dangerous ? "text-red-600 dark:text-red-400" : "text-[var(--text)]"}`}>
           {label}
         </p>
         {description && (
-          <p className="text-[10px] text-[#A89E90] dark:text-[#7C7267] font-mono mt-0.5 leading-relaxed">
+          <p className="text-[10px] text-[var(--text-soft)] font-mono mt-0.5 leading-relaxed">
             {description}
           </p>
         )}
@@ -50,10 +50,10 @@ function SettingsRow({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-0">
-      <p className="text-[9px] font-mono uppercase tracking-widest text-[#A89E90] dark:text-[#7C7267] px-1 mb-2">
+      <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--text-soft)] px-1 mb-2">
         {title}
       </p>
-      <div className="bg-[#FAF6EE] dark:bg-[#1E1914] rounded-2xl border border-[#EAE3D5] dark:border-[#3A3028] overflow-hidden divide-y divide-[#EAE3D5] dark:divide-[#3A3028] px-5">
+      <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border)] overflow-hidden divide-y divide-[var(--border)] px-5">
         {children}
       </div>
     </div>
@@ -70,7 +70,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0 ${
-        checked ? "bg-[#802030] dark:bg-[#B03B50]" : "bg-[#D8D0C0] dark:bg-[#4A3E30]"
+        checked ? "bg-[var(--burgundy)]" : "bg-[var(--border)]"
       }`}
     >
       <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-4" : "translate-x-0.5"}`} />
@@ -231,23 +231,23 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FCFBF9] dark:bg-[#1A1410] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
         <Navigation />
-        <Loader2 className="w-5 h-5 text-[#802030] animate-spin" />
+        <Loader2 className="w-5 h-5 text-[var(--burgundy)] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#FCFBF9] dark:bg-[#1A1410]">
+    <div className="relative min-h-screen bg-[var(--bg)]">
       <Navigation />
 
       <main className="max-w-md mx-auto px-5 py-16 pb-36 space-y-8">
 
         {/* Header — the simplicity IS the hero */}
         <div>
-          <p className="text-[9px] font-mono tracking-widest uppercase text-[#A89E90] dark:text-[#7C7267]">Account</p>
-          <h1 className="font-display italic text-3xl font-black text-[#2E2A25] dark:text-[#EDE7D8] mt-0.5">Settings</h1>
+          <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--text-soft)]">Account</p>
+          <h1 className="font-display italic text-3xl font-black text-[var(--text)] mt-0.5">Settings</h1>
         </div>
 
         {/* Feedback messages */}
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                 value={displayName}
                 onChange={e => setDisplayName(e.target.value)}
                 placeholder="Your name"
-                className="w-full px-4 py-2.5 border border-[#EAE3D5] dark:border-[#3A3028] bg-[#FCFBF9] dark:bg-[#1A1410] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030]"
+                className="w-full px-4 py-2.5 border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
               />
               <button
                 type="submit"
@@ -303,7 +303,7 @@ export default function SettingsPage() {
                 value={newEmail}
                 onChange={e => setNewEmail(e.target.value)}
                 placeholder="New email address"
-                className="w-full px-4 py-2.5 border border-[#EAE3D5] dark:border-[#3A3028] bg-[#FCFBF9] dark:bg-[#1A1410] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030]"
+                className="w-full px-4 py-2.5 border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
               />
               <button
                 type="submit"
@@ -324,7 +324,7 @@ export default function SettingsPage() {
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   placeholder="New password (min 6 characters)"
-                  className="w-full px-4 py-2.5 border border-[#EAE3D5] dark:border-[#3A3028] bg-[#FCFBF9] dark:bg-[#1A1410] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030]"
+                  className="w-full px-4 py-2.5 border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
                 />
                 <button
                   type="submit"
@@ -384,12 +384,12 @@ export default function SettingsPage() {
             <SettingsRow
               label="Connected to"
               description={partner?.display_name || "Your partner"}
-              right={<span className="text-[9px] font-mono uppercase tracking-widest text-[#802030]">Active</span>}
+              right={<span className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)]">Active</span>}
             />
             <SettingsRow
               label="Invite code"
               description="Share to invite your partner"
-              right={<span className="text-[10px] font-mono font-bold bg-[#F5EDD8] px-2 py-1 rounded-lg border border-[#E5D9C5]">{pair.invite_code}</span>}
+              right={<span className="text-[10px] font-mono font-bold bg-[var(--paper-mid)] text-[var(--text)] px-2 py-1 rounded-lg border border-[var(--border)]">{pair.invite_code}</span>}
             />
 
             {/* Anniversary / Start Date */}
@@ -403,7 +403,7 @@ export default function SettingsPage() {
                   type="date"
                   value={anniversaryDate}
                   onChange={e => setAnniversaryDate(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-[#EAE3D5] bg-[#FCFBF9] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030] text-[#2E2A25]"
+                  className="w-full px-4 py-2.5 border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
                 />
                 <button
                   type="submit"
@@ -453,13 +453,13 @@ export default function SettingsPage() {
       {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[#FCFBF9] dark:bg-[#1A1410] rounded-3xl max-w-sm w-full border border-red-200 dark:border-red-900/30 overflow-hidden shadow-2xl">
+          <div className="bg-[var(--bg)] rounded-3xl max-w-sm w-full border border-red-200 dark:border-red-900/30 overflow-hidden shadow-2xl">
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <ShieldAlert className="w-5 h-5 text-red-500" />
-                <p className="font-bold text-[#2E2A25] dark:text-[#EDE7D8] text-sm">Delete account</p>
+                <p className="font-bold text-[var(--text)] text-sm">Delete account</p>
               </div>
-              <p className="text-xs text-[#8A7B6E] leading-relaxed">
+              <p className="text-xs text-[var(--text-soft)] leading-relaxed">
                 This is permanent. Your profile, login, and relationship data will be removed. Type <strong className="text-red-500">DELETE</strong> to confirm.
               </p>
               <input
@@ -473,7 +473,7 @@ export default function SettingsPage() {
                 <button
                   onClick={() => { setShowDeleteModal(false); setConfirmText(""); }}
                   disabled={deletingAccount}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[#8A7B6E] border border-[#EAE3D5] dark:border-[#3A3028] bg-transparent hover:bg-[#FAF6EE] dark:hover:bg-[#241E18] cursor-pointer transition-all"
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--card-bg)] cursor-pointer transition-all"
                 >
                   Cancel
                 </button>

@@ -51,7 +51,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${cormorant.variable} ${playfair.variable} ${ebGaramond.variable} ${caveat.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#FCFBF9] text-[#2E2A25]">
+      <body className="min-h-full flex flex-col font-sans bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

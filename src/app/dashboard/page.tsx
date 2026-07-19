@@ -93,7 +93,7 @@ function HomeEnvelope({ partnerName }: { partnerName: string }) {
       <div
         className="relative w-full h-full rounded-2xl border overflow-hidden z-10"
         style={{
-          backgroundColor: "#F1E3C9",
+          backgroundColor: "var(--paper-mid)",
           borderColor: "var(--border)",
           boxShadow: "0 18px 40px var(--shadow)",
         }}
@@ -126,7 +126,7 @@ function GlassJarSketch() {
   return (
     <svg viewBox="0 0 100 120" className="w-16 h-20" fill="none" aria-hidden="true">
       <path d="M 30 20 Q 20 20 20 30 L 20 90 Q 20 100 30 100 H 70 Q 80 100 80 90 L 80 30 Q 80 20 70 20 Z" fill="rgba(255, 255, 255, 0.15)" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <rect x="35" y="12" width="30" height="8" rx="2" fill="#8C6A48" stroke="var(--text-soft)" strokeWidth="1.2" />
+      <rect x="35" y="12" width="30" height="8" rx="2" fill="var(--text-soft)" stroke="var(--text-soft)" strokeWidth="1.2" />
       
       {/* Mini slips inside */}
       <rect x="32" y="75" width="10" height="10" rx="2" fill="#E0B8B8" transform="rotate(15 32 75)" />
@@ -134,7 +134,7 @@ function GlassJarSketch() {
       <rect x="58" y="72" width="10" height="10" rx="2" fill="#D2C4D8" transform="rotate(25 58 72)" />
       
       {/* Heart tag label */}
-      <rect x="38" y="45" width="24" height="20" rx="3" fill="#FAF6EE" stroke="var(--text-soft)" strokeWidth="1" />
+      <rect x="38" y="45" width="24" height="20" rx="3" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1" />
       <path d="M 50 51 C 48 47, 44 49, 50 57 C 56 49, 52 47, 50 51 Z" fill="var(--rose)" />
     </svg>
   );
@@ -144,9 +144,9 @@ function GlassJarSketch() {
 function AnniversaryCakeSketch() {
   return (
     <svg viewBox="0 0 100 100" className="w-20 h-20" fill="none" aria-hidden="true">
-      <rect x="15" y="60" width="70" height="24" rx="4" fill="#FAF6EE" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <rect x="25" y="40" width="50" height="20" rx="4" fill="#FAF6EE" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <rect x="35" y="24" width="30" height="16" rx="4" fill="#FAF6EE" stroke="var(--text-soft)" strokeWidth="1.5" />
+      <rect x="15" y="60" width="70" height="24" rx="4" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1.5" />
+      <rect x="25" y="40" width="50" height="20" rx="4" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1.5" />
+      <rect x="35" y="24" width="30" height="16" rx="4" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1.5" />
       <line x1="50" y1="24" x2="50" y2="12" stroke="var(--text-soft)" strokeWidth="1.5" />
       <path d="M 50 12 C 48 8, 44 10, 50 18 C 56 10, 52 8, 50 12 Z" fill="var(--rose)" />
       <path d="M 15 68 C 25 72, 75 72, 85 68" stroke="var(--rose)" strokeWidth="1" />
@@ -476,7 +476,7 @@ export default function DashboardPage() {
                 {/* Soft background shape shadow/bloom blur */}
                 <path
                   d="M 50 86 C 25 63, 6 43, 6 27 C 6 12, 23 5, 50 31 C 77 5, 94 12, 94 27 C 94 43, 75 63, 50 86 Z"
-                  fill="rgba(255, 218, 224, 0.15)"
+                  fill="rgba(255, 200, 215, 0.06)"
                   filter="blur(3px)"
                 />
 
@@ -610,7 +610,7 @@ export default function DashboardPage() {
               </p>
               <Link
                 href="/love-letter"
-                className="py-3 px-10 text-xs font-mono uppercase tracking-widest text-[#F8F3EE] rounded-full shadow-sm cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                className="py-3 px-10 text-xs font-mono uppercase tracking-widest text-white rounded-full shadow-sm cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
                 style={{
                   backgroundColor: "var(--burgundy)",
                   boxShadow: "0 4px 14px rgba(142, 43, 69, 0.22)",
@@ -678,12 +678,12 @@ export default function DashboardPage() {
                 {/* Micro polaroid container */}
                 <div
                   className="polaroid p-2 z-10 rotate-[-2deg] flex-shrink-0"
-                  style={{ width: "95px", background: "#FFF", boxShadow: "0 4px 10px rgba(0,0,0,0.05)" }}
+                  style={{ width: "95px", boxShadow: "0 4px 10px var(--shadow)" }}
                 >
-                  <div className="w-full h-16 bg-[#E5D4B0] rounded-sm overflow-hidden flex items-center justify-center">
+                  <div className="w-full h-16 bg-[var(--paper-deep)] rounded-sm overflow-hidden flex items-center justify-center">
                     <span className="text-xl">🌅</span>
                   </div>
-                  <p className="font-handwriting text-[6px] text-center text-gray-400 mt-2">Love</p>
+                  <p className="font-handwriting text-[6px] text-center text-[var(--text-soft)] mt-2">Love</p>
                 </div>
 
                 <div className="space-y-1">

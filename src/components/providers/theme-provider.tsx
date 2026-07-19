@@ -10,16 +10,21 @@ const ThemeContext = createContext<{
 } | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const theme: Theme = "light";
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    // Force light mode on document root and clear previous settings
-    document.documentElement.classList.remove("dark");
-    localStorage.removeItem("theme");
+    const saved = localStorage.getItem("theme") as Theme;
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const resolved = saved || (systemDark ? "dark" : "light");
+    setTheme(resolved);
+    document.documentElement.classList.toggle("dark", resolved === "dark");
   }, []);
 
   const toggleTheme = () => {
-    // No-op to disable changing themes
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
   };
 
   return (

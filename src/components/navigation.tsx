@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -110,12 +110,8 @@ export default function Navigation() {
             aria-label="Main navigation"
           >
             <div
-              className="flex flex-col items-center gap-2 py-4 px-2.5 rounded-full"
+              className="flex flex-col items-center gap-2 py-4 px-2.5 rounded-full bg-[rgba(255,255,255,0.55)] dark:bg-[rgba(30,20,14,0.65)] border border-[rgba(255,255,255,0.6)] dark:border-[rgba(61,48,40,0.6)] backdrop-blur-md"
               style={{
-                background: "rgba(255, 255, 255, 0.55)",
-                backdropFilter: "blur(14px)",
-                WebkitBackdropFilter: "blur(14px)",
-                border: "1px solid rgba(255, 255, 255, 0.6)",
                 boxShadow: "0 10px 30px var(--shadow)",
               }}
             >
@@ -148,8 +144,7 @@ export default function Navigation() {
                           {isActive && (
                             <motion.div
                               layoutId="nav-active-pill"
-                              className="absolute inset-0 rounded-full"
-                              style={{ background: "rgba(142, 43, 69, 0.1)" }}
+                              className="absolute inset-0 rounded-full bg-[var(--burgundy)]/10"
                               transition={{
                                 type: "spring",
                                 stiffness: 450,
