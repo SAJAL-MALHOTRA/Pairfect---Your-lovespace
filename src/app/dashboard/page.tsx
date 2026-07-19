@@ -298,11 +298,92 @@ export default function DashboardPage() {
   const greetingLine = getGreeting();
   const recipientName = partner?.display_name || "partner";
 
+  // prefers-reduced-motion hook
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
+
+  // Ambient particles concentrated in whitespace/edges, avoiding the center envelope area
+  const particles = [
+    { type: "heart", size: 12, left: "8%", top: "12%", color: "var(--rose)", blur: "blur-[3px]", duration: 25, delay: 0, dx: [-15, 15, -15], dy: [-10, 10, -10], rot: [0, 15, 0] },
+    { type: "dot", size: 16, left: "85%", top: "15%", color: "var(--text-soft)", blur: "blur-[6px]", duration: 32, delay: 1.5, dx: [-20, 20, -20], dy: [-15, 15, -15], rot: [0, 0, 0] },
+    { type: "sparkle", size: 14, left: "10%", top: "75%", color: "var(--rose)", blur: "blur-[2px]", duration: 22, delay: 3, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 45, 0] },
+    { type: "heart", size: 20, left: "88%", top: "82%", color: "var(--rose)", blur: "blur-[5px]", duration: 38, delay: 0.5, dx: [-25, 25, -25], dy: [-20, 20, -20], rot: [0, -20, 0] },
+    { type: "dot", size: 12, left: "5%", top: "42%", color: "var(--text-soft)", blur: "blur-[4px]", duration: 20, delay: 2.2, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, 0, 0] },
+    { type: "sparkle", size: 18, left: "92%", top: "48%", color: "var(--rose)", blur: "blur-[3px]", duration: 28, delay: 4, dx: [-18, 18, -18], dy: [-15, 15, -15], rot: [0, -35, 0] },
+    { type: "heart", size: 14, left: "24%", top: "16%", color: "var(--rose)", blur: "blur-[4px]", duration: 26, delay: 1, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 10, 0] },
+    { type: "dot", size: 22, left: "74%", top: "20%", color: "var(--text-soft)", blur: "blur-[8px]", duration: 40, delay: 5, dx: [-28, 28, -28], dy: [-22, 22, -22], rot: [0, 0, 0] },
+    { type: "sparkle", size: 12, left: "26%", top: "78%", color: "var(--rose)", blur: "blur-[2px]", duration: 24, delay: 2.7, dx: [-12, 12, -12], dy: [-8, 8, -8], rot: [0, 90, 0] },
+    { type: "heart", size: 16, left: "76%", top: "80%", color: "var(--rose)", blur: "blur-[5px]", duration: 34, delay: 1.8, dx: [-22, 22, -22], dy: [-18, 18, -18], rot: [0, -15, 0] },
+    { type: "dot", size: 18, left: "4%", top: "28%", color: "var(--text-soft)", blur: "blur-[7px]", duration: 30, delay: 3.5, dx: [-16, 16, -16], dy: [-20, 20, -20], rot: [0, 0, 0] },
+    { type: "sparkle", size: 16, left: "94%", top: "26%", color: "var(--rose)", blur: "blur-[3px]", duration: 36, delay: 0.8, dx: [-20, 20, -20], dy: [-16, 16, -16], rot: [0, 60, 0] },
+  ];
+
   return (
     <div
-      className="relative min-h-[100dvh] flex flex-col items-center"
+      className="relative min-h-[100dvh] flex flex-col items-center overflow-x-hidden"
       style={{ backgroundColor: "var(--bg)" }}
     >
+      {/* ─── AMBIENT BACKGROUND PARTICLES ─── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none" aria-hidden="true">
+        {particles.map((p, idx) => {
+          const animationProps: any = reducedMotion
+            ? {
+                animate: { opacity: 0.05 },
+                transition: { duration: 1 }
+              }
+            : {
+                animate: {
+                  x: p.dx,
+                  y: p.dy,
+                  rotate: p.rot,
+                  opacity: [0.03, 0.12, 0.03],
+                },
+                transition: {
+                  duration: p.duration,
+                  delay: p.delay,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }
+              };
+
+          return (
+            <motion.div
+              key={idx}
+              className={`absolute ${p.blur}`}
+              style={{
+                left: p.left,
+                top: p.top,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                color: p.color,
+                opacity: 0.05,
+              }}
+              {...animationProps}
+            >
+              {p.type === "heart" && (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              )}
+              {p.type === "dot" && (
+                <div className="w-full h-full rounded-full bg-current" />
+              )}
+              {p.type === "sparkle" && (
+                <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" className="w-full h-full">
+                  <path d="M12 3v4M12 17v4M3 12h4M17 12h4" strokeLinecap="round" />
+                </svg>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
       <Navigation />
 
       {/* Main Container: two-column layout on large screens */}
