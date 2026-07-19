@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { format, parseISO } from "date-fns";
-import { Loader2, Plus, X, Trash2, Upload, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { Loader2, Plus, X, Trash2, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LookingAtPhotos } from "@/components/cozy-illustrations";
 
@@ -36,7 +36,6 @@ interface Moment {
 function Polaroid({ moment, index, onOpen }: { moment: Moment; index: number; onOpen: () => void }) {
   const rot = ROTATIONS[index % ROTATIONS.length];
   const washi = WASHI[index % WASHI.length];
-  const [loaded, setLoaded] = useState(false);
 
   const isImageUrl = moment.photo_url && (moment.photo_url.startsWith("http") || moment.photo_url.startsWith("/") || moment.photo_url.startsWith("data:"));
   const src = isImageUrl
@@ -65,14 +64,12 @@ function Polaroid({ moment, index, onOpen }: { moment: Moment; index: number; on
       <div className="polaroid" style={{ width: "clamp(130px, 20vw, 200px)" }}>
         <div className="bg-[var(--border-mid)] overflow-hidden flex items-center justify-center" style={{ aspectRatio: "1 / 1" }}>
           {src ? (
-            <img src={src} alt={moment.title} onLoad={() => setLoaded(true)}
-              className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`} />
+            <img src={src} alt={moment.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-[var(--paper-mid)]">
               <span className="text-4xl select-none">{displayEmoji}</span>
             </div>
           )}
-          {src && !loaded && <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin text-[var(--ink-light)]" /></div>}
         </div>
         <div className="pt-3 pb-0.5">
           <p className="font-handwriting text-sm text-[#3A2E22] dark:text-[#D4C8B8] leading-tight truncate">{moment.title}</p>
@@ -178,10 +175,7 @@ export default function MomentsPage() {
   const [description, setDesc]    = useState("");
   const [momentDate, setDate]     = useState(new Date().toISOString().split("T")[0]);
   const [selectedEmoji, setEmoji] = useState("💖");
-  const [photoFile, setFile]      = useState<File | null>(null);
-  const [photoPreview, setPreview]= useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving]       = useState(false);
 
   const fetchMoments = async () => {
     if (!pair) return;
@@ -206,24 +200,21 @@ export default function MomentsPage() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pair || !user || !title.trim()) return;
-    setUploading(true); setError(null);
+    setSaving(true); setError(null);
     try {
-      let photoUrl: string | null = null;
-      if (photoFile) {
-        const path = `${pair.id}/${Date.now()}.${photoFile.name.split(".").pop()}`;
-        const { error: upErr } = await supabase.storage.from("moment-photos").upload(path, photoFile, { upsert: true });
-        if (upErr) throw upErr;
-        photoUrl = supabase.storage.from("moment-photos").getPublicUrl(path).data?.publicUrl || null;
-      } else {
-        photoUrl = selectedEmoji;
-      }
-
-      const { error: insErr } = await supabase.from("shared_moments").insert({ pair_id: pair.id, title: title.trim(), description: description.trim() || null, moment_date: momentDate, photo_url: photoUrl });
+      const { error: insErr } = await supabase.from("shared_moments").insert({
+        pair_id: pair.id,
+        created_by: user.id,
+        title: title.trim(),
+        description: description.trim() || null,
+        moment_date: momentDate,
+        photo_url: selectedEmoji,
+      });
       if (insErr) throw insErr;
-      setTitle(""); setDesc(""); setFile(null); setPreview(null); setEmoji("💖"); setDate(new Date().toISOString().split("T")[0]);
+      setTitle(""); setDesc(""); setEmoji("💖"); setDate(new Date().toISOString().split("T")[0]);
       setAddOpen(false); fetchMoments();
     } catch (err: any) { setError(err.message || "Failed to save."); }
-    finally { setUploading(false); }
+    finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
@@ -333,14 +324,10 @@ export default function MomentsPage() {
                 {/* Polaroid Live Preview Box */}
                 <div className="relative rounded-2xl border overflow-hidden flex flex-col items-center justify-center shadow-inner"
                   style={{ borderColor: "var(--border-mid)", background: "var(--paper-warm)", height: "140px" }}>
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center space-y-1">
-                      <span className="text-5xl select-none animate-bounce">{selectedEmoji}</span>
-                      <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mt-1">Thumbnail Preview</p>
-                    </div>
-                  )}
+                  <div className="flex flex-col items-center justify-center space-y-1">
+                    <span className="text-5xl select-none animate-bounce">{selectedEmoji}</span>
+                    <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mt-1">Thumbnail Preview</p>
+                  </div>
                 </div>
 
                 {/* 20+ Pookie & Heart Emojis Selector Grid */}
@@ -351,16 +338,12 @@ export default function MomentsPage() {
                   <div className="grid grid-cols-6 gap-2 p-2 rounded-2xl border bg-[var(--card-bg)] max-h-36 overflow-y-auto"
                     style={{ borderColor: "var(--border-mid)" }}>
                     {POOKIE_EMOJIS.map((emoji) => {
-                      const isSelected = !photoPreview && selectedEmoji === emoji;
+                      const isSelected = selectedEmoji === emoji;
                       return (
                         <button
                           key={emoji}
                           type="button"
-                          onClick={() => {
-                            setEmoji(emoji);
-                            setFile(null);
-                            setPreview(null);
-                          }}
+                          onClick={() => setEmoji(emoji)}
                           className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all cursor-pointer ${
                             isSelected
                               ? "bg-[var(--rose)]/20 border-2 border-[var(--burgundy)] scale-110 shadow-xs"
@@ -372,31 +355,6 @@ export default function MomentsPage() {
                       );
                     })}
                   </div>
-                </div>
-
-                {/* Optional Custom File Upload Trigger */}
-                <div className="pt-1 text-center">
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="text-[10px] font-mono text-[var(--ink-light)] hover:text-[var(--burgundy)] underline cursor-pointer inline-flex items-center gap-1"
-                  >
-                    <Upload className="w-3 h-3" /> {photoFile ? `File: ${photoFile.name}` : "Or upload custom photo file..."}
-                  </button>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      setFile(f);
-                      const r = new FileReader();
-                      r.onload = (ev) => setPreview(ev.target?.result as string);
-                      r.readAsDataURL(f);
-                    }}
-                  />
                 </div>
 
                 {[
@@ -419,9 +377,9 @@ export default function MomentsPage() {
 
                 {error && <p className="text-xs text-red-600 bg-red-50 dark:bg-red-950/20 rounded-xl px-4 py-2">{error}</p>}
 
-                <button type="submit" disabled={uploading || !title.trim()}
-                  className="btn-primary w-full py-3 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-40">
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Memory"}
+                <button type="submit" disabled={saving || !title.trim()}
+                  className="btn-primary w-full py-3 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-40 flex items-center justify-center">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Memory"}
                 </button>
               </form>
             </motion.div>
@@ -431,3 +389,4 @@ export default function MomentsPage() {
     </div>
   );
 }
+
