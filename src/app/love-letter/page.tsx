@@ -1,962 +1,752 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
-import { 
-  Heart, Check, X, Loader2, AlertCircle, 
-  Send, ArrowLeft, Clock, MailOpen, Mail,
-  BookOpen, Plus, Trash2, Smile, Gift, Lock, Search
-} from "lucide-react";
+import { Loader2, ArrowLeft, BookOpen, Plus, Smile, Search, X, Mail, Gift } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { LoveLetterEnvelope, WaxSealStamp } from "@/components/cozy-illustrations";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Isolated Giphy Renderer component to resolve URLs on-the-fly at runtime
+// ── Giphy block ──────────────────────────────────────────────────────────────
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    const fetchUrl = async () => {
-      try {
-        const res = await fetch(`/api/giphy/resolve?id=${encodeURIComponent(giphyId)}`);
-        const json = await res.json();
-        if (!res.ok) {
-          throw new Error(json.error || "Failed to load sticker");
-        }
-        setUrl(json.url || null);
-      } catch (e) {
-        console.error("Giphy resolve error:", e);
-      } finally {
-        setUrl(null);
-        setLoading(false);
+    fetch(`/api/giphy/resolve?id=${encodeURIComponent(giphyId)}`)
+      .then(r => r.json())
+      .then(d => setUrl(d.url || null))
+      .catch(() => setUrl(null))
+      .finally(() => setLoading(false));
+  }, [giphyId]);
+  if (loading) return <div className="flex items-center justify-center h-24"><Loader2 className="w-4 h-4 animate-spin text-[var(--ink-light)]" /></div>;
+  if (!url) return <p className="text-[10px] text-[var(--ink-light)] font-mono text-center py-3">Sticker unavailable</p>;
+  return <img src={url} alt="Sticker" className="rounded-xl max-h-44 object-contain w-full" />;
+}
+
+// ── Typewriter ───────────────────────────────────────────────────────────────
+const playClick = () => {
+  try {
+    const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = "sine"; osc.frequency.value = 550 + Math.random() * 350;
+    g.gain.setValueAtTime(0.012, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.04);
+  } catch {}
+};
+
+function TypewriterText({ text, speed = 30, sound = false }: { text: string; speed?: number; sound?: boolean }) {
+  const [shown, setShown] = useState("");
+  const i = useRef(0);
+  useEffect(() => { setShown(""); i.current = 0; }, [text]);
+  useEffect(() => {
+    let t: any;
+    const type = () => {
+      if (i.current < text.length) {
+        const ch = text[i.current];
+        setShown(p => p + ch);
+        i.current++;
+        if (sound && ch.trim()) playClick();
+        t = setTimeout(type, speed + Math.random() * 10);
       }
     };
-    fetchUrl();
-  }, [giphyId]);
+    t = setTimeout(type, speed);
+    return () => clearTimeout(t);
+  }, [text, speed, sound]);
+  return <>{shown}</>;
+}
 
-  if (loading) {
-    return (
-      <div className="w-full h-40 flex items-center justify-center bg-stone-50 rounded-xl">
-        <Loader2 className="w-5 h-5 animate-spin text-pink-500" />
-      </div>
-    );
-  }
-
-  if (!url) {
-    return (
-      <div className="text-[10px] text-stone-400 font-mono p-4 text-center">
-        Sticker unavailable
-      </div>
-    );
-  }
-
+// ── Envelope SVG fold diagram ────────────────────────────────────────────────
+function EnvelopeFolds({ dark = false }: { dark?: boolean }) {
+  const stroke = dark ? "rgba(255,255,255,0.06)" : "rgba(160,130,90,0.28)";
+  const fill = dark ? "rgba(255,255,255,0.03)" : "rgba(200,175,135,0.14)";
   return (
-    <img src={url} alt="Cat sticker" className="rounded-xl max-h-48 object-contain w-full" />
+    <svg viewBox="0 0 400 260" className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" fill="none">
+      <path d="M0,0 L200,120 L400,0" fill={fill} stroke={stroke} strokeWidth="1.4" />
+      <path d="M0,260 L140,145" stroke={stroke} strokeWidth="1" />
+      <path d="M400,260 L260,145" stroke={stroke} strokeWidth="1" />
+    </svg>
   );
 }
 
-// Helper to synthesize typewriter click sounds using Web Audio API
-const playTypewriterClick = () => {
-  if (typeof window === "undefined") return;
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(600 + Math.random() * 500, ctx.currentTime);
-
-    gain.gain.setValueAtTime(0.012, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 0.04);
-  } catch (e) {}
-};
-
-// Custom typewriter effect component
-function TypewriterText({ text, speed = 35, playSound = false, onComplete }: { text: string; speed?: number; playSound?: boolean; onComplete?: () => void }) {
-  const [displayedText, setDisplayedText] = useState("");
-  const indexRef = useRef(0);
-  const textRef = useRef(text);
-  
-  useEffect(() => {
-    setDisplayedText("");
-    indexRef.current = 0;
-    textRef.current = text;
-  }, [text]);
-
-  useEffect(() => {
-    let timer: any;
-    const type = () => {
-      if (indexRef.current < textRef.current.length) {
-        const nextChar = textRef.current[indexRef.current];
-        setDisplayedText(prev => prev + nextChar);
-        indexRef.current += 1;
-        
-        if (playSound && nextChar !== " " && nextChar !== "\n") {
-          playTypewriterClick();
-        }
-        timer = setTimeout(type, speed + Math.random() * 15);
-      } else if (onComplete) {
-        onComplete();
-      }
-    };
-    timer = setTimeout(type, speed);
-    return () => clearTimeout(timer);
-  }, [text, speed, playSound, onComplete]);
-
-  return <span className="whitespace-pre-wrap">{displayedText}</span>;
+// ── Botanical corner sprig ────────────────────────────────────────────────────
+function Sprig({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 70 120" className={className} fill="none" aria-hidden>
+      <path d="M35 118 C35 92 33 68 36 48 C38 33 35 18 33 4" stroke="#C4A882" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M35 98 C27 90 18 87 11 78" stroke="#C4A882" strokeWidth="1.1" strokeLinecap="round" />
+      <path d="M35 78 C26 70 18 66 10 57" stroke="#C4A882" strokeWidth="1" strokeLinecap="round" />
+      <path d="M35 88 C43 80 52 77 59 68" stroke="#C4A882" strokeWidth="1.1" strokeLinecap="round" />
+      <path d="M35 68 C44 60 52 56 60 47" stroke="#C4A882" strokeWidth="1" strokeLinecap="round" />
+      <circle cx="11" cy="78" r="2.1" fill="#C4A882" opacity="0.7" />
+      <circle cx="10" cy="57" r="1.8" fill="#C4A882" opacity="0.64" />
+      <circle cx="59" cy="68" r="2.1" fill="#C4A882" opacity="0.7" />
+      <circle cx="60" cy="47" r="1.8" fill="#C4A882" opacity="0.64" />
+      <circle cx="33" cy="4" r="2.5" fill="#C4A882" opacity="0.76" />
+    </svg>
+  );
 }
 
+// ── WaxSeal button — animated ─────────────────────────────────────────────────
+function WaxSealButton({ onPress, shattering }: { onPress: () => void; shattering: boolean }) {
+  return (
+    <AnimatePresence>
+      {!shattering ? (
+        <motion.button
+          key="seal"
+          aria-label="Break the seal to read the letter"
+          onClick={onPress}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          exit={{ scale: 0, opacity: 0, filter: "blur(8px)" }}
+          transition={{ type: "spring", stiffness: 500, damping: 28 }}
+          style={{
+            filter: "drop-shadow(0 4px 14px rgba(128,32,48,0.38))",
+          }}
+        >
+          <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
+            <circle cx="28" cy="28" r="26" fill="var(--seal-red)" />
+            <circle cx="28" cy="28" r="21.5" fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
+            <path d="M22 20 L22 36 M22 20 L28 20 C31.3 20 33 21.6 33 24 C33 26.4 31.3 28 28 28 L22 28"
+              fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <motion.circle
+              cx="28" cy="28" r="26"
+              fill="none" stroke="rgba(255,255,255,0.12)"
+              strokeWidth="2"
+              animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </svg>
+        </motion.button>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+// ── Envelope Styles ──────────────────────────────────────────────────────────
+const STYLES: Record<string, { name: string; bg: string; foldDark: boolean; sealColor: string }> = {
+  classic:  { name: "Parchment",   bg: "linear-gradient(160deg,#F8EED8,#EDE0C4)",              foldDark: false, sealColor: "#802030" },
+  velvet:   { name: "Velvet Rose", bg: "linear-gradient(160deg,#FDF0F2,#F5D8DC)",              foldDark: false, sealColor: "#9B2E4B" },
+  midnight: { name: "Midnight",    bg: "linear-gradient(160deg,#16202E,#0E1520)",              foldDark: true,  sealColor: "#4F46E5" },
+  kraft:    { name: "Kraft",       bg: "linear-gradient(160deg,#EDE4D0,#DDD0B8)",              foldDark: false, sealColor: "#6B4F2C" },
+};
+
+// ── Main Component ─────────────────────────────────────────────────────────
 export default function LoveLetterPage() {
   const { user, pair, partner, loading } = useAuth();
   const supabase = createClient();
 
   const [lettersList, setLettersList] = useState<any[]>([]);
-  const [activeLetter, setActiveLetter] = useState<any>(null);
-  const [fetching, setFetching] = useState(true);
+  const [activeLetter, setActiveLetter]   = useState<any>(null);
+  const [fetching, setFetching]           = useState(true);
 
-  // Composing Mode States
-  const [isWriting, setIsWriting] = useState(false);
-  const [activeStep, setActiveStep] = useState<number>(1);
-  const [contentBlocks, setContentBlocks] = useState<any[]>([{ type: "text", value: "" }]);
-  const [envelopeStyle, setEnvelopeStyle] = useState<string>("classic");
-  const [recipientName, setRecipientName] = useState("");
-  const [senderName, setSenderName] = useState("");
-  const [sendingLetter, setSendingLetter] = useState(false);
-
-  // Giphy search state
+  // ── Compose state ──
+  const [isWriting, setIsWriting]     = useState(false);
+  const [step, setStep]               = useState(1);
+  const [blocks, setBlocks]           = useState<any[]>([{ type: "text", value: "" }]);
+  const [style, setStyle]             = useState("classic");
+  const [toName, setToName]           = useState("");
+  const [fromName, setFromName]       = useState("");
+  const [sending, setSending]         = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [giphyStickers, setGiphyStickers] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [searchQ, setSearchQ]         = useState("");
+  const [stickers, setStickers]       = useState<any[]>([]);
+  const [searching, setSearching]     = useState(false);
 
-  // Reading States
-  const [isUnsealed, setIsUnsealed] = useState(false);
-  const [unsealAnimating, setUnsealAnimating] = useState(false);
-  const [revealedBlocksCount, setRevealedBlocksCount] = useState(0);
+  // ── Read state ──
+  const [readPhase, setReadPhase]     = useState<"sealed" | "shattering" | "unsealing" | "open">("sealed");
+  const [revealCount, setRevealCount] = useState(0);
   const [savingMoment, setSavingMoment] = useState(false);
-  const [isTypewriterEnabled, setIsTypewriterEnabled] = useState(false);
-  const [isTypewriterSoundEnabled, setIsTypewriterSoundEnabled] = useState(false);
-  const [isCandlelightEnabled, setIsCandlelightEnabled] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [typewriter, setTypewriter]   = useState(false);
+  const [typeSound, setTypeSound]     = useState(false);
+  const [candle, setCandle]           = useState(false);
 
-  // Triggering hide navigation triggers dynamically
+  // Nav management
   useEffect(() => {
-    if (isWriting || activeLetter !== null) {
-      window.dispatchEvent(new CustomEvent("navigation-hide"));
-    } else {
-      window.dispatchEvent(new CustomEvent("navigation-show"));
-    }
+    if (isWriting || activeLetter) window.dispatchEvent(new CustomEvent("navigation-hide"));
+    else                           window.dispatchEvent(new CustomEvent("navigation-show"));
   }, [isWriting, activeLetter]);
 
-  // Check URL parameters for write trigger
+  // URL param
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.get("write") === "true") {
-        setIsWriting(true);
-        setActiveStep(1);
-      }
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("write") === "true") {
+      setIsWriting(true);
     }
   }, []);
 
-  // Envelope configurations
-  const envelopeStyles: { [key: string]: { name: string; bg: string; border: string; text: string; seal: string } } = {
-    classic: {
-      name: "Classic Gold",
-      bg: "bg-[#FAF6EE] dark:bg-[#28221D]",
-      border: "border-[#EAE3D5] dark:border-[#3E352E]",
-      text: "text-[#2E2A25] dark:text-[#E8E2D5]",
-      seal: "bg-amber-700 hover:bg-amber-800"
-    },
-    velvet: {
-      name: "Velvet Romance",
-      bg: "bg-rose-50/80 dark:bg-rose-950/20",
-      border: "border-rose-200 dark:border-rose-900/30",
-      text: "text-rose-900 dark:text-rose-200",
-      seal: "bg-rose-700 hover:bg-rose-800"
-    },
-    midnight: {
-      name: "Midnight Stars",
-      bg: "bg-slate-900 dark:bg-[#151B26]",
-      border: "border-slate-800 dark:border-slate-800",
-      text: "text-slate-100 dark:text-slate-200",
-      seal: "bg-indigo-700 hover:bg-indigo-800"
-    },
-    kraft: {
-      name: "Kraft Vintage",
-      bg: "bg-[#F3EDE2] dark:bg-amber-950/10",
-      border: "border-[#D6CBB7] dark:border-amber-900/20",
-      text: "text-amber-950 dark:text-amber-100",
-      seal: "bg-[#802030] hover:bg-[#6E1B29]"
-    }
-  };
-
-  const fetchData = async () => {
+  const fetchLetters = useCallback(async () => {
     if (!pair) return;
     try {
-      const res = await fetch(`/api/love-letters?pairId=${pair.id}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load letters");
-      setLettersList(data || []);
-    } catch (e: any) {
-      console.error(e);
-      setError(e.message || "Failed to load letters.");
-    } finally {
-      setFetching(false);
-    }
-  };
+      const r = await fetch(`/api/love-letters?pairId=${pair.id}`);
+      const d = await r.json();
+      if (r.ok) setLettersList(d || []);
+    } catch {} finally { setFetching(false); }
+  }, [pair]);
 
   useEffect(() => {
     if (!loading && pair) {
-      fetchData();
-
-      // Realtime subscription for letters list updates
-      const listChan = supabase
-        .channel(`letters-list-${pair.id}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "love_letters", filter: `pair_id=eq.${pair.id}` },
-          () => fetchData()
-        )
+      fetchLetters();
+      const ch = supabase.channel(`letters-${pair.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "love_letters", filter: `pair_id=eq.${pair.id}` }, fetchLetters)
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(listChan);
-      };
+      return () => { supabase.removeChannel(ch); };
     }
-  }, [loading, pair]);
+  }, [loading, pair, fetchLetters]);
 
-  // Load draft from localStorage
+  // Draft persistence
   useEffect(() => {
-    if (pair) {
-      const saved = localStorage.getItem(`pairfect-love-letter-draft-${pair.id}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.contentBlocks) setContentBlocks(parsed.contentBlocks);
-          if (parsed.envelopeStyle) setEnvelopeStyle(parsed.envelopeStyle);
-          if (parsed.recipientName) setRecipientName(parsed.recipientName);
-          if (parsed.senderName) setSenderName(parsed.senderName);
-        } catch (e) {
-          console.error("Failed to load letter draft", e);
-        }
-      }
-    }
+    if (!pair) return;
+    const saved = localStorage.getItem(`pairfect-letter-draft-${pair.id}`);
+    if (saved) { try { const p = JSON.parse(saved); if (p.blocks) setBlocks(p.blocks); if (p.style) setStyle(p.style); if (p.toName) setToName(p.toName); if (p.fromName) setFromName(p.fromName); } catch {} }
   }, [pair]);
 
-  // Auto-save draft
   useEffect(() => {
-    if (pair && isWriting && activeStep === 1) {
-      const hasContent = contentBlocks.some(b => b.type === "cat" || (b.type === "text" && b.value.trim() !== ""));
-      if (hasContent || recipientName.trim() || senderName.trim()) {
-        localStorage.setItem(`pairfect-love-letter-draft-${pair.id}`, JSON.stringify({
-          contentBlocks,
-          envelopeStyle,
-          recipientName,
-          senderName
-        }));
-      } else {
-        localStorage.removeItem(`pairfect-love-letter-draft-${pair.id}`);
-      }
+    if (!pair || !isWriting) return;
+    const hasContent = blocks.some(b => b.type === "cat" || b.value.trim());
+    if (hasContent || toName.trim() || fromName.trim()) {
+      localStorage.setItem(`pairfect-letter-draft-${pair.id}`, JSON.stringify({ blocks, style, toName, fromName }));
     }
-  }, [contentBlocks, envelopeStyle, recipientName, senderName, pair, activeStep, isWriting]);
+  }, [blocks, style, toName, fromName, pair, isWriting]);
 
-  const performStickerSearch = async (query: string) => {
+  const searchStickers = async (q: string) => {
     setSearching(true);
-    setError(null);
     try {
-      const q = query.trim() ? `cat ${query}` : "cat happy";
-      const res = await fetch(`/api/giphy/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to query stickers");
-      setGiphyStickers(data.data || []);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to query GIPHY sticker list.");
-    } finally {
-      setSearching(false);
-    }
+      const r = await fetch(`/api/giphy/search?q=${encodeURIComponent(q.trim() ? `cat ${q}` : "cat happy")}`);
+      const d = await r.json(); setStickers(d.data || []);
+    } catch {} finally { setSearching(false); }
   };
 
-  useEffect(() => {
-    if (galleryOpen) {
-      performStickerSearch(searchQuery);
-    }
-  }, [galleryOpen]);
+  useEffect(() => { if (galleryOpen) searchStickers(searchQ); }, [galleryOpen]);
 
-  const handleUpdateBlockValue = (index: number, val: string) => {
-    const updated = [...contentBlocks];
-    updated[index].value = val;
-    setContentBlocks(updated);
-  };
-
-  const handleAddTextBlock = () => {
-    setContentBlocks([...contentBlocks, { type: "text", value: "" }]);
-  };
-
-  const handleRemoveBlock = (index: number) => {
-    if (contentBlocks.length === 1 && contentBlocks[0].type === "text") {
-      setContentBlocks([{ type: "text", value: "" }]);
-      return;
-    }
-    setContentBlocks(contentBlocks.filter((_, i) => i !== index));
-  };
-
-  const handleInsertCatBlock = (giphyId: string) => {
-    setContentBlocks([...contentBlocks, { type: "cat", giphy_id: giphyId }]);
-    setGalleryOpen(false);
-    setSearchQuery("");
-  };
-
-  const handleSendLetter = async () => {
-    if (!pair || !user || sendingLetter) return;
-    const cleanBlocks = contentBlocks.filter(b => b.type === "cat" || b.value.trim() !== "");
-    if (cleanBlocks.length === 0) {
-      alert("Please write some content first!");
-      return;
-    }
-    if (!recipientName.trim()) {
-      alert("Please specify the recipient's name!");
-      return;
-    }
-
-    setSendingLetter(true);
+  const handleSend = async () => {
+    if (!pair || !user || sending) return;
+    const clean = blocks.filter(b => b.type === "cat" || b.value.trim());
+    if (!clean.length || !toName.trim()) return;
+    setSending(true);
     try {
-      const res = await fetch("/api/love-letters", {
+      const r = await fetch("/api/love-letters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pairId: pair.id,
-          recipientName: recipientName.trim(),
-          senderName: senderName.trim() || "Me",
-          content: cleanBlocks,
-          envelopeStyle
-        })
+        body: JSON.stringify({ pairId: pair.id, recipientName: toName.trim(), senderName: fromName.trim() || "Me", content: clean, envelopeStyle: style }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send letter");
-
-      // Reset
-      setContentBlocks([{ type: "text", value: "" }]);
-      setEnvelopeStyle("classic");
-      setRecipientName("");
-      setSenderName("");
-      setIsWriting(false);
-      setActiveStep(1);
-
-      fetchData();
-      localStorage.removeItem(`pairfect-love-letter-draft-${pair.id}`);
-    } catch (e: any) {
-      console.error(e);
-      alert(e.message || "Failed to send letter.");
-    } finally {
-      setSendingLetter(false);
-    }
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setBlocks([{ type: "text", value: "" }]); setToName(""); setFromName(""); setStyle("classic");
+      setIsWriting(false); setStep(1);
+      fetchLetters();
+      if (pair) localStorage.removeItem(`pairfect-letter-draft-${pair.id}`);
+    } catch (e: any) { alert(e.message || "Failed to send."); }
+    finally { setSending(false); }
   };
 
-  const handleUnsealLetter = async (letter: any) => {
+  const handleUnseal = async (letter: any) => {
     setActiveLetter(letter);
-    setIsUnsealed(false);
-    setRevealedBlocksCount(0);
-
     if (letter.is_opened) {
-      setIsUnsealed(true);
-      setRevealedBlocksCount(letter.content.length);
+      setReadPhase("open");
+      setRevealCount((letter.content?.length || 0) + 1);
       return;
     }
+    setReadPhase("sealed");
+    setRevealCount(0);
+  };
 
-    setUnsealAnimating(true);
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    setUnsealAnimating(false);
-    setIsUnsealed(true);
-
-    const blocksCount = letter.content?.length || 0;
-    for (let i = 0; i <= blocksCount; i++) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      setRevealedBlocksCount(i + 1);
+  const breakSeal = async () => {
+    if (!activeLetter) return;
+    setReadPhase("shattering");
+    await new Promise(r => setTimeout(r, 650));
+    setReadPhase("unsealing");
+    await new Promise(r => setTimeout(r, 700));
+    setReadPhase("open");
+    // Reveal blocks one at a time
+    const count = activeLetter.content?.length || 0;
+    for (let i = 0; i <= count; i++) {
+      await new Promise(r => setTimeout(r, 500));
+      setRevealCount(i + 1);
     }
-
-    if (!letter.is_opened && user?.id !== letter.sender_id) {
-      try {
-        await supabase
-          .from("love_letters")
-          .update({ is_opened: true, opened_at: new Date().toISOString() })
-          .eq("id", letter.id);
-      } catch (err) {}
+    // Mark as opened
+    if (user?.id !== activeLetter.sender_id) {
+      await supabase.from("love_letters").update({ is_opened: true, opened_at: new Date().toISOString() }).eq("id", activeLetter.id);
     }
   };
 
   const handleSaveToMoments = async () => {
     if (!activeLetter || !pair || !user || savingMoment) return;
     setSavingMoment(true);
-
     try {
-      const partnerName = partner?.display_name || "Partner";
-      const isSentByMe = activeLetter.sender_id === user.id;
-      const firstTextBlock = activeLetter.content.find((b: any) => b.type === "text")?.value || "";
-      const summaryText = firstTextBlock.slice(0, 100);
-
-      const { error: err } = await supabase
-        .from("shared_moments")
-        .insert({
-          pair_id: pair.id,
-          title: "Love Letter 💌",
-          description: isSentByMe
-            ? `Sent a Love Letter to ${activeLetter.recipient_name}: "${summaryText}..."`
-            : `Received a Love Letter from ${partnerName}: "${summaryText}..."`,
-          moment_date: format(new Date(), "yyyy-MM-dd"),
-          photo_url: "canvas-default.png"
-        });
-
-      if (err) throw err;
-      alert("Saved successfully to Scrapbook moments!");
-    } catch (e: any) {
-      console.error(e);
-      alert(e.message || "Failed to log moment.");
-    } finally {
-      setSavingMoment(false);
-    }
+      const isMine = activeLetter.sender_id === user.id;
+      const firstText = activeLetter.content.find((b: any) => b.type === "text")?.value || "";
+      await supabase.from("shared_moments").insert({
+        pair_id: pair.id,
+        title: "Love Letter 💌",
+        description: isMine
+          ? `Sent to ${activeLetter.recipient_name}: "${firstText.slice(0, 100)}"`
+          : `Received from ${partner?.display_name || "Partner"}: "${firstText.slice(0, 100)}"`,
+        moment_date: format(new Date(), "yyyy-MM-dd"),
+        photo_url: "canvas-default.png",
+      });
+      alert("Saved to Scrapbook!");
+    } catch (e: any) { alert(e.message); }
+    finally { setSavingMoment(false); }
   };
 
   if (loading || fetching) {
     return (
-      <div className="flex-1 flex flex-col min-h-screen bg-[#FCFBF9] dark:bg-[#1C1713]">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <Navigation />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
+        <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
     );
   }
 
-  return (
-    <div className="relative min-h-screen flex flex-col bg-[#FCFBF9] text-[#2E2A25] dark:bg-[#1C1713] dark:text-[#E8E2D5]">
-      {/* Hide navigation header component when composing or reading */}
-      {!isWriting && !activeLetter && <Navigation />}
+  // ═══════════════════════════════════════════════════════════════
+  // INBOX — Hero: the unread letter card
+  // ═══════════════════════════════════════════════════════════════
+  if (!activeLetter && !isWriting) {
+    const unread = lettersList.filter(l => l.sender_id !== user?.id && !l.is_opened);
+    const read   = lettersList.filter(l => !(l.sender_id !== user?.id && !l.is_opened));
 
-      <main className="max-w-3xl w-full mx-auto px-6 py-12 md:py-20 flex-1 flex flex-col justify-start z-10 animate-fade-in select-none">
-        
-        {/* LOBBY LIST VIEW (Minimal Editorial letters list) */}
-        {!activeLetter && !isWriting && (
-          <div className="space-y-12">
-            <div className="border-b border-[#EAE3D5] dark:border-[#3E352E] pb-6 flex items-end justify-between">
-              <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#8A7B6E]">
-                  Keepsakes Box
-                </span>
-                <h1 className="text-4xl font-display italic font-black text-[#2E2A25] dark:text-[#E8E2D5] mt-1">
-                  Letters Box
-                </h1>
-              </div>
-              <button
-                onClick={() => {
-                  setIsWriting(true);
-                  setActiveStep(1);
-                }}
-                className="btn-primary py-2.5 px-6 text-xs uppercase font-bold tracking-wider cursor-pointer"
-              >
-                Write Letter
-              </button>
+    return (
+      <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
+        <Navigation />
+        <main className="max-w-lg mx-auto px-5 py-20 pb-36">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="flex items-end justify-between mb-10">
+            <div>
+              <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Keepsakes</p>
+              <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)] mt-0.5">Letters</h1>
             </div>
+            <button onClick={() => { setIsWriting(true); setStep(1); }} className="btn-primary py-2 px-5 text-[10px] uppercase tracking-widest">
+              Write
+            </button>
+          </motion.div>
 
-            {/* List entries */}
-            {lettersList.length === 0 ? (
-              <div className="text-center py-20 bg-[#FAF6EE] dark:bg-[#28221D] rounded-2xl border border-dashed border-[#EAE3D5] dark:border-[#3E352E] text-sm text-[#7C7267] italic">
-                The letters box is empty. Write the first unsealed moment.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {lettersList.map((l) => {
-                  const isSentByMe = l.sender_id === user?.id;
-                  const dateFormatted = format(parseISO(l.sent_at), "MMM d, yyyy");
-                  const config = envelopeStyles[l.envelope_style] || envelopeStyles.classic;
-
-                  return (
-                    <div
-                      key={l.id}
-                      onClick={() => handleUnsealLetter(l)}
-                      className="group rounded-2xl border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FAF6EE] dark:bg-[#28221D] p-6 cursor-pointer hover:scale-[1.01] transition-all flex items-center justify-between shadow-sm hover:shadow"
-                    >
-                      <div className="flex items-center space-x-4 min-w-0">
-                        <span className={`p-3.5 rounded-xl border ${config.bg} ${config.border} ${config.text}`}>
-                          {isSentByMe ? (
-                            <Mail className="w-4 h-4 text-[#8A7B6E]" />
-                          ) : (
-                            <Gift className={`w-4 h-4 ${!l.is_opened ? "animate-pulse text-[#802030]" : "text-[#8A7B6E]"}`} />
-                          )}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="font-heading italic text-base text-[#2E2A25] dark:text-[#E8E2D5] font-bold">
-                            {isSentByMe ? `To: ${l.recipient_name}` : `From: ${l.sender_name}`}
-                          </p>
-                          <p className="text-[10px] font-mono text-[#8A7B6E] mt-0.5">
-                            {dateFormatted}
-                          </p>
-                        </div>
+          {lettersList.length === 0 ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-center py-28">
+              <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-2">The box is empty.</p>
+              <p className="text-[10px] font-mono text-[var(--ink-light)]">Write the first letter.</p>
+            </motion.div>
+          ) : (
+            <div className="space-y-3">
+              {unread.map((l, i) => (
+                <motion.button key={l.id} onClick={() => handleUnseal(l)} className="w-full text-left"
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+                  whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}
+                >
+                  <div className="relative bg-[var(--paper-warm)] border border-[var(--border-warm)] rounded-2xl px-6 py-5" style={{ boxShadow: "0 4px 20px rgba(128,32,48,0.1), 0 1px 4px rgba(60,40,20,0.06)" }}>
+                    <motion.div className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[var(--seal-red)] flex items-center justify-center"
+                      animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
+                      <div className="w-1.5 h-1.5 rounded-full bg-white/80" />
+                    </motion.div>
+                    <div className="flex items-center gap-4 pr-8">
+                      <div className="w-10 h-10 rounded-xl bg-[var(--paper-mid)] border border-[var(--border-warm)] flex items-center justify-center flex-shrink-0">
+                        <Gift className="w-4 h-4 text-[var(--seal-red)]" />
                       </div>
-                      {!isSentByMe && !l.is_opened && (
-                        <span className="bg-[#802030] text-white text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">
-                          Sealed
-                        </span>
-                      )}
+                      <div>
+                        <p className="font-heading italic font-bold text-base text-[var(--ink-dark)]">From {l.sender_name}</p>
+                        <p className="text-[9px] font-mono text-[var(--ink-light)] mt-0.5">{format(parseISO(l.sent_at), "MMMM d, yyyy")} · Sealed</p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                  </div>
+                </motion.button>
+              ))}
 
-        {/* WRITE MODE COMPOSER (Spacious paper writing room) */}
-        {isWriting && (
-          <div className="space-y-8 animate-fade-in max-w-xl mx-auto w-full">
-            <div className="flex items-center justify-between border-b border-[#EAE3D5] dark:border-[#3E352E] pb-4">
-              <button
-                onClick={() => {
-                  setIsWriting(false);
-                  setActiveStep(1);
-                }}
-                className="inline-flex items-center gap-1 text-xs font-mono font-bold text-[#8A7B6E] hover:text-[#2E2A25] uppercase cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Cancel</span>
-              </button>
-              <span className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase">
-                Step {activeStep} of 3
-              </span>
+              {unread.length > 0 && read.length > 0 && (
+                <div className="flex items-center gap-3 py-3">
+                  <div className="flex-1 h-px bg-[var(--border-mid)]" />
+                  <span className="text-[8px] font-mono uppercase tracking-widest text-[var(--ink-light)]">Earlier</span>
+                  <div className="flex-1 h-px bg-[var(--border-mid)]" />
+                </div>
+              )}
+
+              {read.map((l, i) => (
+                <motion.button key={l.id} onClick={() => handleUnseal(l)} className="w-full text-left"
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (unread.length + i) * 0.07 }}
+                  whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex items-center gap-4 bg-[var(--card-bg)] border border-[var(--border-mid)] rounded-2xl px-5 py-4 transition-colors hover:bg-[var(--paper-warm)]">
+                    <div className="w-8 h-8 rounded-lg bg-[var(--border-mid)] flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-3.5 h-3.5 text-[var(--ink-mid)]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[var(--ink-dark)]">
+                        {l.sender_id === user?.id ? `To ${l.recipient_name}` : `From ${l.sender_name}`}
+                      </p>
+                      <p className="text-[9px] font-mono text-[var(--ink-light)] mt-0.5">{format(parseISO(l.sent_at), "MMM d, yyyy")}</p>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
             </div>
+          )}
+        </main>
+      </div>
+    );
+  }
 
-            {/* STEP 1: CONTENT BLOCKS */}
-            {activeStep === 1 && (
-              <div className="space-y-6">
-                <div className="space-y-1">
-                  <h2 className="font-display italic text-3xl font-black text-[#2E2A25] dark:text-[#E8E2D5]">
-                    Compose Letter
-                  </h2>
-                  <p className="text-xs text-[#8A7B6E] font-mono">Write down your feelings below.</p>
+  // ═══════════════════════════════════════════════════════════════
+  // COMPOSE — Hero: the blank page
+  // ═══════════════════════════════════════════════════════════════
+  if (isWriting) {
+    const cfg = STYLES[style] || STYLES.classic;
+    return (
+      <div className="min-h-screen relative" style={{ background: "var(--paper-warm)" }}>
+        <main className="max-w-lg mx-auto px-5 py-12 pb-32">
+          <div className="flex items-center justify-between mb-8">
+            <motion.button whileTap={{ x: -2 }} onClick={() => { setIsWriting(false); setStep(1); }}
+              className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--ink-mid)] hover:text-[var(--ink-dark)] cursor-pointer transition-colors">
+              <ArrowLeft className="w-3.5 h-3.5" /> Cancel
+            </motion.button>
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]">{step} / 3</span>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {/* STEP 1 — The page */}
+            {step === 1 && (
+              <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-5">
+                <div>
+                  <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">Compose</h1>
+                  <p className="text-xs text-[var(--ink-mid)] font-mono mt-1">Write what's in your heart.</p>
                 </div>
 
-                <div className="bg-[#FAF6EE] dark:bg-[#28221D] border border-[#EAE3D5] dark:border-[#3E352E] rounded-3xl p-6 md:p-8 space-y-6 shadow-sm">
-                  {contentBlocks.map((block, idx) => (
-                    <div key={idx} className="relative group border-l-2 border-[#802030] pl-4 space-y-2">
-                      <button
-                        onClick={() => handleRemoveBlock(idx)}
-                        className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded cursor-pointer transition-all"
-                        title="Delete block"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
+                {/* The lined paper — THE HERO of this step */}
+                <div className="relative rounded-3xl overflow-hidden paper-grain" style={{
+                  background: "linear-gradient(180deg,#FFFDF5 0%,#FBF6EA 100%)",
+                  border: "1px solid var(--border-warm)",
+                  backgroundImage: "linear-gradient(180deg,#FFFDF5 0%,#FBF6EA 100%),linear-gradient(transparent calc(32px - 1px),rgba(196,168,130,0.22) calc(32px - 1px),rgba(196,168,130,0.22) 32px,transparent 32px)",
+                  backgroundSize: "100%,100% 32px",
+                  boxShadow: "0 8px 40px rgba(60,40,20,0.1),0 2px 8px rgba(60,40,20,0.06)",
+                }}>
+                  {/* Washi tape strip */}
+                  <div className="absolute top-3 right-8 w-16 h-5 pointer-events-none" style={{ background: "var(--washi-warm)", transform: "rotate(-2deg)" }} />
+                  <Sprig className="absolute bottom-3 right-3 w-10 h-16 opacity-40 pointer-events-none" />
+
+                  <div className="px-8 pt-10 pb-6">
+                    {blocks.map((block, idx) => (
+                      <div key={idx} className="relative group mb-3">
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => {
+                          if (blocks.length === 1 && blocks[0].type === "text") { setBlocks([{ type: "text", value: "" }]); return; }
+                          setBlocks(blocks.filter((_, j) => j !== idx));
+                        }} className="absolute -right-3 top-0 opacity-0 group-hover:opacity-100 p-1 text-[var(--ink-light)] hover:text-red-500 rounded cursor-pointer transition-all z-10">
+                          <X className="w-3 h-3" />
+                        </motion.button>
+                        {block.type === "text" ? (
+                          <textarea value={block.value}
+                            onChange={e => { const u = [...blocks]; u[idx].value = e.target.value; setBlocks(u); }}
+                            placeholder={idx === 0 ? "Dear..." : "Continue..."}
+                            rows={5}
+                            className="w-full bg-transparent placeholder-[#C4B89A] text-base focus:outline-none resize-none"
+                            style={{ lineHeight: "32px", fontFamily: "var(--font-handwriting),cursive", color: "var(--ink-dark)" }}
+                          />
+                        ) : (
+                          <div className="rounded-xl overflow-hidden border border-[var(--border-warm)] max-w-xs p-2 bg-white/70">
+                            <GiphyRenderer giphyId={block.giphy_id} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex gap-4 pt-2 border-t border-[var(--border-warm)]/50">
+                      <button onClick={() => setBlocks([...blocks, { type: "text", value: "" }])} className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-[var(--ink-dark)] inline-flex items-center gap-1 cursor-pointer transition-colors">
+                        <Plus className="w-3 h-3" /> Paragraph
                       </button>
-
-                      {block.type === "text" ? (
-                        <textarea
-                          value={block.value}
-                          onChange={(e) => handleUpdateBlockValue(idx, e.target.value)}
-                          placeholder="Write something sweet here..."
-                          className="block w-full h-28 p-2 bg-transparent text-sm focus:outline-none font-quote italic placeholder-[#8A7B6E]/40"
-                        />
-                      ) : (
-                        <div className="rounded-xl overflow-hidden border border-[#EAE3D5] dark:border-[#3E352E] max-w-xs p-2 bg-[#FCFBF9] dark:bg-[#1C1713]">
-                          <GiphyRenderer giphyId={block.giphy_id} />
-                          <span className="text-[8px] font-mono uppercase bg-[#8A7B6E] text-white px-2 py-0.5 rounded-full mt-2 font-bold block text-center tracking-widest">
-                            Embedded Giphy
-                          </span>
-                        </div>
-                      )}
+                      <button onClick={() => setGalleryOpen(true)} className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-[var(--seal-red)] inline-flex items-center gap-1 cursor-pointer transition-colors">
+                        <Smile className="w-3 h-3" /> Sticker
+                      </button>
                     </div>
-                  ))}
-
-                  <div className="flex gap-2 justify-center border-t border-[#EAE3D5] dark:border-[#3E352E] pt-4">
-                    <button
-                      onClick={handleAddTextBlock}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#EAE3D5] dark:border-[#3E352E] rounded-xl text-xs font-bold text-[#7C7267] hover:bg-[#FCFBF9] dark:hover:bg-[#1C1713] cursor-pointer"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Add Text</span>
-                    </button>
-                    <button
-                      onClick={() => setGalleryOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#EAE3D5] dark:border-[#3E352E] rounded-xl text-xs font-bold text-[#802030] hover:bg-rose-50 dark:hover:bg-rose-950/15 cursor-pointer"
-                    >
-                      <Smile className="w-3 h-3" />
-                      <span>Sticker</span>
-                    </button>
                   </div>
                 </div>
 
                 <div className="text-center pt-2">
-                  <button
-                    onClick={() => setActiveStep(2)}
-                    disabled={contentBlocks.every(b => b.type === "text" && !b.value.trim())}
-                    className="btn-primary py-3 px-8 text-xs uppercase tracking-widest font-bold cursor-pointer disabled:opacity-40"
-                  >
-                    Continue
+                  <button onClick={() => setStep(2)} disabled={blocks.every(b => b.type === "text" && !b.value.trim())} className="btn-primary py-3 px-10 text-[10px] uppercase tracking-widest disabled:opacity-40">
+                    Choose Envelope →
                   </button>
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* STEP 2: ENVELOPE THEME */}
-            {activeStep === 2 && (
-              <div className="space-y-6 text-center">
-                <div className="space-y-1">
-                  <h2 className="font-display italic text-3xl font-black text-[#2E2A25] dark:text-[#E8E2D5]">
-                    Envelope Theme
-                  </h2>
-                  <p className="text-xs text-[#8A7B6E] font-mono">Select the packaging style.</p>
+            {/* STEP 2 — Envelope */}
+            {step === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-5">
+                <div>
+                  <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">Envelope</h1>
+                  <p className="text-xs text-[var(--ink-mid)] font-mono mt-1">Choose the outer wrapping.</p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(envelopeStyles).map(([key, style]) => {
-                    const isSelected = envelopeStyle === key;
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(STYLES).map(([key, cfg]) => {
+                    const sel = style === key;
                     return (
-                      <div
-                        key={key}
-                        onClick={() => setEnvelopeStyle(key)}
-                        className={`rounded-2xl p-4 cursor-pointer transition-all border flex flex-col justify-between h-40 ${
-                          isSelected
-                            ? "border-[#802030] bg-[#FAF6EE] dark:bg-[#28221D] scale-102 shadow-sm"
-                            : "border-[#EAE3D5] dark:border-[#3E352E] bg-transparent opacity-80"
-                        }`}
-                      >
-                        <div className={`w-full flex-1 rounded-lg border border-[#EAE3D5] dark:border-[#3E352E] flex items-center justify-center relative ${style.bg}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${style.seal} text-white shadow-sm`}>
-                            <Lock className="w-3 h-3" />
-                          </div>
-                        </div>
-                        <p className="text-xs font-bold text-[#2E2A25] dark:text-[#E8E2D5] mt-2.5">{style.name}</p>
-                      </div>
+                      <motion.button key={key} onClick={() => setStyle(key)} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                        className={`relative rounded-2xl h-32 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all border ${sel ? "border-[var(--seal-red)] shadow-[0_0_0_3px_rgba(128,32,48,0.12)]" : "border-[var(--border-mid)] opacity-70"}`}
+                        style={{ background: cfg.bg }}>
+                        {sel && <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[var(--seal-red)] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-white" /></div>}
+                        <p className="text-xs font-bold text-center leading-tight px-3" style={{ color: cfg.foldDark ? "rgba(255,255,255,0.8)" : "#3A2E22" }}>{cfg.name}</p>
+                      </motion.button>
                     );
                   })}
                 </div>
-
-                <div className="flex justify-center gap-3 pt-4">
-                  <button
-                    onClick={() => setActiveStep(1)}
-                    className="btn-secondary py-2.5 px-6 text-xs uppercase font-bold tracking-widest cursor-pointer"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={() => setActiveStep(3)}
-                    className="btn-primary py-2.5 px-6 text-xs uppercase font-bold tracking-widest cursor-pointer"
-                  >
-                    Continue
-                  </button>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={() => setStep(1)} className="btn-secondary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer">← Back</button>
+                  <button onClick={() => setStep(3)} className="btn-primary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer">Address →</button>
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* STEP 3: DETAILS & DISPATCH */}
-            {activeStep === 3 && (
-              <div className="space-y-6 text-center">
-                <div className="space-y-1">
-                  <h2 className="font-display italic text-3xl font-black text-[#2E2A25] dark:text-[#E8E2D5]">
-                    Seal & Send
-                  </h2>
-                  <p className="text-xs text-[#8A7B6E] font-mono">Finalize envelope addresses.</p>
+            {/* STEP 3 — Seal */}
+            {step === 3 && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-5">
+                <div>
+                  <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">Seal & Send</h1>
+                  <p className="text-xs text-[var(--ink-mid)] font-mono mt-1">Address your letter and send it.</p>
                 </div>
-
-                <div className="bg-[#FAF6EE] dark:bg-[#28221D] border border-[#EAE3D5] dark:border-[#3E352E] rounded-3xl p-6 space-y-4 text-left shadow-sm">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase">To field (Recipient)</label>
-                    <input
-                      type="text"
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="e.g. My Love"
-                      className="block w-full px-4 py-3 border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FCFBF9] dark:bg-[#1C1713] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030]"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase">From field (Sender)</label>
-                    <input
-                      type="text"
-                      value={senderName}
-                      onChange={(e) => setSenderName(e.target.value)}
-                      placeholder="e.g. Your Partner"
-                      className="block w-full px-4 py-3 border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FCFBF9] dark:bg-[#1C1713] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#802030]"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-center gap-3 pt-4">
-                  <button
-                    onClick={() => setActiveStep(2)}
-                    className="btn-secondary py-2.5 px-6 text-xs uppercase font-bold tracking-widest cursor-pointer"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={handleSendLetter}
-                    disabled={sendingLetter || !recipientName.trim()}
-                    className="btn-primary py-2.5 px-8 text-xs uppercase font-bold tracking-widest cursor-pointer"
-                  >
-                    {sendingLetter ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Letter 💌"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ENVELOPE UNSEALING & READING (Ceremonial Paper Sheet & settings) */}
-        {activeLetter && (
-          <div className="max-w-xl w-full mx-auto space-y-8 animate-fade-in pb-16">
-            <div className="flex items-center justify-between border-b border-[#EAE3D5] dark:border-[#3E352E] pb-4">
-              <button
-                onClick={() => {
-                  setActiveLetter(null);
-                  fetchData();
-                }}
-                className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#8A7B6E] hover:text-[#2E2A25] uppercase cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Inbox</span>
-              </button>
-            </div>
-
-            {(() => {
-              const config = envelopeStyles[activeLetter.envelope_style] || envelopeStyles.classic;
-
-              return (
-                <div className="space-y-8 relative">
-                  
-                  {/* CLOSED SEED VIEW */}
-                  {!isUnsealed && (
-                    <div className="w-full max-w-md mx-auto select-none">
-                      <div className={`relative w-full h-80 rounded-2xl border shadow-md flex flex-col justify-between items-center p-8 ${config.bg} ${config.border} overflow-hidden`}>
-                        
-                        {/* Diagonal lines to outline envelope */}
-                        <div className="absolute inset-0 pointer-events-none z-0">
-                          <svg viewBox="0 0 320 208" className="w-full h-full stroke-[#EAE3D5]/50 dark:stroke-[#3E352E]/50 fill-none stroke-1">
-                            <path d="M 0,0 L 160,104 L 320,0" />
-                            <path d="M 0,208 L 110,120" />
-                            <path d="M 320,208 L 210,120" />
-                          </svg>
-                        </div>
-
-                        <div className="text-center z-10 space-y-1">
-                          <span className="text-[9px] font-mono text-[#8A7B6E] uppercase tracking-wider block">To:</span>
-                          <span className="font-heading italic text-lg text-[#2E2A25] dark:text-[#E8E2D5] font-black">{activeLetter.recipient_name}</span>
-                        </div>
-
-                        {/* Seal interaction */}
-                        <button
-                          onClick={() => handleUnsealLetter(activeLetter)}
-                          disabled={unsealAnimating}
-                          className="relative w-20 h-20 flex items-center justify-center cursor-pointer z-10"
-                        >
-                          <div className={`transition-all duration-700 ${unsealAnimating ? "scale-110 rotate-45 opacity-0" : "hover:scale-105 active:scale-95 animate-pulse"}`}>
-                            <WaxSealStamp className="w-16 h-16" />
-                          </div>
-                        </button>
-
-                        <div className="text-center z-10 space-y-1">
-                          <span className="text-[8px] font-mono text-[#8A7B6E] uppercase tracking-widest block">Press Wax Seal to Unseal</span>
-                          <span className="text-xs font-bold text-[#2E2A25] dark:text-[#E8E2D5]">From: {activeLetter.sender_name}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* UNROLLED LUXURY PAPER SHEET */}
-                  {isUnsealed && (
-                    <div className="space-y-6">
-                      {/* Quiet settings bar */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EAE3D5] dark:border-[#3E352E] pb-3 select-none text-[10px] font-mono uppercase tracking-widest text-[#8A7B6E]">
-                        <span>Reading Settings</span>
-                        <div className="flex items-center gap-3">
-                          <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isCandlelightEnabled}
-                              onChange={(e) => setIsCandlelightEnabled(e.target.checked)}
-                              className="rounded border-[#EAE3D5] text-[#802030] focus:ring-[#802030]"
-                            />
-                            <span>🕯️ Candle</span>
-                          </label>
-                          <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isTypewriterEnabled}
-                              onChange={(e) => setIsTypewriterEnabled(e.target.checked)}
-                              className="rounded border-[#EAE3D5] text-[#802030] focus:ring-[#802030]"
-                            />
-                            <span>⌨️ Typewriter</span>
-                          </label>
-                          {isTypewriterEnabled && (
-                            <label className="flex items-center gap-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isTypewriterSoundEnabled}
-                                onChange={(e) => setIsTypewriterSoundEnabled(e.target.checked)}
-                                className="rounded border-[#EAE3D5] text-[#802030] focus:ring-[#802030]"
-                              />
-                              <span>🔊 Sound</span>
-                            </label>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Spacious Luxury stationary view */}
-                      <div className={`relative rounded-2xl border p-10 md:p-16 space-y-8 text-left shadow-lg overflow-hidden min-h-[50vh] ${
-                        isCandlelightEnabled
-                          ? "border-[#3A2A1A] bg-gradient-to-br from-[#1E140C] via-[#2A1C10] to-[#160E08] text-amber-200 animate-candle-flicker"
-                          : "border-[#EAE3D5] bg-[#FAF5EB] text-[#2E2A25]"
-                      }`}>
-                        
-                        {/* Subtle floral svg or clean linen styling: Washi tape at top right */}
-                        <div className="absolute top-4 right-4 washi-tape washi-tape-angle z-10" />
-
-                        {/* Top addressed labels (Caveat cursive font) */}
-                        <div className="flex justify-between items-center text-sm tracking-wide text-[#8A7B6E] select-none font-handwriting">
-                          <span>To: {activeLetter.recipient_name}</span>
-                          <span>{format(parseISO(activeLetter.sent_at), "MMMM d, yyyy")}</span>
-                        </div>
-
-                        {/* Blocks */}
-                        <div className="space-y-6 py-4 flex-1">
-                          {activeLetter.content.map((block: any, idx: number) => {
-                            if (revealedBlocksCount <= idx) return null;
-
-                            return (
-                              <div key={idx} className="animate-fade-in">
-                                {block.type === "text" ? (
-                                  <p className={`text-base leading-relaxed whitespace-pre-wrap font-sans ${
-                                    isCandlelightEnabled ? "text-amber-100/90" : "text-[#2E2A25]"
-                                  } ${!isTypewriterEnabled ? "animate-ink-bleed" : ""}`}>
-                                    {isTypewriterEnabled ? (
-                                      <TypewriterText 
-                                        text={block.value} 
-                                        playSound={isTypewriterSoundEnabled} 
-                                      />
-                                    ) : (
-                                      block.value
-                                    )}
-                                  </p>
-                                ) : (
-                                  <div className="rounded-xl overflow-hidden border border-[#EAE3D5] dark:border-[#3E352E] max-w-sm my-4 p-2 bg-[#FCFBF9] dark:bg-[#1C1713]">
-                                    <GiphyRenderer giphyId={block.giphy_id} />
-                                    <span className="text-[8px] font-mono uppercase bg-[#8A7B6E] text-white px-2 py-0.5 rounded-full mt-2 font-bold tracking-widest block text-center">
-                                      Embedded Sticker
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Signature (Caveat handwriting font) */}
-                        {revealedBlocksCount > activeLetter.content.length && (
-                          <div className="border-t border-[#EAE3D5]/40 pt-6 space-y-6 animate-fade-in">
-                            <p className="text-right text-lg font-handwriting text-[#2E2A25] dark:text-[#E8E2D5]">
-                              With love, {activeLetter.sender_name}
-                            </p>
-                            
-                            <div className="flex justify-center pt-2">
-                              <button
-                                onClick={handleSaveToMoments}
-                                disabled={savingMoment}
-                                className="flex items-center gap-1.5 py-2.5 px-6 rounded-full text-xs font-bold text-white bg-[#802030] hover:bg-[#6E1B29] active:scale-[0.98] transition-all cursor-pointer shadow-sm"
-                              >
-                                {savingMoment ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
-                                <span>Save to Moments Scrapbook</span>
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        )}
-      </main>
-
-      {/* GIPHY SEARCH DIALOG TRAY */}
-      {galleryOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in select-none">
-          <div className="bg-[#FCFBF9] dark:bg-[#1C1713] rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-[#EAE3D5] dark:border-[#3E352E] overflow-hidden">
-            <div className="p-5 border-b border-[#EAE3D5] dark:border-[#3E352E] flex justify-between items-center bg-[#FAF6EE] dark:bg-[#28221D]">
-              <div>
-                <h3 className="text-sm font-bold text-[#2E2A25] dark:text-[#E8E2D5]">Embed Sticker</h3>
-                <p className="text-[8px] text-[#8A7B6E] font-mono uppercase mt-0.5">Powered by GIPHY</p>
-              </div>
-              <button
-                onClick={() => {
-                  setGalleryOpen(false);
-                  setSearchQuery("");
-                }}
-                className="p-1.5 rounded-lg text-[#8A7B6E] hover:bg-[#FAF6EE] dark:hover:bg-[#1C1713] cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="px-5 py-3 border-b border-[#EAE3D5] dark:border-[#3E352E] bg-[#FCFBF9] dark:bg-[#1C1713]">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    performStickerSearch(e.target.value);
-                  }}
-                  placeholder="Search stickers (happy, sad, love...)"
-                  className="block w-full pl-8 pr-4 py-2 border border-[#EAE3D5] dark:border-[#3E352E] rounded-xl bg-[#FAF6EE] dark:bg-[#28221D] text-xs focus:outline-none"
-                />
-                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8A7B6E]" />
-              </div>
-            </div>
-
-            <div className="p-5 overflow-y-auto flex-1 bg-[#FAF6EE]/30">
-              {error ? (
-                <div className="text-center py-8 text-xs text-red-600">{error}</div>
-              ) : searching ? (
-                <div className="text-center py-12">
-                  <Loader2 className="w-5 h-5 text-[#802030] animate-spin mx-auto" />
-                  <p className="text-[10px] text-[#8A7B6E] mt-2 font-mono">Querying stickers...</p>
-                </div>
-              ) : giphyStickers.length === 0 ? (
-                <div className="text-center py-12 text-[#8A7B6E] text-xs">No stickers found.</div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {giphyStickers.map((sticker: any) => (
-                    <div
-                      key={sticker.id}
-                      onClick={() => handleInsertCatBlock(sticker.id)}
-                      className="rounded-xl border border-[#EAE3D5] dark:border-[#3E352E] bg-white dark:bg-[#28221D] p-1.5 cursor-pointer hover:scale-102 transition-all flex items-center justify-center h-20"
-                    >
-                      <img
-                        src={sticker.images?.fixed_height_small?.url || sticker.images?.fixed_height?.url}
-                        alt="Sticker item"
-                        className="max-h-16 object-contain"
-                      />
+                <div className="bg-[var(--card-bg)] border border-[var(--border-mid)] rounded-3xl p-6 space-y-4">
+                  {[{ label: "To", val: toName, set: setToName, placeholder: "My Love" }, { label: "From", val: fromName, set: setFromName, placeholder: "Your name" }].map(f => (
+                    <div key={f.label} className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">{f.label}</label>
+                      <input type="text" value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.placeholder}
+                        className="w-full px-4 py-3 border border-[var(--border-mid)] bg-[var(--background)] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
+                        style={{ fontFamily: "var(--font-handwriting),cursive" }} />
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={() => setStep(2)} className="btn-secondary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer">← Back</button>
+                  <button onClick={handleSend} disabled={sending || !toName.trim()} className="btn-primary py-2.5 px-8 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-40">
+                    {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Letter 💌"}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
 
-            <div className="p-3 border-t border-[#EAE3D5] dark:border-[#3E352E] text-center bg-[#FAF6EE] dark:bg-[#28221D]">
-              <span className="text-[8px] font-mono uppercase tracking-widest text-[#8A7B6E] font-bold">
-                GIPHY STICKERS INC
-              </span>
-            </div>
+        {/* Giphy modal */}
+        <AnimatePresence>
+          {galleryOpen && (
+            <motion.div key="giphy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+              <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 36 }}
+                className="bg-[var(--background)] rounded-3xl max-w-sm w-full max-h-[70vh] flex flex-col border border-[var(--border-mid)] overflow-hidden shadow-2xl">
+                <div className="p-4 border-b border-[var(--border-mid)] flex items-center justify-between">
+                  <p className="text-sm font-bold text-[var(--ink-dark)]">Pick a sticker</p>
+                  <button onClick={() => setGalleryOpen(false)} className="p-1.5 rounded-lg text-[var(--ink-mid)] hover:bg-[var(--muted)] cursor-pointer"><X className="w-4 h-4" /></button>
+                </div>
+                <div className="px-4 py-2.5 border-b border-[var(--border-mid)]">
+                  <div className="relative">
+                    <input type="text" value={searchQ} onChange={e => { setSearchQ(e.target.value); searchStickers(e.target.value); }} placeholder="Search..."
+                      className="w-full pl-8 pr-4 py-2 border border-[var(--border-mid)] bg-[var(--muted)] rounded-xl text-xs focus:outline-none" />
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-[var(--ink-light)]" />
+                  </div>
+                </div>
+                <div className="p-4 overflow-y-auto flex-1">
+                  {searching ? <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--ink-light)]" /></div> : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {stickers.map((s: any) => (
+                        <button key={s.id} onClick={() => { setBlocks([...blocks, { type: "cat", giphy_id: s.id }]); setGalleryOpen(false); }}
+                          className="rounded-xl border border-[var(--border-mid)] bg-white dark:bg-[var(--muted)] p-1 cursor-pointer hover:scale-105 transition-all h-20 flex items-center justify-center">
+                          <img src={s.images?.fixed_height_small?.url || s.images?.fixed_height?.url} alt="Sticker" className="max-h-16 object-contain" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="px-4 py-2 border-t border-[var(--border-mid)] text-center">
+                  <span className="text-[8px] font-mono uppercase tracking-widest text-[var(--ink-light)]">Powered by GIPHY</span>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // READ — Hero: the paper itself  
+  // ═══════════════════════════════════════════════════════════════
+  if (activeLetter) {
+    const cfg = STYLES[activeLetter.envelope_style] || STYLES.classic;
+    const bg = candle ? "linear-gradient(160deg,#110C06,#1A1208)" : "var(--background)";
+
+    return (
+      <div className="relative min-h-screen" style={{ background: bg }}>
+        {/* Back — barely visible */}
+        <motion.button
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+          onClick={() => { setActiveLetter(null); setReadPhase("sealed"); setRevealCount(0); fetchLetters(); }}
+          className="fixed top-5 left-5 z-50 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest cursor-pointer transition-colors px-3 py-2 rounded-full backdrop-blur-sm"
+          style={{ color: candle ? "rgba(245,210,150,0.6)" : "var(--ink-light)", background: candle ? "rgba(30,18,8,0.6)" : "rgba(250,246,238,0.8)" }}
+        >
+          <ArrowLeft className="w-3 h-3" /> Inbox
+        </motion.button>
+
+        {/* Toggles — only visible when unsealed */}
+        {readPhase === "open" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+            className="fixed top-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-sm"
+            style={{ background: candle ? "rgba(30,18,8,0.6)" : "rgba(250,246,238,0.8)" }}>
+            {[
+              { emoji: "🕯️", active: candle, toggle: () => setCandle(p => !p), title: "Candlelight" },
+              { emoji: "⌨️", active: typewriter, toggle: () => setTypewriter(p => !p), title: "Typewriter" },
+            ].map((t, i) => (
+              <button key={i} onClick={t.toggle} title={t.title}
+                className={`text-sm cursor-pointer transition-opacity ${t.active ? "opacity-100" : "opacity-35 hover:opacity-60"}`}
+              >{t.emoji}</button>
+            ))}
+            {typewriter && (
+              <button onClick={() => setTypeSound(p => !p)} title="Typewriter sound"
+                className={`text-sm cursor-pointer transition-opacity ${typeSound ? "opacity-100" : "opacity-35 hover:opacity-60"}`}>🔊</button>
+            )}
+          </motion.div>
+        )}
+
+        <main className="flex items-start justify-center min-h-screen pt-14 px-5 pb-24">
+          <div className="w-full max-w-md">
+            <AnimatePresence mode="wait">
+              {/* SEALED — the envelope IS the hero */}
+              {(readPhase === "sealed" || readPhase === "shattering") && (
+                <motion.div key="sealed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -12 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col items-center justify-center min-h-[75vh] gap-8">
+                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+                    className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]">
+                    A letter awaits you
+                  </motion.p>
+
+                  {/* Physical envelope */}
+                  <motion.div
+                    className="relative w-full rounded-3xl overflow-hidden paper-grain"
+                    style={{
+                      background: cfg.bg,
+                      aspectRatio: "1.42 / 1",
+                      boxShadow: "0 24px 64px -8px rgba(60,38,18,0.24),0 4px 12px rgba(60,38,18,0.1)",
+                      border: "1px solid rgba(196,168,130,0.3)",
+                    }}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <EnvelopeFolds dark={cfg.foldDark} />
+                    <Sprig className="absolute -top-2 right-4 w-10 h-14 opacity-60 pointer-events-none" />
+
+                    {/* To address */}
+                    <div className="absolute top-5 left-6 z-10 space-y-0.5">
+                      <p className="text-[7px] font-mono uppercase tracking-widest" style={{ color: cfg.foldDark ? "rgba(255,255,255,0.35)" : "#9A876A" }}>To</p>
+                      <p className="font-handwriting text-lg font-semibold" style={{ color: cfg.foldDark ? "rgba(255,255,255,0.8)" : "#4A3A28" }}>{activeLetter.recipient_name}</p>
+                    </div>
+
+                    {/* The seal — center hero */}
+                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                      <WaxSealButton onPress={breakSeal} shattering={readPhase === "shattering"} />
+                    </div>
+
+                    {/* From address */}
+                    <div className="absolute bottom-5 right-6 z-10 space-y-0.5 text-right">
+                      <p className="text-[7px] font-mono uppercase tracking-widest" style={{ color: cfg.foldDark ? "rgba(255,255,255,0.35)" : "#9A876A" }}>From</p>
+                      <p className="font-handwriting text-base font-semibold" style={{ color: cfg.foldDark ? "rgba(255,255,255,0.8)" : "#4A3A28" }}>{activeLetter.sender_name}</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 0, 1] }} transition={{ delay: 0.8, duration: 1.5 }}
+                    className="text-[9px] font-mono text-[var(--ink-light)]">
+                    Tap the seal to open
+                  </motion.p>
+                </motion.div>
+              )}
+
+              {/* UNSEALING — transitional beat */}
+              {readPhase === "unsealing" && (
+                <motion.div key="unsealing" className="flex items-center justify-center min-h-[75vh]"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <div className="space-y-3 text-center">
+                    <div className="w-12 h-12 rounded-full border border-[var(--border-warm)] mx-auto flex items-center justify-center">
+                      <motion.div className="w-2 h-2 rounded-full bg-[var(--seal-red)]"
+                        animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 0.6, repeat: Infinity }} />
+                    </div>
+                    <p className="text-[9px] font-mono text-[var(--ink-light)] uppercase tracking-widest">Opening…</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* OPEN — the paper is the hero */}
+              {readPhase === "open" && (
+                <motion.div key="open" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
+                  <div
+                    className={`relative rounded-3xl overflow-hidden ${candle ? "animate-candle-flicker" : ""}`}
+                    style={{
+                      background: candle
+                        ? "linear-gradient(160deg,#1C1208,#221608)"
+                        : "linear-gradient(180deg,#FFFDF5 0%,#FAF4E8 100%)",
+                      border: candle ? "1px solid #3A2810" : "1px solid var(--border-warm)",
+                      boxShadow: candle
+                        ? "0 0 80px 20px rgba(200,120,30,0.06)"
+                        : "0 12px 48px rgba(60,40,20,0.1),0 2px 8px rgba(60,40,20,0.06)",
+                      backgroundImage: candle ? undefined : "linear-gradient(180deg,#FFFDF5 0%,#FAF4E8 100%),linear-gradient(transparent calc(32px - 1px),rgba(196,168,130,0.2) calc(32px - 1px),rgba(196,168,130,0.2) 32px,transparent 32px)",
+                      backgroundSize: candle ? undefined : "100%,100% 32px",
+                    }}
+                  >
+                    {!candle && (
+                      <>
+                        <div className="absolute top-3 right-5 w-12 h-4 pointer-events-none" style={{ background: "var(--washi-warm)", transform: "rotate(-2deg)" }} />
+                        <Sprig className="absolute bottom-4 right-4 w-10 h-16 opacity-35 pointer-events-none" />
+                      </>
+                    )}
+
+                    <div className="p-8 md:p-12 space-y-6">
+                      <div className="flex justify-between text-xs font-handwriting" style={{ color: candle ? "rgba(245,210,150,0.5)" : "var(--ink-light)" }}>
+                        <span>To: {activeLetter.recipient_name}</span>
+                        <span>{format(parseISO(activeLetter.sent_at), "MMMM d, yyyy")}</span>
+                      </div>
+
+                      <div className="space-y-5">
+                        {activeLetter.content.map((block: any, idx: number) => {
+                          if (revealCount <= idx) return null;
+                          return (
+                            <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                              {block.type === "text" ? (
+                                <p className="text-base leading-8 whitespace-pre-wrap" style={{
+                                  fontFamily: "var(--font-handwriting),cursive",
+                                  color: candle ? "rgba(245,210,150,0.88)" : "var(--ink-dark)",
+                                }}>
+                                  {typewriter ? <TypewriterText text={block.value} sound={typeSound} /> : block.value}
+                                </p>
+                              ) : (
+                                <div className="rounded-xl overflow-hidden border border-[var(--border-warm)] max-w-xs p-2 bg-white/60">
+                                  <GiphyRenderer giphyId={block.giphy_id} />
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+
+                      {revealCount > activeLetter.content.length && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+                          className="border-t pt-6 space-y-5" style={{ borderColor: candle ? "rgba(255,255,255,0.06)" : "rgba(196,168,130,0.3)" }}>
+                          <p className="text-right text-xl font-handwriting" style={{ color: candle ? "rgba(245,210,150,0.9)" : "var(--ink-dark)" }}>
+                            With love, {activeLetter.sender_name}
+                          </p>
+                          <div className="flex justify-center">
+                            <button onClick={handleSaveToMoments} disabled={savingMoment}
+                              className="inline-flex items-center gap-2 py-2.5 px-6 rounded-full text-xs font-bold text-white cursor-pointer transition-all"
+                              style={{ background: "var(--seal-red)" }}>
+                              {savingMoment ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
+                              Save to Scrapbook
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </main>
+      </div>
+    );
+  }
+
+  return null;
 }

@@ -6,278 +6,239 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Navigation from "@/components/navigation";
 import { moodDetails } from "@/app/dashboard/page";
-import { Music, AlertCircle, Heart, ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const fallbackTracks = [
-  { id: "1", name: "Cozy Coffee", artist: "Lo-Fi Lullabies", albumArt: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=80&h=80&fit=crop" },
-  { id: "2", name: "Rainy Sunday", artist: "Acoustic Dreams", albumArt: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=80&h=80&fit=crop" },
-  { id: "3", name: "Warm Hugs", artist: "Sweet Melodies", albumArt: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=80&h=80&fit=crop" },
-  { id: "4", name: "Starlight Dance", artist: "Vibe Selector", albumArt: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=80&h=80&fit=crop" },
+  { id: "1", name: "Cozy Coffee",    artist: "Lo-Fi Lullabies", albumArt: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=80&h=80&fit=crop" },
+  { id: "2", name: "Rainy Sunday",   artist: "Acoustic Dreams", albumArt: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=80&h=80&fit=crop" },
+  { id: "3", name: "Warm Hugs",      artist: "Sweet Melodies",  albumArt: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=80&h=80&fit=crop" },
+  { id: "4", name: "Starlight Dance", artist: "Vibe Selector",  albumArt: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=80&h=80&fit=crop" },
 ];
 
+// Dried flower — bottom-right corner of the page
+function PageFlower({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 72" className={className} fill="none" aria-hidden>
+      <path d="M24 70 C24 54 23 38 25 24 C26 15 24 6 23 0" stroke="#D4B892" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M24 58 C18 52 11 50 7 44" stroke="#D4B892" strokeWidth="1" strokeLinecap="round" />
+      <path d="M24 44 C17 38 11 35 6 29" stroke="#D4B892" strokeWidth="1" strokeLinecap="round" />
+      <path d="M24 52 C30 46 37 44 41 38" stroke="#D4B892" strokeWidth="1" strokeLinecap="round" />
+      <path d="M24 38 C31 32 37 29 42 23" stroke="#D4B892" strokeWidth="1" strokeLinecap="round" />
+      <circle cx="7"  cy="44" r="1.8" fill="#D4B892" opacity="0.7" />
+      <circle cx="6"  cy="29" r="1.6" fill="#D4B892" opacity="0.64" />
+      <circle cx="41" cy="38" r="1.8" fill="#D4B892" opacity="0.7" />
+      <circle cx="42" cy="23" r="1.6" fill="#D4B892" opacity="0.64" />
+      <circle cx="23" cy="0"  r="2.2" fill="#D4B892" opacity="0.75" />
+    </svg>
+  );
+}
+
 export default function CheckinPage() {
-  const { user, pair, profile, loading } = useAuth();
+  const { user, pair, loading } = useAuth();
+  const supabase = createClient();
+  const router = useRouter();
+
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [intensity, setIntensity] = useState<number>(3);
+  const [intensity, setIntensity] = useState(3);
   const [note, setNote] = useState("");
-  const [cozyTracks, setCozyTracks] = useState<any[]>([]);
+  const [cozyTracks] = useState(fallbackTracks);
   const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
+  const [isFocused, setIsFocused] = useState(false);
 
+  // Nav hides when writing
   useEffect(() => {
-    setCozyTracks(fallbackTracks);
-  }, []);
-
-  // Adaptive navigation hide listener
-  useEffect(() => {
-    if (isTyping) {
-      window.dispatchEvent(new CustomEvent("navigation-hide"));
-    } else {
-      window.dispatchEvent(new CustomEvent("navigation-show"));
-    }
-  }, [isTyping]);
+    window.dispatchEvent(new CustomEvent(isFocused ? "navigation-hide" : "navigation-show"));
+  }, [isFocused]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMood) {
-      setError("Please select a vibe first.");
-      return;
-    }
-    if (!pair) {
-      setError("You are not paired yet. Please complete onboarding first.");
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
+    if (!selectedMood) { setError("Choose how you're feeling first."); return; }
+    if (!pair)          { setError("You're not paired yet."); return; }
+    setSubmitting(true); setError(null);
     try {
-      const { error: insertErr } = await supabase
-        .from("mood_logs")
-        .insert({
-          pair_id: pair.id,
-          user_id: user!.id,
-          mood: selectedMood as any,
-          mood_intensity: intensity,
-          note: note.trim() || null,
-          spotify_track_id: selectedTrack?.id || null,
-          spotify_track_name: selectedTrack?.name || null,
-          spotify_artist_name: selectedTrack?.artist || null,
-          spotify_album_art: selectedTrack?.albumArt || null,
-        });
-
+      const { error: insertErr } = await supabase.from("mood_logs").insert({
+        pair_id: pair.id, user_id: user!.id,
+        mood: selectedMood as any,
+        mood_intensity: intensity,
+        note: note.trim() || null,
+        spotify_track_id: selectedTrack?.id || null,
+        spotify_track_name: selectedTrack?.name || null,
+        spotify_artist_name: selectedTrack?.artist || null,
+        spotify_album_art: selectedTrack?.albumArt || null,
+      });
       if (insertErr) throw insertErr;
-
       window.dispatchEvent(new CustomEvent("navigation-show"));
       router.push("/dashboard");
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to log today's mood check-in.");
-    } finally {
-      setSubmitting(false);
-    }
+      setError(err.message || "Failed to log today's check-in.");
+    } finally { setSubmitting(false); }
   };
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col min-h-screen bg-[#FCFBF9] dark:bg-[#1C1713]">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
         <Navigation />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
+        <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
     );
   }
 
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
   return (
-    <div className="relative min-h-screen bg-[#FCFBF9] text-[#2E2A25] dark:bg-[#1C1713] dark:text-[#E8E2D5] flex flex-col justify-between pb-32">
-      {/* Hide navigation dock while note is focused/editing */}
-      {!isTyping && <Navigation />}
+    <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
+      <Navigation />
 
-      <main className="max-w-2xl w-full mx-auto px-6 py-12 md:py-20 flex-1 flex flex-col justify-start animate-fade-in select-none">
-        {/* Back header */}
-        <div className="mb-8 flex items-center justify-between">
-          <button
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("navigation-show"));
-              router.back();
-            }}
-            className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#8A7B6E] hover:text-[#2E2A25] uppercase cursor-pointer"
+      <main className="max-w-xl mx-auto px-5 py-16 pb-36">
+        <form onSubmit={handleSubmit} className="space-y-7">
+
+          {/* Date stamp — Caveat, barely there */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+            <p className="font-handwriting text-base text-[var(--ink-light)]">{today}</p>
+          </motion.div>
+
+          {/* Page title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-display italic text-3xl font-black text-[var(--ink-dark)]"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Cancel</span>
-          </button>
-          <span className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase">
-            Journal entry
-          </span>
-        </div>
+            How is your heart today?
+          </motion.h1>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-12">
-          
-          {/* Header Title */}
-          <div className="text-center space-y-2">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#8A7B6E]">
-              Daily check-in
-            </span>
-            <h1 className="text-4xl font-display italic font-black text-[#2E2A25] dark:text-[#E8E2D5]">
-              How is your heart today?
-            </h1>
-          </div>
-
-          {/* Luxury Notebook Pad & Lined Note */}
-          <div className="paper-sheet-lined rounded-2xl border border-[#EAE3D5] dark:border-amber-950/20 p-8 md:p-10 shadow-sm relative space-y-8 bg-[#FAF5EB] dark:bg-[#201A15]">
-            
-            {/* Lined Notebook Header: Mood Pills Row */}
-            <div className="space-y-3 not-italic">
-              <label className="text-[10px] font-mono font-bold text-[#8A7B6E] uppercase tracking-wider block">
-                1. Select vibe pill
-              </label>
-              
-              <div className="flex gap-2 flex-wrap pb-4 border-b border-[#EAE3D5]/60 dark:border-amber-900/10">
-                {Object.entries(moodDetails).map(([key, value]) => {
-                  const isSelected = selectedMood === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => {
-                        setSelectedMood(key);
-                        setError(null);
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-[#802030] border-[#802030] text-white shadow-sm"
-                          : "border-[#EAE3D5] bg-[#FCFBF9] text-[#7C7267] hover:bg-[#FAF6EE] dark:bg-[#1C1713]/40 dark:border-[#3E352E] dark:text-[#A59B8E]"
-                      }`}
-                    >
-                      <span className="mr-1">{value.emoji}</span>
-                      <span>{value.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Note text entry representing lined paper */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-mono font-bold text-[#8A7B6E]">
-                <span>2. Log notes</span>
-                <span>{note.length} / 280</span>
-              </div>
-              <textarea
-                maxLength={280}
-                value={note}
-                onFocus={() => setIsTyping(true)}
-                onBlur={() => setIsTyping(false)}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Write down details or feelings (e.g. coffee dates, study stress, cozy evening)..."
-                className="block w-full h-32 bg-transparent focus:outline-none text-[#2E2A25] dark:text-[#E8E2D5] text-sm leading-7 font-sans placeholder-[#8A7B6E]/30 resize-none border-none p-0"
-              />
-            </div>
-          </div>
-
-          {/* Mood Intensity Control */}
-          <div className="space-y-4 max-w-md mx-auto">
-            <div className="flex items-center justify-between text-[10px] font-mono font-bold text-[#8A7B6E] uppercase tracking-wider">
-              <span>Intensity</span>
-              <span>Level {intensity} of 5</span>
-            </div>
-            
-            <input
-              type="range"
-              min="1"
-              max="5"
-              step="1"
-              value={intensity}
-              onChange={(e) => setIntensity(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-[#EAE3D5] dark:bg-[#3E352E] rounded-chip appearance-none cursor-pointer accent-[#802030]"
-            />
-          </div>
-
-          {/* Cozy Track Attachment */}
-          <div className="space-y-4 max-w-md mx-auto">
-            <div className="flex items-center justify-between text-[10px] font-mono font-bold text-[#8A7B6E] uppercase tracking-wider">
-              <span>Song of the moment</span>
-              {selectedTrack && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedTrack(null)}
-                  className="text-[9px] text-[#802030] hover:underline cursor-pointer font-bold"
-                >
-                  Clear Selection
-                </button>
-              )}
-            </div>
-
-            {selectedTrack ? (
-              <div className="flex items-center space-x-4 bg-[#FAF6EE] dark:bg-[#28221D] border border-[#EAE3D5] dark:border-[#3E352E] p-4 rounded-2xl shadow-sm">
-                <img
-                  src={selectedTrack.albumArt}
-                  alt={selectedTrack.name}
-                  className="w-10 h-10 rounded object-cover flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-xs font-bold text-[#2E2A25] dark:text-[#E8E2D5] truncate">
-                    {selectedTrack.name}
-                  </p>
-                  <p className="text-[10px] text-[#8A7B6E] truncate">
-                    {selectedTrack.artist}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {cozyTracks.map((track) => (
-                  <button
-                    key={track.id}
-                    type="button"
-                    onClick={() => setSelectedTrack(track)}
-                    className="flex items-center space-x-3 p-2 rounded-xl border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FAF6EE] dark:bg-[#28221D] hover:bg-[#FAF6EE]/50 text-left transition-all cursor-pointer group"
+          {/* Mood pills — small, subordinate strip */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">Your feeling</p>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(moodDetails).map(([key, val]) => {
+                const sel = selectedMood === key;
+                return (
+                  <motion.button
+                    key={key} type="button"
+                    onClick={() => setSelectedMood(key)}
+                    whileTap={{ scale: 0.92 }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border transition-all duration-150 ${
+                      sel
+                        ? "bg-[var(--seal-red)] text-white border-[var(--seal-red)] shadow-sm"
+                        : "bg-[var(--card-bg)] text-[var(--ink-mid)] border-[var(--border-mid)] hover:bg-[var(--paper-mid)]"
+                    }`}
                   >
-                    <img
-                      src={track.albumArt}
-                      alt={track.name}
-                      className="w-8 h-8 rounded object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold text-[#2E2A25] dark:text-[#E8E2D5] truncate group-hover:text-[#802030]">
-                        {track.name}
-                      </p>
-                      <p className="text-[9px] text-[#8A7B6E] truncate">
-                        {track.artist}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                    <span>{val.emoji}</span>
+                    <span>{val.label}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
 
-          {/* Submit Button */}
-          <div className="text-center pt-4">
-            <button
-              type="submit"
-              disabled={submitting || !selectedMood}
-              className="btn-primary py-3 px-12 text-xs uppercase font-bold tracking-wider cursor-pointer"
+          {/* Intensity — appears only after mood is selected */}
+          <AnimatePresence>
+            {selectedMood && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.35 }}
+              >
+                <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">Intensity</p>
+                <div className="flex items-center gap-4">
+                  <input type="range" min={1} max={5} value={intensity} onChange={e => setIntensity(Number(e.target.value))}
+                    className="flex-1 accent-[var(--seal-red)] h-1 cursor-pointer" />
+                  <span className="font-display font-black text-2xl text-[var(--ink-dark)] w-6 text-center tabular-nums">{intensity}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* THE HERO — the blank page */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+          >
+            <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">Your note</p>
+            <motion.div
+              className="relative rounded-3xl overflow-hidden"
+              animate={{
+                borderColor: isFocused ? "rgba(196,168,130,0.8)" : "rgba(229,217,197,1)",
+                boxShadow: isFocused
+                  ? "0 12px 48px rgba(60,40,20,0.1),0 2px 8px rgba(60,40,20,0.06)"
+                  : "0 4px 20px rgba(60,40,20,0.06)",
+              }}
+              transition={{ duration: 0.3 }}
+              style={{
+                background: isFocused
+                  ? "linear-gradient(180deg,#FFFDF5 0%,#FBF6EA 100%)"
+                  : "linear-gradient(180deg,#FAF6EE 0%,#F5EDD8 100%)",
+                border: "1px solid var(--border-warm)",
+                backgroundImage: isFocused
+                  ? "linear-gradient(180deg,#FFFDF5 0%,#FBF6EA 100%),linear-gradient(transparent calc(32px - 1px),rgba(196,168,130,0.24) calc(32px - 1px),rgba(196,168,130,0.24) 32px,transparent 32px)"
+                  : "linear-gradient(180deg,#FAF6EE 0%,#F5EDD8 100%),linear-gradient(transparent calc(32px - 1px),rgba(196,168,130,0.18) calc(32px - 1px),rgba(196,168,130,0.18) 32px,transparent 32px)",
+                backgroundSize: "100%,100% 32px",
+              }}
             >
-              {submitting ? (
-                <span>Publishing Check-in...</span>
-              ) : (
-                <span>Publish Entry</span>
-              )}
-            </button>
-          </div>
+              <PageFlower className="absolute bottom-3 right-4 w-8 h-12 opacity-35 pointer-events-none" />
+              <textarea
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder="What's on your mind?"
+                rows={9}
+                className="w-full bg-transparent px-7 pt-6 pb-16 text-base placeholder-[#C4B89A] focus:outline-none resize-none"
+                style={{ lineHeight: "32px", fontFamily: "var(--font-handwriting),cursive", color: "var(--ink-dark)" }}
+              />
+            </motion.div>
+          </motion.div>
+
+          {/* Music — compact horizontal scroll, subordinate */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+            <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">Listening to</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {cozyTracks.map((track) => {
+                const sel = selectedTrack?.id === track.id;
+                return (
+                  <motion.button key={track.id} type="button" onClick={() => setSelectedTrack(sel ? null : track)}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex-shrink-0 flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                      sel
+                        ? "bg-[var(--paper-mid)] border-[var(--ink-light)] shadow-sm"
+                        : "bg-[var(--card-bg)] border-[var(--border-mid)] hover:bg-[var(--paper-warm)]"
+                    }`}
+                  >
+                    <img src={track.albumArt} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-[var(--ink-dark)] truncate max-w-[96px]">{track.name}</p>
+                      <p className="text-[9px] text-[var(--ink-light)] truncate max-w-[96px]">{track.artist}</p>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {error && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-red-600 text-xs bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-3">
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          <motion.button
+            type="submit"
+            disabled={submitting || !selectedMood}
+            className="btn-primary w-full py-4 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-40"
+            whileTap={{ scale: 0.98 }}
+          >
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Seal this entry"}
+          </motion.button>
         </form>
       </main>
     </div>

@@ -456,17 +456,10 @@ export default function FocusZonePage() {
       <main className="max-w-4xl w-full mx-auto px-6 py-10 flex-1 flex flex-col justify-start z-10 animate-fade-in">
         
         {/* Title */}
-        <div className="space-y-2.5 mb-8">
-          <p className="text-[11px] font-bold tracking-widest text-[#f472b6] uppercase">
-            FOCUS ZONE
-          </p>
-          <h1 className="text-3xl font-sans font-black text-foreground tracking-tight flex items-center space-x-3">
-            <Brain className="w-8 h-8 text-[#f472b6]" />
-            <span>Focus Zone</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1.5 max-w-lg">
-            Stay in the zone together. Work Pomodoros, log study tracks, and see what your partner is studying in real-time.
-          </p>
+        <div className="mb-10">
+          <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Focus Zone</p>
+          <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)] mt-0.5">Focus Space</h1>
+          <p className="font-handwriting text-sm text-[var(--ink-mid)] mt-2">Study, reflect, and stay in the zone together.</p>
         </div>
 
         {/* Database setup notification helper */}
@@ -504,7 +497,7 @@ export default function FocusZonePage() {
                     cx="50"
                     cy="50"
                     r="45"
-                    className="stroke-[#f472b6] fill-none transition-all duration-100"
+                    className="stroke-[var(--seal-red)] fill-none transition-all duration-100"
                     strokeWidth="3.5"
                     strokeDasharray="282.6"
                     strokeDashoffset={strokeDashoffset}
@@ -525,8 +518,8 @@ export default function FocusZonePage() {
 
               {/* Focus Label */}
               {status === "work" && (
-                <div className="mb-6 bg-[#f472b6]/10 px-4 py-1.5 rounded-full text-xs font-semibold text-[#f472b6] flex items-center space-x-1.5 border border-[#f472b6]/20">
-                  <Flame className="w-3.5 h-3.5 fill-[#f472b6]" />
+                <div className="mb-6 bg-[var(--seal-red)]/10 px-4 py-1.5 rounded-full text-xs font-semibold text-[var(--seal-red)] flex items-center space-x-1.5 border border-[var(--seal-red)]/20">
+                  <Flame className="w-3.5 h-3.5 fill-[var(--seal-red)]" />
                   <span>Focusing on: {label || "General Study"}</span>
                 </div>
               )}
@@ -560,13 +553,13 @@ export default function FocusZonePage() {
                   <div className="flex flex-wrap justify-center gap-2">
                     <button
                       onClick={() => startTimer("work", 1500, customLabelInput || "Study Session")}
-                      className="px-5 py-2.5 rounded-md text-xs font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-pink-500/10 dark:shadow-none"
+                      className="btn-primary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer"
                     >
                       Pomodoro (25m)
                     </button>
                     <button
                       onClick={() => startTimer("work", 3000, customLabelInput || "Study Session")}
-                      className="px-5 py-2.5 rounded-md text-xs font-bold text-foreground border border-border bg-card hover:bg-muted active:scale-[0.98] transition-all cursor-pointer"
+                      className="btn-secondary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer"
                     >
                       Long Focus (50m)
                     </button>
@@ -612,8 +605,7 @@ export default function FocusZonePage() {
 
             {/* STUDY LOG HISTORY */}
             <div className="rounded-[20px] border border-border bg-card p-6 shadow-sm">
-              <h2 className="text-xl font-sans font-black text-foreground tracking-tight flex items-center space-x-2 mb-4">
-                <History className="w-5 h-5 text-[#f472b6]" />
+              <h2 className="text-sm font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest mb-4">
                 <span>Study History Log</span>
               </h2>
 
@@ -641,7 +633,7 @@ export default function FocusZonePage() {
                             log.completed === false
                               ? "bg-red-500/10 text-red-500"
                               : isMe
-                              ? "bg-[#f472b6]/10 text-[#f472b6]"
+                              ? "bg-[var(--seal-red)]/10 text-[var(--seal-red)]"
                               : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                           }`}>
                             {log.completed === false ? (
@@ -691,9 +683,9 @@ export default function FocusZonePage() {
               ) : partnerFocus ? (
                 <div className="space-y-5 text-center py-4">
                   {/* Large Icon display */}
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-[20px] bg-[#f472b6]/10 text-[#f472b6] shadow-inner">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-[20px] bg-[var(--seal-red)]/10 text-[var(--seal-red)] shadow-inner">
                     {partnerFocus.status === "work" ? (
-                      <Flame className="w-10 h-10 fill-[#f472b6] animate-pulse" />
+                      <Flame className="w-10 h-10 fill-[var(--seal-red)] animate-pulse" />
                     ) : (
                       <Coffee className="w-10 h-10 animate-bounce" />
                     )}
@@ -722,7 +714,7 @@ export default function FocusZonePage() {
                     <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest font-mono">
                       Remaining
                     </span>
-                    <span className="text-lg font-mono font-bold text-[#f472b6]">
+                    <span className="text-lg font-mono font-bold text-[var(--seal-red)]">
                       {formatTime(partnerFocus.secondsRemaining)}
                     </span>
                   </div>
@@ -747,8 +739,7 @@ export default function FocusZonePage() {
 
             {/* Pomodoro study tip cards */}
             <div className="rounded-[20px] border border-border bg-card p-6 shadow-sm">
-              <h3 className="text-xs font-bold text-[#f472b6] flex items-center space-x-1.5 uppercase tracking-widest font-mono mb-3">
-                <Sparkles className="w-4 h-4 fill-[#f472b6]" />
+              <h3 className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">
                 <span>Focus Zone Tips</span>
               </h3>
               

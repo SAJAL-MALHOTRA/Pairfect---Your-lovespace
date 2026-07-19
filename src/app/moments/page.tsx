@@ -1,499 +1,346 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { format, parseISO } from "date-fns";
-import { BookOpen, Calendar, Plus, Camera, Loader2, AlertCircle, Trash2, X, Lock } from "lucide-react";
+import { Loader2, Plus, X, Trash2, Upload, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Image optimization utility
-const compressImage = (file: File): Promise<Blob> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-        const MAX_SIDE = 1200;
+// Each photo gets a deterministic-random rotation and washi tape color
+const ROTATIONS = [-1.8, 2.4, -0.6, 1.8, -2.6, 0.8, -1.4, 2.1, -0.4, 1.6];
+const WASHI = [
+  "rgba(196,164,130,0.42)", "rgba(176,120,120,0.38)", "rgba(110,150,130,0.36)",
+  "rgba(130,128,172,0.36)", "rgba(190,158,98,0.40)", "rgba(152,130,110,0.38)",
+];
 
-        if (width > height) {
-          if (width > MAX_SIDE) {
-            height = Math.round((height * MAX_SIDE) / width);
-            width = MAX_SIDE;
-          }
-        } else {
-          if (height > MAX_SIDE) {
-            width = Math.round((width * MAX_SIDE) / height);
-            height = MAX_SIDE;
-          }
-        }
+interface Moment {
+  id: string;
+  title: string;
+  description?: string;
+  moment_date: string;
+  photo_url?: string;
+}
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, width, height);
+// ── Individual Polaroid photograph ──────────────────────────────────────────
+function Polaroid({ moment, index, onOpen }: { moment: Moment; index: number; onOpen: () => void }) {
+  const rot = ROTATIONS[index % ROTATIONS.length];
+  const washi = WASHI[index % WASHI.length];
+  const [loaded, setLoaded] = useState(false);
 
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error("Canvas toBlob output is empty"));
-            }
-          },
-          "image/webp",
-          0.8
-        );
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
+  const src = moment.photo_url
+    ? moment.photo_url.startsWith("http") ? moment.photo_url : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url)}`
+    : null;
 
+  const dateStr = (() => { try { return format(parseISO(moment.moment_date), "MMM d, ''yy"); } catch { return ""; } })();
+
+  return (
+    <motion.div
+      className="relative cursor-pointer"
+      style={{ rotate: rot, transformOrigin: "center center" } as any}
+      initial={{ opacity: 0, y: 30, rotate: rot, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: index * 0.06 }}
+      whileHover={{ rotate: 0, scale: 1.06, y: -6, zIndex: 20 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onOpen}
+    >
+      {/* Washi tape */}
+      <div className="absolute -top-3 left-1/2 pointer-events-none z-10" style={{ transform: `translateX(-50%) rotate(${rot * -0.6}deg)`, width: "48px", height: "18px", background: washi }} />
+
+      {/* The polaroid frame */}
+      <div className="polaroid" style={{ width: "clamp(130px, 20vw, 200px)" }}>
+        <div className="bg-[var(--border-mid)] overflow-hidden flex items-center justify-center" style={{ aspectRatio: "1 / 1" }}>
+          {src ? (
+            <img src={src} alt={moment.title} onLoad={() => setLoaded(true)}
+              className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[var(--paper-mid)]">
+              <span className="text-2xl opacity-30">📷</span>
+            </div>
+          )}
+          {src && !loaded && <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin text-[var(--ink-light)]" /></div>}
+        </div>
+        <div className="pt-3 pb-0.5">
+          <p className="font-handwriting text-sm text-[#3A2E22] dark:text-[#D4C8B8] leading-tight truncate">{moment.title}</p>
+          <p className="font-handwriting text-[10px] text-[var(--ink-light)] mt-0.5">{dateStr}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Full-screen lightbox ─────────────────────────────────────────────────────
+function Lightbox({ moment, index, total, onClose, onPrev, onNext, onDelete }: {
+  moment: Moment; index: number; total: number;
+  onClose: () => void; onPrev: () => void; onNext: () => void; onDelete: (id: string) => void;
+}) {
+  const src = moment.photo_url
+    ? moment.photo_url.startsWith("http") ? moment.photo_url : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url)}`
+    : null;
+
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); if (e.key === "ArrowLeft") onPrev(); if (e.key === "ArrowRight") onNext(); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, []);
+
+  const dateStr = (() => { try { return format(parseISO(moment.moment_date), "MMMM d, yyyy"); } catch { return ""; } })();
+
+  return (
+    <motion.div
+      key="lightbox"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.88, opacity: 0, y: 20 }}
+        animate={{ scale: 1,    opacity: 1, y: 0 }}
+        exit={{ scale: 0.92,   opacity: 0, y: 12 }}
+        transition={{ type: "spring", stiffness: 320, damping: 32 }}
+        className="relative max-w-sm w-full"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="polaroid mx-auto" style={{ maxWidth: "360px" }}>
+          {src ? (
+            <img src={src} alt={moment.title} className="w-full object-cover" style={{ maxHeight: "55vh" }} />
+          ) : (
+            <div className="w-full h-52 flex items-center justify-center bg-[var(--paper-mid)]">
+              <span className="text-4xl opacity-25">📷</span>
+            </div>
+          )}
+          <div className="pt-4 pb-1 space-y-1">
+            <p className="font-handwriting text-xl text-[#2E2A25]">{moment.title}</p>
+            <p className="font-handwriting text-xs text-[var(--ink-mid)]">{dateStr}</p>
+            {moment.description && <p className="text-xs text-[var(--ink-mid)] leading-relaxed mt-1">{moment.description}</p>}
+          </div>
+        </div>
+
+        {/* Close */}
+        <button onClick={onClose} className="absolute -top-10 right-0 text-white/50 hover:text-white cursor-pointer p-2 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Prev / Next */}
+        {index > 0 && (
+          <button onClick={onPrev} className="absolute left-0 top-1/3 -translate-x-14 text-white/50 hover:text-white cursor-pointer p-2 transition-colors">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+        )}
+        {index < total - 1 && (
+          <button onClick={onNext} className="absolute right-0 top-1/3 translate-x-14 text-white/50 hover:text-white cursor-pointer p-2 transition-colors">
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        )}
+
+        {/* Delete */}
+        <div className="text-center mt-4">
+          <button onClick={() => onDelete(moment.id)}
+            className="text-[9px] font-mono uppercase tracking-widest text-red-400/50 hover:text-red-400 cursor-pointer transition-colors inline-flex items-center gap-1.5">
+            <Trash2 className="w-3 h-3" /> Remove memory
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Main ────────────────────────────────────────────────────────────────────
 export default function MomentsPage() {
-  const { user, pair, profile, partner, loading } = useAuth();
-  const [moments, setMoments] = useState<any[]>([]);
-  const [fetching, setFetching] = useState(true);
-  const [isEligible, setIsEligible] = useState(true);
-  const [checkingEligibility, setCheckingEligibility] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  
-  // Form states
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [momentDate, setMomentDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { user, pair } = useAuth();
+  const [moments, setMoments] = useState<Moment[]>([]);
+  const [fetching, setFetching]   = useState(true);
+  const [error, setError]         = useState<string | null>(null);
+  const [lightbox, setLightbox]   = useState<{ m: Moment; i: number } | null>(null);
+  const [addOpen, setAddOpen]     = useState(false);
   const supabase = createClient();
 
-  const fetchMomentsAndUrls = async () => {
+  const [title, setTitle]         = useState("");
+  const [description, setDesc]    = useState("");
+  const [momentDate, setDate]     = useState(new Date().toISOString().split("T")[0]);
+  const [photoFile, setFile]      = useState<File | null>(null);
+  const [photoPreview, setPreview]= useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const fetchMoments = async () => {
     if (!pair) return;
     try {
-      // 1. Check eligibility: first 50 unique couples to active the feature
-      const { data: allActiveMoments, error: claimErr } = await supabase
-        .from("shared_moments")
-        .select("pair_id");
-
-      if (!claimErr && allActiveMoments) {
-        const activePairs = Array.from(new Set(allActiveMoments.map((m: any) => m.pair_id)));
-        const totalClaimedCouples = activePairs.length;
-        const currentCoupleHasClaimed = activePairs.includes(pair.id);
-        setIsEligible(currentCoupleHasClaimed || totalClaimedCouples < 50);
-      }
-      setCheckingEligibility(false);
-
-      // 2. Fetch moments
-      const { data: momentsData, error: momentsErr } = await supabase
-        .from("shared_moments")
-        .select("*")
-        .eq("pair_id", pair.id)
-        .order("moment_date", { ascending: false });
-
-      if (momentsErr) throw momentsErr;
-
-      // 3. Resolve signed URLs for private images
-      const resolvedMoments = await Promise.all(
-        (momentsData || []).map(async (moment: any) => {
-          if (moment.photo_url) {
-            try {
-              const { data: urlData, error: urlErr } = await supabase.storage
-                .from("memories")
-                .createSignedUrl(moment.photo_url, 3600);
-
-              if (urlErr) throw urlErr;
-              return { ...moment, resolved_photo_url: urlData.signedUrl };
-            } catch (err) {
-              console.error("Error creating signed URL for moment:", moment.id, err);
-              return { ...moment, resolved_photo_url: null };
-            }
-          }
-          return moment;
-        })
-      );
-
-      setMoments(resolvedMoments);
-    } catch (err) {
-      console.error("Error loading memories:", err);
-    } finally {
-      setFetching(false);
-    }
+      const { data, error: err } = await supabase.from("shared_moments").select("*").eq("pair_id", pair.id).order("moment_date", { ascending: false });
+      if (err) throw err;
+      setMoments(data || []);
+    } catch (e: any) { setError(e.message); }
+    finally { setFetching(false); }
   };
 
   useEffect(() => {
-    if (!loading && pair && profile) {
-      fetchMomentsAndUrls();
+    if (pair) {
+      fetchMoments();
+      const ch = supabase.channel(`moments-${pair.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "shared_moments", filter: `pair_id=eq.${pair.id}` }, fetchMoments)
+        .subscribe();
+      return () => { supabase.removeChannel(ch); };
     }
-  }, [pair, loading, profile]);
+  }, [pair]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleAddMoment = async (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pair) return;
-    if (!title.trim()) {
-      setError("Please add a title for your memory.");
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
+    if (!pair || !user || !title.trim()) return;
+    setUploading(true); setError(null);
     try {
-      let storagePath: string | null = null;
-
+      let photoUrl: string | null = null;
       if (photoFile) {
-        let compressedBlob: Blob = photoFile;
-        try {
-          compressedBlob = await compressImage(photoFile);
-        } catch (compressErr) {
-          console.warn("Image compression failed, using original file:", compressErr);
-        }
-
-        const filename = `${Date.now()}.webp`;
-        storagePath = `${pair.id}/${filename}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("memories")
-          .upload(storagePath, compressedBlob, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: "image/webp",
-          });
-
-        if (uploadError) throw uploadError;
+        const path = `${pair.id}/${Date.now()}.${photoFile.name.split(".").pop()}`;
+        const { error: upErr } = await supabase.storage.from("moment-photos").upload(path, photoFile, { upsert: true });
+        if (upErr) throw upErr;
+        photoUrl = supabase.storage.from("moment-photos").getPublicUrl(path).data?.publicUrl || null;
       }
-
-      const { error: insertError } = await supabase
-        .from("shared_moments")
-        .insert({
-          pair_id: pair.id,
-          created_by: user!.id,
-          title: title.trim(),
-          description: description.trim() || null,
-          photo_url: storagePath,
-          moment_date: momentDate,
-        });
-
-      if (insertError) throw insertError;
-
-      setTitle("");
-      setDescription("");
-      setMomentDate(format(new Date(), "yyyy-MM-dd"));
-      setPhotoFile(null);
-      setPhotoPreview(null);
-      setModalOpen(false);
-
-      await fetchMomentsAndUrls();
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to create moment.");
-    } finally {
-      setSubmitting(false);
-    }
+      const { error: insErr } = await supabase.from("shared_moments").insert({ pair_id: pair.id, title: title.trim(), description: description.trim() || null, moment_date: momentDate, photo_url: photoUrl });
+      if (insErr) throw insErr;
+      setTitle(""); setDesc(""); setFile(null); setPreview(null); setDate(new Date().toISOString().split("T")[0]);
+      setAddOpen(false); fetchMoments();
+    } catch (err: any) { setError(err.message || "Failed to save."); }
+    finally { setUploading(false); }
   };
 
-  const handleDeleteMoment = async (id: string, photoUrl: string | null) => {
-    if (!confirm("Are you sure you want to delete this memory?")) return;
-    try {
-      const { error: dbError } = await supabase
-        .from("shared_moments")
-        .delete()
-        .eq("id", id);
-
-      if (dbError) throw dbError;
-
-      if (photoUrl) {
-        await supabase.storage.from("memories").remove([photoUrl]);
-      }
-
-      setMoments((prev) => prev.filter((m) => m.id !== id));
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete moment.");
-    }
+  const handleDelete = async (id: string) => {
+    if (!confirm("Remove this memory?")) return;
+    await supabase.from("shared_moments").delete().eq("id", id);
+    setLightbox(null); fetchMoments();
   };
 
-  if (loading || fetching || checkingEligibility) {
+  if (fetching) {
     return (
-      <div className="flex-1 flex flex-col min-h-screen bg-[#FCFBF9] dark:bg-[#1C1713]">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
         <Navigation />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!isEligible) {
-    return (
-      <div className="flex-1 flex flex-col min-h-screen bg-[#FCFBF9] dark:bg-[#1C1713] pb-24 md:pb-8">
-        <Navigation />
-        <main className="max-w-md w-full mx-auto px-6 py-24 flex-1 flex flex-col justify-center items-center text-center space-y-6 animate-fade-in">
-          <div className="mx-auto flex items-center justify-center w-20 h-20 rounded-2xl bg-[#FAF6EE] dark:bg-[#28221D] border border-[#EAE3D5] dark:border-[#3E352E] shadow-sm">
-            <Lock className="w-8 h-8 text-[#802030]" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-display italic font-black text-[#2E2A25] dark:text-[#E8E2D5]">Early Access is Full!</h1>
-            <p className="text-sm text-[#7C7267] leading-relaxed">
-              Moments was available exclusively to our first 50 couples. It will return soon as part of Pairfect Premium.
-            </p>
-          </div>
-        </main>
+        <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#FCFBF9] text-[#2E2A25] dark:bg-[#1C1713] dark:text-[#E8E2D5] flex flex-col justify-between pb-32">
+    <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
       <Navigation />
 
-      <main className="max-w-4xl w-full mx-auto px-6 py-12 md:py-20 flex-1 flex flex-col justify-start space-y-12 animate-fade-in select-none">
-        
-        {moments.length >= 25 && (
-          <div className="p-4 rounded-xl border border-red-200 bg-red-50 text-[#802030] text-xs flex items-start gap-2.5">
-            <AlertCircle className="w-4.5 h-4.5 flex-shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <p className="font-mono font-bold uppercase">Scrapbook Limit Reached</p>
-              <p className="text-[#7C7267]">
-                You've reached your 25-memory limit. Unlimited memories will be available with Premium.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Header Section */}
-        <div className="border-b border-[#EAE3D5] dark:border-[#3E352E] pb-6 flex items-end justify-between">
+      <main className="px-4 sm:px-6 lg:px-8 py-16 pb-36 max-w-5xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+          className="flex items-end justify-between mb-14">
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#8A7B6E]">
-              Scrapbook
-            </span>
-            <h1 className="text-4xl font-display italic font-black text-[#2E2A25] dark:text-[#E8E2D5] mt-1">
-              Our Memories
-            </h1>
-            <p className="text-xs text-[#7C7267] mt-1">
-              Document your milestones, dates, and sweet moments.
-            </p>
+            <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Our scrapbook</p>
+            <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)] mt-0.5">Memories</h1>
           </div>
+          <motion.button onClick={() => setAddOpen(true)} whileTap={{ scale: 0.95 }}
+            className="btn-primary py-2 px-5 text-[10px] uppercase tracking-widest inline-flex items-center gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Add
+          </motion.button>
+        </motion.div>
 
-          <button
-            onClick={() => setModalOpen(true)}
-            disabled={moments.length >= 25}
-            className="btn-primary py-2.5 px-6 text-xs uppercase font-bold tracking-wider cursor-pointer disabled:opacity-40"
-          >
-            Add Moment
-          </button>
-        </div>
-
-        {/* Polaroid Scrapbook Album Grid */}
-        {moments.length === 0 ? (
-          <div className="text-center py-24 bg-[#FAF6EE] dark:bg-[#28221D] rounded-2xl border border-dashed border-[#EAE3D5] dark:border-[#3E352E] text-sm text-[#7C7267] italic">
-            Your shared photo scrapbook is empty. Add a moment to start your album.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 md:gap-14 pt-4">
-            {moments.map((moment, idx) => {
-              const isCreator = moment.created_by === user!.id;
-              // Add slight organic rotation to each polaroid card to look like a physical scrapbook layout
-              const rotationDegs = [1.5, -2, 2, -1.5, 1][idx % 5];
-              
-              return (
-                <div
-                  key={moment.id}
-                  style={{ transform: `rotate(${rotationDegs}deg)` }}
-                  className="bg-[#FAF6EE] dark:bg-[#201A15] p-5 pb-8 border border-[#EAE3D5] dark:border-amber-950/20 shadow-md hover:shadow-lg hover:rotate-0 hover:scale-102 transition-all duration-300 w-full max-w-[280px] mx-auto flex flex-col justify-between relative group"
-                >
-                  {/* Polaroid Image Area */}
-                  <div className="aspect-square bg-stone-100 dark:bg-stone-900 border border-stone-200/40 relative overflow-hidden flex items-center justify-center">
-                    {moment.resolved_photo_url ? (
-                      <img
-                        src={moment.resolved_photo_url}
-                        alt={moment.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <BookOpen className="w-10 h-10 text-stone-300" />
-                    )}
-
-                    {isCreator && (
-                      <button
-                        onClick={() => handleDeleteMoment(moment.id, moment.photo_url)}
-                        className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Cursive Handwriting text below image */}
-                  <div className="pt-5 text-center space-y-1">
-                    <p className="font-handwriting text-lg font-bold text-[#2E2A25] dark:text-[#E8E2D5] leading-tight break-words px-1">
-                      {moment.title}
-                    </p>
-                    <p className="font-handwriting text-xs text-[#8A7B6E] tracking-wide">
-                      {format(parseISO(moment.moment_date), "MMMM d, yyyy")}
-                    </p>
-                    {moment.description && (
-                      <p className="text-[10px] text-[#7C7267] font-sans truncate px-1 mt-1">
-                        {moment.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+        {error && (
+          <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-3 mb-8">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" /><span>{error}</span>
           </div>
         )}
 
-        {/* Add Moment Modal */}
-        {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="relative overflow-hidden rounded-3xl border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FCFBF9] dark:bg-[#1C1713] w-full max-w-md p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
-              
-              <button
-                onClick={() => {
-                  setModalOpen(false);
-                  setPhotoPreview(null);
-                  setPhotoFile(null);
-                }}
-                className="absolute top-4 right-4 p-1.5 text-[#8A7B6E] hover:text-[#2E2A25] rounded-lg hover:bg-[#FAF6EE] transition-all cursor-pointer z-10"
-              >
-                <X className="w-4.5 h-4.5" />
-              </button>
-
-              <h2 className="text-2xl font-display italic font-black text-[#2E2A25] dark:text-[#E8E2D5] mb-5">
-                Add to Scrapbook
-              </h2>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-700 text-xs flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleAddMoment} className="space-y-4">
-                <div>
-                  <label className="block text-[9px] font-mono font-bold uppercase tracking-wider text-[#8A7B6E] mb-1">
-                    Memory Title
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. First Picnic, Dinner Date..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="block w-full px-3.5 py-2.5 border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FAF6EE] dark:bg-[#28221D] rounded-xl text-sm focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[9px] font-mono font-bold uppercase tracking-wider text-[#8A7B6E] mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    placeholder="Describe this moment (optional)..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="block w-full h-20 px-3 py-2 border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FAF6EE] dark:bg-[#28221D] rounded-xl text-sm resize-none focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[9px] font-mono font-bold uppercase tracking-wider text-[#8A7B6E] mb-1">
-                    Date of Moment
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={momentDate}
-                    onChange={(e) => setMomentDate(e.target.value)}
-                    className="block w-full px-3 py-2 border border-[#EAE3D5] dark:border-[#3E352E] bg-[#FAF6EE] dark:bg-[#28221D] rounded-xl text-sm focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[9px] font-mono font-bold uppercase tracking-wider text-[#8A7B6E] mb-1">
-                    Photo Memory
-                  </label>
-                  {photoPreview ? (
-                    <div className="relative rounded-xl overflow-hidden border border-[#EAE3D5] dark:border-[#3E352E] max-h-[180px]">
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPhotoFile(null);
-                          setPhotoPreview(null);
-                        }}
-                        className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors cursor-pointer"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center w-full">
-                      <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#EAE3D5] dark:border-[#3E352E] rounded-xl cursor-pointer bg-[#FAF6EE] dark:bg-[#28221D] hover:bg-[#FAF6EE]/50 transition-colors">
-                        <div className="flex flex-col items-center justify-center pt-4 pb-4">
-                          <Camera className="w-7 h-7 text-[#8A7B6E]/50 mb-1" />
-                          <p className="text-xs text-[#8A7B6E]">
-                            Upload photo
-                          </p>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleFileChange}
-                        />
-                      </label>
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-4 border-t border-[#EAE3D5] dark:border-[#3E352E] flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setModalOpen(false);
-                      setPhotoPreview(null);
-                      setPhotoFile(null);
-                    }}
-                    className="btn-secondary py-2 px-4 text-xs uppercase font-bold tracking-wider cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="btn-primary py-2 px-5 text-xs uppercase font-bold tracking-wider cursor-pointer"
-                  >
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin mr-1 inline" />}
-                    <span>Save Moment</span>
-                  </button>
-                </div>
-              </form>
-            </div>
+        {/* THE HERO: the photographs — organic scattered collage */}
+        {moments.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+            className="text-center py-40">
+            <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-3">Your scrapbook is waiting.</p>
+            <p className="text-xs text-[var(--ink-light)] font-mono mb-8">Every moment deserves a place here.</p>
+            <button onClick={() => setAddOpen(true)} className="btn-primary py-3 px-8 text-[10px] uppercase tracking-widest cursor-pointer">
+              Add your first memory
+            </button>
+          </motion.div>
+        ) : (
+          <div className="flex flex-wrap gap-6 md:gap-8 justify-center md:justify-start items-start pt-4">
+            {moments.map((m, i) => (
+              <Polaroid key={m.id} moment={m} index={i} onOpen={() => setLightbox({ m, i })} />
+            ))}
           </div>
         )}
       </main>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox && (
+          <Lightbox
+            moment={lightbox.m}
+            index={lightbox.i}
+            total={moments.length}
+            onClose={() => setLightbox(null)}
+            onPrev={() => lightbox.i > 0 && setLightbox({ m: moments[lightbox.i - 1], i: lightbox.i - 1 })}
+            onNext={() => lightbox.i < moments.length - 1 && setLightbox({ m: moments[lightbox.i + 1], i: lightbox.i + 1 })}
+            onDelete={handleDelete}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Add memory sheet */}
+      <AnimatePresence>
+        {addOpen && (
+          <motion.div key="add-sheet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+            <motion.div
+              initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 380, damping: 38 }}
+              className="rounded-3xl max-w-md w-full border overflow-hidden shadow-2xl"
+              style={{ background: "var(--background)", borderColor: "var(--border-mid)" }}
+            >
+              <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--border-mid)" }}>
+                <p className="font-display italic text-lg font-bold text-[var(--ink-dark)]">New Memory</p>
+                <button onClick={() => setAddOpen(false)} className="p-1.5 rounded-lg text-[var(--ink-mid)] hover:bg-[var(--muted)] cursor-pointer"><X className="w-4 h-4" /></button>
+              </div>
+
+              <form onSubmit={handleAdd} className="p-5 space-y-4">
+                {/* Photo upload */}
+                <div onClick={() => fileRef.current?.click()} className="cursor-pointer relative rounded-2xl border-dashed border overflow-hidden flex flex-col items-center justify-center transition-colors hover:bg-[var(--paper-warm)]"
+                  style={{ borderColor: "var(--ink-light)", background: "var(--card-bg)", aspectRatio: "16 / 9" }}>
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <Upload className="w-7 h-7 text-[var(--ink-light)] mb-2" />
+                      <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]">Tap to add photo</p>
+                    </>
+                  )}
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (!f) return; setFile(f); const r = new FileReader(); r.onload = ev => setPreview(ev.target?.result as string); r.readAsDataURL(f); }} />
+                </div>
+
+                {[
+                  { label: "Title", val: title, set: setTitle, placeholder: "What was this moment?" },
+                ].map(f => (
+                  <div key={f.label} className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">{f.label}</label>
+                    <input type="text" value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.placeholder} required
+                      className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
+                      style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
+                  </div>
+                ))}
+
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">Date</label>
+                  <input type="date" value={momentDate} onChange={e => setDate(e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
+                    style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
+                </div>
+
+                {error && <p className="text-xs text-red-600 bg-red-50 dark:bg-red-950/20 rounded-xl px-4 py-2">{error}</p>}
+
+                <button type="submit" disabled={uploading || !title.trim()}
+                  className="btn-primary w-full py-3 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-40">
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Memory"}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -139,21 +139,18 @@ export default function LoginPage() {
       />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
-        <div className="inline-flex items-center justify-center w-20 h-20 mb-4">
-          <img src="/logo-book.png" alt="Pairfect Logo" className="w-20 h-20 object-contain" />
-        </div>
-        <h2 className="text-3xl font-sans font-black tracking-tight text-foreground">
+        <h2 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">
           Welcome to Pairfect
         </h2>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-xs mx-auto text-pretty">
-          A private, bold space to sync daily rhythms and scrapbook memories with your partner.
+        <p className="mt-2 text-xs text-[var(--ink-mid)] font-mono max-w-xs mx-auto uppercase tracking-wider">
+          A private room for the two of you.
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
-        <div className="relative overflow-hidden rounded-card border border-border bg-card p-8 shadow-sm">
-          {/* 3px top gradient accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+        <div className="relative overflow-hidden rounded-3xl border border-[var(--border-mid)] bg-[var(--card-bg)] p-8 shadow-sm paper-grain">
+          {/* 2px top brand accent bar */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-[var(--seal-red)]" />
 
           {error && (
             <div className="mb-6 p-4 rounded-button bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
