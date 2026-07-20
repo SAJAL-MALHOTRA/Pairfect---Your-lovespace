@@ -318,7 +318,7 @@ export default function VibeJudgePage() {
 
             {/* Initiate new case */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5 mb-4">
+              <h2 className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest flex items-center space-x-1.5 mb-4">
                 <Plus className="w-4 h-4 text-primary" />
                 <span>Initiate a Relationship Case</span>
               </h2>
@@ -345,7 +345,7 @@ export default function VibeJudgePage() {
 
             {/* Past cases list */}
             <div className="space-y-4">
-              <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
+              <h2 className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest flex items-center space-x-1.5">
                 <MessageSquare className="w-4 h-4 text-primary" />
                 <span>Relationship Court Log</span>
               </h2>

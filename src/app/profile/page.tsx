@@ -218,7 +218,7 @@ export default function ProfilePage() {
                   </motion.div>
                   <span
                     className={`text-sm leading-relaxed transition-all duration-200 ${
-                      item.done ? "line-through text-[var(--ink-light)]" : "text-[#2E2A25]"
+                      item.done ? "line-through text-[var(--ink-light)]" : "text-[var(--text)]"
                     }`}
                     style={{ fontFamily: "var(--font-handwriting),cursive" }}
                   >
@@ -236,7 +236,7 @@ export default function ProfilePage() {
                 onChange={e => setNewTodo(e.target.value)}
                 placeholder="Add a dream..."
                 className="flex-1 bg-transparent text-sm placeholder-[#C4B89A] focus:outline-none py-2"
-                style={{ fontFamily: "var(--font-handwriting),cursive", color: "#2E2A25", lineHeight: "36px" }}
+                style={{ fontFamily: "var(--font-handwriting),cursive", color: "var(--text)", lineHeight: "36px" }}
               />
             </form>
           </div>

@@ -924,7 +924,7 @@ export default function MixtapePage() {
                       onChange={(e) => setNotebookNote(e.target.value)}
                       maxLength={150}
                       rows={3}
-                      className="w-full px-4 py-3 rounded-2xl bg-[#FAF6EE] dark:bg-[#201A16] border border-[#EAE3D5] dark:border-[#382E26] font-handwriting text-base text-[#4A3B32] dark:text-[#D4C8B8] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30 resize-none shadow-xs"
+                      className="w-full px-4 py-3 rounded-2xl bg-[var(--paper-warm)] dark:bg-[var(--paper-warm)] border border-[var(--border)] dark:border-[var(--border)] font-handwriting text-base text-[var(--text)] dark:text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30 resize-none shadow-xs"
                     />
                   </div>
 

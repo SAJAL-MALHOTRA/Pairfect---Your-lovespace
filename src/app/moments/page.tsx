@@ -126,7 +126,7 @@ function Lightbox({ moment, index, total, onClose, onPrev, onNext, onDelete }: {
             </div>
           )}
           <div className="pt-4 pb-1 space-y-1">
-            <p className="font-handwriting text-xl text-[#2E2A25]">{moment.title}</p>
+            <p className="font-handwriting text-xl text-[var(--text)]">{moment.title}</p>
             <p className="font-handwriting text-xs text-[var(--ink-mid)]">{dateStr}</p>
             {moment.description && <p className="text-xs text-[var(--ink-mid)] leading-relaxed mt-1">{moment.description}</p>}
           </div>

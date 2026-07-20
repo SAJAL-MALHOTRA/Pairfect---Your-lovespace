@@ -345,7 +345,7 @@ export default function RiddlePage() {
             {/* Config & Launch Card */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="space-y-3.5 text-left w-full md:w-auto">
-                <p className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">
+                <p className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest">
                   Configure Riddle Timer
                 </p>
                 <div className="flex gap-2">
@@ -381,7 +381,7 @@ export default function RiddlePage() {
 
             {/* Session log list */}
             <div className="space-y-4">
-              <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
+              <h2 className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest flex items-center space-x-1.5">
                 <HelpCircle className="w-4 h-4 text-primary" />
                 <span>Riddle Session Logs</span>
               </h2>

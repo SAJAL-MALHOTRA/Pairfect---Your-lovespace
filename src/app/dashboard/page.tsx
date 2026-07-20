@@ -569,7 +569,7 @@ export default function DashboardPage() {
                   <radialGradient id={`glassGrad-${idx}`} cx="35%" cy="30%" r="65%">
                     <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
                     <stop offset="50%" stopColor={p.color} stopOpacity="0.22" />
-                    <stop offset="100%" stopColor="#D38CA2" stopOpacity="0.08" />
+                    <stop offset="100%" stopColor="#FFB3C6" stopOpacity="0.08" />
                   </radialGradient>
                   {/* Glass edge stroke gradient */}
                   <linearGradient id={`edgeGrad-${idx}`} x1="0" y1="0" x2="1" y2="1">

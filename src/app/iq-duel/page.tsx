@@ -32,7 +32,7 @@ const TYPE_BADGE: Record<string, string> = {
 };
 
 const TYPE_COLOR: Record<string, string> = {
-  pattern: "text-[#f472b6] border-[#f472b6]/30 bg-[#f472b6]/5",
+  pattern: "text-[var(--burgundy)] border-[var(--burgundy)]/30 bg-[var(--burgundy)]/5",
   logic:   "text-[#60a5fa] border-[#60a5fa]/30 bg-[#60a5fa]/5",
   math:    "text-emerald-400 border-emerald-400/30 bg-emerald-400/5",
 };
@@ -448,12 +448,12 @@ export default function IQDuelPage() {
               <h1 className="font-sans font-black text-3xl tracking-tight text-foreground">IQ Duel</h1>
               <p className="text-muted-foreground text-sm mt-2 max-w-sm mx-auto leading-relaxed">
                 A private timed logic, pattern &amp; math challenge — you and{" "}
-                <span className="text-[#f472b6] font-bold">{partner?.display_name || "your partner"}</span>{" "}
+                <span className="text-[var(--burgundy)] font-bold">{partner?.display_name || "your partner"}</span>{" "}
                 answer separately. Compare your results after!
               </p>
 
               <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground font-mono">
-                <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-[#f472b6]" /> 6 questions</span>
+                <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-[var(--burgundy)]" /> 6 questions</span>
                 <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#60a5fa]" /> 15-20s each</span>
                 <span className="flex items-center gap-1.5"><Trophy className="w-3.5 h-3.5 text-amber-400" /> IQ estimate</span>
               </div>
@@ -466,7 +466,7 @@ export default function IQDuelPage() {
             {/* How it works */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { step: "01", text: "One partner starts the duel", color: "text-[#f472b6]" },
+                { step: "01", text: "One partner starts the duel", color: "text-[var(--burgundy)]" },
                 { step: "02", text: "Both answer 6 questions privately", color: "text-amber-400" },
                 { step: "03", text: "Reveal scores together!", color: "text-[#60a5fa]" },
               ].map((s) => (
@@ -549,8 +549,8 @@ export default function IQDuelPage() {
                             : isWrong
                             ? "border-red-400 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400"
                             : isSelected
-                            ? "border-[#f472b6] bg-gradient-to-r from-[#f472b6]/5 to-[#60a5fa]/5 text-foreground"
-                            : "border-border bg-background hover:border-[#f472b6]/50 hover:bg-accent text-foreground"
+                            ? "border-[var(--burgundy)] bg-gradient-to-r from-[#f472b6]/5 to-[#60a5fa]/5 text-foreground"
+                            : "border-border bg-background hover:border-[var(--burgundy)]/50 hover:bg-accent text-foreground"
                           }`}
                       >
                         {isCorrect && <CheckCircle2 className="w-4 h-4 inline mr-1.5 text-emerald-500" />}
@@ -585,7 +585,7 @@ export default function IQDuelPage() {
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
 
               {/* Animated brain pulse */}
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#f472b6]/10 to-[#60a5fa]/10 border border-[#f472b6]/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#f472b6]/10 to-[#60a5fa]/10 border border-[var(--burgundy)]/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <Brain className="w-10 h-10 text-primary" />
               </div>
 
@@ -629,9 +629,9 @@ export default function IQDuelPage() {
             {/* Side-by-side stat cards */}
             <div className="grid grid-cols-2 gap-4">
               {/* My card — pink */}
-              <div className="relative overflow-hidden rounded-2xl border border-[#f472b6]/30 bg-card shadow-sm p-5 text-center space-y-2">
+              <div className="relative overflow-hidden rounded-2xl border border-[var(--burgundy)]/30 bg-card shadow-sm p-5 text-center space-y-2">
                 <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#f472b6]/50" />
-                <p className="text-[9px] font-mono font-black text-[#f472b6] tracking-widest uppercase">You</p>
+                <p className="text-[9px] font-mono font-black text-[var(--burgundy)] tracking-widest uppercase">You</p>
                 <p className="text-4xl font-black font-mono text-foreground">
                   <IQCountUp target={myResult.estimatedIq} />
                 </p>
@@ -671,7 +671,7 @@ export default function IQDuelPage() {
             {partnerResult && (
               <div className={`rounded-2xl border p-4 text-center
                 ${myResult.estimatedIq > partnerResult.estimatedIq
-                  ? "border-[#f472b6]/30 bg-[#f472b6]/5"
+                  ? "border-[var(--burgundy)]/30 bg-[var(--burgundy)]/5"
                   : myResult.estimatedIq < partnerResult.estimatedIq
                   ? "border-[#60a5fa]/30 bg-[#60a5fa]/5"
                   : "border-amber-400/30 bg-amber-400/5"

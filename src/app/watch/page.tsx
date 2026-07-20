@@ -260,7 +260,7 @@ export default function WatchPage() {
             <Tv className="w-7 h-7 text-primary" />
             <span>Watch Together</span>
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-[var(--text-soft)] dark:text-[var(--ink-light)] mt-1">
             Stream YouTube videos with synchronized controls. Play, pause, and seek instantly for both screens.
           </p>
         </div>

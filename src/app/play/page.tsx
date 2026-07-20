@@ -46,7 +46,7 @@ const GAMES: GameItem[] = [
     badgeType: "most-played",
     icon: HelpCircle,
     playersInfo: "2 Players · 17 Packs",
-    accent: "#8E2B45",
+    accent: "var(--burgundy)",
   },
   {
     id: "vibe-judge",
@@ -142,7 +142,7 @@ const GAMES: GameItem[] = [
     badgeType: "most-played",
     icon: Heart,
     playersInfo: "Sealed · Wax Stamp",
-    accent: "#8E2B45",
+    accent: "var(--burgundy)",
   },
 ];
 

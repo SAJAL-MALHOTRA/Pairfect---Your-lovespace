@@ -35,7 +35,7 @@ const PATTERN_STYLES: Record<CassettePattern, { label: string; bg: string; borde
     label: "Vintage Grid",
     bg: "bg-[#FAF6F0] dark:bg-[#201C18]",
     border: "border-[#E5D9C5] dark:border-[#382E24]",
-    accent: "#8E2B45",
+    accent: "var(--burgundy)",
   },
   midnight: {
     label: "Midnight Stars",
@@ -53,7 +53,7 @@ const PATTERN_STYLES: Record<CassettePattern, { label: string; bg: string; borde
     label: "Classic Cream",
     bg: "bg-[#FAF5EB] dark:bg-[#1C1510]",
     border: "border-[#E7DED5] dark:border-[#2E2420]",
-    accent: "#8E2B45",
+    accent: "var(--burgundy)",
   },
 };
 

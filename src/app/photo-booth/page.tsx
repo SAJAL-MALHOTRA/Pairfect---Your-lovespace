@@ -57,8 +57,8 @@ const FRAME_COLORS: Record<FrameColor, { label: string; bg: string; text: string
   white:      { label: "White",      bg: "#FFFFFF", text: "#221C16", border: "#E5E0D8" },
   paper:      { label: "Paper",      bg: "#F5EDD8", text: "#3A2E22", border: "#DFD2B8" },
   vintage:    { label: "Vintage",    bg: "#EADCC6", text: "#2E2418", border: "#D4C2A6" },
-  warm_brown: { label: "Warm Brown", bg: "#4A362D", text: "#F8F3EE", border: "#35261F" },
-  burgundy:   { label: "Burgundy",   bg: "#8E2B45", text: "#FAF5EB", border: "#6E1B29" },
+  warm_brown: { label: "Warm Brown", bg: "#4A362D", text: "#FFF3F6", border: "#35261F" },
+  burgundy:   { label: "Burgundy",   bg: "#E8527D", text: "#FFF8FA", border: "#D13D68" },
 };
 
 // ── Paper Textures ──────────────────────────────────────────────────────────
@@ -267,7 +267,7 @@ export default function PhotoBoothPage() {
         // Fallback camera canvas drawing (simulated warm photobooth snap)
         ctx.fillStyle = "#F5EDD8";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#8E2B45";
+        ctx.fillStyle = "#E8527D";
         ctx.font = "bold 32px Cormorant Garamond";
         ctx.textAlign = "center";
         ctx.fillText("Pairfect Memory Snap ♡", canvas.width / 2, canvas.height / 2 - 20);
@@ -381,7 +381,7 @@ export default function PhotoBoothPage() {
         if (fCtx) {
           fCtx.fillStyle = "#F5EDD8";
           fCtx.fillRect(0, 0, 640, 480);
-          fCtx.fillStyle = "#8E2B45";
+          fCtx.fillStyle = "#E8527D";
           fCtx.font = "bold 28px sans-serif";
           fCtx.textAlign = "center";
           fCtx.fillText("Pairfect Photo Snap ♡", 320, 240);
@@ -905,7 +905,7 @@ export default function PhotoBoothPage() {
                 ) : (
                   <div className="p-6 text-center space-y-3">
                     <Camera className="w-10 h-10 text-[var(--rose)] mx-auto opacity-70" />
-                    <p className="font-heading text-lg text-[#F8F3EE]">Camera Unavailable</p>
+                    <p className="font-heading text-lg text-[var(--bg)]">Camera Unavailable</p>
                     <p className="text-xs text-[var(--text-soft)] font-sans">
                       {cameraError || "Your browser camera stream couldn't be loaded."}
                     </p>

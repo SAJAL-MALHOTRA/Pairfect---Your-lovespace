@@ -87,7 +87,7 @@ export default function Navigation() {
         {/* Right: Avatar â€” chibi character or initial fallback */}
         <Link
           href="/profile"
-          className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-[#F8F3EE] font-sans flex items-center justify-center text-sm font-bold pointer-events-auto select-none shadow-sm transition-transform hover:scale-105 active:scale-95"
+          className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-[var(--bg)] font-sans flex items-center justify-center text-sm font-bold pointer-events-auto select-none shadow-sm transition-transform hover:scale-105 active:scale-95"
           style={{ boxShadow: "0 2px 8px var(--shadow)" }}
         >
           {profile?.avatar_url ? (

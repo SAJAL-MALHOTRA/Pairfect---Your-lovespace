@@ -745,14 +745,14 @@ export default function FocusZonePage() {
               
               <div className="space-y-3.5 text-xs text-muted-foreground leading-relaxed">
                 <div className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#f472b6] mt-1.5 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--burgundy)] mt-1.5 flex-shrink-0" />
                   <p>
                     <strong>25/5 rule:</strong> Study for 25 minutes (Pomodoro) and rest for 5 minutes. Reset after 4 focus sessions.
                   </p>
                 </div>
                 
                 <div className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#f472b6] mt-1.5 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--burgundy)] mt-1.5 flex-shrink-0" />
                   <p>
                     <strong>Realtime Sync:</strong> Keep this page open while you study to broadcast your live study updates to your partner automatically.
                   </p>

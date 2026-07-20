@@ -128,7 +128,7 @@ function WaxSealButton({ onPress, shattering }: { onPress: () => void; shatterin
 
 // ── Envelope Styles ──────────────────────────────────────────────────────────
 const STYLES: Record<string, { name: string; bg: string; foldDark: boolean; sealColor: string }> = {
-  classic:  { name: "Parchment",   bg: "linear-gradient(160deg,#F8EED8,#EDE0C4)",              foldDark: false, sealColor: "#802030" },
+  classic:  { name: "Parchment",   bg: "linear-gradient(160deg,#F8EED8,#EDE0C4)",              foldDark: false, sealColor: "var(--burgundy)" },
   velvet:   { name: "Velvet Rose", bg: "linear-gradient(160deg,#FDF0F2,#F5D8DC)",              foldDark: false, sealColor: "#9B2E4B" },
   midnight: { name: "Midnight",    bg: "linear-gradient(160deg,#16202E,#0E1520)",              foldDark: true,  sealColor: "#4F46E5" },
   kraft:    { name: "Kraft",       bg: "linear-gradient(160deg,#EDE4D0,#DDD0B8)",              foldDark: false, sealColor: "#6B4F2C" },

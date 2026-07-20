@@ -255,7 +255,7 @@ export default function GratitudeJarPage() {
               <div className="absolute top-12 right-6 w-0.5 h-36 bg-white/8 rounded-full blur-[0.5px] pointer-events-none z-10" />
 
               {/* Hanging label tag */}
-              <div className="absolute top-10 left-5 w-8 h-12 bg-[#FAF6EE] border border-[#E8DDCD] shadow-[0_2px_4px_rgba(0,0,0,0.04)] rounded-sm origin-top rotate-[14deg] z-10 flex flex-col items-center justify-center p-0.5 pointer-events-none">
+              <div className="absolute top-10 left-5 w-8 h-12 bg-[var(--paper-warm)] border border-[var(--border)] shadow-[0_2px_4px_rgba(0,0,0,0.04)] rounded-sm origin-top rotate-[14deg] z-10 flex flex-col items-center justify-center p-0.5 pointer-events-none">
                 <div className="w-1.5 h-1.5 rounded-full bg-[var(--seal-red)]/20 mb-1 flex items-center justify-center">
                   <div className="w-0.5 h-0.5 bg-[var(--seal-red)] rounded-full" />
                 </div>

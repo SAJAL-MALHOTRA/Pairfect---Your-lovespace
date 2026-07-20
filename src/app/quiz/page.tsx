@@ -692,7 +692,7 @@ export default function QuizPage() {
 
             {/* Grid of 14 packs */}
             <div className="space-y-4">
-              <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest flex items-center space-x-1.5">
+              <h2 className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest flex items-center space-x-1.5">
                 <Gamepad2 className="w-4 h-4 text-primary" />
                 <span>Select a Play Pack to Start</span>
               </h2>
@@ -845,7 +845,7 @@ export default function QuizPage() {
                   <div className="flex flex-col sm:flex-row gap-6 justify-center items-stretch">
                     
                     {/* Polaroid A: Subject's actual answer */}
-                    <div className="flex-1 max-w-xs bg-[#faf9f6] p-4 border border-stone-200 shadow-md rotate-[-1deg] text-center flex flex-col justify-between">
+                    <div className="flex-1 max-w-xs bg-[var(--paper-warm)] p-4 border border-stone-200 shadow-md rotate-[-1deg] text-center flex flex-col justify-between">
                       <div className="aspect-square bg-stone-100 border border-stone-300 flex flex-col items-center justify-center p-4">
                         <p className="text-stone-800 text-lg font-bold italic font-mono break-all leading-normal">
                           "{gameState.answers[gameState.currentQuestionIndex]?.[gameState.turnOwnerId] || ""}"
@@ -859,7 +859,7 @@ export default function QuizPage() {
                     </div>
 
                     {/* Polaroid B: Guesser's Guess */}
-                    <div className="flex-1 max-w-xs bg-[#faf9f6] p-4 border border-stone-200 shadow-md rotate-[1deg] text-center flex flex-col justify-between">
+                    <div className="flex-1 max-w-xs bg-[var(--paper-warm)] p-4 border border-stone-200 shadow-md rotate-[1deg] text-center flex flex-col justify-between">
                       <div className="aspect-square bg-stone-100 border border-stone-300 flex flex-col items-center justify-center p-4">
                         <p className="text-stone-800 text-lg font-bold italic font-mono break-all leading-normal">
                           "{gameState.answers[gameState.currentQuestionIndex]?.[gameState.turnOwnerId === user.id ? (partner?.id || "") : user.id] || ""}"

@@ -166,7 +166,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="card-standard p-8 bg-white/70 dark:bg-[#1e1a19]/70 backdrop-blur-md min-h-[300px] flex flex-col justify-between">
+        <div className="card-standard p-8 bg-white/70 dark:bg-[var(--card-bg)]/70 backdrop-blur-md min-h-[300px] flex flex-col justify-between">
           {error && (
             <div className="mb-6 p-4 rounded-button bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
               {error}

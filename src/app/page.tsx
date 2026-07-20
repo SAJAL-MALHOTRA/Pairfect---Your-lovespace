@@ -13,7 +13,7 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-between bg-[#f8f9fb] dark:bg-[#09090b] transition-colors duration-300 overflow-hidden">
+    <div className="relative min-h-screen flex flex-col justify-between bg-[var(--bg)] transition-colors duration-300 overflow-hidden">
       
       {/* CSS Keyframes for Floating Hearts & animations */}
       <style dangerouslySetInnerHTML={{ __html: `
