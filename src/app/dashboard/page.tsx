@@ -437,8 +437,10 @@ export default function DashboardPage() {
     );
   }
 
-  const daysTogether = pair?.created_at
-    ? Math.max(1, Math.floor((Date.now() - new Date(pair.created_at).getTime()) / 86400000) + 1)
+  const anniversaryStart = pair?.started_dating_date || pair?.created_at;
+
+  const daysTogether = anniversaryStart
+    ? Math.max(1, Math.floor((Date.now() - new Date(anniversaryStart).getTime()) / 86400000) + 1)
     : 1;
 
   const getGreeting = () => {

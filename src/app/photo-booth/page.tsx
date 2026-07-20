@@ -416,7 +416,20 @@ export default function PhotoBoothPage() {
   const renderStripToCanvas = useCallback(async (): Promise<HTMLCanvasElement> => {
     const canvas = document.createElement("canvas");
     const width = 1200; // 300 DPI high-res output
-    const height = selectedLayout === "polaroid_grid" ? 1200 : selectedLayout === "journal" ? 1500 : 2000;
+    const count = currentLayoutConfig.count;
+    const padding = 60;
+    const gap = 36;
+    const slotWidth = width - padding * 2;
+    const slotHeight = Math.floor(slotWidth * (3 / 4)); // 4:3 camera photo frame ratio
+
+    const dateText = showDateStamp ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+    const timeText = showTimeStamp ? new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
+    const stampCombined = [dateText, timeText, locationText].filter(Boolean).join(" · ");
+
+    const topHeaderHeight = stampCombined ? 160 : 120;
+    const bottomFooterHeight = captionText ? 140 : 100;
+    
+    const height = topHeaderHeight + (count * slotHeight) + ((count - 1) * gap) + bottomFooterHeight;
     canvas.width = width;
     canvas.height = height;
 
@@ -438,26 +451,15 @@ export default function PhotoBoothPage() {
     ctx.fillStyle = fStyle.text;
     ctx.font = "italic bold 44px Cormorant Garamond, serif";
     ctx.textAlign = "center";
-    ctx.fillText("Pairfect Photo Booth ♡", width / 2, 80);
-
-    // Date & Time Stamps
-    ctx.font = "28px Caveat, cursive";
-    const dateText = showDateStamp ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
-    const timeText = showTimeStamp ? new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
-    const stampCombined = [dateText, timeText, locationText].filter(Boolean).join(" · ");
+    ctx.fillText("Pairfect Photo Booth ♡", width / 2, 70);
 
     if (stampCombined) {
-      ctx.fillText(stampCombined, width / 2, 125);
+      ctx.font = "28px Caveat, cursive";
+      ctx.fillText(stampCombined, width / 2, 115);
     }
 
     // Preload ALL images asynchronously as Data URLs
     const loadedImages = await Promise.all(capturedPhotos.map(src => loadImageAsync(src)));
-
-    // Calculate layout parameters
-    const count = currentLayoutConfig.count;
-    const padding = 60;
-    const topOffset = stampCombined ? 160 : 110;
-    const availableHeight = height - topOffset - 160;
 
     // Save context for filter application
     ctx.save();
@@ -466,17 +468,17 @@ export default function PhotoBoothPage() {
     }
 
     if (selectedLayout === "strip_3" || selectedLayout === "strip_4") {
-      const slotHeight = (availableHeight - (count - 1) * 30) / count;
-      const slotWidth = width - padding * 2;
-
       loadedImages.forEach((img, idx) => {
-        const y = topOffset + idx * (slotHeight + 30);
+        const y = topHeaderHeight + idx * (slotHeight + gap);
 
         // Photo white border box
         ctx.save();
         ctx.filter = "none";
         ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(padding - 8, y - 8, slotWidth + 16, slotHeight + 16);
+        ctx.fillRect(padding - 10, y - 10, slotWidth + 20, slotHeight + 20);
+        ctx.strokeStyle = "rgba(0,0,0,0.08)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(padding - 10, y - 10, slotWidth + 20, slotHeight + 20);
         ctx.restore();
 
         // Draw photo with filter applied

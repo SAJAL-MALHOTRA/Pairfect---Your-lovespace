@@ -25,20 +25,96 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
   return <img src={url} alt="Sticker" className="rounded-xl max-h-44 object-contain w-full" />;
 }
 
-// ── Typewriter ───────────────────────────────────────────────────────────────
-const playClick = () => {
-  try {
-    const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator(); const g = ctx.createGain();
-    osc.type = "sine"; osc.frequency.value = 550 + Math.random() * 350;
-    g.gain.setValueAtTime(0.012, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
-    osc.connect(g); g.connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime + 0.04);
-  } catch {}
+// ── Typewriter Audio Engine ──────────────────────────────────────────────────
+let audioCtxSingleton: AudioContext | null = null;
+
+const getAudioContext = () => {
+  if (typeof window === "undefined") return null;
+  if (!audioCtxSingleton) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtxSingleton = new AudioContextClass();
+    }
+  }
+  if (audioCtxSingleton && audioCtxSingleton.state === "suspended") {
+    audioCtxSingleton.resume().catch(() => {});
+  }
+  return audioCtxSingleton;
 };
 
-function TypewriterText({ text, speed = 30, sound = false }: { text: string; speed?: number; sound?: boolean }) {
+export const playTypewriterClick = (char?: string) => {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+
+    // 1. Key mechanical strike (filtered white noise burst)
+    const bufferSize = Math.floor(ctx.sampleRate * 0.03);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 1600 + Math.random() * 500;
+    filter.Q.value = 3.0;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    noise.start(now);
+
+    // 2. Low mechanical body thump
+    const thud = ctx.createOscillator();
+    const thudGain = ctx.createGain();
+    thud.type = "triangle";
+    thud.frequency.setValueAtTime(130 + Math.random() * 30, now);
+    thud.frequency.exponentialRampToValueAtTime(40, now + 0.035);
+
+    thudGain.gain.setValueAtTime(0.18, now);
+    thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+
+    thud.connect(thudGain);
+    thudGain.connect(ctx.destination);
+
+    thud.start(now);
+    thud.stop(now + 0.04);
+
+    // 3. Carriage bell ding on sentence endings
+    if (char && (char === "." || char === "!" || char === "?" || char === "\n")) {
+      const bell = ctx.createOscillator();
+      const bellGain = ctx.createGain();
+      bell.type = "sine";
+      bell.frequency.setValueAtTime(1250, now + 0.01);
+
+      bellGain.gain.setValueAtTime(0.1, now + 0.01);
+      bellGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+      bell.connect(bellGain);
+      bellGain.connect(ctx.destination);
+
+      bell.start(now + 0.01);
+      bell.stop(now + 0.23);
+    }
+  } catch (e) {
+    // Silent catch if audio not allowed
+  }
+};
+
+const playClick = playTypewriterClick;
+
+function TypewriterText({ text, speed = 30, sound = true }: { text: string; speed?: number; sound?: boolean }) {
   const [shown, setShown] = useState("");
   const i = useRef(0);
   useEffect(() => { setShown(""); i.current = 0; }, [text]);
@@ -49,8 +125,8 @@ function TypewriterText({ text, speed = 30, sound = false }: { text: string; spe
         const ch = text[i.current];
         setShown(p => p + ch);
         i.current++;
-        if (sound && ch.trim()) playClick();
-        t = setTimeout(type, speed + Math.random() * 10);
+        if (sound && ch.trim()) playTypewriterClick(ch);
+        t = setTimeout(type, speed + Math.random() * 12);
       }
     };
     t = setTimeout(type, speed);

@@ -9,6 +9,7 @@ interface UserProfile {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  avatar_config?: any;
   spotify_connected: boolean;
   notification_settings?: {
     partner_check_in?: boolean;

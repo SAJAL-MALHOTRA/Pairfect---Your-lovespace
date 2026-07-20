@@ -227,55 +227,72 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       {/* Live Warm Toast Popover Layer */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm pointer-events-none">
         <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl text-[var(--text)] paper-grain"
-              style={{ boxShadow: "0 10px 30px var(--shadow)" }}
-            >
-              <div className="w-9 h-9 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--burgundy)] shrink-0 mt-0.5">
-                {toast.type === "game_started" ? (
-                  <Gamepad2 className="w-4.5 h-4.5 text-[var(--burgundy)]" />
-                ) : toast.type === "letter_sent" ? (
-                  <Mail className="w-4 h-4" />
-                ) : toast.type === "ping_sent" ? (
-                  <Heart className="w-4 h-4 fill-current" />
-                ) : toast.type === "memory_added" ? (
-                  <ImageIcon className="w-4 h-4" />
-                ) : toast.type === "gratitude_note" ? (
-                  <Gift className="w-4 h-4" />
-                ) : (
-                  <Sparkles className="w-4 h-4" />
-                )}
-              </div>
+          {toasts.map((toast) => {
+            const getToastRoute = (t: ToastNotice) => {
+              if (t.route) return t.route;
+              if (t.type === "letter_sent" || t.type === "reaction_reply") return "/love-letter";
+              if (t.type === "gratitude_note") return "/gratitude-jar";
+              if (t.type === "memory_added") return "/stories";
+              if (t.type === "game_started") return "/play";
+              return "/dashboard";
+            };
+            const targetRoute = getToastRoute(toast);
 
-              <div className="flex-1 space-y-1">
-                <p className="font-heading font-bold text-sm text-[var(--burgundy)]">{toast.title}</p>
-                {toast.body && (
-                  <p className="font-sans text-xs text-[var(--text-soft)] leading-snug">{toast.body}</p>
-                )}
-                {toast.route && (
-                  <Link
-                    href={toast.route}
-                    onClick={() => removeToast(toast.id)}
-                    className="inline-flex items-center gap-1 text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--burgundy)] hover:underline pt-1"
-                  >
-                    Join Now →
-                  </Link>
-                )}
-              </div>
-
-              <button
-                onClick={() => removeToast(toast.id)}
-                className="text-[var(--text-soft)] hover:text-[var(--text)] p-1 rounded-full hover:bg-black/5"
+            return (
+              <motion.div
+                key={toast.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                className="pointer-events-auto p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl text-[var(--text)] paper-grain hover:border-[var(--burgundy)]/50 transition-all cursor-pointer"
+                style={{ boxShadow: "0 10px 30px var(--shadow)" }}
               >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </motion.div>
-          ))}
+                <Link
+                  href={targetRoute}
+                  onClick={() => removeToast(toast.id)}
+                  className="flex items-start gap-3"
+                >
+                  <div className="w-9 h-9 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--burgundy)] shrink-0 mt-0.5">
+                    {toast.type === "game_started" ? (
+                      <Gamepad2 className="w-4.5 h-4.5 text-[var(--burgundy)]" />
+                    ) : toast.type === "letter_sent" ? (
+                      <Mail className="w-4 h-4" />
+                    ) : toast.type === "ping_sent" ? (
+                      <Heart className="w-4 h-4 fill-current" />
+                    ) : toast.type === "memory_added" ? (
+                      <ImageIcon className="w-4 h-4" />
+                    ) : toast.type === "gratitude_note" ? (
+                      <Gift className="w-4 h-4" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-1">
+                    <p className="font-heading font-bold text-sm text-[var(--burgundy)]">{toast.title}</p>
+                    {toast.body && (
+                      <p className="font-sans text-xs text-[var(--text-soft)] leading-snug">{toast.body}</p>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--burgundy)] hover:underline pt-1">
+                      View details →
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeToast(toast.id);
+                    }}
+                    className="text-[var(--text-soft)] hover:text-[var(--text)] p-1 rounded-full hover:bg-black/5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </Link>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
     </NotificationContext.Provider>

@@ -154,18 +154,19 @@ export default function PhysicalCassetteTape({
 
             {/* ─── STICKERS DECAL LAYER ON CASE ─── */}
             {stickers.length > 0 && (
-              <div className="absolute inset-0 z-40 p-4 flex items-center justify-between">
+              <div className="absolute inset-0 z-40 p-3 flex items-center justify-around pointer-events-none">
                 {stickers.map((st, idx) => (
                   <motion.div
                     key={st + idx}
                     drag
-                    dragConstraints={{ left: -110, right: 110, top: -60, bottom: 60 }}
-                    dragElastic={0.1}
+                    dragMomentum={false}
+                    dragElastic={0.05}
+                    dragConstraints={{ left: -140, right: 140, top: -75, bottom: 75 }}
                     initial={{ scale: 0, rotate: (idx % 2 === 0 ? -12 : 12) }}
                     animate={{ scale: 1, rotate: (idx % 2 === 0 ? -8 : 8) }}
-                    whileHover={{ scale: 1.15, cursor: "grab" }}
-                    whileTap={{ scale: 1.1, cursor: "grabbing" }}
-                    className="transform pointer-events-auto touch-none"
+                    whileHover={{ scale: 1.25, cursor: "grab" }}
+                    whileTap={{ scale: 1.15, cursor: "grabbing" }}
+                    className="transform pointer-events-auto touch-none select-none filter drop-shadow-md"
                   >
                     <StickerGraphic sticker={st} />
                   </motion.div>

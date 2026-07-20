@@ -216,10 +216,10 @@ export default function PlayLobbyPage() {
                 </span>
               </div>
               <h3 className="font-heading font-bold text-2xl text-[var(--text)] leading-tight">
-                Online Photobooth for Two
+                Online Photo Booth
               </h3>
               <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed">
-                A shared live countdown fires the shot on both screens at once — so every photo frame captures you both together in real time.
+                Take your own 4-frame photo strip, customize it with vintage filters & stickers, and save your memories.
               </p>
             </div>
           </div>

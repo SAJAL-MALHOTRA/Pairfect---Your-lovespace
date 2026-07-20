@@ -5,7 +5,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import Navigation from "@/components/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { calculateStreak } from "@/lib/utils/streak";
-import { Check, Plus, Loader2 } from "lucide-react";
+import { Check, Plus, Loader2, Edit3, Trash2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 import Link from "next/link";
@@ -23,6 +23,8 @@ export default function ProfilePage() {
     { id: "5", text: "Stargaze on a clear summer night 🌌", done: false },
   ]);
   const [newTodo, setNewTodo] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     if (!pair) return;
@@ -38,19 +40,44 @@ export default function ProfilePage() {
     if (saved) { try { setBucketList(JSON.parse(saved)); } catch {} }
   }, [pair]);
 
+  const saveToStorage = (list: any[]) => {
+    setBucketList(list);
+    if (pair) localStorage.setItem(`pairfect-bucketlist-${pair.id}`, JSON.stringify(list));
+  };
+
   const toggleTodo = (id: string) => {
     const updated = bucketList.map(item => item.id === id ? { ...item, done: !item.done } : item);
-    setBucketList(updated);
-    if (pair) localStorage.setItem(`pairfect-bucketlist-${pair.id}`, JSON.stringify(updated));
+    saveToStorage(updated);
   };
 
   const addTodo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTodo.trim()) return;
     const updated = [...bucketList, { id: Date.now().toString(), text: newTodo.trim(), done: false }];
-    setBucketList(updated);
+    saveToStorage(updated);
     setNewTodo("");
-    if (pair) localStorage.setItem(`pairfect-bucketlist-${pair.id}`, JSON.stringify(updated));
+  };
+
+  const startEdit = (item: { id: string; text: string }) => {
+    setEditingId(item.id);
+    setEditText(item.text);
+  };
+
+  const saveEdit = (id: string) => {
+    if (!editText.trim()) {
+      deleteTodo(id);
+      return;
+    }
+    const updated = bucketList.map(item => item.id === id ? { ...item, text: editText.trim() } : item);
+    saveToStorage(updated);
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const deleteTodo = (id: string) => {
+    const updated = bucketList.filter(item => item.id !== id);
+    saveToStorage(updated);
+    if (editingId === id) setEditingId(null);
   };
 
   if (loading) {
@@ -62,12 +89,14 @@ export default function ProfilePage() {
     );
   }
 
-  const daysTogether = pair?.created_at
-    ? Math.max(1, Math.floor((Date.now() - new Date(pair.created_at).getTime()) / 86400000) + 1)
+  const anniversaryStart = pair?.started_dating_date || pair?.created_at;
+
+  const daysTogether = anniversaryStart
+    ? Math.max(1, Math.floor((Date.now() - new Date(anniversaryStart).getTime()) / 86400000) + 1)
     : 1;
 
-  const since = pair?.created_at
-    ? new Date(pair.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  const since = anniversaryStart
+    ? new Date(anniversaryStart).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : null;
 
   const getInitials = (name: string | null | undefined) => name ? name.slice(0, 2).toUpperCase() : "??";
@@ -89,80 +118,74 @@ export default function ProfilePage() {
           className="text-center mb-14"
         >
           {since && (
-            <p className="font-handwriting text-sm text-[var(--ink-light)] mb-3">Since {since}</p>
+            <p className="font-handwriting text-xs text-[var(--ink-light)] mb-2 italic">
+              Since {since}
+            </p>
           )}
 
-          {/* The monument */}
           <div className="relative inline-block">
-            <p className="font-display font-black text-[clamp(5rem,22vw,7.5rem)] text-[var(--ink-dark)] leading-none tracking-tight tabular-nums" style={{ lineHeight: 0.9 }}>
+            <h1
+              className="font-display font-black text-8xl md:text-9xl text-[var(--ink-dark)] tracking-tighter leading-none select-none"
+              style={{ fontSize: "clamp(5.5rem, 18vw, 8.5rem)" }}
+            >
               {daysTogether}
-            </p>
-            {/* Subtle ambient glow behind the number */}
-            <div aria-hidden className="absolute inset-0 pointer-events-none"
-              style={{ background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(128,32,48,0.06) 0%, transparent 70%)" }} />
+            </h1>
           </div>
 
-          <p className="font-handwriting text-base text-[var(--ink-mid)] mt-3">
+          <p className="font-handwriting text-base text-[var(--ink-mid)] mt-3 italic">
             days of choosing each other
           </p>
 
-          {/* Thin rule */}
-          <div className="flex items-center gap-3 mt-6 mb-2">
-            <div className="flex-1 h-px bg-[var(--border-mid)]" />
-            <span className="text-[var(--ink-light)] text-xs">✦</span>
-            <div className="flex-1 h-px bg-[var(--border-mid)]" />
+          <div className="mt-5 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-[var(--border-mid)]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--seal-red)] opacity-50" />
+            <div className="h-px w-8 bg-[var(--border-mid)]" />
           </div>
-
-          {/* Secondary stat: streak */}
-          {streak > 0 && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-              className="font-handwriting text-sm text-[var(--ink-light)]">
-              {streak} day streak 🔥
-            </motion.p>
-          )}
-
-          {/* Signature Illustration */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="mt-6 flex justify-center"
-          >
-            <PairfectPortrait className="w-56 h-56 rounded-3xl" />
-          </motion.div>
         </motion.div>
 
-        {/* Two Polaroid portraits — subordinate to the number */}
+        {/* The Couple — side by side polaroid portraits */}
         <motion.div
-          className="flex items-end justify-center gap-8 mb-14"
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
+          transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="grid grid-cols-2 gap-4 mb-16"
         >
           {[
-            { displayName: profile?.display_name, avatarUrl: profile?.avatar_url },
-            { displayName: partner?.display_name, avatarUrl: partner?.avatar_url },
-          ].map((person, i) => (
+            {
+              profile: profile,
+              isMe: true,
+              displayName: profile?.display_name,
+            },
+            {
+              profile: partner,
+              isMe: false,
+              displayName: partner?.display_name,
+            },
+          ].map((person, index) => (
             <motion.div
-              key={i}
-              className={`polaroid ${ROTATIONS[i]} relative`}
-              style={{ width: "clamp(110px, 28vw, 140px)" }}
-              whileHover={{ rotate: 0, y: -4, scale: 1.04 }}
-              transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              key={index}
+              className={`polaroid relative ${ROTATIONS[index]}`}
+              whileHover={{ rotate: 0, scale: 1.04, y: -4 }}
+              transition={{ duration: 0.3 }}
             >
-              {/* Washi tape strip */}
-              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-10 h-4 pointer-events-none z-10"
-                style={{ background: WASHI[i], transform: `translateX(-50%) rotate(${i === 0 ? -1.5 : 1.5}deg)` }} />
+              {/* Washi tape top */}
+              <div
+                className="washi-tape"
+                style={{
+                  width: "40px",
+                  height: "16px",
+                  background: WASHI[index],
+                  transform: `translateX(-50%) rotate(${index === 0 ? -4 : 4}deg)`,
+                }}
+              />
 
-              {/* Photo area */}
-              <div className="aspect-square bg-[var(--border-mid)] overflow-hidden flex items-center justify-center relative group">
-                {person.avatarUrl && !person.avatarUrl.startsWith("{") ? (
-                  <img src={person.avatarUrl} alt={person.displayName || ""} className="w-full h-full object-cover" />
-                ) : (
-                  <ChibiAvatar config={parseAvatarConfig(person.avatarUrl)} pose="profile" className="w-full h-full" />
-                )}
-                {/* Customize link overlay on hover for current user */}
-                {i === 0 && (
+              {/* Avatar Box */}
+              <div className="relative bg-[var(--paper-mid)] overflow-hidden rounded-sm group aspect-square flex items-center justify-center">
+                <ChibiAvatar
+                  config={parseAvatarConfig(person.profile?.avatar_config)}
+                  className="w-28 h-28"
+                />
+                {person.isMe && (
                   <Link
                     href="/profile/avatar-builder"
                     className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[9px] uppercase tracking-wider font-mono font-bold"
@@ -188,7 +211,13 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.55 }}
         >
-          <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">Our bucket list</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]">Our bucket list</p>
+            <span className="text-[9px] font-mono text-[var(--ink-light)]">
+              {bucketList.filter(i => i.done).length}/{bucketList.length} completed
+            </span>
+          </div>
+
           <div
             className="relative rounded-3xl overflow-hidden paper-grain"
             style={{
@@ -200,34 +229,91 @@ export default function ProfilePage() {
             }}
           >
             <div className="px-6 py-4 space-y-0">
-              {bucketList.map((item, i) => (
-                <motion.div
+              {bucketList.map((item) => (
+                <div
                   key={item.id}
-                  onClick={() => toggleTodo(item.id)}
-                  className="flex items-center gap-3 cursor-pointer group"
+                  className="flex items-center gap-3 group"
                   style={{ minHeight: "36px", paddingTop: "2px" }}
-                  whileTap={{ scale: 0.98 }}
                 >
-                  <motion.div
-                    className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                      item.done ? "bg-[var(--seal-red)] border-[var(--seal-red)]" : "bg-transparent border-[var(--ink-light)]"
+                  {/* Checkbox */}
+                  <button
+                    type="button"
+                    onClick={() => toggleTodo(item.id)}
+                    className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all duration-200 cursor-pointer ${
+                      item.done ? "bg-[var(--seal-red)] border-[var(--seal-red)]" : "bg-transparent border-[var(--ink-light)] hover:border-[var(--seal-red)]"
                     }`}
-                    whileTap={{ scale: 0.85 }}
                   >
                     {item.done && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                  </motion.div>
-                  <span
-                    className={`text-sm leading-relaxed transition-all duration-200 ${
-                      item.done ? "line-through text-[var(--ink-light)]" : "text-[var(--text)]"
-                    }`}
-                    style={{ fontFamily: "var(--font-handwriting),cursive" }}
-                  >
-                    {item.text}
-                  </span>
-                </motion.div>
+                  </button>
+
+                  {/* Inline Edit Form vs Normal Text */}
+                  {editingId === item.id ? (
+                    <form
+                      onSubmit={(e) => { e.preventDefault(); saveEdit(item.id); }}
+                      className="flex-1 flex items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        autoFocus
+                        className="flex-1 bg-white/70 px-2 py-0.5 rounded border text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
+                        style={{ fontFamily: "var(--font-handwriting),cursive", color: "var(--text)" }}
+                      />
+                      <button
+                        type="submit"
+                        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded cursor-pointer"
+                        title="Save item"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(null)}
+                        className="p-1 text-gray-400 hover:bg-gray-100 rounded cursor-pointer"
+                        title="Cancel"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <span
+                        onClick={() => toggleTodo(item.id)}
+                        className={`flex-1 text-sm leading-relaxed transition-all duration-200 cursor-pointer ${
+                          item.done ? "line-through text-[var(--ink-light)]" : "text-[var(--text)]"
+                        }`}
+                        style={{ fontFamily: "var(--font-handwriting),cursive" }}
+                      >
+                        {item.text}
+                      </span>
+
+                      {/* Action buttons (Edit / Delete) */}
+                      <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(item)}
+                          className="p-1 text-[var(--ink-light)] hover:text-[var(--burgundy)] rounded hover:bg-black/5 cursor-pointer"
+                          title="Edit item"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTodo(item.id)}
+                          className="p-1 text-[var(--ink-light)] hover:text-red-600 rounded hover:bg-black/5 cursor-pointer"
+                          title="Remove item"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               ))}
             </div>
 
+            {/* Add new item input */}
             <form onSubmit={addTodo} className="px-6 pb-5 flex items-center gap-3 border-t" style={{ borderColor: "rgba(196,168,130,0.25)" }}>
               <Plus className="w-3.5 h-3.5 text-[var(--ink-light)] flex-shrink-0" />
               <input

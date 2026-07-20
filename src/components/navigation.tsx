@@ -34,7 +34,6 @@ const CLUSTERS = [
   ],
   [
     { href: "/love-letter", icon: Mail, label: "Letters" },
-    { href: "/checkin", icon: BookOpen, label: "Journal" },
     { href: "/mixtape", icon: Music, label: "Mixtape" }
   ],
   [
@@ -246,28 +245,44 @@ export default function Navigation() {
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      {notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          onClick={() => markAsRead(n.id)}
-                          className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                            !n.read
-                              ? "bg-[var(--bg-secondary)] border border-[var(--border)]"
-                              : "hover:bg-black/5 text-opacity-80"
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <div className="w-2 h-2 rounded-full bg-[var(--burgundy)] mt-1 shrink-0 opacity-80" />
-                            <div className="flex-1">
-                              <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
-                              {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
-                              <p className="text-[9px] font-mono text-[var(--ink-light)] mt-1">
-                                {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                              </p>
+                      {notifications.map((n) => {
+                        const getNotifRoute = (notif: any) => {
+                          if (notif.metadata?.route) return notif.metadata.route;
+                          if (notif.type === "letter_sent" || notif.type === "reaction_reply") return "/love-letter";
+                          if (notif.type === "gratitude_note") return "/gratitude-jar";
+                          if (notif.type === "memory_added") return "/stories";
+                          if (notif.type === "game_started") return "/play";
+                          return "/dashboard";
+                        };
+                        const targetRoute = getNotifRoute(n);
+
+                        return (
+                          <Link
+                            key={n.id}
+                            href={targetRoute}
+                            onClick={() => {
+                              markAsRead(n.id);
+                              setShowNotifPanel(false);
+                            }}
+                            className={`block p-2.5 rounded-xl transition-all cursor-pointer ${
+                              !n.read
+                                ? "bg-[var(--bg-secondary)] border border-[var(--border)] font-medium"
+                                : "hover:bg-black/5 opacity-80"
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${!n.read ? "bg-[var(--burgundy)]" : "bg-[var(--border)]"}`} />
+                              <div className="flex-1">
+                                <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
+                                {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
+                                <p className="text-[9px] font-mono text-[var(--ink-light)] mt-1">
+                                  {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      ))}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </motion.div>
