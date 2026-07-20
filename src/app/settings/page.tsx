@@ -227,7 +227,7 @@ export default function SettingsPage() {
       const [lettersRes, memoriesRes, mixtapesRes, gratitudeRes] = await Promise.all([
         supabase.from("love_letters").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
         supabase.from("shared_moments").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
-        supabase.from("mixtapes").select("id", { count: "exact", head: true }).eq("relationship_id", pair.id),
+        supabase.from("mixtapes").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
         supabase.from("gratitude_entries").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
       ]);
 

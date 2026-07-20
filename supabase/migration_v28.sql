@@ -58,12 +58,12 @@ DROP POLICY IF EXISTS "Pair members can manage mixtapes" ON public.mixtapes;
 CREATE POLICY "Pair members can manage mixtapes"
   ON public.mixtapes FOR ALL
   USING (
-    relationship_id IN (
+    pair_id IN (
       SELECT id FROM public.pairs WHERE user_a_id = auth.uid() OR user_b_id = auth.uid()
     )
   )
   WITH CHECK (
-    relationship_id IN (
+    pair_id IN (
       SELECT id FROM public.pairs WHERE user_a_id = auth.uid() OR user_b_id = auth.uid()
     )
   );

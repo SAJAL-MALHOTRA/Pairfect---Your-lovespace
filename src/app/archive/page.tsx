@@ -72,7 +72,7 @@ export default function ArchivePage() {
       const [lettersRes, memoriesRes, mixtapesRes, gratitudeRes] = await Promise.all([
         supabase.from("love_letters").select("*").eq("pair_id", pairId).order("created_at", { ascending: false }),
         supabase.from("shared_moments").select("*").eq("pair_id", pairId).order("moment_date", { ascending: false }),
-        supabase.from("mixtapes").select("*").eq("relationship_id", pairId).order("created_at", { ascending: false }),
+        supabase.from("mixtapes").select("*").eq("pair_id", pairId).order("created_at", { ascending: false }),
         supabase.from("gratitude_entries").select("*").eq("pair_id", pairId).order("created_at", { ascending: false }),
       ]);
 
