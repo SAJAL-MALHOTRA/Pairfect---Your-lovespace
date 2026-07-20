@@ -30,6 +30,9 @@ interface Pair {
   paused_streak_value?: number;
   is_paused?: boolean;
   last_ping_at?: string | null;
+  purge_status?: "none" | "pending_purge" | "purged";
+  purge_requested_at?: string | null;
+  purge_requested_by?: string | null;
 }
 
 interface AuthContextType {

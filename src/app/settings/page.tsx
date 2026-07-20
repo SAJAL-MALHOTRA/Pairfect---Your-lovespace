@@ -280,21 +280,31 @@ export default function SettingsPage() {
     }
   };
 
-  const handlePurgePairHistory = async () => {
+  const handleRequestPurgePairHistory = async () => {
     if (!pair || purgeConfirmText !== "PURGE") return;
     setPurgingHistory(true); setError(null);
     try {
-      const { error: purgeErr } = await supabase.rpc("purge_pair_history", { p_pair_id: pair.id });
+      const { error: purgeErr } = await supabase.rpc("request_purge_user_pair", { p_pair_id: pair.id });
       if (purgeErr) throw purgeErr;
 
       await refreshSession();
       setShowPurgeModal(false);
-      setSuccessMessage("Relationship history permanently purged.");
-      router.push("/onboarding");
+      setSuccessMessage("Purge request initiated. Partner notified with 14-day objection window.");
     } catch (err: unknown) {
-      setError(getErrorMessage(err, "Failed to purge relationship history."));
+      setError(getErrorMessage(err, "Failed to request history purge."));
     } finally {
       setPurgingHistory(false);
+    }
+  };
+
+  const handleCancelPurge = async () => {
+    if (!pair) return;
+    try {
+      await supabase.rpc("cancel_purge_user_pair", { p_pair_id: pair.id });
+      await refreshSession();
+      setSuccessMessage("Purge request cancelled. Shared archive remains safe.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to cancel purge."));
     }
   };
 
@@ -505,6 +515,26 @@ export default function SettingsPage() {
 
         {/* Danger zone */}
         <Section title="Danger zone">
+          {pair && pair.purge_status === "pending_purge" && (
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 space-y-2 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="font-heading font-semibold text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                  Purge Pending (14-Day Objection Window)
+                </span>
+                <button
+                  onClick={handleCancelPurge}
+                  className="btn-secondary py-1 px-3 text-[10px] uppercase font-bold text-amber-800 cursor-pointer"
+                >
+                  Object & Keep Safe
+                </button>
+              </div>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
+                A request was made to permanently delete this relationship's history. Click "Object & Keep Safe" to cancel the purge and keep your shared archive protected.
+              </p>
+            </div>
+          )}
+
           {pair && (
             <div className="py-3 border-b border-[var(--border)]">
               <button
@@ -666,10 +696,10 @@ export default function SettingsPage() {
               <p className="font-bold text-[var(--text)] text-sm">Purge Shared Relationship History</p>
             </div>
             <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-              This will <strong className="text-red-500">PERMANENTLY DELETE</strong> all love letters, photos, mixtapes, and gratitude notes created in this relationship. This action is instant and cannot be undone.
+              This initiates a <strong className="text-red-500">14-day deletion request</strong>. Your partner will be notified and given 14 days to preserve shared memories or object. If uncontested, all shared photos, letters, and mixtapes will be permanently purged from database and storage.
             </p>
             <p className="text-xs font-sans text-[var(--text-soft)]">
-              To confirm permanent deletion, type <strong className="text-red-500 font-mono">PURGE</strong> below:
+              To request permanent deletion, type <strong className="text-red-500 font-mono">PURGE</strong> below:
             </p>
             <input
               type="text"
@@ -687,11 +717,11 @@ export default function SettingsPage() {
                 Cancel
               </button>
               <button
-                onClick={handlePurgePairHistory}
+                onClick={handleRequestPurgePairHistory}
                 disabled={purgeConfirmText !== "PURGE" || purgingHistory}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center"
               >
-                {purgingHistory ? <Loader2 className="w-4 h-4 animate-spin" /> : "Purge Forever"}
+                {purgingHistory ? <Loader2 className="w-4 h-4 animate-spin" /> : "Request Purge"}
               </button>
             </div>
           </div>
