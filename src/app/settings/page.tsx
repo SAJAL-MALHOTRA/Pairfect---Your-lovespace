@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
@@ -116,10 +115,6 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
-
-  const [showPurgeModal, setShowPurgeModal] = useState(false);
-  const [purgeConfirmText, setPurgeConfirmText] = useState("");
-  const [purgingHistory, setPurgingHistory] = useState(false);
 
   const [anniversaryDate, setAnniversaryDate] = useState("");
   const [updatingAnniversary, setUpdatingAnniversary] = useState(false);
@@ -248,22 +243,18 @@ export default function SettingsPage() {
     if (!pair || unlinkConfirmText !== "UNLINK") return;
     setUnlinkingPair(true); setError(null);
     try {
-      // 1. Call RPC function directly via client
-      await supabase.rpc("unlink_user_pair");
-
-      // 2. Call API route as fallback / server execution
-      const res = await fetch("/api/auth/unlink-pair", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok && !data.success) {
-        console.warn("Unlink API warning:", data.error);
+      const { error: rpcErr } = await supabase.rpc("unlink_and_delete_pair", { p_pair_id: pair.id });
+      if (rpcErr) {
+        const res = await fetch("/api/auth/unlink-pair", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok && !data.success) throw new Error(data.error || "Failed to unlink");
       }
 
       await refreshSession();
       setShowUnlinkModal(false);
-      setSuccessMessage("Partner unlinked. Your shared history remains safe in your archive.");
       router.push("/onboarding");
     } catch (err: unknown) {
-      setError(getErrorMessage(err, "Failed to unlink."));
+      setError(getErrorMessage(err, "Failed to unlink partner."));
     } finally { setUnlinkingPair(false); }
   };
 
@@ -277,34 +268,6 @@ export default function SettingsPage() {
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to delete account."));
       setDeletingAccount(false); setShowDeleteModal(false);
-    }
-  };
-
-  const handleRequestPurgePairHistory = async () => {
-    if (!pair || purgeConfirmText !== "PURGE") return;
-    setPurgingHistory(true); setError(null);
-    try {
-      const { error: purgeErr } = await supabase.rpc("request_purge_user_pair", { p_pair_id: pair.id });
-      if (purgeErr) throw purgeErr;
-
-      await refreshSession();
-      setShowPurgeModal(false);
-      setSuccessMessage("Purge request initiated. Partner notified with 14-day objection window.");
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, "Failed to request history purge."));
-    } finally {
-      setPurgingHistory(false);
-    }
-  };
-
-  const handleCancelPurge = async () => {
-    if (!pair) return;
-    try {
-      await supabase.rpc("cancel_purge_user_pair", { p_pair_id: pair.id });
-      await refreshSession();
-      setSuccessMessage("Purge request cancelled. Shared archive remains safe.");
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, "Failed to cancel purge."));
     }
   };
 
@@ -494,14 +457,7 @@ export default function SettingsPage() {
               </div>
             </form>
 
-            <div className="py-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
-              <Link
-                href="/archive"
-                className="text-xs font-heading font-semibold text-[var(--burgundy)] hover:underline flex items-center gap-1.5"
-              >
-                📚 View Relationship Archive
-              </Link>
-
+            <div className="py-4 border-t border-[var(--border)] pt-4 flex justify-end">
               <button
                 onClick={openUnlinkModal}
                 disabled={unlinkingPair}
@@ -515,40 +471,6 @@ export default function SettingsPage() {
 
         {/* Danger zone */}
         <Section title="Danger zone">
-          {pair && pair.purge_status === "pending_purge" && (
-            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 space-y-2 mb-4">
-              <div className="flex items-center justify-between">
-                <span className="font-heading font-semibold text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                  <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                  Purge Pending (14-Day Objection Window)
-                </span>
-                <button
-                  onClick={handleCancelPurge}
-                  className="btn-secondary py-1 px-3 text-[10px] uppercase font-bold text-amber-800 cursor-pointer"
-                >
-                  Object & Keep Safe
-                </button>
-              </div>
-              <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
-                A request was made to permanently delete this relationship's history. Click "Object & Keep Safe" to cancel the purge and keep your shared archive protected.
-              </p>
-            </div>
-          )}
-
-          {pair && (
-            <div className="py-3 border-b border-[var(--border)]">
-              <button
-                onClick={() => setShowPurgeModal(true)}
-                className="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer transition-colors"
-              >
-                Permanently purge shared relationship history
-              </button>
-              <p className="text-[10px] text-[#A89E90] font-mono mt-0.5">
-                Hard-deletes all letters, memories, and mixtapes for this relationship permanently.
-              </p>
-            </div>
-          )}
-
           <div className="py-3">
             <button
               onClick={() => setShowDeleteModal(true)}
@@ -613,57 +535,51 @@ export default function SettingsPage() {
       {/* Unlink partner confirmation modal */}
       {showUnlinkModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[var(--paper-warm)] rounded-3xl max-w-md w-full border border-[var(--border)] overflow-hidden shadow-2xl paper-grain p-6 space-y-5">
+          <div className="bg-[var(--bg)] rounded-3xl max-w-sm w-full border border-red-200 dark:border-red-900/30 overflow-hidden shadow-2xl p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 shrink-0">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
+              <ShieldAlert className="w-6 h-6 text-red-500 shrink-0" />
               <div>
-                <p className="font-heading font-bold text-lg text-[var(--burgundy)]">Unlink Partner?</p>
-                <p className="text-xs text-[var(--text-soft)]">Pause live sharing with {partner?.display_name || "partner"}</p>
+                <p className="font-heading font-bold text-base text-[var(--text)]">Unlink Partner</p>
+                <p className="text-[11px] text-[var(--text-soft)]">Connected to {partner?.display_name || "partner"}</p>
               </div>
             </div>
 
-            {/* Shared History Data Preservation Card */}
-            <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-2">
-              <p className="font-heading font-semibold text-xs text-[var(--text)] flex items-center gap-1.5">
-                <span>🛡️</span> Your Shared History is Safe & Preserved
-              </p>
-              {loadingCounts ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-4 h-4 animate-spin text-[var(--burgundy)]" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 text-xs font-mono text-[var(--text-soft)] pt-1">
-                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
-                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.letters}</span> Letters
-                  </div>
-                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
-                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.memories}</span> Memories
-                  </div>
-                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
-                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.mixtapes}</span> Mixtapes
-                  </div>
-                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
-                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.gratitude}</span> Gratitude Notes
-                  </div>
-                </div>
-              )}
-              <p className="text-[11px] text-[var(--text-soft)] leading-snug pt-1 italic">
-                All your shared memories remain permanently stored in your relationship archive. Unlinking only pauses active live sharing.
-              </p>
-            </div>
+            <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+              This will <strong className="text-red-500">permanently delete all shared letters, memories, mixtapes, and gratitude notes</strong> for both of you. This cannot be undone.
+            </p>
 
-            <div className="space-y-2">
+            {/* Live Shared Items Counts */}
+            {loadingCounts ? (
+              <div className="flex items-center justify-center py-3">
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--burgundy)]" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono text-[var(--text-soft)] pt-1">
+                <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                  <span className="font-bold text-red-500 text-sm">{sharedCounts.letters}</span> Letters
+                </div>
+                <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                  <span className="font-bold text-red-500 text-sm">{sharedCounts.memories}</span> Memories
+                </div>
+                <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                  <span className="font-bold text-red-500 text-sm">{sharedCounts.mixtapes}</span> Mixtapes
+                </div>
+                <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                  <span className="font-bold text-red-500 text-sm">{sharedCounts.gratitude}</span> Gratitude Notes
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1.5 pt-1">
               <p className="text-xs font-sans text-[var(--text-soft)]">
-                To confirm, type <strong className="text-[var(--burgundy)] font-mono">UNLINK</strong> below:
+                To confirm permanent deletion, type <strong className="text-red-500 font-mono">UNLINK</strong> below:
               </p>
               <input
                 type="text"
                 value={unlinkConfirmText}
                 onChange={e => setUnlinkConfirmText(e.target.value.toUpperCase())}
                 placeholder="UNLINK"
-                className="w-full text-center px-4 py-2.5 border border-[var(--border)] rounded-xl bg-[var(--bg)] text-sm font-bold tracking-widest text-[var(--burgundy)] uppercase placeholder:opacity-30 focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
+                className="w-full text-center px-4 py-2.5 border border-red-200 dark:border-red-900/30 rounded-xl bg-transparent text-sm font-bold tracking-widest text-red-500 uppercase placeholder:opacity-30 focus:outline-none focus:ring-1 focus:ring-red-500"
               />
             </div>
 
@@ -671,57 +587,16 @@ export default function SettingsPage() {
               <button
                 onClick={() => { setShowUnlinkModal(false); setUnlinkConfirmText(""); }}
                 disabled={unlinkingPair}
-                className="btn-secondary flex-1 py-2.5 text-xs font-bold"
-              >
-                Keep Us Linked
-              </button>
-              <button
-                onClick={handleUnlinkPair}
-                disabled={unlinkConfirmText !== "UNLINK" || unlinkingPair}
-                className="btn-primary flex-1 py-2.5 text-xs font-bold disabled:opacity-40"
-              >
-                {unlinkingPair ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlink Partner"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Purge history confirmation modal */}
-      {showPurgeModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[var(--bg)] rounded-3xl max-w-sm w-full border border-red-200 dark:border-red-900/30 overflow-hidden shadow-2xl p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
-              <p className="font-bold text-[var(--text)] text-sm">Purge Shared Relationship History</p>
-            </div>
-            <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-              This initiates a <strong className="text-red-500">14-day deletion request</strong>. Your partner will be notified and given 14 days to preserve shared memories or object. If uncontested, all shared photos, letters, and mixtapes will be permanently purged from database and storage.
-            </p>
-            <p className="text-xs font-sans text-[var(--text-soft)]">
-              To request permanent deletion, type <strong className="text-red-500 font-mono">PURGE</strong> below:
-            </p>
-            <input
-              type="text"
-              value={purgeConfirmText}
-              onChange={e => setPurgeConfirmText(e.target.value.toUpperCase())}
-              placeholder="PURGE"
-              className="w-full text-center px-4 py-2.5 border border-red-200 dark:border-red-900/30 rounded-xl bg-transparent text-sm font-bold tracking-widest text-red-500 uppercase placeholder:opacity-30 focus:outline-none focus:ring-1 focus:ring-red-500"
-            />
-            <div className="flex gap-3 pt-1">
-              <button
-                onClick={() => { setShowPurgeModal(false); setPurgeConfirmText(""); }}
-                disabled={purgingHistory}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--card-bg)] cursor-pointer transition-all"
               >
                 Cancel
               </button>
               <button
-                onClick={handleRequestPurgePairHistory}
-                disabled={purgeConfirmText !== "PURGE" || purgingHistory}
+                onClick={handleUnlinkPair}
+                disabled={unlinkConfirmText !== "UNLINK" || unlinkingPair}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center"
               >
-                {purgingHistory ? <Loader2 className="w-4 h-4 animate-spin" /> : "Request Purge"}
+                {unlinkingPair ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlink & Delete Everything"}
               </button>
             </div>
           </div>

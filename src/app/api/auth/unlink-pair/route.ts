@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { buildUnlinkedPairUpdate } from "@/lib/pairs";
 
 export async function POST() {
   try {
@@ -12,14 +11,6 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 1. Try calling the SECURITY DEFINER RPC first (most robust)
-    const { data: rpcData, error: rpcErr } = await supabase.rpc("unlink_user_pair");
-
-    if (!rpcErr && rpcData?.success) {
-      return NextResponse.json({ success: true, count: rpcData.unlinked_count });
-    }
-
-    // 2. Fallback to Admin Client if service key is configured
     let dbClient = supabase;
     try {
       dbClient = createAdminClient();
@@ -29,7 +20,7 @@ export async function POST() {
 
     const { data: pairsList, error: pairErr } = await dbClient
       .from("pairs")
-      .select("id,user_a_id,user_b_id,status")
+      .select("id,user_a_id,user_b_id")
       .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
       .in("status", ["pending", "active"]);
 
@@ -39,18 +30,13 @@ export async function POST() {
       return NextResponse.json({ success: true });
     }
 
-    for (const pairData of pairsList) {
-      const mutation = buildUnlinkedPairUpdate(pairData, user.id);
+    for (const p of pairsList) {
+      // 1. Try calling the SECURITY DEFINER RPC first
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("unlink_and_delete_pair", { p_pair_id: p.id });
 
-      if (mutation.action === "delete") {
-        const { error: delErr } = await dbClient.from("pairs").delete().eq("id", pairData.id);
-        if (delErr) console.warn("Pair delete warn:", delErr);
-      } else {
-        const { error: updErr } = await dbClient
-          .from("pairs")
-          .update(mutation.values)
-          .eq("id", pairData.id);
-        if (updErr) console.warn("Pair update warn:", updErr);
+      if (rpcErr || !rpcData?.success) {
+        // Fallback: Delete storage objects then pair row
+        await dbClient.from("pairs").delete().eq("id", p.id);
       }
     }
 
