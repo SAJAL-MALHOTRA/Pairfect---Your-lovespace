@@ -127,22 +127,45 @@ export default function IQDuelPage() {
   // Realtime
   const channelRef = useRef<any>(null);
 
-  // ── Realtime channel setup ────────────────────────────────────────
+  // ── Realtime channel & auto-join setup ────────────────────────────
   useEffect(() => {
     if (loading || !pair || !user) return;
+
+    // Check if partner started an active duel in the last 15 mins
+    (async () => {
+      try {
+        const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+        const { data: activeDuels } = await supabase
+          .from("iq_duels")
+          .select("id")
+          .eq("pair_id", pair.id)
+          .gte("created_at", fifteenMinsAgo)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (activeDuels && activeDuels.length > 0) {
+          const activeId = activeDuels[0].id;
+          const { data: res } = await supabase.from("iq_duel_results").select("user_id").eq("duel_id", activeId);
+          const mySub = res?.find((r: any) => r.user_id === user.id);
+          if (!mySub && (!res || res.length < 2)) {
+            joinExistingDuel(activeId);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    })();
 
     const channel = supabase.channel(`duel-${pair.id}`);
     channelRef.current = channel;
 
     channel
       .on("broadcast", { event: "duel-started" }, ({ payload }: any) => {
-        // Partner started a duel — join it
         if (payload.startedBy !== user.id) {
           joinExistingDuel(payload.duelId);
         }
       })
       .on("broadcast", { event: "duel-reveal" }, ({ payload }: any) => {
-        // Both done — receive results
         setMyResult(payload.results.find((r: any) => r.userId === user.id) || null);
         setPartnerResult(payload.results.find((r: any) => r.userId !== user.id) || null);
         setScreen("reveal");

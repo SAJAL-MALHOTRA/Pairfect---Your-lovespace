@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { decrypt, encrypt } from "@/lib/encryption";
+import { createClient } from "@supabase/supabase-js";
+import { decrypt } from "@/lib/encryption";
 
 function safeDecrypt(text?: string | null): string {
   if (!text) return "";
@@ -9,6 +10,21 @@ function safeDecrypt(text?: string | null): string {
   } catch (e) {
     return text.replace(/^enc:/, "");
   }
+}
+
+function getSupabaseClient() {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && serviceKey) {
+      return createAdminClient();
+    }
+  } catch (e) {
+    // fallback
+  }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  return createClient(url, key);
 }
 
 export async function POST(req: Request) {
@@ -21,7 +37,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dispute ID is required" }, { status: 400 });
     }
 
-    const supabase = createAdminClient();
+    const supabase = getSupabaseClient();
 
     // 1. Fetch the dispute
     const { data: dispute, error: disputeErr } = await supabase
@@ -57,8 +73,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Pair association not found" }, { status: 404 });
     }
 
-    const { data: userA } = await supabase.from("users").select("display_name").eq("id", pair.user_a_id).single();
-    const { data: userB } = await supabase.from("users").select("display_name").eq("id", pair.user_b_id).single();
+    const { data: userA } = await supabase.from("profiles").select("display_name").eq("id", pair.user_a_id).single();
+    const { data: userB } = await supabase.from("profiles").select("display_name").eq("id", pair.user_b_id).single();
 
     const nameA = userA?.display_name || "Partner A";
     const nameB = userB?.display_name || "Partner B";

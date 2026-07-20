@@ -427,9 +427,11 @@ export default function PhotoBoothPage() {
     const stampCombined = [dateText, timeText, locationText].filter(Boolean).join(" · ");
 
     const topHeaderHeight = stampCombined ? 160 : 120;
+    const topOffset = topHeaderHeight;
     const bottomFooterHeight = captionText ? 140 : 100;
     
     const height = topHeaderHeight + (count * slotHeight) + ((count - 1) * gap) + bottomFooterHeight;
+    const availableHeight = height - topHeaderHeight - bottomFooterHeight;
     canvas.width = width;
     canvas.height = height;
 
