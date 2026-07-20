@@ -751,48 +751,7 @@ export default function DashboardPage() {
           {/* ─── RIGHT COLUMN (WIDGETS) ─── */}
           <div className="lg:col-span-5 flex flex-col space-y-6">
             
-            {/* Widget 1: On This Day */}
-            <Link
-              href="/moments"
-              className="block p-6 rounded-[20px] border space-y-4 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md"
-              style={{
-                backgroundColor: "var(--bg-secondary)",
-                borderColor: "var(--border)",
-                boxShadow: "0 4px 16px var(--shadow)",
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[var(--text-soft)] text-[10px] font-mono uppercase tracking-widest">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>On This Day</span>
-                </div>
-              </div>
 
-              {/* Memory content layout */}
-              <div className="flex gap-4 items-center">
-                <div
-                  className="polaroid p-2 z-10 rotate-[-2deg] flex-shrink-0"
-                  style={{ width: "95px", boxShadow: "0 4px 10px var(--shadow)" }}
-                >
-                  <div className="w-full h-16 bg-[var(--paper-deep)] rounded-sm overflow-hidden flex items-center justify-center">
-                    <span className="text-xl">🌅</span>
-                  </div>
-                  <p className="font-handwriting text-[6px] text-center text-[var(--text-soft)] mt-2">Love</p>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-[10px] font-mono text-[var(--rose)] uppercase tracking-wider">2 years ago</p>
-                  <p className="font-heading text-sm text-[var(--text)] italic leading-tight">
-                    You watched the sunset together.
-                  </p>
-                  <span
-                    className="inline-flex items-center gap-1 text-[9px] font-mono uppercase text-[var(--burgundy)] hover:underline pt-1"
-                  >
-                    View Memory <ArrowRight className="w-2.5 h-2.5" />
-                  </span>
-                </div>
-              </div>
-            </Link>
 
             {/* Widget 2: Split Row (Gratitude Jar & Recent Activity) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
