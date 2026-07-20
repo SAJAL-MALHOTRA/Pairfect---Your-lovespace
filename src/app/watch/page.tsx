@@ -13,8 +13,17 @@ declare global {
   }
 }
 
+import { useNotifications } from "@/components/providers/notification-provider";
+
 export default function WatchPage() {
   const { user, pair, loading } = useAuth();
+  const { sendGameNotification } = useNotifications();
+
+  useEffect(() => {
+    if (pair && user) {
+      sendGameNotification("Watch Together", "/watch");
+    }
+  }, [pair, user]);
   
   const [videoUrl, setVideoUrl] = useState("");
   const [currentVideoId, setCurrentVideoId] = useState("dQw4w9WgXcQ"); // Rickroll default

@@ -12,9 +12,18 @@ import {
 import { format, parseISO } from "date-fns";
 import { checkCorrectAnswer } from "@/lib/string-similarity";
 
+import { useNotifications } from "@/components/providers/notification-provider";
+
 export default function RiddlePage() {
   const { user, pair, partner, loading } = useAuth();
+  const { sendGameNotification } = useNotifications();
   const supabase = createClient();
+
+  useEffect(() => {
+    if (pair && user) {
+      sendGameNotification("Riddle Night", "/riddle");
+    }
+  }, [pair, user]);
 
   const [riddles, setRiddles] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);

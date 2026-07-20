@@ -737,7 +737,7 @@ export default function PhotoBoothPage() {
           <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Pairfect Keepsakes</p>
           <h1 className="font-heading font-bold text-4xl text-[var(--text)]">Photo Booth</h1>
           <p className="font-quote italic text-sm text-[var(--text-soft)]">
-            Capture moments you&apos;ll smile at years from now.
+            Take your own 4-frame photo strip, customize it, and save to memories.
           </p>
         </motion.div>
 

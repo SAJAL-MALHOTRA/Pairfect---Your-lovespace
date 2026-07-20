@@ -11,8 +11,11 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
+import { useNotifications } from "@/components/providers/notification-provider";
+
 export default function VibeJudgePage() {
   const { user, pair, partner, loading } = useAuth();
+  const { sendGameNotification } = useNotifications();
   const supabase = createClient();
 
   const [disputes, setDisputes] = useState<any[]>([]);
@@ -267,6 +270,7 @@ export default function VibeJudgePage() {
       if (err) throw err;
 
       setNewTopic("");
+      sendGameNotification("Between the Lines", "/vibe-judge");
       loadDisputeDetails(data.id);
     } catch (e: any) {
       console.error(e);

@@ -95,9 +95,12 @@ function IQCountUp({ target }: { target: number }) {
   return <>{displayed}</>;
 }
 
+import { useNotifications } from "@/components/providers/notification-provider";
+
 // ─── Main Page ────────────────────────────────────────────────────────
 export default function IQDuelPage() {
   const { user, pair, partner, profile, loading } = useAuth();
+  const { sendGameNotification } = useNotifications();
   const supabase = createClient();
 
   type Screen = "lobby" | "questions" | "waiting" | "reveal";
@@ -150,6 +153,44 @@ export default function IQDuelPage() {
       supabase.removeChannel(channel);
     };
   }, [loading, pair, user]);
+
+  // ── Auto-poll & check results when in 'waiting' screen ──
+  useEffect(() => {
+    if (screen !== "waiting" || !duelId || !user) return;
+
+    console.log("[IQDuel] Entering waiting screen. Polling results for duelId:", duelId);
+
+    const checkCompletion = async () => {
+      try {
+        const { data: allResults, error: resErr } = await supabase
+          .from("iq_duel_results")
+          .select("*")
+          .eq("duel_id", duelId);
+
+        if (!resErr && allResults && allResults.length >= 2) {
+          console.log("[IQDuel] Both results ready! Transitioning to reveal screen:", allResults);
+          const resultsPayload = allResults.map((r: any) => ({
+            userId: r.user_id,
+            score: r.score,
+            estimatedIq: r.estimated_iq,
+            playfulLabel: r.playful_label,
+          }));
+
+          const mine = resultsPayload.find((r: any) => r.userId === user.id);
+          const theirs = resultsPayload.find((r: any) => r.userId !== user.id);
+          setMyResult(mine);
+          setPartnerResult(theirs);
+          setScreen("reveal");
+        }
+      } catch (e) {
+        console.error("[IQDuel] Error checking completion:", e);
+      }
+    };
+
+    checkCompletion();
+    const interval = setInterval(checkCompletion, 2000);
+    return () => clearInterval(interval);
+  }, [screen, duelId, user]);
 
   // ── Countdown timer per question ─────────────────────────────────
   useEffect(() => {
@@ -224,12 +265,13 @@ export default function IQDuelPage() {
         .single();
       if (duelErr) throw duelErr;
 
-      // Broadcast to partner
+      // Broadcast to partner & trigger notification
       channelRef.current?.send({
         type: "broadcast",
         event: "duel-started",
         payload: { duelId: duelRow.id, startedBy: user.id },
       });
+      sendGameNotification("IQ Duel", "/iq-duel");
 
       setDuelId(duelRow.id);
       setQuestions(shuffled);

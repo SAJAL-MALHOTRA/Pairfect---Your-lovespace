@@ -304,23 +304,7 @@ export default function StoriesPage() {
                   </div>
                 </div>
 
-                {/* Cover */}
-                <div>
-                  <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block mb-2">Cover photo</label>
-                  <label className="cursor-pointer block">
-                    <div className={`rounded-2xl border border-dashed overflow-hidden flex items-center justify-center transition-colors hover:bg-[var(--paper-warm)] ${coverPreview ? "h-36" : "h-20"}`}
-                      style={{ borderColor: "var(--ink-light)", background: "var(--card-bg)" }}>
-                      {coverPreview ? <img src={coverPreview} alt="" className="w-full h-full object-cover" /> : (
-                        <div className="flex flex-col items-center gap-1">
-                          <ImageIcon className="w-5 h-5 text-[var(--ink-light)]" />
-                          <span className="text-[9px] font-mono text-[var(--ink-light)] uppercase tracking-widest">Optional</span>
-                        </div>
-                      )}
-                    </div>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (!f) return; setCoverFile(f); setCoverPreview(URL.createObjectURL(f)); }} />
-                  </label>
-                </div>
+
 
                 {[
                   { label: "Chapter title", val: title, set: setTitle, placeholder: "Name this chapter...", required: true },

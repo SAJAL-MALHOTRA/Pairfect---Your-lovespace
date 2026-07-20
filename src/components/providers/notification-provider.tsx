@@ -4,14 +4,15 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/auth-provider";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Mail, Sparkles, Image as ImageIcon, Gift, X } from "lucide-react";
+import { Heart, Mail, Sparkles, Image as ImageIcon, Gift, X, Gamepad2 } from "lucide-react";
+import Link from "next/link";
 
 export interface NotificationItem {
   id: string;
   pair_id: string;
   recipient_id: string;
   sender_id: string;
-  type: "letter_sent" | "ping_sent" | "memory_added" | "gratitude_note" | "reaction_reply";
+  type: "letter_sent" | "ping_sent" | "memory_added" | "gratitude_note" | "reaction_reply" | "game_started";
   title: string;
   body: string | null;
   read: boolean;
@@ -24,6 +25,7 @@ interface ToastNotice {
   title: string;
   body: string | null;
   type: string;
+  route?: string;
 }
 
 interface NotificationContextType {
@@ -33,6 +35,7 @@ interface NotificationContextType {
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   sendPing: (phrase?: string) => Promise<{ success: boolean; message: string }>;
+  sendGameNotification: (gameName: string, gameRoute: string) => Promise<{ success: boolean }>;
   refreshNotifications: () => Promise<void>;
 }
 
@@ -43,11 +46,12 @@ const NotificationContext = createContext<NotificationContextType>({
   markAsRead: async () => {},
   markAllAsRead: async () => {},
   sendPing: async () => ({ success: false, message: "" }),
+  sendGameNotification: async () => ({ success: false }),
   refreshNotifications: async () => {},
 });
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { user, pair, partner } = useAuth();
+  const { user, pair, partner, profile } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [toasts, setToasts] = useState<ToastNotice[]>([]);
@@ -100,6 +104,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           setNotifications(prev => [newNotif, ...prev]);
           setUnreadCount(prev => prev + 1);
 
+          // Extract game route from metadata or body
+          const gameRoute = newNotif.metadata?.route || (newNotif.body?.includes("/") ? newNotif.body.split(" ").find(w => w.startsWith("/")) : undefined);
+
           // Trigger live warm toast
           const toastId = `${newNotif.id}-${Date.now()}`;
           setToasts(prev => [...prev, {
@@ -107,12 +114,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             title: newNotif.title,
             body: newNotif.body,
             type: newNotif.type,
+            route: gameRoute,
           }]);
 
-          // Auto dismiss toast after 6 seconds
+          // Auto dismiss toast after 8 seconds
           setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== toastId));
-          }, 6000);
+          }, 8000);
         }
       )
       .subscribe();
@@ -157,25 +165,43 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const pingText = phrase || "Thinking of you ♡";
       const partnerName = partner.display_name || "partner";
 
-      // 1. Log notification for recipient
       const { error: notifErr } = await supabase.from("notifications").insert({
         pair_id: pair.id,
         recipient_id: partner.id,
         sender_id: user.id,
         type: "ping_sent",
-        title: `${user.user_metadata?.display_name || "Your partner"} ${phrase ? `sent a hug: "${phrase}"` : "is thinking of you ♡"}`,
+        title: `${profile?.display_name || "Your partner"} ${phrase ? `sent a hug: "${phrase}"` : "is thinking of you ♡"}`,
         body: pingText,
       });
 
       if (notifErr) throw notifErr;
-
-      // 2. Record pair activity for soft streak progression
       await supabase.rpc("record_pair_activity", { p_pair_id: pair.id });
 
       return { success: true, message: `Sent a warm ping to ${partnerName}!` };
     } catch (e: any) {
       console.error("Failed to send ping:", e);
       return { success: false, message: e?.message || "Failed to send ping." };
+    }
+  };
+
+  // Game Activity Notification Action
+  const sendGameNotification = async (gameName: string, gameRoute: string): Promise<{ success: boolean }> => {
+    if (!user || !pair || !partner) return { success: false };
+    try {
+      const partnerName = profile?.display_name || "Your partner";
+      await supabase.from("notifications").insert({
+        pair_id: pair.id,
+        recipient_id: partner.id,
+        sender_id: user.id,
+        type: "game_started",
+        title: `${partnerName} started playing ${gameName} — join them?`,
+        body: `Tap Join Now to play ${gameName} together!`,
+        metadata: { route: gameRoute },
+      });
+      return { success: true };
+    } catch (e) {
+      console.error("Failed to send game notification:", e);
+      return { success: false };
     }
   };
 
@@ -192,6 +218,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markAsRead,
         markAllAsRead,
         sendPing,
+        sendGameNotification,
         refreshNotifications: fetchNotifications,
       }}
     >
@@ -210,7 +237,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               style={{ boxShadow: "0 10px 30px var(--shadow)" }}
             >
               <div className="w-9 h-9 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--burgundy)] shrink-0 mt-0.5">
-                {toast.type === "letter_sent" ? (
+                {toast.type === "game_started" ? (
+                  <Gamepad2 className="w-4.5 h-4.5 text-[var(--burgundy)]" />
+                ) : toast.type === "letter_sent" ? (
                   <Mail className="w-4 h-4" />
                 ) : toast.type === "ping_sent" ? (
                   <Heart className="w-4 h-4 fill-current" />
@@ -223,10 +252,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 )}
               </div>
 
-              <div className="flex-1 space-y-0.5">
+              <div className="flex-1 space-y-1">
                 <p className="font-heading font-bold text-sm text-[var(--burgundy)]">{toast.title}</p>
                 {toast.body && (
                   <p className="font-sans text-xs text-[var(--text-soft)] leading-snug">{toast.body}</p>
+                )}
+                {toast.route && (
+                  <Link
+                    href={toast.route}
+                    onClick={() => removeToast(toast.id)}
+                    className="inline-flex items-center gap-1 text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--burgundy)] hover:underline pt-1"
+                  >
+                    Join Now →
+                  </Link>
                 )}
               </div>
 

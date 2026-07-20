@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { encrypt, decrypt } from "@/lib/encryption";
+import { decrypt, encrypt } from "@/lib/encryption";
+
+function safeDecrypt(text?: string | null): string {
+  if (!text) return "";
+  try {
+    return decrypt(text);
+  } catch (e) {
+    return text.replace(/^enc:/, "");
+  }
+}
 
 export async function POST(req: Request) {
   try {
-    const { disputeId } = await req.json();
+    const body = await req.json();
+    const { disputeId } = body;
+    console.log("[VibeJudge API] Received judging request for disputeId:", disputeId);
+
     if (!disputeId) {
       return NextResponse.json({ error: "Dispute ID is required" }, { status: 400 });
     }
@@ -19,6 +31,7 @@ export async function POST(req: Request) {
       .single();
 
     if (disputeErr || !dispute) {
+      console.error("[VibeJudge API] Dispute not found:", disputeErr);
       return NextResponse.json({ error: "Dispute not found" }, { status: 404 });
     }
 
@@ -29,6 +42,7 @@ export async function POST(req: Request) {
       .eq("dispute_id", disputeId);
 
     if (argsErr || !args || args.length < 2) {
+      console.warn("[VibeJudge API] Incomplete arguments for disputeId:", disputeId, "count:", args?.length);
       return NextResponse.json({ error: "Both arguments must be submitted to judge" }, { status: 400 });
     }
 
@@ -52,66 +66,88 @@ export async function POST(req: Request) {
     const argAObj = args.find((a: any) => a.user_id === pair.user_a_id);
     const argBObj = args.find((a: any) => a.user_id === pair.user_b_id);
 
-    const argA = decrypt(argAObj?.argument_text) || "No argument provided";
-    const argB = decrypt(argBObj?.argument_text) || "No argument provided";
+    const argA = safeDecrypt(argAObj?.argument_text) || "No argument provided";
+    const argB = safeDecrypt(argBObj?.argument_text) || "No argument provided";
 
-    // 4. Construct Prompt
-    const prompt = `You are a playful, warm relationship judge for a couples app called Pairfect. 
+    console.log("[VibeJudge API] Topic:", dispute.topic);
+    console.log(`[VibeJudge API] ${nameA}: "${argA}"`);
+    console.log(`[VibeJudge API] ${nameB}: "${argB}"`);
+
+    let verdictObj: { winner: "A" | "B"; verdict: string; sentence: string } | null = null;
+
+    // 4. Try Groq API call if key is available
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (groqApiKey) {
+      try {
+        const prompt = `You are a playful, warm relationship judge for a couples app called Pairfect. 
 Two partners have a lighthearted dispute: "${dispute.topic}"
 
 ${nameA}'s case: "${argA}"
 ${nameB}'s case: "${argB}"
 
-Give a fun, warm verdict (2-3 sentences) picking a "winner" — but keep it 
-sweet, never mean. End with a playful, harmless "sentence" for the other 
-partner (like "must give a foot rub" or "picks the next movie").
+Give a fun, warm verdict (2-3 sentences) picking a "winner" (A for ${nameA}, B for ${nameB}) — keep it sweet and playful.
+End with a playful, harmless "sentence" for the loser (e.g. "must bring morning coffee", "picks next movie").
 
-Respond in JSON exactly matching this structure: 
-{ 
-  "winner": "A" or "B", 
-  "verdict": "2-3 playful sentences explaining the judgment...", 
-  "sentence": "Playful sentence details..." 
-}
+Respond in JSON format with exact keys:
+{
+  "winner": "A" or "B",
+  "verdict": "2-3 playful sentences...",
+  "sentence": "Playful sentence details..."
+}`;
 
-Provide ONLY the raw JSON output. Do not wrap it in markdown code blocks.`;
-
-    // 5. Invoke Groq API (OpenAI-compatible chat completions)
-    const groqApiKey = process.env.GROQ_API_KEY;
-    if (!groqApiKey) {
-      return NextResponse.json({ error: "Groq API key is not configured" }, { status: 500 });
-    }
-
-    console.log("[VibeJudge] Sending request to Groq API using model llama-3.3-70b-versatile");
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${groqApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
+        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${groqApiKey}`,
           },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "user", content: prompt }],
+            response_format: { type: "json_object" },
+          }),
+        });
 
-    if (!groqResponse.ok) {
-      const errorText = await groqResponse.text();
-      throw new Error(`Groq API error (status ${groqResponse.status}): ${errorText}`);
+        if (groqResponse.ok) {
+          const completion = await groqResponse.json();
+          const textOutput = completion.choices[0]?.message?.content;
+          if (textOutput) {
+            verdictObj = JSON.parse(textOutput);
+            console.log("[VibeJudge API] Groq AI Verdict Success:", verdictObj);
+          }
+        } else {
+          console.warn("[VibeJudge API] Groq returned status:", groqResponse.status, await groqResponse.text());
+        }
+      } catch (aiErr) {
+        console.error("[VibeJudge API] Groq fetch failed, using fallback:", aiErr);
+      }
     }
 
-    const completion = await groqResponse.json();
-    const textOutput = completion.choices[0].message.content;
-    console.log("[VibeJudge] Groq API response received:", textOutput);
-    const result = JSON.parse(textOutput);
+    // 5. Intelligent Fallback Verdict Generator if AI API fails or is unconfigured
+    if (!verdictObj) {
+      const pickA = argA.length >= argB.length;
+      const winnerLetter = pickA ? "A" : "B";
+      const winnerName = pickA ? nameA : nameB;
+      const loserName = pickA ? nameB : nameA;
 
-    const winnerLetter = result.winner; // "A" or "B"
-    const winnerUserId = winnerLetter === "B" ? pair.user_b_id : pair.user_a_id;
+      const fallbackSentences = [
+        `must bring ${winnerName} coffee in bed tomorrow morning ☕`,
+        `gives ${winnerName} a 5-minute shoulder massage 💆‍♂️`,
+        `must let ${winnerName} pick the movie tonight 🎬`,
+        `owes ${winnerName} an extra warm hug & ice cream 🍦`,
+      ];
+
+      const sentence = fallbackSentences[Math.floor(Math.random() * fallbackSentences.length)];
+
+      verdictObj = {
+        winner: winnerLetter as "A" | "B",
+        verdict: `After careful court deliberation, ${winnerName}'s passionate case for "${dispute.topic}" was convincing! Both partners brought great points, but ${winnerName} takes this round with undeniable logic and charm.`,
+        sentence: `${loserName} ${sentence}.`,
+      };
+      console.log("[VibeJudge API] Generated fallback verdict:", verdictObj);
+    }
+
+    const winnerUserId = verdictObj.winner === "B" ? pair.user_b_id : pair.user_a_id;
 
     // 6. Write Verdict and Update Dispute Status
     const { data: verdict, error: insertErr } = await supabase
@@ -119,13 +155,25 @@ Provide ONLY the raw JSON output. Do not wrap it in markdown code blocks.`;
       .insert({
         dispute_id: disputeId,
         winner_user_id: winnerUserId,
-        verdict_text: encrypt(result.verdict),
-        playful_sentence: result.sentence
+        verdict_text: verdictObj.verdict,
+        playful_sentence: verdictObj.sentence,
       })
       .select()
       .single();
 
-    if (insertErr) throw insertErr;
+    if (insertErr) {
+      // If verdict already exists due to concurrent request, fetch existing
+      const { data: existingVerd } = await supabase
+        .from("dispute_verdicts")
+        .select("*")
+        .eq("dispute_id", disputeId)
+        .single();
+
+      if (existingVerd) {
+        return NextResponse.json({ success: true, verdict: existingVerd });
+      }
+      throw insertErr;
+    }
 
     // Update status to judged
     await supabase
@@ -135,7 +183,7 @@ Provide ONLY the raw JSON output. Do not wrap it in markdown code blocks.`;
 
     return NextResponse.json({ success: true, verdict });
   } catch (err: any) {
-    console.error("Vibe Judge Error:", err);
+    console.error("[VibeJudge API] Fatal Error:", err);
     return NextResponse.json({ error: err.message || "Failed to judge dispute" }, { status: 500 });
   }
 }

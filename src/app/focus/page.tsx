@@ -9,6 +9,7 @@ import {
   Sparkles, CheckCircle2, History, AlertTriangle, ChevronRight, Check, X
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { useNotifications } from "@/components/providers/notification-provider";
 
 type FocusStatus = "idle" | "work" | "break";
 
@@ -39,6 +40,7 @@ interface FocusLog {
 
 export default function FocusZonePage() {
   const { user, profile, pair, partner, loading } = useAuth();
+  const { sendGameNotification } = useNotifications();
   const supabase = createClient();
 
   // Timer state
@@ -314,6 +316,9 @@ export default function FocusZonePage() {
     setSecondsRemaining(seconds);
     setLabel(topic);
     setTimerActive(true);
+    if (sessionType === "work") {
+      sendGameNotification("Focus Session", "/focus");
+    }
 
     const nowStr = new Date().toISOString();
     setStartedAt(nowStr);

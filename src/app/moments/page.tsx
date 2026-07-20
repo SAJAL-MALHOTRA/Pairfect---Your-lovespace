@@ -7,7 +7,6 @@ import Navigation from "@/components/navigation";
 import { format, parseISO } from "date-fns";
 import { Loader2, Plus, X, Trash2, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LookingAtPhotos } from "@/components/cozy-illustrations";
 
 // 24+ Pookie & Heart Emojis for Memory Thumbnails
 const POOKIE_EMOJIS = [
@@ -27,9 +26,10 @@ const WASHI = [
 interface Moment {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   moment_date: string;
   photo_url?: string;
+  emoji?: string;
 }
 
 // ── Individual Polaroid photograph ──────────────────────────────────────────
@@ -42,7 +42,7 @@ function Polaroid({ moment, index, onOpen }: { moment: Moment; index: number; on
     ? moment.photo_url!.startsWith("http") ? moment.photo_url! : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url!)}`
     : null;
 
-  const displayEmoji = !isImageUrl ? (moment.photo_url?.replace("emoji:", "") || "🌅") : null;
+  const displayEmoji = moment.emoji || (!isImageUrl ? (moment.photo_url?.replace("emoji:", "") || "🌅") : "🌅");
 
   const dateStr = (() => { try { return format(parseISO(moment.moment_date), "MMM d, ''yy"); } catch { return ""; } })();
 
@@ -61,19 +61,22 @@ function Polaroid({ moment, index, onOpen }: { moment: Moment; index: number; on
       <div className="absolute -top-3 left-1/2 pointer-events-none z-10" style={{ transform: `translateX(-50%) rotate(${rot * -0.6}deg)`, width: "48px", height: "18px", background: washi }} />
 
       {/* The polaroid frame */}
-      <div className="polaroid" style={{ width: "clamp(130px, 20vw, 200px)" }}>
-        <div className="bg-[var(--border-mid)] overflow-hidden flex items-center justify-center" style={{ aspectRatio: "1 / 1" }}>
+      <div className="polaroid" style={{ width: "clamp(150px, 22vw, 220px)" }}>
+        <div className="bg-[var(--border-mid)] overflow-hidden flex items-center justify-center rounded-sm" style={{ aspectRatio: "1 / 1" }}>
           {src ? (
             <img src={src} alt={moment.title} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[var(--paper-mid)]">
-              <span className="text-4xl select-none">{displayEmoji}</span>
+            <div className="w-full h-full flex items-center justify-center bg-[var(--paper-mid)] p-4 text-center">
+              <span className="text-5xl select-none leading-none">{displayEmoji}</span>
             </div>
           )}
         </div>
-        <div className="pt-3 pb-0.5">
-          <p className="font-handwriting text-sm text-[#3A2E22] dark:text-[#D4C8B8] leading-tight truncate">{moment.title}</p>
-          <p className="font-handwriting text-[10px] text-[var(--ink-light)] mt-0.5">{dateStr}</p>
+        <div className="pt-3 pb-0.5 space-y-1">
+          <p className="font-handwriting text-base font-bold text-[#3A2E22] dark:text-[#D4C8B8] leading-tight truncate">{moment.title}</p>
+          {moment.description && (
+            <p className="text-[11px] font-sans text-[var(--ink-light)] line-clamp-2 leading-snug">{moment.description}</p>
+          )}
+          <p className="font-handwriting text-[10px] text-[var(--ink-light)] pt-0.5">{dateStr}</p>
         </div>
       </div>
     </motion.div>
@@ -89,7 +92,7 @@ function Lightbox({ moment, index, total, onClose, onPrev, onNext, onDelete }: {
   const src = isImageUrl
     ? moment.photo_url!.startsWith("http") ? moment.photo_url! : `/api/photo-proxy?url=${encodeURIComponent(moment.photo_url!)}`
     : null;
-  const displayEmoji = !isImageUrl ? (moment.photo_url?.replace("emoji:", "") || "🌅") : null;
+  const displayEmoji = moment.emoji || (!isImageUrl ? (moment.photo_url?.replace("emoji:", "") || "🌅") : "🌅");
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); if (e.key === "ArrowLeft") onPrev(); if (e.key === "ArrowRight") onNext(); };
@@ -125,10 +128,10 @@ function Lightbox({ moment, index, total, onClose, onPrev, onNext, onDelete }: {
               <span className="text-6xl select-none">{displayEmoji}</span>
             </div>
           )}
-          <div className="pt-4 pb-1 space-y-1">
-            <p className="font-handwriting text-xl text-[var(--text)]">{moment.title}</p>
+          <div className="pt-4 pb-1 space-y-1 text-center">
+            <p className="font-handwriting text-xl text-[var(--text)] font-bold">{moment.title}</p>
             <p className="font-handwriting text-xs text-[var(--ink-mid)]">{dateStr}</p>
-            {moment.description && <p className="text-xs text-[var(--ink-mid)] leading-relaxed mt-1">{moment.description}</p>}
+            {moment.description && <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed mt-2 p-2 bg-[var(--paper-warm)] rounded-xl border border-[var(--border)]">{moment.description}</p>}
           </div>
         </div>
 
@@ -180,9 +183,16 @@ export default function MomentsPage() {
   const fetchMoments = async () => {
     if (!pair) return;
     try {
-      const { data, error: err } = await supabase.from("shared_moments").select("*").eq("pair_id", pair.id).order("moment_date", { ascending: false });
+      const { data, error: err } = await supabase
+        .from("shared_moments")
+        .select("*")
+        .eq("pair_id", pair.id)
+        .order("moment_date", { ascending: false });
+
       if (err) throw err;
-      setMoments(data || []);
+      // Sort by moment_date descending
+      const sorted = (data || []).sort((a: Moment, b: Moment) => new Date(b.moment_date).getTime() - new Date(a.moment_date).getTime());
+      setMoments(sorted);
     } catch (e: any) { setError(e.message); }
     finally { setFetching(false); }
   };
@@ -253,7 +263,7 @@ export default function MomentsPage() {
 
       <main className="px-4 sm:px-6 lg:px-8 py-16 pb-36 max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-          className="flex items-end justify-between mb-14">
+          className="flex items-end justify-between mb-10 border-b border-[var(--border)] pb-6">
           <div>
             <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Our scrapbook</p>
             <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)] mt-0.5">Memories</h1>
@@ -270,13 +280,12 @@ export default function MomentsPage() {
           </div>
         )}
 
-        {/* THE HERO: the photographs — organic scattered collage */}
         {moments.length === 0 ? (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
-            className="text-center py-16 flex flex-col items-center gap-5">
-            <LookingAtPhotos className="w-48 h-48 rounded-3xl" />
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
+            className="text-center py-16 flex flex-col items-center gap-4 bg-[var(--paper-warm)] rounded-3xl border border-[var(--border)] p-8">
+            <span className="text-6xl mb-2">🖼️</span>
             <div>
-              <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-3">Your scrapbook is waiting.</p>
+              <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-2">Your scrapbook is waiting.</p>
               <p className="text-xs text-[var(--ink-light)] font-mono mb-6">Every moment deserves a place here.</p>
               <button onClick={() => setAddOpen(true)} className="btn-primary py-3 px-8 text-[10px] uppercase tracking-widest cursor-pointer">
                 Add your first memory
@@ -284,22 +293,10 @@ export default function MomentsPage() {
             </div>
           </motion.div>
         ) : (
-          <div className="space-y-6">
-            {/* Header illustration */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex justify-center mb-6"
-            >
-              <LookingAtPhotos className="w-44 h-44 rounded-3xl" />
-            </motion.div>
-
-            <div className="flex flex-wrap gap-6 md:gap-8 justify-center md:justify-start items-start pt-4">
+          <div className="flex flex-wrap gap-6 md:gap-8 justify-center md:justify-start items-start pt-2">
             {moments.map((m, i) => (
               <Polaroid key={m.id} moment={m} index={i} onOpen={() => setLightbox({ m, i })} />
             ))}
-          </div>
           </div>
         )}
       </main>
@@ -338,7 +335,7 @@ export default function MomentsPage() {
               <form onSubmit={handleAdd} className="p-5 space-y-4 overflow-y-auto flex-1">
                 {/* Polaroid Live Preview Box */}
                 <div className="relative rounded-2xl border overflow-hidden flex flex-col items-center justify-center shadow-inner"
-                  style={{ borderColor: "var(--border-mid)", background: "var(--paper-warm)", height: "140px" }}>
+                  style={{ borderColor: "var(--border-mid)", background: "var(--paper-warm)", height: "130px" }}>
                   <div className="flex flex-col items-center justify-center space-y-1">
                     <span className="text-5xl select-none animate-bounce">{selectedEmoji}</span>
                     <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mt-1">Thumbnail Preview</p>
@@ -350,7 +347,7 @@ export default function MomentsPage() {
                   <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">
                     Choose Thumbnail Emoji ({POOKIE_EMOJIS.length} Pookie Options)
                   </label>
-                  <div className="grid grid-cols-6 gap-2 p-2 rounded-2xl border bg-[var(--card-bg)] max-h-36 overflow-y-auto"
+                  <div className="grid grid-cols-6 gap-2 p-2 rounded-2xl border bg-[var(--card-bg)] max-h-32 overflow-y-auto"
                     style={{ borderColor: "var(--border-mid)" }}>
                     {POOKIE_EMOJIS.map((emoji) => {
                       const isSelected = selectedEmoji === emoji;
@@ -372,21 +369,29 @@ export default function MomentsPage() {
                   </div>
                 </div>
 
-                {[
-                  { label: "Title", val: title, set: setTitle, placeholder: "e.g. Our First Date 💕" },
-                ].map(f => (
-                  <div key={f.label} className="space-y-1.5">
-                    <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">{f.label}</label>
-                    <input type="text" value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.placeholder} required
-                      className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
-                      style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
-                  </div>
-                ))}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">Title</label>
+                  <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Our First Date 💕" required
+                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
+                    style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">DESCRIPTION</label>
+                  <textarea
+                    value={description}
+                    onChange={e => setDesc(e.target.value)}
+                    placeholder="What made this moment special..."
+                    rows={3}
+                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)] resize-none"
+                    style={{ borderColor: "var(--border-mid)", background: "var(--background)" }}
+                  />
+                </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">Date</label>
                   <input type="date" value={momentDate} onChange={e => setDate(e.target.value)}
-                    className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
+                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
                     style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
                 </div>
 
@@ -404,4 +409,3 @@ export default function MomentsPage() {
     </div>
   );
 }
-

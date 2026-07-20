@@ -151,12 +151,20 @@ function Sparkle({ className = "", delay = 0 }: { className?: string; delay?: nu
 
 function getExcerpt(text: any, maxLen = 75): string {
   if (!text) return "";
-  if (typeof text === "string") return text.slice(0, maxLen);
-  if (Array.isArray(text)) {
+  let raw = "";
+  if (typeof text === "string") raw = text;
+  else if (Array.isArray(text)) {
     const textObj = text.find((item: any) => item && item.type === "text" && item.value);
-    if (textObj && textObj.value) return String(textObj.value).slice(0, maxLen);
+    if (textObj && textObj.value) raw = String(textObj.value);
+    else raw = text.map((b: any) => (typeof b === "string" ? b : b?.value || "")).join(" ");
+  } else if (typeof text === "object") {
+    raw = text.content || text.text || "";
   }
-  return "";
+
+  if (!raw || raw.startsWith("enc:")) {
+    return "A handwritten letter for you ♡";
+  }
+  return raw.slice(0, maxLen);
 }
 
 // ── Wax Seal Monogram ──
@@ -388,21 +396,25 @@ export default function DashboardPage() {
         activities.sort((a, b) => b.timestamp - a.timestamp);
         setRecentActivities(activities.slice(0, 3));
 
-        // Anniversary countdown — use started_dating_date, NOT pair.created_at
-        if (pair.started_dating_date) {
-          const anniversaryDate = new Date(pair.started_dating_date);
-          if (!isNaN(anniversaryDate.getTime())) {
+        // Anniversary calculation — display actual start date, not future year date
+        const anniversaryDateISO = pair.started_dating_date || pair.created_at;
+        if (anniversaryDateISO) {
+          const startDate = new Date(anniversaryDateISO);
+          if (!isNaN(startDate.getTime())) {
             const today = new Date();
-            let nextAnniversary = new Date(today.getFullYear(), anniversaryDate.getMonth(), anniversaryDate.getDate());
+            let nextAnniversary = new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate());
             if (nextAnniversary.getTime() <= today.getTime()) {
               nextAnniversary.setFullYear(nextAnniversary.getFullYear() + 1);
             }
             const diffTime = Math.abs(nextAnniversary.getTime() - today.getTime());
             const daysToGo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             setAnniversaryDaysToGo(daysToGo);
+
             const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric" };
-            setAnniversaryDateFormatted(nextAnniversary.toLocaleDateString("en-US", options));
+            setAnniversaryDateFormatted(startDate.toLocaleDateString("en-US", options));
             setAnniversaryNotSet(false);
+          } else {
+            setAnniversaryNotSet(true);
           }
         } else {
           setAnniversaryNotSet(true);
@@ -896,7 +908,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ─── 3. STAT CARDS WITH CONTENT PREVIEWS ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-8 border-t border-[var(--border)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-[var(--border)]">
           
           {/* Card 1: Days Together */}
           <Link
@@ -977,47 +989,7 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          {/* Card 3: Memories */}
-          <Link
-            href="/moments"
-            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                <ImageIcon className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                <span>Memories</span>
-              </div>
-              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
-                {momentsCount} {momentsCount === 1 ? "Memory" : "Memories"}
-              </h3>
-            </div>
 
-            <div className="pt-3 border-t border-[var(--border)] space-y-2">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Latest Memory</p>
-              {latestMoment ? (
-                <div className="polaroid p-2 bg-[var(--card)] border border-[var(--border)] rounded-xl flex flex-col items-center shadow-xs">
-                  <div className="w-full h-20 bg-[var(--paper-deep)] rounded-md overflow-hidden flex items-center justify-center">
-                    {latestMoment.photo_url ? (
-                      <img src={latestMoment.photo_url} alt={latestMoment.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-2xl">🌅</span>
-                    )}
-                  </div>
-                  <p className="font-handwriting text-xs text-[var(--text)] font-bold mt-1.5 truncate max-w-full">
-                    {latestMoment.title || "Sunset Walk 🌊"}
-                  </p>
-                  <p className="text-[9px] font-mono text-[var(--text-soft)]">
-                    {latestMoment.moment_date ? new Date(latestMoment.moment_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Recently"}
-                  </p>
-                </div>
-              ) : (
-                <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
-                  <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No memories saved yet</p>
-                  <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Add a memory →</p>
-                </div>
-              )}
-            </div>
-          </Link>
 
           {/* Card 4: Gratitude Jar */}
           <Link
