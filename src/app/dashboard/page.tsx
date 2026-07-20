@@ -800,7 +800,7 @@ export default function DashboardPage() {
                     recentActivities.map((act) => (
                       <Link
                         key={act.id}
-                        href={act.type === "letter" ? "/love-letter" : act.type === "moment" ? "/moments" : "/gratitude-jar"}
+                        href={act.type === "letter" ? "/love-letter" : act.type === "moment" ? "/stories" : "/gratitude-jar"}
                         className="text-[10px] text-[var(--text-soft)] flex items-start gap-1.5 leading-tight hover:text-[var(--burgundy)] transition-colors cursor-pointer"
                       >
                         <span className="text-[var(--burgundy)]">✦</span>
