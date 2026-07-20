@@ -365,8 +365,55 @@ export default function PhotoBoothPage() {
     if (activeStickerId === id) setActiveStickerId(null);
   };
 
-  // ── Canvas Exporter for PNG/PDF Download (300 DPI High-Res) ──────────────
-  const renderStripToCanvas = useCallback((): HTMLCanvasElement => {
+  // ── Preload image safely as Data URL / HTMLImageElement ─────────────────
+  const loadImageAsync = useCallback((src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        // Fallback canvas image if load fails
+        const fallbackCanvas = document.createElement("canvas");
+        fallbackCanvas.width = 640;
+        fallbackCanvas.height = 480;
+        const fCtx = fallbackCanvas.getContext("2d");
+        if (fCtx) {
+          fCtx.fillStyle = "#F5EDD8";
+          fCtx.fillRect(0, 0, 640, 480);
+          fCtx.fillStyle = "#8E2B45";
+          fCtx.font = "bold 28px sans-serif";
+          fCtx.textAlign = "center";
+          fCtx.fillText("Pairfect Photo Snap ♡", 320, 240);
+        }
+        const fallbackImg = new Image();
+        fallbackImg.onload = () => resolve(fallbackImg);
+        fallbackImg.src = fallbackCanvas.toDataURL("image/png");
+      };
+
+      if (src.startsWith("http://") || src.startsWith("https://")) {
+        // Fetch as blob to convert to Data URL, bypassing cross-origin canvas taints completely
+        fetch(src, { mode: "cors" })
+          .then(r => r.blob())
+          .then(b => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              img.src = reader.result as string;
+            };
+            reader.onerror = () => { img.src = src; };
+            reader.readAsDataURL(b);
+          })
+          .catch(() => {
+            img.src = src;
+          });
+      } else {
+        img.src = src;
+      }
+    });
+  }, []);
+
+  // ── Async Canvas Exporter for PNG/PDF Download (300 DPI High-Res) ──────────────
+  const renderStripToCanvas = useCallback(async (): Promise<HTMLCanvasElement> => {
     const canvas = document.createElement("canvas");
     const width = 1200; // 300 DPI high-res output
     const height = selectedLayout === "polaroid_grid" ? 1200 : selectedLayout === "journal" ? 1500 : 2000;
@@ -387,14 +434,14 @@ export default function PhotoBoothPage() {
     ctx.lineWidth = 12;
     ctx.strokeRect(6, 6, width - 12, height - 12);
 
-    // Header title if present
+    // Header title
     ctx.fillStyle = fStyle.text;
-    ctx.font = "italic bold 44px Cormorant Garamond";
+    ctx.font = "italic bold 44px Cormorant Garamond, serif";
     ctx.textAlign = "center";
     ctx.fillText("Pairfect Photo Booth ♡", width / 2, 80);
 
     // Date & Time Stamps
-    ctx.font = "24px Caveat";
+    ctx.font = "28px Caveat, cursive";
     const dateText = showDateStamp ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const timeText = showTimeStamp ? new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
     const stampCombined = [dateText, timeText, locationText].filter(Boolean).join(" · ");
@@ -403,62 +450,209 @@ export default function PhotoBoothPage() {
       ctx.fillText(stampCombined, width / 2, 125);
     }
 
-    // Draw photos
+    // Preload ALL images asynchronously as Data URLs
+    const loadedImages = await Promise.all(capturedPhotos.map(src => loadImageAsync(src)));
+
+    // Calculate layout parameters
     const count = currentLayoutConfig.count;
     const padding = 60;
     const topOffset = stampCombined ? 160 : 110;
     const availableHeight = height - topOffset - 160;
 
+    // Save context for filter application
+    ctx.save();
+    if (currentFilterConfig.css && currentFilterConfig.css !== "none") {
+      ctx.filter = currentFilterConfig.css;
+    }
+
     if (selectedLayout === "strip_3" || selectedLayout === "strip_4") {
       const slotHeight = (availableHeight - (count - 1) * 30) / count;
       const slotWidth = width - padding * 2;
 
-      capturedPhotos.forEach((src, idx) => {
-        const img = new Image();
-        img.src = src;
+      loadedImages.forEach((img, idx) => {
         const y = topOffset + idx * (slotHeight + 30);
 
-        // Photo border box
+        // Photo white border box
+        ctx.save();
+        ctx.filter = "none";
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(padding - 8, y - 8, slotWidth + 16, slotHeight + 16);
+        ctx.restore();
 
+        // Draw photo with filter applied
         ctx.drawImage(img, padding, y, slotWidth, slotHeight);
+      });
+    } else if (selectedLayout === "polaroid_grid") {
+      const gridW = (width - padding * 2 - 30) / 2;
+      const gridH = (availableHeight - 30) / 2;
+
+      loadedImages.slice(0, 4).forEach((img, idx) => {
+        const col = idx % 2;
+        const row = Math.floor(idx / 2);
+        const x = padding + col * (gridW + 30);
+        const y = topOffset + row * (gridH + 30);
+
+        ctx.save();
+        ctx.filter = "none";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x - 8, y - 8, gridW + 16, gridH + 16);
+        ctx.restore();
+
+        ctx.drawImage(img, x, y, gridW, gridH);
+      });
+    } else if (selectedLayout === "journal") {
+      const slotW = (width - padding * 2 - 30) / 2;
+      const slotH = slotW * 0.75;
+
+      loadedImages.slice(0, 2).forEach((img, idx) => {
+        const x = padding + idx * (slotW + 30);
+        const y = topOffset + 20;
+
+        ctx.save();
+        ctx.filter = "none";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x - 8, y - 8, slotW + 16, slotH + 16);
+        ctx.restore();
+
+        ctx.drawImage(img, x, y, slotW, slotH);
+      });
+
+      // Journal notes area lines
+      ctx.save();
+      ctx.filter = "none";
+      ctx.strokeStyle = "rgba(142, 43, 69, 0.2)";
+      ctx.lineWidth = 2;
+      const lineStartY = topOffset + slotH + 80;
+      for (let l = lineStartY; l < height - 120; l += 50) {
+        ctx.beginPath();
+        ctx.moveTo(padding, l);
+        ctx.lineTo(width - padding, l);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else if (selectedLayout === "film_roll") {
+      // Dark film roll background
+      ctx.save();
+      ctx.filter = "none";
+      ctx.fillStyle = "#1A1410";
+      ctx.fillRect(padding - 20, topOffset - 20, width - (padding - 20) * 2, availableHeight + 40);
+
+      // Sprocket holes
+      ctx.fillStyle = "#FAF5EB";
+      for (let yH = topOffset; yH < topOffset + availableHeight; yH += 60) {
+        ctx.fillRect(padding - 10, yH, 16, 26);
+        ctx.fillRect(width - padding - 6, yH, 16, 26);
+      }
+      ctx.restore();
+
+      const slotHeight = (availableHeight - (count - 1) * 30) / count;
+      const slotWidth = width - padding * 2 - 80;
+
+      loadedImages.forEach((img, idx) => {
+        const y = topOffset + idx * (slotHeight + 30);
+        ctx.drawImage(img, padding + 40, y, slotWidth, slotHeight);
+      });
+    } else if (selectedLayout === "anniversary_card") {
+      // 1 main hero photo + 2 side photos
+      const mainW = (width - padding * 2) * 0.58;
+      const mainH = availableHeight;
+      const sideW = (width - padding * 2) * 0.38;
+      const sideH = (availableHeight - 30) / 2;
+
+      if (loadedImages[0]) {
+        ctx.save();
+        ctx.filter = "none";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(padding - 8, topOffset - 8, mainW + 16, mainH + 16);
+        ctx.restore();
+
+        ctx.drawImage(loadedImages[0], padding, topOffset, mainW, mainH);
+      }
+
+      loadedImages.slice(1, 3).forEach((img, idx) => {
+        const y = topOffset + idx * (sideH + 30);
+        const x = padding + mainW + 30;
+
+        ctx.save();
+        ctx.filter = "none";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x - 8, y - 8, sideW + 16, sideH + 16);
+        ctx.restore();
+
+        ctx.drawImage(img, x, y, sideW, sideH);
       });
     }
 
-    // Caption footer
+    ctx.restore(); // Restore filter
+
+    // Draw Caption Footer
     if (captionText) {
       ctx.fillStyle = fStyle.text;
-      ctx.font = "italic 36px EB Garamond";
+      ctx.font = "italic 38px EB Garamond, serif";
+      ctx.textAlign = "center";
       ctx.fillText(`“${captionText}”`, width / 2, height - 60);
     }
 
+    // Draw Stickers on top of canvas
+    placedStickers.forEach((st) => {
+      ctx.save();
+      const posX = (st.x / 100) * width;
+      const posY = (st.y / 100) * height;
+
+      ctx.translate(posX, posY);
+      ctx.rotate((st.rotation * Math.PI) / 180);
+      ctx.scale(st.scale, st.scale);
+
+      ctx.font = "52px serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(st.icon, 0, 0);
+
+      ctx.restore();
+    });
+
     return canvas;
-  }, [frameColor, selectedLayout, currentLayoutConfig, capturedPhotos, showDateStamp, showTimeStamp, locationText, captionText]);
+  }, [frameColor, paperTexture, selectedLayout, currentLayoutConfig, capturedPhotos, showDateStamp, showTimeStamp, locationText, captionText, placedStickers, currentFilterConfig, loadImageAsync]);
+
+  const [isExporting, setIsExporting] = useState(false);
 
   // ── Download Handlers ────────────────────────────────────────────────────
-  const downloadPNG = () => {
-    const canvas = renderStripToCanvas();
-    const link = document.createElement("a");
-    link.download = `pairfect-photo-strip-${Date.now()}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+  const downloadPNG = async () => {
+    setIsExporting(true);
+    try {
+      const canvas = await renderStripToCanvas();
+      const link = document.createElement("a");
+      link.download = `pairfect-photo-strip-${Date.now()}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (e) {
+      console.error("PNG export error:", e);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const downloadPDF = () => {
-    const canvas = renderStripToCanvas();
-    const dataUrl = canvas.toDataURL("image/png");
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head><title>Print Photo Strip - Pairfect</title></head>
-          <body style="margin:0; display:flex; justify-content:center; align-items:center; background:#FAF5EB;">
-            <img src="${dataUrl}" style="max-height:95vh; max-width:95vw; box-shadow: 0 10px 30px rgba(0,0,0,0.15);" onload="window.print();" />
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+  const downloadPDF = async () => {
+    setIsExporting(true);
+    try {
+      const canvas = await renderStripToCanvas();
+      const dataUrl = canvas.toDataURL("image/png");
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head><title>Print Photo Strip - Pairfect</title></head>
+            <body style="margin:0; display:flex; justify-content:center; align-items:center; background:#FAF5EB;">
+              <img src="${dataUrl}" style="max-height:95vh; max-width:95vw; box-shadow: 0 10px 30px rgba(0,0,0,0.15);" onload="window.print();" />
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    } catch (e) {
+      console.error("PDF export error:", e);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -922,6 +1116,7 @@ export default function PhotoBoothPage() {
                         <img
                           src={src}
                           alt=""
+                          crossOrigin="anonymous"
                           style={{ filter: currentFilterConfig.css }}
                           className="w-full aspect-4/3 object-cover rounded-lg"
                         />
@@ -1128,17 +1323,19 @@ export default function PhotoBoothPage() {
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
+                disabled={isExporting}
                 onClick={downloadPNG}
-                className="btn-primary py-3.5 text-sm inline-flex items-center justify-center gap-2"
+                className="btn-primary py-3.5 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <Download className="w-4 h-4" /> Download PNG
+                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Download PNG
               </button>
 
               <button
+                disabled={isExporting}
                 onClick={downloadPDF}
-                className="btn-secondary py-3.5 text-sm inline-flex items-center justify-center gap-2"
+                className="btn-secondary py-3.5 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <FileText className="w-4 h-4" /> Download PDF
+                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} Download PDF
               </button>
 
               <button
