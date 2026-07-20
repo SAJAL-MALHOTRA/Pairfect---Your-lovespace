@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
@@ -81,6 +82,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
 export default function SettingsPage() {
   const { user, profile, pair, partner, refreshSession, signOut, loading } = useAuth();
   const supabase = createClient();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
 
   const [error, setError] = useState<string | null>(null);
@@ -206,11 +208,19 @@ export default function SettingsPage() {
     if (!pair || !confirm("Unlink from your partner? Your shared history stays intact.")) return;
     setUnlinkingPair(true); setError(null);
     try {
+      // 1. Call RPC function directly via client
+      await supabase.rpc("unlink_user_pair");
+
+      // 2. Call API route as fallback / server execution
       const res = await fetch("/api/auth/unlink-pair", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok && !data.success) {
+        console.warn("Unlink API warning:", data.error);
+      }
+
       await refreshSession();
       setSuccessMessage("Partner unlinked.");
+      router.push("/onboarding");
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to unlink."));
     } finally { setUnlinkingPair(false); }

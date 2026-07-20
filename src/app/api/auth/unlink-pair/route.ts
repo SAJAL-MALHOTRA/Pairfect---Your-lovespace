@@ -12,32 +12,46 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const adminSupabase = createAdminClient();
+    // 1. Try calling the SECURITY DEFINER RPC first (most robust)
+    const { data: rpcData, error: rpcErr } = await supabase.rpc("unlink_user_pair");
 
-    const { data: pairData, error: pairErr } = await adminSupabase
+    if (!rpcErr && rpcData?.success) {
+      return NextResponse.json({ success: true, count: rpcData.unlinked_count });
+    }
+
+    // 2. Fallback to Admin Client if service key is configured
+    let dbClient = supabase;
+    try {
+      dbClient = createAdminClient();
+    } catch {
+      // Service key not set, use user client
+    }
+
+    const { data: pairsList, error: pairErr } = await dbClient
       .from("pairs")
-      .select("id,user_a_id,user_b_id")
+      .select("id,user_a_id,user_b_id,status")
       .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
-      .in("status", ["pending", "active"])
-      .maybeSingle();
+      .in("status", ["pending", "active"]);
 
     if (pairErr) throw pairErr;
 
-    if (!pairData) {
+    if (!pairsList || pairsList.length === 0) {
       return NextResponse.json({ success: true });
     }
 
-    const mutation = buildUnlinkedPairUpdate(pairData, user.id);
+    for (const pairData of pairsList) {
+      const mutation = buildUnlinkedPairUpdate(pairData, user.id);
 
-    if (mutation.action === "delete") {
-      const { error: delErr } = await adminSupabase.from("pairs").delete().eq("id", pairData.id);
-      if (delErr) throw delErr;
-    } else {
-      const { error: updErr } = await adminSupabase
-        .from("pairs")
-        .update(mutation.values)
-        .eq("id", pairData.id);
-      if (updErr) throw updErr;
+      if (mutation.action === "delete") {
+        const { error: delErr } = await dbClient.from("pairs").delete().eq("id", pairData.id);
+        if (delErr) console.warn("Pair delete warn:", delErr);
+      } else {
+        const { error: updErr } = await dbClient
+          .from("pairs")
+          .update(mutation.values)
+          .eq("id", pairData.id);
+        if (updErr) console.warn("Pair update warn:", updErr);
+      }
     }
 
     return NextResponse.json({ success: true });

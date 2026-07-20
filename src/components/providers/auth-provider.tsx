@@ -115,6 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error("Error loading user profile or pair details:", err);
+      setPair(null);
+      setPartner(null);
     }
   };
 
