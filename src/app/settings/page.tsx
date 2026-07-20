@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
@@ -115,6 +116,10 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const [showPurgeModal, setShowPurgeModal] = useState(false);
+  const [purgeConfirmText, setPurgeConfirmText] = useState("");
+  const [purgingHistory, setPurgingHistory] = useState(false);
 
   const [anniversaryDate, setAnniversaryDate] = useState("");
   const [updatingAnniversary, setUpdatingAnniversary] = useState(false);
@@ -272,6 +277,24 @@ export default function SettingsPage() {
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to delete account."));
       setDeletingAccount(false); setShowDeleteModal(false);
+    }
+  };
+
+  const handlePurgePairHistory = async () => {
+    if (!pair || purgeConfirmText !== "PURGE") return;
+    setPurgingHistory(true); setError(null);
+    try {
+      const { error: purgeErr } = await supabase.rpc("purge_pair_history", { p_pair_id: pair.id });
+      if (purgeErr) throw purgeErr;
+
+      await refreshSession();
+      setShowPurgeModal(false);
+      setSuccessMessage("Relationship history permanently purged.");
+      router.push("/onboarding");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to purge relationship history."));
+    } finally {
+      setPurgingHistory(false);
     }
   };
 
@@ -461,7 +484,14 @@ export default function SettingsPage() {
               </div>
             </form>
 
-            <div className="py-4">
+            <div className="py-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
+              <Link
+                href="/archive"
+                className="text-xs font-heading font-semibold text-[var(--burgundy)] hover:underline flex items-center gap-1.5"
+              >
+                📚 View Relationship Archive
+              </Link>
+
               <button
                 onClick={openUnlinkModal}
                 disabled={unlinkingPair}
@@ -475,14 +505,28 @@ export default function SettingsPage() {
 
         {/* Danger zone */}
         <Section title="Danger zone">
-          <div className="py-4">
+          {pair && (
+            <div className="py-3 border-b border-[var(--border)]">
+              <button
+                onClick={() => setShowPurgeModal(true)}
+                className="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer transition-colors"
+              >
+                Permanently purge shared relationship history
+              </button>
+              <p className="text-[10px] text-[#A89E90] font-mono mt-0.5">
+                Hard-deletes all letters, memories, and mixtapes for this relationship permanently.
+              </p>
+            </div>
+          )}
+
+          <div className="py-3">
             <button
               onClick={() => setShowDeleteModal(true)}
               className="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer transition-colors"
             >
               Delete account permanently
             </button>
-            <p className="text-[10px] text-[#A89E90] font-mono mt-1">
+            <p className="text-[10px] text-[#A89E90] font-mono mt-0.5">
               This removes all your data and cannot be undone.
             </p>
           </div>
@@ -607,6 +651,47 @@ export default function SettingsPage() {
                 className="btn-primary flex-1 py-2.5 text-xs font-bold disabled:opacity-40"
               >
                 {unlinkingPair ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlink Partner"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purge history confirmation modal */}
+      {showPurgeModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[var(--bg)] rounded-3xl max-w-sm w-full border border-red-200 dark:border-red-900/30 overflow-hidden shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
+              <p className="font-bold text-[var(--text)] text-sm">Purge Shared Relationship History</p>
+            </div>
+            <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+              This will <strong className="text-red-500">PERMANENTLY DELETE</strong> all love letters, photos, mixtapes, and gratitude notes created in this relationship. This action is instant and cannot be undone.
+            </p>
+            <p className="text-xs font-sans text-[var(--text-soft)]">
+              To confirm permanent deletion, type <strong className="text-red-500 font-mono">PURGE</strong> below:
+            </p>
+            <input
+              type="text"
+              value={purgeConfirmText}
+              onChange={e => setPurgeConfirmText(e.target.value.toUpperCase())}
+              placeholder="PURGE"
+              className="w-full text-center px-4 py-2.5 border border-red-200 dark:border-red-900/30 rounded-xl bg-transparent text-sm font-bold tracking-widest text-red-500 uppercase placeholder:opacity-30 focus:outline-none focus:ring-1 focus:ring-red-500"
+            />
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => { setShowPurgeModal(false); setPurgeConfirmText(""); }}
+                disabled={purgingHistory}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--card-bg)] cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePurgePairHistory}
+                disabled={purgeConfirmText !== "PURGE" || purgingHistory}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center"
+              >
+                {purgingHistory ? <Loader2 className="w-4 h-4 animate-spin" /> : "Purge Forever"}
               </button>
             </div>
           </div>
