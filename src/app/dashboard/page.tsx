@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Gamepad2, Send, Sparkles, PenTool, Music } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
+import PushOptInBanner from "@/components/push-opt-in-banner";
 
 export const moodDetails = {
   joyful:   { label: "Joyful",   emoji: "😊", color: "text-yellow-600  bg-yellow-50  dark:bg-yellow-950/20  border-yellow-100 dark:border-yellow-900/25" },
@@ -688,6 +689,7 @@ export default function DashboardPage() {
         className="relative max-w-6xl mx-auto w-full px-6 py-16 pb-36 pt-24 space-y-10"
         style={{ zIndex: 10 }}
       >
+        <PushOptInBanner />
         {/* ─── MAIN HERO & WIDGETS GRID ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           

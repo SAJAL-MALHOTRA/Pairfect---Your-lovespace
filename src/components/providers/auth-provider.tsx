@@ -24,6 +24,12 @@ interface Pair {
   status: "pending" | "active" | "archived" | "unlinked";
   started_dating_date: string | null;
   created_at: string;
+  current_streak?: number;
+  longest_streak?: number;
+  last_active_date?: string | null;
+  paused_streak_value?: number;
+  is_paused?: boolean;
+  last_ping_at?: string | null;
 }
 
 interface AuthContextType {

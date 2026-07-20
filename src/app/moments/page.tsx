@@ -163,7 +163,7 @@ function Lightbox({ moment, index, total, onClose, onPrev, onNext, onDelete }: {
 
 // ── Main ────────────────────────────────────────────────────────────────────
 export default function MomentsPage() {
-  const { user, pair } = useAuth();
+  const { user, profile, pair } = useAuth();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [fetching, setFetching]   = useState(true);
   const [error, setError]         = useState<string | null>(null);
@@ -211,6 +211,21 @@ export default function MomentsPage() {
         photo_url: selectedEmoji,
       });
       if (insErr) throw insErr;
+
+      // Trigger partner notification & soft streak activity record
+      const partnerId = pair.user_a_id === user.id ? pair.user_b_id : pair.user_a_id;
+      if (partnerId) {
+        await supabase.from("notifications").insert({
+          pair_id: pair.id,
+          recipient_id: partnerId,
+          sender_id: user.id,
+          type: "memory_added",
+          title: `${profile?.display_name || "Your partner"} added a new memory 🖼️`,
+          body: `"${title.trim()}"`,
+        });
+      }
+      await supabase.rpc("record_pair_activity", { p_pair_id: pair.id });
+
       setTitle(""); setDesc(""); setEmoji("💖"); setDate(new Date().toISOString().split("T")[0]);
       setAddOpen(false); fetchMoments();
     } catch (err: any) { setError(err.message || "Failed to save."); }

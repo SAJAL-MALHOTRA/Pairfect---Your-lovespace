@@ -42,7 +42,7 @@ function getSlipLayout(i: number, total: number) {
 }
 
 export default function GratitudeJarPage() {
-  const { user, pair, partner, loading } = useAuth();
+  const { user, profile, pair, partner, loading } = useAuth();
   const supabase = createClient();
 
   const [notes, setNotes] = useState<any[]>([]);
@@ -107,6 +107,20 @@ export default function GratitudeJarPage() {
         .single();
 
       if (insertErr) throw insertErr;
+
+      // Trigger partner notification & soft streak activity record
+      const partnerId = pair.user_a_id === user.id ? pair.user_b_id : pair.user_a_id;
+      if (partnerId) {
+        await supabase.from("notifications").insert({
+          pair_id: pair.id,
+          recipient_id: partnerId,
+          sender_id: user.id,
+          type: "gratitude_note",
+          title: `${profile?.display_name || "Your partner"} dropped a gratitude note in your jar 🎁`,
+          body: `"${message.trim().slice(0, 60)}${message.length > 60 ? "..." : ""}"`,
+        });
+      }
+      await supabase.rpc("record_pair_activity", { p_pair_id: pair.id });
 
       // Animate the paper folding & falling
       setDroppedId(data.id);

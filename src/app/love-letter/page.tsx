@@ -234,6 +234,21 @@ export default function LoveLetterPage() {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
+
+      // Trigger partner notification & soft streak activity record
+      const partnerId = pair.user_a_id === user.id ? pair.user_b_id : pair.user_a_id;
+      if (partnerId) {
+        await supabase.from("notifications").insert({
+          pair_id: pair.id,
+          recipient_id: partnerId,
+          sender_id: user.id,
+          type: "letter_sent",
+          title: `${fromName.trim() || "Your partner"} sent you a love letter 💌`,
+          body: "Unseal it to read their handwritten words.",
+        });
+      }
+      await supabase.rpc("record_pair_activity", { p_pair_id: pair.id });
+
       setBlocks([{ type: "text", value: "" }]); setToName(""); setFromName(""); setStyle("classic");
       setIsWriting(false); setStep(1);
       fetchLetters();

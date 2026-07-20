@@ -29,7 +29,7 @@ function PageFlower({ className = "" }: { className?: string }) {
 }
 
 export default function CheckinPage() {
-  const { user, pair, loading } = useAuth();
+  const { user, profile, pair, loading } = useAuth();
   const supabase = createClient();
   const router = useRouter();
 
@@ -58,6 +58,21 @@ export default function CheckinPage() {
         note: note.trim() || null,
       });
       if (insertErr) throw insertErr;
+
+      // Trigger partner notification & soft streak activity record
+      const partnerId = pair.user_a_id === user!.id ? pair.user_b_id : pair.user_a_id;
+      if (partnerId) {
+        await supabase.from("notifications").insert({
+          pair_id: pair.id,
+          recipient_id: partnerId,
+          sender_id: user!.id,
+          type: "reaction_reply",
+          title: `${profile?.display_name || "Your partner"} checked in today 📖`,
+          body: `Feeling ${moodDetails[selectedMood as keyof typeof moodDetails]?.label || selectedMood}`,
+        });
+      }
+      await supabase.rpc("record_pair_activity", { p_pair_id: pair.id });
+
       window.dispatchEvent(new CustomEvent("navigation-show"));
       router.push("/dashboard");
     } catch (err: any) {

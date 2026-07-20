@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond, Playfair_Display, EB_Garamond, Caveat } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { NotificationProvider } from "@/components/providers/notification-provider";
 import AmbientHearts from "@/components/ambient-hearts";
 import "./globals.css";
 
@@ -55,7 +56,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider>
           <AmbientHearts />
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <NotificationProvider>{children}</NotificationProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
