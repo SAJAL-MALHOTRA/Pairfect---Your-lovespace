@@ -102,6 +102,16 @@ export default function SettingsPage() {
   const [updatingNotifications, setUpdatingNotifications] = useState(false);
 
   const [unlinkingPair, setUnlinkingPair] = useState(false);
+  const [showUnlinkModal, setShowUnlinkModal] = useState(false);
+  const [unlinkConfirmText, setUnlinkConfirmText] = useState("");
+  const [sharedCounts, setSharedCounts] = useState<{ letters: number; memories: number; mixtapes: number; gratitude: number }>({
+    letters: 0,
+    memories: 0,
+    mixtapes: 0,
+    gratitude: 0,
+  });
+  const [loadingCounts, setLoadingCounts] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -204,8 +214,33 @@ export default function SettingsPage() {
     } finally { setUpdatingAnniversary(false); }
   };
 
+  const openUnlinkModal = async () => {
+    if (!pair) return;
+    setShowUnlinkModal(true);
+    setLoadingCounts(true);
+    try {
+      const [lettersRes, memoriesRes, mixtapesRes, gratitudeRes] = await Promise.all([
+        supabase.from("love_letters").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
+        supabase.from("shared_moments").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
+        supabase.from("mixtapes").select("id", { count: "exact", head: true }).eq("relationship_id", pair.id),
+        supabase.from("gratitude_entries").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
+      ]);
+
+      setSharedCounts({
+        letters: lettersRes.count || 0,
+        memories: memoriesRes.count || 0,
+        mixtapes: mixtapesRes.count || 0,
+        gratitude: gratitudeRes.count || 0,
+      });
+    } catch (e) {
+      console.error("Failed to load shared counts:", e);
+    } finally {
+      setLoadingCounts(false);
+    }
+  };
+
   const handleUnlinkPair = async () => {
-    if (!pair || !confirm("Unlink from your partner? Your shared history stays intact.")) return;
+    if (!pair || unlinkConfirmText !== "UNLINK") return;
     setUnlinkingPair(true); setError(null);
     try {
       // 1. Call RPC function directly via client
@@ -219,7 +254,8 @@ export default function SettingsPage() {
       }
 
       await refreshSession();
-      setSuccessMessage("Partner unlinked.");
+      setShowUnlinkModal(false);
+      setSuccessMessage("Partner unlinked. Your shared history remains safe in your archive.");
       router.push("/onboarding");
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to unlink."));
@@ -427,7 +463,7 @@ export default function SettingsPage() {
 
             <div className="py-4">
               <button
-                onClick={handleUnlinkPair}
+                onClick={openUnlinkModal}
                 disabled={unlinkingPair}
                 className="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer transition-colors disabled:opacity-40"
               >
@@ -495,6 +531,83 @@ export default function SettingsPage() {
                   {deletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete forever"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unlink partner confirmation modal */}
+      {showUnlinkModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[var(--paper-warm)] rounded-3xl max-w-md w-full border border-[var(--border)] overflow-hidden shadow-2xl paper-grain p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 shrink-0">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-heading font-bold text-lg text-[var(--burgundy)]">Unlink Partner?</p>
+                <p className="text-xs text-[var(--text-soft)]">Pause live sharing with {partner?.display_name || "partner"}</p>
+              </div>
+            </div>
+
+            {/* Shared History Data Preservation Card */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-2">
+              <p className="font-heading font-semibold text-xs text-[var(--text)] flex items-center gap-1.5">
+                <span>🛡️</span> Your Shared History is Safe & Preserved
+              </p>
+              {loadingCounts ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-4 h-4 animate-spin text-[var(--burgundy)]" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono text-[var(--text-soft)] pt-1">
+                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.letters}</span> Letters
+                  </div>
+                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.memories}</span> Memories
+                  </div>
+                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.mixtapes}</span> Mixtapes
+                  </div>
+                  <div className="bg-[var(--paper-warm)] p-2 rounded-xl border border-[var(--border)] text-center">
+                    <span className="font-bold text-[var(--burgundy)] text-sm">{sharedCounts.gratitude}</span> Gratitude Notes
+                  </div>
+                </div>
+              )}
+              <p className="text-[11px] text-[var(--text-soft)] leading-snug pt-1 italic">
+                All your shared memories remain permanently stored in your relationship archive. Unlinking only pauses active live sharing.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-sans text-[var(--text-soft)]">
+                To confirm, type <strong className="text-[var(--burgundy)] font-mono">UNLINK</strong> below:
+              </p>
+              <input
+                type="text"
+                value={unlinkConfirmText}
+                onChange={e => setUnlinkConfirmText(e.target.value.toUpperCase())}
+                placeholder="UNLINK"
+                className="w-full text-center px-4 py-2.5 border border-[var(--border)] rounded-xl bg-[var(--bg)] text-sm font-bold tracking-widest text-[var(--burgundy)] uppercase placeholder:opacity-30 focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => { setShowUnlinkModal(false); setUnlinkConfirmText(""); }}
+                disabled={unlinkingPair}
+                className="btn-secondary flex-1 py-2.5 text-xs font-bold"
+              >
+                Keep Us Linked
+              </button>
+              <button
+                onClick={handleUnlinkPair}
+                disabled={unlinkConfirmText !== "UNLINK" || unlinkingPair}
+                className="btn-primary flex-1 py-2.5 text-xs font-bold disabled:opacity-40"
+              >
+                {unlinkingPair ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlink Partner"}
+              </button>
             </div>
           </div>
         </div>
