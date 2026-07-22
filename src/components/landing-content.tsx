@@ -176,9 +176,9 @@ export default function LandingContent() {
                 <div className="polaroid rounded-2xl overflow-hidden shadow-sm relative">
                   <div className="aspect-[4/3] bg-[var(--paper-warm)] relative overflow-hidden">
                     <img
-                      src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&h=450&fit=crop"
-                      className="w-full h-full object-cover grayscale-[10%] hover:grayscale-0 transition-all duration-500"
-                      alt="Cozy memory"
+                      src="/ghibli-hero.jpg"
+                      className="w-full h-full object-cover grayscale-[5%] hover:grayscale-0 transition-all duration-500"
+                      alt="Studio Ghibli style cozy couple memory"
                     />
                   </div>
                   <p className="font-handwriting text-base text-center text-[var(--ink-dark)] mt-2">
