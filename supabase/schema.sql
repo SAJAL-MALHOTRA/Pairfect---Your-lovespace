@@ -188,8 +188,15 @@ alter table public.shared_moments enable row level security;
 -- (NO POLICIES for user_secrets: client-side cannot select/update, only service role can access)
 
 -- USERS Policies
-create policy "Users can view all users"
-  on public.users for select using (true);
+create policy "Users can view themselves and their partner"
+  on public.users for select using (
+    auth.uid() = id
+    or exists (
+      select 1 from public.pairs
+      where (pairs.user_a_id = auth.uid() and pairs.user_b_id = users.id)
+         or (pairs.user_b_id = auth.uid() and pairs.user_a_id = users.id)
+    )
+  );
 
 create policy "Users can update their own profile"
   on public.users for update using (auth.uid() = id);

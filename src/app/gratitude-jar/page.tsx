@@ -65,13 +65,9 @@ export default function GratitudeJarPage() {
   const fetchNotes = async () => {
     if (!pair) return;
     try {
-      const { data, error: err } = await supabase
-        .from("gratitude_entries")
-        .select("*")
-        .eq("pair_id", pair.id)
-        .order("created_at", { ascending: false });
-
-      if (err) throw err;
+      const res = await fetch(`/api/gratitude?pairId=${pair.id}`);
+      if (!res.ok) throw new Error("Failed to load gratitude notes");
+      const data = await res.json();
       setNotes(data || []);
     } catch (e) {
       console.error(e);
@@ -96,34 +92,22 @@ export default function GratitudeJarPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const { data, error: insertErr } = await supabase
-        .from("gratitude_entries")
-        .insert({
-          pair_id: pair.id,
-          user_id: user.id,
+      const res = await fetch("/api/gratitude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pairId: pair.id,
           content: message.trim(),
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (insertErr) throw insertErr;
-
-      // Trigger partner notification & soft streak activity record
-      const partnerId = pair.user_a_id === user.id ? pair.user_b_id : pair.user_a_id;
-      if (partnerId) {
-        await supabase.from("notifications").insert({
-          pair_id: pair.id,
-          recipient_id: partnerId,
-          sender_id: user.id,
-          type: "gratitude_note",
-          title: `${profile?.display_name || "Your partner"} dropped a gratitude note in your jar 🎁`,
-          body: `"${message.trim().slice(0, 60)}${message.length > 60 ? "..." : ""}"`,
-        });
-      }
-      await supabase.rpc("record_pair_activity", { p_pair_id: pair.id });
+      const result = await res.json();
+      if (!res.ok || result.error) throw new Error(result.error || "Failed to drop note");
 
       // Animate the paper folding & falling
-      setDroppedId(data.id);
+      if (result.note?.id) {
+        setDroppedId(result.note.id);
+      }
       setMessage("");
       
       // Soft wobble timing

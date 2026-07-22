@@ -112,10 +112,20 @@ export async function GET(request: Request) {
       lastLoveLetter = { ...lastLoveLetter, content: decryptedContent };
     }
 
+    // Decrypt the last gratitude entry if it exists
+    let lastGratitude = gratitudeRes.data?.[0] || null;
+    if (lastGratitude && typeof lastGratitude.content === "string") {
+      try {
+        lastGratitude = { ...lastGratitude, content: decrypt(lastGratitude.content) };
+      } catch (e) {
+        console.error("Failed to decrypt summary gratitude content:", e);
+      }
+    }
+
     return NextResponse.json({
       lastLoveLetter,
       lastPhotobooth: photoboothRes.data?.[0] || null,
-      lastGratitude: gratitudeRes.data?.[0] || null,
+      lastGratitude,
       lastQuizHistory: quizHistoryRes.data?.[0] || null,
       lastCompletedRiddle: riddleSessionRes.data?.[0] || null,
       lastDisputeVerdict: disputeVerdictRes.data?.[0] || null,

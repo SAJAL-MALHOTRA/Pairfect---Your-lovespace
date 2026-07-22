@@ -1,4 +1,4 @@
-import { format, differenceInCalendarDays, subDays } from "date-fns";
+import { format, subDays } from "date-fns";
 
 interface MoodLog {
   user_id: string;
@@ -22,7 +22,7 @@ export function calculateStreak(logs: MoodLog[], userAId: string, userBId: strin
   });
 
   let streak = 0;
-  let currentDate = new Date();
+  const currentDate = new Date();
   
   // Check if both checked in today
   const todayStr = format(currentDate, "yyyy-MM-dd");

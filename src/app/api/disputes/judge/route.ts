@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createClientJS } from "@supabase/supabase-js";
 import { decrypt } from "@/lib/encryption";
 
 function safeDecrypt(text?: string | null): string {
@@ -24,11 +25,18 @@ function getSupabaseClient() {
   }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  return createClient(url, key);
+  return createClientJS(url, key);
 }
 
 export async function POST(req: Request) {
   try {
+    const userClient = await createClient();
+    const { data: { user }, error: authErr } = await userClient.auth.getUser();
+
+    if (authErr || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { disputeId } = body;
     console.log("[VibeJudge API] Received judging request for disputeId:", disputeId);
@@ -51,18 +59,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dispute not found" }, { status: 404 });
     }
 
-    // 2. Fetch the arguments
-    const { data: args, error: argsErr } = await supabase
-      .from("dispute_arguments")
-      .select("*")
-      .eq("dispute_id", disputeId);
-
-    if (argsErr || !args || args.length < 2) {
-      console.warn("[VibeJudge API] Incomplete arguments for disputeId:", disputeId, "count:", args?.length);
-      return NextResponse.json({ error: "Both arguments must be submitted to judge" }, { status: 400 });
-    }
-
-    // 3. Fetch pair profiles to match A and B names
+    // 2. Fetch pair profiles to match A and B names & verify authorization
     const { data: pair } = await supabase
       .from("pairs")
       .select("*")
@@ -71,6 +68,21 @@ export async function POST(req: Request) {
 
     if (!pair) {
       return NextResponse.json({ error: "Pair association not found" }, { status: 404 });
+    }
+
+    if (user.id !== pair.user_a_id && user.id !== pair.user_b_id) {
+      return NextResponse.json({ error: "Forbidden: You do not belong to this pair" }, { status: 403 });
+    }
+
+    // 3. Fetch the arguments
+    const { data: args, error: argsErr } = await supabase
+      .from("dispute_arguments")
+      .select("*")
+      .eq("dispute_id", disputeId);
+
+    if (argsErr || !args || args.length < 2) {
+      console.warn("[VibeJudge API] Incomplete arguments for disputeId:", disputeId, "count:", args?.length);
+      return NextResponse.json({ error: "Both arguments must be submitted to judge" }, { status: 400 });
     }
 
     const { data: userA } = await supabase.from("profiles").select("display_name").eq("id", pair.user_a_id).single();

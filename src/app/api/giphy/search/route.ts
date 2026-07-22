@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
-    const apiKey =
-      process.env.GIPHY_API_KEY ||
-      process.env.NEXT_PUBLIC_GIPHY_API_KEY ||
-      "Z2X54qQsJJrza9DF89AzBkEIHyXqsMhN";
+    const apiKey = process.env.GIPHY_API_KEY || process.env.NEXT_PUBLIC_GIPHY_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "GIPHY API key is not configured" }, { status: 500 });
     }

@@ -1,11 +1,11 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = process.env.APP_ENCRYPTION_KEY || "pairfect-fallback-secure-encryption-key-for-local-and-prod-32-chars";
+const ENCRYPTION_KEY = process.env.APP_ENCRYPTION_KEY;
 const IV_LENGTH = 16;
 
 function getKey() {
   if (!ENCRYPTION_KEY) {
-    throw new Error("APP_ENCRYPTION_KEY is not configured");
+    throw new Error("APP_ENCRYPTION_KEY environment variable is required.");
   }
 
   return crypto.createHash("sha256").update(ENCRYPTION_KEY, "utf8").digest();

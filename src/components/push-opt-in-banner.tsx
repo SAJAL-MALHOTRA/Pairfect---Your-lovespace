@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
-import { Bell, X, Heart } from "lucide-react";
+import { Bell, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PushOptInBanner() {
