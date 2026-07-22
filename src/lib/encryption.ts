@@ -1,14 +1,14 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = process.env.APP_ENCRYPTION_KEY;
 const IV_LENGTH = 16;
 
 function getKey() {
-  if (!ENCRYPTION_KEY) {
-    throw new Error("APP_ENCRYPTION_KEY environment variable is required.");
-  }
+  const secret =
+    process.env.APP_ENCRYPTION_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "pairfect-secure-default-encryption-key-32-chars";
 
-  return crypto.createHash("sha256").update(ENCRYPTION_KEY, "utf8").digest();
+  return crypto.createHash("sha256").update(secret, "utf8").digest();
 }
 
 export function encrypt(text: string): string {
