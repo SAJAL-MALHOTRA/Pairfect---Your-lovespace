@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoveLetterEnvelope, OpenScrapbook, PhotoboothFilmStrip, GratitudeJarRitual } from "@/components/cozy-illustrations";
+import MemoryDesk from "@/components/memory-desk";
 
 export default function LandingContent() {
   const [sealUnsealed, setSealUnsealed] = useState(false);
@@ -539,68 +540,9 @@ export default function LandingContent() {
 
 
         {/* ════════════════════════════════════════════════════════════════════
-            CHAPTER 6 — THE MEMORY WALL (ORGANIC COLLAGE)
+            CHAPTER 6 — THE MEMORY DESK (ORGANIC KEEPSAKES)
             ════════════════════════════════════════════════════════════════════ */}
-        <section className="space-y-10 text-center">
-          <div className="space-y-2 max-w-xl mx-auto">
-            <span className="text-[9px] font-mono font-bold tracking-widest text-[var(--ink-light)] uppercase">
-              CHAPTER 6 · THE MEMORY WALL
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--ink-dark)]">
-              An organic collage of your life together.
-            </h2>
-            <p className="font-quote italic text-sm text-[var(--ink-mid)]">
-              Messy, real, and sacred. Touch any memory to lift it.
-            </p>
-          </div>
-
-          {/* Organic Rotated Items Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--border-mid)] paper-grain shadow-sm select-none">
-            
-            <div className="polaroid -rotate-3 hover:rotate-0 hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-              <div className="aspect-square bg-rose-100/80 rounded flex flex-col items-center justify-center p-3 text-center border border-rose-200">
-                <span className="text-4xl">🌅 💖</span>
-                <span className="text-[10px] font-mono font-bold text-rose-900 mt-2">Mood: Loved (5/5)</span>
-              </div>
-              <p className="font-handwriting text-sm text-[var(--ink-dark)] mt-2">First Sunset Together ♡</p>
-            </div>
-
-            <div className="paper-grain p-4 rounded-2xl border border-amber-200 bg-amber-50/60 rotate-2 hover:rotate-0 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col justify-between">
-              <p className="text-[9px] font-mono text-amber-800 uppercase font-bold">☕ CAFE RECEIPT</p>
-              <p className="font-handwriting text-sm text-amber-950 my-2">"2x Cappuccino, 1x Warm Croissant."</p>
-              <p className="text-[8px] font-mono text-amber-700">Oct 14, 2025</p>
-            </div>
-
-            <div className="polaroid rotate-3 hover:rotate-0 hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-              <div className="aspect-square bg-sky-100/80 rounded flex flex-col items-center justify-center p-3 text-center border border-sky-200">
-                <span className="text-4xl">📸 ✌️</span>
-                <span className="text-[10px] font-mono font-bold text-sky-900 mt-2">Photobooth Strip</span>
-              </div>
-              <p className="font-handwriting text-sm text-[var(--ink-dark)] mt-2">Webcam Photobooth Burst</p>
-            </div>
-
-            <div className="paper-grain p-4 rounded-2xl border border-purple-200 bg-purple-50/60 -rotate-2 hover:rotate-0 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col justify-between">
-              <p className="text-[9px] font-mono text-purple-800 uppercase font-bold">🎵 CONCERT TICKET</p>
-              <p className="font-handwriting text-sm text-purple-950 my-2">"Laufey Live Night — Row 4"</p>
-              <p className="text-[8px] font-mono text-purple-700">Row 4, Seat 12 &amp; 13</p>
-            </div>
-
-            <div className="polaroid -rotate-1 hover:rotate-0 hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-              <div className="aspect-square bg-emerald-100/80 rounded flex flex-col items-center justify-center p-3 text-center border border-emerald-200">
-                <span className="text-4xl">💌 🔒</span>
-                <span className="text-[10px] font-mono font-bold text-emerald-900 mt-2">Wax-Sealed Letter</span>
-              </div>
-              <p className="font-handwriting text-sm text-[var(--ink-dark)] mt-2">Secret Memory Note</p>
-            </div>
-
-            <div className="paper-grain p-4 rounded-2xl border border-rose-200 bg-rose-50/60 rotate-4 hover:rotate-0 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col justify-between">
-              <p className="text-[9px] font-mono text-rose-800 uppercase font-bold">🎂 ANNIVERSARY BADGE</p>
-              <p className="font-handwriting text-sm text-rose-950 my-2">"365 Days &amp; Forever to Go"</p>
-              <p className="text-[8px] font-mono text-rose-700">July 2026</p>
-            </div>
-
-          </div>
-        </section>
+        <MemoryDesk />
 
 
         {/* ════════════════════════════════════════════════════════════════════
