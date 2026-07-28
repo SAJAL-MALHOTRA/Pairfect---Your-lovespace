@@ -10,16 +10,18 @@ export interface UnifiedTrackResult {
 
 let cachedSpotifyToken: { token: string; expiresAt: number } | null = null;
 
-async function getSpotifyAccessToken(): Promise<string | null> {
+async function getSpotifyAccessToken(): Promise<{ token: string | null; errorReason?: string }> {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
   if (!clientId || !clientSecret || clientId === "your_spotify_client_id" || clientSecret === "your_spotify_client_secret") {
-    return null;
+    const reason = `[Spotify Auth Warning] SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET is missing or set to placeholder in .env.local. Please configure valid Spotify Developer App credentials.`;
+    console.warn(reason);
+    return { token: null, errorReason: reason };
   }
 
   if (cachedSpotifyToken && cachedSpotifyToken.expiresAt > Date.now()) {
-    return cachedSpotifyToken.token;
+    return { token: cachedSpotifyToken.token };
   }
 
   try {
@@ -33,20 +35,30 @@ async function getSpotifyAccessToken(): Promise<string | null> {
       body: "grant_type=client_credentials",
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errBody = await res.text();
+      const reason = `[Spotify Auth Failed] HTTP ${res.status} ${res.statusText} - Body: ${errBody}`;
+      console.error(reason);
+      return { token: null, errorReason: reason };
+    }
+
     const data = await res.json();
     if (data.access_token) {
       cachedSpotifyToken = {
         token: data.access_token,
         expiresAt: Date.now() + (data.expires_in - 60) * 1000,
       };
-      return data.access_token;
+      return { token: data.access_token };
+    } else {
+      const reason = `[Spotify Auth Failed] No access_token found in response payload`;
+      console.error(reason);
+      return { token: null, errorReason: reason };
     }
-  } catch (e) {
-    console.warn("[Spotify API] Token fetch error:", e);
+  } catch (e: any) {
+    const reason = `[Spotify Auth Exception] ${e.message || e}`;
+    console.error(reason);
+    return { token: null, errorReason: reason };
   }
-
-  return null;
 }
 
 async function searchFallback(query: string): Promise<UnifiedTrackResult[]> {
@@ -81,7 +93,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, tracks: [] });
     }
 
-    const accessToken = await getSpotifyAccessToken();
+    const { token: accessToken, errorReason } = await getSpotifyAccessToken();
 
     if (accessToken) {
       const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=8`, {
@@ -97,16 +109,24 @@ export async function GET(req: Request) {
           name: track.name,
           artist: (track.artists || []).map((a: any) => a.name).join(", "),
           albumArt: track.album?.images?.[0]?.url || "",
-          spotifyUrl: track.external_urls?.spotify || `https://open.spotify.com/track/${track.id}`,
+          spotifyUrl: `https://open.spotify.com/track/${track.id}`,
         }));
 
         return NextResponse.json({ success: true, tracks, source: "spotify" });
+      } else {
+        const errText = await res.text();
+        console.error(`[Spotify API Search Failed] HTTP ${res.status}: ${errText}`);
       }
     }
 
     // Fallback search mechanism when Spotify API keys are not configured or request fails
     const fallbackTracks = await searchFallback(query);
-    return NextResponse.json({ success: true, tracks: fallbackTracks, source: "fallback" });
+    return NextResponse.json({
+      success: true,
+      tracks: fallbackTracks,
+      source: "fallback",
+      authDiagnostic: errorReason || "Spotify API search request was non-OK",
+    });
   } catch (err: any) {
     console.error("[Spotify Search API] Error:", err);
     return NextResponse.json({ success: false, error: err.message || "Failed to search tracks", tracks: [] }, { status: 500 });
