@@ -729,7 +729,9 @@ export default function DashboardPage() {
 
             {/* Envelope Centerpiece */}
             <div className="flex justify-center w-full lg:justify-start">
-              <HomeEnvelope partnerName={recipientName} />
+              <Link href="/love-letter" className="block transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Open Love Letters">
+                <HomeEnvelope partnerName={recipientName} />
+              </Link>
             </div>
 
             {/* CTA action */}

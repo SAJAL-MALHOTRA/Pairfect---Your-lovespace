@@ -134,7 +134,7 @@ export default function VibeJudgePage() {
     }
   };
 
-  // 3. Real-time subscription to active dispute
+  // 3. Real-time subscription to active dispute + Auto-polling fallback
   useEffect(() => {
     if (!activeDispute || !user) return;
 
@@ -177,10 +177,27 @@ export default function VibeJudgePage() {
       )
       .subscribe();
 
+    // Auto-poll active dispute arguments & verdict every 2 seconds to eliminate sync delay
+    const pollInterval = setInterval(() => {
+      if (activeDispute.status !== "judged") {
+        loadDisputeDetails(activeDispute.id);
+      }
+    }, 2000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [activeDispute, user]);
+
+  // Auto-poll disputes list every 3.5 seconds so partner discovers newly created cases instantly
+  useEffect(() => {
+    if (!pair) return;
+    const listInterval = setInterval(() => {
+      fetchDisputes();
+    }, 3500);
+    return () => clearInterval(listInterval);
+  }, [pair]);
 
   // 4. Timer Countdown Logic
   useEffect(() => {

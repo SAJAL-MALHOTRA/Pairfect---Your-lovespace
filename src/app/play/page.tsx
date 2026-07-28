@@ -192,45 +192,7 @@ export default function PlayLobbyPage() {
           </div>
         </motion.div>
 
-        {/* ─── FEATURED SPOTLIGHT BANNER ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="p-6 sm:p-8 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] shadow-md flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
-        >
-          {/* Subtle background glow */}
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-[var(--rose)]/10 blur-3xl pointer-events-none" />
 
-          <div className="flex items-start gap-4 z-10">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--rose)]/20 border border-[var(--rose)]/40 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0 shadow-sm">
-              <Camera className="w-7 h-7" />
-            </div>
-            <div className="space-y-1 max-w-xl">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold uppercase tracking-wider">
-                  SPOTLIGHT FEATURE
-                </span>
-                <span className="text-[10px] font-mono text-[var(--text-soft)] uppercase tracking-wider">
-                  Always Free
-                </span>
-              </div>
-              <h3 className="font-heading font-bold text-2xl text-[var(--text)] leading-tight">
-                Online Photo Booth
-              </h3>
-              <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed">
-                Take your own 4-frame photo strip, customize it with vintage filters & stickers, and save your memories.
-              </p>
-            </div>
-          </div>
-
-          <Link
-            href="/quiz"
-            className="w-full md:w-auto py-3 px-7 rounded-xl font-mono text-xs uppercase font-bold tracking-widest text-white bg-[var(--burgundy)] hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm whitespace-nowrap z-10"
-          >
-            Start Playroom <ArrowRight className="w-4 h-4" />
-          </Link>
-        </motion.div>
 
         {/* ─── CATEGORY FILTER TABS ─── */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">

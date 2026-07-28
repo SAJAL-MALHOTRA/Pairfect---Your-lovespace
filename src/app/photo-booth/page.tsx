@@ -914,19 +914,11 @@ export default function PhotoBoothPage() {
                       {cameraError || "Your browser camera stream couldn't be loaded."}
                     </p>
                     <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="btn-secondary py-2 px-4 text-xs mx-auto"
+                      onClick={() => startCamera()}
+                      className="btn-primary py-2 px-5 text-xs mx-auto inline-flex items-center gap-1.5"
                     >
-                      <ImageIcon className="w-3.5 h-3.5" /> Upload Photo Files Instead
+                      <Camera className="w-3.5 h-3.5" /> Retry Camera Stream
                     </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleFileUpload}
-                    />
                   </div>
                 )}
 

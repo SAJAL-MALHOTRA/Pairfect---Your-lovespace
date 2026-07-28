@@ -148,14 +148,20 @@ export default function StoriesPage() {
 
   useEffect(() => { fetchStories(); }, []);
 
+  const [chapterDate, setChapterDate] = useState<string>("");
+
   const openModal = () => {
     const mine = stories.find(s => s.author_id === user?.id);
     if (mine) {
       const { badge: b, body } = parseContent(mine.content);
       setTitle(mine.title); setContent(body); setBadge(b); setEditingId(mine.id);
       setCoverPreview(mine.resolved_cover || null);
+      if (mine.created_at) {
+        try { setChapterDate(new Date(mine.created_at).toISOString().split("T")[0]); } catch {}
+      }
     } else {
       setTitle(""); setContent(""); setBadge(STATUS_OPTIONS[0].label); setEditingId(null); setCoverPreview(null);
+      setChapterDate(new Date().toISOString().split("T")[0]);
     }
     setCoverFile(null); setError(null); setModalOpen(true);
   };
@@ -173,16 +179,18 @@ export default function StoriesPage() {
         if (upErr) throw upErr;
       }
       const decorated = `[${badge}]\n\n${content.trim()}`;
+      const payloadDate = chapterDate ? new Date(chapterDate).toISOString() : new Date().toISOString();
+
       if (editingId) {
-        const upd: any = { title: title.trim(), content: decorated };
+        const upd: any = { title: title.trim(), content: decorated, created_at: payloadDate };
         if (path) upd.cover_image_url = path;
         const { error: e } = await supabase.from("love_stories").update(upd).eq("id", editingId);
         if (e) throw e;
       } else {
-        const { error: e } = await supabase.from("love_stories").insert({ pair_id: pair.id, author_id: user.id, title: title.trim(), content: decorated, cover_image_url: path, likes: 0 });
+        const { error: e } = await supabase.from("love_stories").insert({ pair_id: pair.id, author_id: user.id, title: title.trim(), content: decorated, cover_image_url: path, likes: 0, created_at: payloadDate });
         if (e) throw e;
       }
-      setModalOpen(false); setEditingId(null); setTitle(""); setContent(""); setCoverFile(null); setCoverPreview(null);
+      setModalOpen(false); setEditingId(null); setTitle(""); setContent(""); setCoverFile(null); setCoverPreview(null); setChapterDate("");
       await fetchStories();
     } catch (err: any) { setError(err.message); }
     finally { setSubmitting(false); }
@@ -316,6 +324,17 @@ export default function StoriesPage() {
                       style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
                   </div>
                 ))}
+
+                <div>
+                  <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block mb-1.5">Date of Chapter</label>
+                  <input
+                    type="date"
+                    value={chapterDate}
+                    onChange={e => setChapterDate(e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)] font-mono"
+                    style={{ borderColor: "var(--border-mid)", background: "var(--background)" }}
+                  />
+                </div>
 
                 <div>
                   <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block mb-1.5">Your story</label>

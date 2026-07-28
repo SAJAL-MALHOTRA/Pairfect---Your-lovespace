@@ -345,20 +345,20 @@ export default function GratitudeJarPage() {
                   }}
                 >
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest text-[var(--ink-light)] border-b border-[var(--border-mid)] pb-2">
+                    <div className="flex justify-between items-center text-[9px] font-mono uppercase tracking-widest text-[#5C4D3C] border-b border-[#D8C8B4] pb-2 font-semibold">
                       <span>Appreciation note</span>
                       <span>From: {activeNote.user_id === user?.id ? "You" : (partner?.display_name || "Partner")}</span>
                     </div>
                     
-                    <p className="font-handwriting text-lg text-[var(--ink-dark)] leading-relaxed whitespace-pre-wrap py-2">
+                    <p className="font-handwriting text-xl text-[#2A2016] leading-relaxed whitespace-pre-wrap py-2 font-bold">
                       "{activeNote.content}"
                     </p>
 
-                    <div className="flex justify-between items-center pt-2 border-t border-[var(--border-mid)] text-[9px] font-mono text-[var(--ink-light)]">
+                    <div className="flex justify-between items-center pt-2 border-t border-[#D8C8B4] text-[10px] font-mono text-[#5C4D3C] font-semibold">
                       <span>{format(new Date(activeNote.created_at), "MMMM d, yyyy")}</span>
                       <button
                         onClick={() => setActiveNote(null)}
-                        className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-dark)] hover:text-[var(--seal-red)] cursor-pointer"
+                        className="text-[10px] font-mono uppercase tracking-widest text-[#2A2016] hover:text-[var(--seal-red)] cursor-pointer font-bold border-b border-[#2A2016]/30 pb-0.5"
                       >
                         Fold & Return
                       </button>

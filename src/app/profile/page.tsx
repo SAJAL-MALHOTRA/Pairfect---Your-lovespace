@@ -34,15 +34,70 @@ export default function ProfilePage() {
     })();
   }, [pair]);
 
+  const channelRef = useState<any>(null);
+
   useEffect(() => {
     if (!pair) return;
-    const saved = localStorage.getItem(`pairfect-bucketlist-${pair.id}`);
-    if (saved) { try { setBucketList(JSON.parse(saved)); } catch {} }
+
+    // Load initial bucket list from DB or localStorage
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("pairs")
+          .select("bucket_list")
+          .eq("id", pair.id)
+          .single();
+
+        if (data?.bucket_list && Array.isArray(data.bucket_list) && data.bucket_list.length > 0) {
+          setBucketList(data.bucket_list);
+          localStorage.setItem(`pairfect-bucketlist-${pair.id}`, JSON.stringify(data.bucket_list));
+          return;
+        }
+      } catch (e) {
+        console.warn("DB bucket_list fetch:", e);
+      }
+
+      const saved = localStorage.getItem(`pairfect-bucketlist-${pair.id}`);
+      if (saved) {
+        try { setBucketList(JSON.parse(saved)); } catch {}
+      }
+    })();
+
+    // Realtime broadcast listener for instant partner sync
+    const ch = supabase.channel(`bucketlist-sync-${pair.id}`);
+
+    ch.on("broadcast", { event: "bucket-update" }, ({ payload }: any) => {
+      if (payload?.list && Array.isArray(payload.list)) {
+        setBucketList(payload.list);
+        localStorage.setItem(`pairfect-bucketlist-${pair.id}`, JSON.stringify(payload.list));
+      }
+    }).subscribe();
+
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [pair]);
 
-  const saveToStorage = (list: any[]) => {
+  const saveToStorage = async (list: any[]) => {
     setBucketList(list);
-    if (pair) localStorage.setItem(`pairfect-bucketlist-${pair.id}`, JSON.stringify(list));
+    if (!pair) return;
+
+    // Save to local storage
+    localStorage.setItem(`pairfect-bucketlist-${pair.id}`, JSON.stringify(list));
+
+    // Broadcast to partner in real time
+    supabase.channel(`bucketlist-sync-${pair.id}`).send({
+      type: "broadcast",
+      event: "bucket-update",
+      payload: { list },
+    });
+
+    // Save to database
+    try {
+      await supabase.from("pairs").update({ bucket_list: list }).eq("id", pair.id);
+    } catch (e) {
+      console.warn("Save DB bucket_list error:", e);
+    }
   };
 
   const toggleTodo = (id: string) => {
@@ -281,9 +336,12 @@ export default function ProfilePage() {
                       <span
                         onClick={() => toggleTodo(item.id)}
                         className={`flex-1 text-sm leading-relaxed transition-all duration-200 cursor-pointer ${
-                          item.done ? "line-through text-[var(--ink-light)]" : "text-[var(--text)]"
+                          item.done ? "line-through" : ""
                         }`}
-                        style={{ fontFamily: "var(--font-handwriting),cursive" }}
+                        style={{
+                          fontFamily: "var(--font-handwriting),cursive",
+                          color: item.done ? "#9C8E7B" : "#3A2E22",
+                        }}
                       >
                         {item.text}
                       </span>
@@ -293,7 +351,7 @@ export default function ProfilePage() {
                         <button
                           type="button"
                           onClick={() => startEdit(item)}
-                          className="p-1 text-[var(--ink-light)] hover:text-[var(--burgundy)] rounded hover:bg-black/5 cursor-pointer"
+                          className="p-1 text-[#7A6A55] hover:text-[#8E2B45] rounded hover:bg-black/5 cursor-pointer"
                           title="Edit item"
                         >
                           <Edit3 className="w-3 h-3" />
@@ -301,7 +359,7 @@ export default function ProfilePage() {
                         <button
                           type="button"
                           onClick={() => deleteTodo(item.id)}
-                          className="p-1 text-[var(--ink-light)] hover:text-red-600 rounded hover:bg-black/5 cursor-pointer"
+                          className="p-1 text-[#7A6A55] hover:text-red-700 rounded hover:bg-black/5 cursor-pointer"
                           title="Remove item"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -315,14 +373,14 @@ export default function ProfilePage() {
 
             {/* Add new item input */}
             <form onSubmit={addTodo} className="px-6 pb-5 flex items-center gap-3 border-t" style={{ borderColor: "rgba(196,168,130,0.25)" }}>
-              <Plus className="w-3.5 h-3.5 text-[var(--ink-light)] flex-shrink-0" />
+              <Plus className="w-3.5 h-3.5 text-[#8C7D6B] flex-shrink-0" />
               <input
                 type="text"
                 value={newTodo}
                 onChange={e => setNewTodo(e.target.value)}
                 placeholder="Add a dream..."
-                className="flex-1 bg-transparent text-sm placeholder-[#C4B89A] focus:outline-none py-2"
-                style={{ fontFamily: "var(--font-handwriting),cursive", color: "var(--text)", lineHeight: "36px" }}
+                className="flex-1 bg-transparent text-sm placeholder-[#9C8E7B] focus:outline-none py-2"
+                style={{ fontFamily: "var(--font-handwriting),cursive", color: "#3A2E22", lineHeight: "36px" }}
               />
             </form>
           </div>
