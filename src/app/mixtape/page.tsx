@@ -12,6 +12,7 @@ import {
   List, Clock, Disc, Smile, Check, Share2, CornerDownRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import SpotifySearchInput from "@/components/spotify-search-input";
 
 // ── Handmade Cassette Shell Options ─────────────────────────────────────────
 const CASSETTE_PATTERNS: { key: CassettePattern; label: string; icon: string }[] = [
@@ -77,11 +78,12 @@ interface DraftSong {
   photo_emoji: string;
   date_memory: string;
   location_text: string;
+  album_art_url?: string;
 }
 
 const EMPTY_DRAFT: DraftSong = {
   title: "", artist: "", spotify_url: "", youtube_url: "", apple_music_url: "",
-  story: "", photo_emoji: "", date_memory: "", location_text: "",
+  story: "", photo_emoji: "", date_memory: "", location_text: "", album_art_url: "",
 };
 
 // ── Embed Helpers ────────────────────────────────────────────────────────────
@@ -512,14 +514,40 @@ export default function MixtapePage() {
         />
       </div>
 
-      {/* Streaming URLs */}
-      <div className="space-y-2">
-        <input
-          type="url" placeholder="Spotify Link (optional)"
-          value={draft.spotify_url}
-          onChange={(e) => setDraft({ ...draft, spotify_url: e.target.value })}
-          className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)] placeholder:text-[var(--ink-light)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
+      {/* In-App Spotify Search & Streaming URLs */}
+      <div className="space-y-3">
+        <SpotifySearchInput
+          selectedTrack={
+            draft.title || draft.spotify_url
+              ? {
+                  name: draft.title,
+                  artist: draft.artist || "",
+                  spotifyUrl: draft.spotify_url || "",
+                  albumArt: draft.album_art_url || "",
+                }
+              : null
+          }
+          onSelectTrack={(track) => {
+            if (track) {
+              setDraft({
+                ...draft,
+                title: track.name,
+                artist: track.artist,
+                spotify_url: track.spotifyUrl,
+                album_art_url: track.albumArt || "",
+              });
+            } else {
+              setDraft({
+                ...draft,
+                title: "",
+                artist: "",
+                spotify_url: "",
+                album_art_url: "",
+              });
+            }
+          }}
         />
+
         <div className="grid grid-cols-2 gap-2">
           <input
             type="url" placeholder="YouTube Link (optional)"
