@@ -791,7 +791,7 @@ export default function MixtapePage() {
                   if (createStep > 1) setCreateStep(createStep - 1);
                   else { setView("list"); setCreateStep(1); }
                 }}
-                className="flex items-center gap-1 text-sm font-sans text-[var(--text-soft)] hover:text-[var(--text)] transition-colors"
+                className="flex items-center gap-1 text-sm font-sans font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" /> {createStep > 1 ? "Back" : "Cancel"}
               </button>
@@ -981,11 +981,11 @@ export default function MixtapePage() {
             <div className="flex items-center justify-between mb-6">
               <button
                 onClick={() => { setView("list"); setSelectedMixtape(null); setEmbedUrl(null); setIsPlaying(false); }}
-                className="flex items-center gap-1.5 text-sm font-sans text-[var(--text-soft)] hover:text-[var(--text)] transition-colors"
+                className="flex items-center gap-1.5 text-sm font-sans font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Collection
               </button>
-              <button onClick={() => setShowDeleteConfirm(true)} className="p-2 text-red-400 hover:text-red-600 transition-colors">
+              <button onClick={() => setShowDeleteConfirm(true)} className="p-2 text-red-400 hover:text-red-600 transition-colors cursor-pointer">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -994,7 +994,7 @@ export default function MixtapePage() {
             {(() => {
               const tConf = parseTheme(selectedMixtape.cover_theme);
               return (
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center mb-6 max-w-full overflow-hidden px-2">
                   <PhysicalCassetteTape
                     pattern={tConf.pattern}
                     stickers={tConf.stickers}

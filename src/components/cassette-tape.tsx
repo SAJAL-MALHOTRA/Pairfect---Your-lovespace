@@ -112,13 +112,13 @@ export default function PhysicalCassetteTape({
   const pStyle = PATTERN_STYLES[pattern] || PATTERN_STYLES.classic;
 
   const scaleMap = {
-    sm: "scale-75 sm:scale-85",
-    md: "scale-100",
-    lg: "scale-110 sm:scale-120",
+    sm: "scale-75 sm:scale-85 origin-center",
+    md: "scale-90 sm:scale-100 origin-center",
+    lg: "scale-90 min-[400px]:scale-100 sm:scale-105 md:scale-115 origin-center max-w-full",
   };
 
   return (
-    <div className={`relative flex flex-col items-center justify-center py-4 select-none ${className}`}>
+    <div className={`relative flex flex-col items-center justify-center py-4 select-none max-w-full overflow-visible ${className}`}>
       <div className={`relative transition-transform duration-300 ${scaleMap[size]}`}>
 
         {/* ─── SPIRAL NOTEBOOK PAPER INSERT (Top notes card sticking out) ─── */}
