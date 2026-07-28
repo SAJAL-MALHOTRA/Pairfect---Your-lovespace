@@ -133,6 +133,18 @@ const GAMES: GameItem[] = [
     accent: "#A24B68",
   },
   {
+    id: "photo-booth",
+    href: "/photo-booth",
+    title: "Online Photo Booth",
+    desc: "Take 4-frame photo strips, apply vintage filters & stickers, and save your keepsakes.",
+    category: "bonding",
+    badge: "FREE",
+    badgeType: "free",
+    icon: Camera,
+    playersInfo: "Photo Strip · Vintage",
+    accent: "var(--burgundy)",
+  },
+  {
     id: "love-letter",
     href: "/love-letter",
     title: "Love Letter Studio",
