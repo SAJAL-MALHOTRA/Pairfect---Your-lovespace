@@ -49,13 +49,13 @@ export default function OnboardingPage() {
     }
   };
 
-  // If user A is waiting for user B, set up subscription on the pair row
+  // If user A is waiting for user B, set up subscription & 2s polling fallback on the pair row
   useEffect(() => {
     if (pair && pair.status === "pending" && pair.user_a_id === user?.id) {
       setMode("create");
       setInviteCode(pair.invite_code);
 
-      // Subscribe to updates for this pair
+      // 1. Subscribe to WebSockets
       const channel = supabase
         .channel(`onboarding-pair-${pair.id}`)
         .on(
@@ -69,7 +69,7 @@ export default function OnboardingPage() {
           (payload: any) => {
             const updatedPair = payload.new as any;
             if (updatedPair.status === "active") {
-              refreshSession().then(() => {
+              refreshSession(true).then(() => {
                 router.push("/dashboard");
               });
             }
@@ -77,11 +77,46 @@ export default function OnboardingPage() {
         )
         .subscribe();
 
+      // 2. Fallback polling interval every 2s to guarantee instant redirect if WebSockets lag
+      const interval = setInterval(async () => {
+        try {
+          const { data: updatedPair } = await supabase
+            .from("pairs")
+            .select("status")
+            .eq("id", pair.id)
+            .single();
+
+          if (updatedPair?.status === "active") {
+            clearInterval(interval);
+            await refreshSession(true);
+            router.push("/dashboard");
+          }
+        } catch (e) {
+          console.warn("Pair status check polling error:", e);
+        }
+      }, 2000);
+
       return () => {
         supabase.removeChannel(channel);
+        clearInterval(interval);
       };
     }
   }, [pair, user, router]);
+
+  const handleCancelPendingPair = async () => {
+    if (pair && pair.status === "pending" && pair.user_a_id === user?.id) {
+      setLoading(true);
+      try {
+        await supabase.from("pairs").delete().eq("id", pair.id);
+        await refreshSession(false);
+      } catch (e) {
+        console.warn("Cancel pending pair error:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    setMode("choice");
+  };
 
   const handleCreatePair = async () => {
     setLoading(true);
@@ -322,7 +357,7 @@ export default function OnboardingPage() {
               </div>
 
               <button
-                onClick={() => setMode("choice")}
+                onClick={handleCancelPendingPair}
                 className="text-xs font-mono font-semibold text-[var(--text-soft)] hover:text-[var(--text)] transition-colors mt-4 inline-flex items-center justify-center gap-1 cursor-pointer"
               >
                 ← Choose another option
