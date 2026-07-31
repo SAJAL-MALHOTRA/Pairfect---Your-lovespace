@@ -121,23 +121,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshSession = async () => {
-    setLoading(true);
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    setUser(currentUser);
-    if (currentUser) {
-      await fetchUserData(currentUser);
-    } else {
-      setProfile(null);
-      setPair(null);
-      setPartner(null);
+  const refreshSession = async (showLoadingSpinner = false) => {
+    if (showLoadingSpinner || !user) {
+      setLoading(true);
     }
-    setLoading(false);
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      setUser(currentUser);
+      if (currentUser) {
+        await fetchUserData(currentUser);
+      } else {
+        setProfile(null);
+        setPair(null);
+        setPartner(null);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    // Initial fetch
-    refreshSession();
+    // Initial fetch with spinner
+    refreshSession(true);
 
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -160,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Listen for real-time changes to the user's pair row (e.g. partner joins) to synchronize sessions instantly
+  // Listen for real-time changes ONLY to this specific user's pair row
   useEffect(() => {
     if (!user) return;
 
@@ -172,9 +177,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           event: "*",
           schema: "public",
           table: "pairs",
+          filter: `user_a_id=eq.${user.id}`,
         },
         () => {
-          refreshSession();
+          refreshSession(false);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pairs",
+          filter: `user_b_id=eq.${user.id}`,
+        },
+        () => {
+          refreshSession(false);
         }
       )
       .subscribe();

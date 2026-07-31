@@ -142,11 +142,11 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-tr from-brand-rose-50 via-brand-peach-50 to-brand-lavender-50 dark:from-[#151312] dark:via-[#1a1514] dark:to-[#12141a]">
+    <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-screen bg-[var(--bg)] transition-colors">
       <div className="absolute top-4 right-4">
         <button
           onClick={signOut}
-          className="inline-flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 rounded-xl transition-all"
+          className="inline-flex items-center space-x-2 text-xs font-mono font-bold text-[var(--text-soft)] hover:text-[var(--text)] px-4 py-2 rounded-xl transition-all cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
@@ -154,21 +154,21 @@ export default function OnboardingPage() {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-rose-100 dark:bg-brand-rose-950/30 text-brand-rose-500 mb-4 animate-bounce">
-          <Link2 className="w-8 h-8 stroke-brand-rose-500" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--rose)]/20 text-[var(--burgundy)] mb-4 animate-bounce border border-[var(--rose)]/40">
+          <Link2 className="w-8 h-8 text-[var(--burgundy)]" />
         </div>
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[var(--text)] tracking-tight">
           Hello, {profile?.display_name || "there"}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-[var(--text-soft)] font-sans">
           Pairfect connects two people. Let's link you with your partner.
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="card-standard p-8 bg-white/70 dark:bg-[var(--card-bg)]/70 backdrop-blur-md min-h-[300px] flex flex-col justify-between">
+        <div className="rounded-[var(--radius-card)] p-8 bg-[var(--bg-secondary)] border border-[var(--border)] shadow-xl min-h-[300px] flex flex-col justify-between">
           {error && (
-            <div className="mb-6 p-4 rounded-button bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-medium">
               {error}
             </div>
           )}
@@ -176,8 +176,8 @@ export default function OnboardingPage() {
           {mode === "choice" && (
             <div className="space-y-6 my-auto">
               {/* Profile Display Name Update */}
-              <form onSubmit={handleUpdateDisplayName} className="space-y-2 border-b border-border pb-6">
-                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+              <form onSubmit={handleUpdateDisplayName} className="space-y-2 border-b border-[var(--border)] pb-6">
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)]">
                   Your Display Name (What partner calls you)
                 </label>
                 <div className="flex gap-2">
@@ -190,18 +190,18 @@ export default function OnboardingPage() {
                       setDisplayNameSaved(false);
                     }}
                     placeholder="e.g. Sunny, Alex, Bun"
-                    className="flex-1 px-4 py-2.5 border border-border rounded-button bg-background/50 text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                    className="flex-1 px-4 py-2.5 border border-[var(--border)] rounded-xl bg-[var(--bg)] text-xs font-sans text-[var(--text)] placeholder:text-[var(--text-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
                   />
                   <button
                     type="submit"
                     disabled={loading || !tempDisplayName.trim() || tempDisplayName.trim() === profile?.display_name}
-                    className="px-4 py-2 bg-foreground hover:bg-foreground/90 disabled:opacity-40 text-background text-xs font-bold rounded-button transition-all cursor-pointer active:scale-95 flex items-center justify-center"
+                    className="btn-primary px-4 py-2 text-xs font-mono uppercase font-bold tracking-wider disabled:opacity-40"
                   >
                     {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Save"}
                   </button>
                 </div>
                 {displayNameSaved && (
-                  <p className="text-[10px] text-green-500 font-bold font-sans">
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-sans">
                     ✓ Name saved successfully!
                   </p>
                 )}
@@ -210,34 +210,34 @@ export default function OnboardingPage() {
               <button
                 onClick={handleCreatePair}
                 disabled={loading}
-                className="w-full flex items-center justify-between p-5 rounded-card border border-border bg-background/50 hover:bg-brand-rose-50/50 dark:hover:bg-brand-rose-950/10 group active:scale-[0.99] transition-all text-left"
+                className="w-full flex items-center justify-between p-5 rounded-2xl border border-[var(--border)] bg-[var(--paper-warm)] hover:border-[var(--burgundy)]/50 group transition-all text-left cursor-pointer shadow-xs"
               >
                 <div>
-                  <h3 className="font-semibold text-lg text-foreground flex items-center">
+                  <h3 className="font-heading font-bold text-lg text-[var(--text)] flex items-center">
                     Create a new pair
-                    <Sparkles className="w-4 h-4 ml-2 text-brand-peach-400 fill-brand-peach-400" />
+                    <Sparkles className="w-4 h-4 ml-2 text-[var(--burgundy)] fill-[var(--burgundy)]/30" />
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs text-[var(--text-soft)] font-sans mt-1">
                     Get an invite code to send to your partner.
                   </p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-brand-rose-500 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-5 h-5 text-[var(--text-soft)] group-hover:text-[var(--burgundy)] group-hover:translate-x-1 transition-all" />
               </button>
 
               <button
                 onClick={() => setMode("join")}
-                className="w-full flex items-center justify-between p-5 rounded-card border border-border bg-background/50 hover:bg-brand-lavender-50/50 dark:hover:bg-brand-lavender-950/10 group active:scale-[0.99] transition-all text-left"
+                className="w-full flex items-center justify-between p-5 rounded-2xl border border-[var(--border)] bg-[var(--paper-warm)] hover:border-[var(--burgundy)]/50 group transition-all text-left cursor-pointer shadow-xs"
               >
                 <div>
-                  <h3 className="font-semibold text-lg text-foreground flex items-center">
+                  <h3 className="font-heading font-bold text-lg text-[var(--text)] flex items-center">
                     Join with invite code
-                    <Heart className="w-4 h-4 ml-2 text-brand-rose-400 fill-brand-rose-400" />
+                    <Heart className="w-4 h-4 ml-2 text-[var(--burgundy)] fill-[var(--burgundy)]/30" />
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs text-[var(--text-soft)] font-sans mt-1">
                     Enter a code shared by your partner.
                   </p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-brand-lavender-500 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-5 h-5 text-[var(--text-soft)] group-hover:text-[var(--burgundy)] group-hover:translate-x-1 transition-all" />
               </button>
             </div>
           )}
@@ -245,10 +245,10 @@ export default function OnboardingPage() {
           {mode === "create" && (
             <div className="text-center space-y-6 my-auto">
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-brand-rose-500 tracking-wider uppercase">
+                <p className="text-xs font-mono uppercase font-bold text-[var(--burgundy)] tracking-widest">
                   Your Invite Code
                 </p>
-                <div className="flex items-center justify-center space-x-2 bg-background border border-border rounded-card py-4 px-6 select-all font-mono text-3xl font-bold tracking-wider text-foreground">
+                <div className="flex items-center justify-center space-x-2 bg-[var(--paper-warm)] border border-[var(--border)] rounded-2xl py-4 px-6 select-all font-mono text-3xl font-bold tracking-widest text-[var(--text)] shadow-inner">
                   <span>{inviteCode}</span>
                 </div>
               </div>
@@ -256,11 +256,11 @@ export default function OnboardingPage() {
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={copyCode}
-                  className="flex items-center space-x-2 py-3 px-6 rounded-button border border-border bg-background/50 hover:bg-background transition-all text-sm font-medium text-foreground"
+                  className="btn-secondary py-3 px-6 text-xs font-mono font-bold inline-flex items-center gap-2"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className="w-4 h-4 text-emerald-600" />
                       <span>Copied!</span>
                     </>
                   ) : (
@@ -272,21 +272,21 @@ export default function OnboardingPage() {
                 </button>
               </div>
 
-              <div className="pt-6 border-t border-border flex flex-col items-center">
-                <Loader2 className="w-6 h-6 text-brand-rose-400 animate-spin mb-2" />
-                <p className="text-xs text-muted-foreground">
+              <div className="pt-6 border-t border-[var(--border)] flex flex-col items-center">
+                <Loader2 className="w-6 h-6 text-[var(--burgundy)] animate-spin mb-2" />
+                <p className="text-xs font-sans text-[var(--text-soft)] font-medium">
                   Waiting for your partner to join.
                 </p>
-                <p className="text-[10px] text-muted-foreground/60 mt-1 max-w-[200px]">
+                <p className="text-[11px] text-[var(--text-soft)] opacity-80 mt-1 max-w-[240px] leading-relaxed">
                   This page will automatically update once they link with your code.
                 </p>
               </div>
 
               <button
                 onClick={() => setMode("choice")}
-                className="text-xs text-muted-foreground hover:text-foreground mt-4 underline decoration-dotted"
+                className="text-xs font-mono font-semibold text-[var(--text-soft)] hover:text-[var(--text)] transition-colors mt-4 inline-flex items-center justify-center gap-1 cursor-pointer"
               >
-                Go back options
+                ← Choose another option
               </button>
             </div>
           )}
@@ -294,7 +294,7 @@ export default function OnboardingPage() {
           {mode === "join" && (
             <form onSubmit={handleJoinPair} className="space-y-6 my-auto">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-xs font-mono uppercase font-bold text-[var(--text-soft)] mb-2">
                   Enter Invite Code
                 </label>
                 <input
@@ -303,14 +303,14 @@ export default function OnboardingPage() {
                   placeholder="E.G. A1B2C3"
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value)}
-                  className="block w-full text-center uppercase tracking-widest font-mono text-2xl py-4 border border-border rounded-card bg-background/50 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                  className="block w-full text-center uppercase tracking-widest font-mono text-2xl py-4 border border-[var(--border)] rounded-2xl bg-[var(--paper-warm)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30 text-[var(--text)]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || !inputCode}
-                className="w-full btn-primary"
+                className="w-full btn-primary py-3 text-xs font-mono uppercase font-bold tracking-widest"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 <span>Link Accounts</span>
@@ -319,9 +319,9 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => setMode("choice")}
-                className="w-full text-center text-xs text-muted-foreground hover:text-foreground mt-4 underline decoration-dotted block"
+                className="w-full text-center text-xs font-mono font-semibold text-[var(--text-soft)] hover:text-[var(--text)] transition-colors mt-4 block cursor-pointer"
               >
-                Go back
+                ← Choose another option
               </button>
             </form>
           )}
