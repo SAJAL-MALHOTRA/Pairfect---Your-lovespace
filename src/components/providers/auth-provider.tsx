@@ -39,7 +39,7 @@ interface AuthContextType {
   pair: Pair | null;
   partner: UserProfile | null;
   loading: boolean;
-  refreshSession: () => Promise<void>;
+  refreshSession: (showLoadingSpinner?: boolean) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -49,7 +49,7 @@ const AuthContext = createContext<AuthContextType>({
   pair: null,
   partner: null,
   loading: true,
-  refreshSession: async () => {},
+  refreshSession: async (showLoadingSpinner?: boolean) => {},
   signOut: async () => {},
 });
 
@@ -75,19 +75,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileErr) throw profileErr;
       setProfile(profileData);
 
-      // 2. Fetch active/pending pair defensively, prioritizing active status
-      const { data: pairsList, error: pairErr } = await supabase
+      // 2. Fetch active pair first; if none, check for pending pair
+      const { data: activePairs } = await supabase
         .from("pairs")
         .select("*")
         .or(`user_a_id.eq.${currentUser.id},user_b_id.eq.${currentUser.id}`)
-        .in("status", ["pending", "active"])
-        .order("status", { ascending: true }) // 'active' (starts with A) before 'pending' (starts with P)
-        .order("created_at", { ascending: false }) // newest first
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
         .limit(1);
 
-      if (pairErr) throw pairErr;
+      let pairData = activePairs && activePairs.length > 0 ? activePairs[0] : null;
 
-      const pairData = pairsList && pairsList.length > 0 ? pairsList[0] : null;
+      if (!pairData) {
+        const { data: pendingPairs } = await supabase
+          .from("pairs")
+          .select("*")
+          .or(`user_a_id.eq.${currentUser.id},user_b_id.eq.${currentUser.id}`)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        pairData = pendingPairs && pendingPairs.length > 0 ? pendingPairs[0] : null;
+      }
 
       if (pairData) {
         setPair(pairData);

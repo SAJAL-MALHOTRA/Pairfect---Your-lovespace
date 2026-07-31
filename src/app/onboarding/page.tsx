@@ -114,18 +114,57 @@ export default function OnboardingPage() {
 
   const handleJoinPair = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setLoading(true);
     setError(null);
     try {
       const cleanedCode = inputCode.trim().toUpperCase();
+      
+      // 1. Try RPC first
       const { data: pairId, error: rpcError } = await supabase.rpc(
         "join_pair_by_code",
         { code: cleanedCode }
       );
 
-      if (rpcError) throw rpcError;
+      // 2. If RPC fails, try direct fallback client update
+      if (rpcError) {
+        console.warn("RPC join_pair_by_code error, attempting fallback update:", rpcError);
+        
+        // Find pending pair by code
+        const { data: targetPair, error: fetchErr } = await supabase
+          .from("pairs")
+          .select("*")
+          .eq("invite_code", cleanedCode)
+          .eq("status", "pending")
+          .single();
 
-      await refreshSession();
+        if (fetchErr || !targetPair) {
+          throw new Error(rpcError.message || "Invalid invite code or pair is not joinable.");
+        }
+
+        // Delete any orphaned pending pair created by user B first
+        await supabase
+          .from("pairs")
+          .delete()
+          .eq("user_a_id", user.id)
+          .is("user_b_id", null)
+          .eq("status", "pending");
+
+        // Update target pair row to active
+        const { error: updateErr } = await supabase
+          .from("pairs")
+          .update({
+            user_b_id: user.id,
+            status: "active",
+            started_dating_date: targetPair.started_dating_date || new Date().toISOString().split("T")[0],
+          })
+          .eq("id", targetPair.id);
+
+        if (updateErr) throw updateErr;
+      }
+
+      // 3. Refresh session with loading state & navigate to dashboard
+      await refreshSession(true);
       router.push("/dashboard");
     } catch (err: any) {
       console.error(err);
