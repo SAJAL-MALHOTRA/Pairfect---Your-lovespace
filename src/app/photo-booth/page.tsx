@@ -1305,7 +1305,7 @@ export default function PhotoBoothPage() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-xl mx-auto">
             <div className="text-center space-y-1">
               <h2 className="font-heading font-bold text-3xl text-[var(--text)]">Your Photo Strip Keepsake</h2>
-              <p className="font-quote italic text-sm text-[var(--text-soft)]">Ready to download and save to your scrapbook</p>
+              <p className="font-quote italic text-sm text-[var(--text-soft)]">Ready to download and keep in your memory collection ♡</p>
             </div>
 
             {/* Privacy Card */}
