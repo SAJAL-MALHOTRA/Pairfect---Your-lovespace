@@ -687,3 +687,76 @@ textarea.input-warm {
   --paper-mid: #1A1C20;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   5-LAYER CRAFTED SHADOWS (APPLE JOURNAL x HERMÈS)
+   1. Top highlight edge
+   2. Contact shadow
+   3. Ambient drop shadow
+   4. Soft reflection
+   5. Inset depth
+   ═══════════════════════════════════════════════════════════ */
+
+.shadow-crafted-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 4px rgba(61, 36, 50, 0.05),
+    0 8px 24px rgba(232, 82, 125, 0.1),
+    0 20px 48px rgba(61, 36, 50, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+}
+.dark .shadow-crafted-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 20px 48px rgba(0, 0, 0, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.shadow-crafted-hero {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 4px 10px rgba(61, 36, 50, 0.08),
+    0 16px 40px rgba(232, 82, 125, 0.16),
+    0 32px 72px rgba(61, 36, 50, 0.06),
+    inset 0 -1px 0 rgba(232, 82, 125, 0.08);
+}
+.dark .shadow-crafted-hero {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 10px rgba(0, 0, 0, 0.35),
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 32px 72px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.shadow-crafted-seal {
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 2px 6px rgba(128, 32, 48, 0.2),
+    0 8px 24px rgba(128, 32, 48, 0.35),
+    0 16px 36px rgba(61, 36, 50, 0.15);
+}
+
+/* Washi Tape Accent */
+.washi-tape-top {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1deg);
+  width: 90px;
+  height: 20px;
+  background: rgba(255, 217, 227, 0.65);
+  backdrop-filter: blur(2px);
+  border-left: 2px dashed rgba(232, 82, 125, 0.2);
+  border-right: 2px dashed rgba(232, 82, 125, 0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  pointer-events: none;
+  z-index: 20;
+}
+.dark .washi-tape-top {
+  background: rgba(60, 48, 36, 0.65);
+  border-color: rgba(194, 68, 90, 0.3);
+}
+
+
