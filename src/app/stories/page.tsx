@@ -61,7 +61,7 @@ function Chapter({ story, index, isMe, authorName, onDelete, onLike, profilesMap
 
       {/* Content */}
       <motion.div
-        className="flex-1 pb-14"
+        className="flex-1 pb-14 material-notebook"
         initial={{ opacity: 0, x: 16 }}
         animate={inView ? { opacity: 1, x: 0 } : {}}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
@@ -69,7 +69,7 @@ function Chapter({ story, index, isMe, authorName, onDelete, onLike, profilesMap
         <p className="text-[8px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-1">
           Chapter {index + 1}
         </p>
-        <span className="inline-block text-[8px] font-mono uppercase tracking-widest text-[var(--ink-mid)] bg-[var(--card-bg)] px-2 py-0.5 rounded-full border border-[var(--border-mid)] mb-2">
+        <span className="inline-block text-[8px] font-mono uppercase tracking-widest text-[var(--ink-mid)] bg-[var(--bg-secondary)] px-2 py-0.5 rounded-full border border-[var(--border-mid)] mb-2">
           {badge}
         </span>
 
@@ -211,7 +211,7 @@ export default function StoriesPage() {
 
   if (fetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <Navigation />
         <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
@@ -219,7 +219,7 @@ export default function StoriesPage() {
   }
 
   return (
-    <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="relative min-h-screen" style={{ background: "var(--bg)" }}>
       <Navigation />
 
       <main className="max-w-xl mx-auto px-5 py-16 pb-36">
@@ -290,8 +290,8 @@ export default function StoriesPage() {
             <motion.div
               initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
               transition={{ type: "spring", stiffness: 380, damping: 38 }}
-              className="rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col border overflow-hidden shadow-2xl"
-              style={{ background: "var(--background)", borderColor: "var(--border-mid)" }}
+              className="rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col border overflow-hidden shadow-2xl paper-grain"
+              style={{ background: "var(--bg)", borderColor: "var(--border-mid)" }}
             >
               <div className="p-5 border-b flex items-center justify-between flex-shrink-0" style={{ borderColor: "var(--border-mid)" }}>
                 <p className="font-display italic text-lg font-bold text-[var(--ink-dark)]">{editingId ? "Update Chapter" : "New Chapter"}</p>
@@ -305,7 +305,7 @@ export default function StoriesPage() {
                   <div className="flex flex-wrap gap-2">
                     {STATUS_OPTIONS.map(opt => (
                       <button key={opt.id} type="button" onClick={() => setBadge(opt.label)}
-                        className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all ${badge === opt.label ? "bg-[var(--seal-red)] text-white border-[var(--seal-red)]" : "bg-[var(--card-bg)] text-[var(--ink-mid)] border-[var(--border-mid)]"}`}>
+                        className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all ${badge === opt.label ? "bg-[var(--seal-red)] text-white border-[var(--seal-red)]" : "bg-[var(--bg-secondary)] text-[var(--ink-mid)] border-[var(--border-mid)]"}`}>
                         {opt.label}
                       </button>
                     ))}
@@ -320,8 +320,8 @@ export default function StoriesPage() {
                   <div key={f.label}>
                     <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block mb-1.5">{f.label}</label>
                     <input type="text" value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.placeholder} required={f.required}
-                      className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
-                      style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
+                      className="input-warm w-full"
+                      style={{ borderColor: "var(--border-mid)", background: "var(--bg)" }} />
                   </div>
                 ))}
 
@@ -331,16 +331,16 @@ export default function StoriesPage() {
                     type="date"
                     value={chapterDate}
                     onChange={e => setChapterDate(e.target.value)}
-                    className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)] font-mono"
-                    style={{ borderColor: "var(--border-mid)", background: "var(--background)" }}
+                    className="input-warm w-full font-mono"
+                    style={{ borderColor: "var(--border-mid)", background: "var(--bg)" }}
                   />
                 </div>
 
                 <div>
                   <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block mb-1.5">Your story</label>
                   <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write what happened..." rows={5} required
-                    className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)] resize-none leading-relaxed"
-                    style={{ borderColor: "var(--border-mid)", background: "var(--background)" }} />
+                    className="input-warm w-full resize-none"
+                    style={{ borderColor: "var(--border-mid)", background: "var(--bg)" }} />
                 </div>
 
                 {error && <p className="text-xs text-red-600 bg-red-50 dark:bg-red-950/20 rounded-xl px-4 py-2">{error}</p>}

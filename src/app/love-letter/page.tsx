@@ -385,7 +385,7 @@ export default function LoveLetterPage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
         <Navigation />
         <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
@@ -400,7 +400,7 @@ export default function LoveLetterPage() {
     const read   = lettersList.filter(l => !(l.sender_id !== user?.id && !l.is_opened));
 
     return (
-      <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
+      <div className="relative min-h-screen" style={{ background: "var(--bg)" }}>
         <Navigation />
         <main className="max-w-lg mx-auto px-5 py-20 pb-36">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="flex items-end justify-between mb-10">
@@ -439,7 +439,7 @@ export default function LoveLetterPage() {
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                   whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative bg-[var(--paper-warm)] border border-[var(--border-warm)] rounded-2xl px-6 py-5" style={{ boxShadow: "0 4px 20px rgba(128,32,48,0.1), 0 1px 4px rgba(60,40,20,0.06)" }}>
+                  <div className="relative material-cotton rounded-2xl px-6 py-5" style={{ boxShadow: "0 4px 20px rgba(128,32,48,0.1), 0 1px 4px rgba(60,40,20,0.06)" }}>
                     <motion.div className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[var(--seal-red)] flex items-center justify-center"
                       animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-white/80" />
@@ -470,7 +470,7 @@ export default function LoveLetterPage() {
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (unread.length + i) * 0.07 }}
                   whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}
                 >
-                  <div className="flex items-center gap-4 bg-[var(--card-bg)] border border-[var(--border-mid)] rounded-2xl px-5 py-4 transition-colors hover:bg-[var(--paper-warm)]">
+                  <div className="flex items-center gap-4 material-cotton rounded-2xl px-5 py-4 transition-colors hover:bg-[var(--paper-warm)]">
                     <div className="w-8 h-8 rounded-lg bg-[var(--border-mid)] flex items-center justify-center flex-shrink-0">
                       <Mail className="w-3.5 h-3.5 text-[var(--ink-mid)]" />
                     </div>
@@ -542,7 +542,7 @@ export default function LoveLetterPage() {
                             onChange={e => { const u = [...blocks]; u[idx].value = e.target.value; setBlocks(u); }}
                             placeholder={idx === 0 ? "Dear..." : "Continue..."}
                             rows={5}
-                            className="w-full bg-transparent placeholder-[#C4B89A] text-base focus:outline-none resize-none"
+                            className="input-warm w-full resize-none"
                             style={{ lineHeight: "32px", fontFamily: "var(--font-handwriting),cursive", color: "var(--ink-dark)" }}
                           />
                         ) : (
@@ -605,12 +605,12 @@ export default function LoveLetterPage() {
                   <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">Seal & Send</h1>
                   <p className="text-xs text-[var(--ink-mid)] font-mono mt-1">Address your letter and send it.</p>
                 </div>
-                <div className="bg-[var(--card-bg)] border border-[var(--border-mid)] rounded-3xl p-6 space-y-4">
+                <div className="bg-[var(--bg-secondary)] border border-[var(--border-mid)] rounded-3xl p-6 space-y-4 paper-grain">
                   {[{ label: "To", val: toName, set: setToName, placeholder: "My Love" }, { label: "From", val: fromName, set: setFromName, placeholder: "Your name" }].map(f => (
                     <div key={f.label} className="space-y-1.5">
                       <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">{f.label}</label>
                       <input type="text" value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.placeholder}
-                        className="w-full px-4 py-3 border border-[var(--border-mid)] bg-[var(--background)] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)]"
+                        className="input-warm w-full"
                         style={{ fontFamily: "var(--font-handwriting),cursive" }} />
                     </div>
                   ))}
@@ -633,7 +633,7 @@ export default function LoveLetterPage() {
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
               <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 400, damping: 36 }}
-                className="bg-[var(--background)] rounded-3xl max-w-sm w-full max-h-[70vh] flex flex-col border border-[var(--border-mid)] overflow-hidden shadow-2xl">
+                className="bg-[var(--bg)] rounded-3xl max-w-sm w-full max-h-[70vh] flex flex-col border border-[var(--border-mid)] overflow-hidden shadow-2xl">
                 <div className="p-4 border-b border-[var(--border-mid)] flex items-center justify-between">
                   <p className="text-sm font-bold text-[var(--ink-dark)]">Pick a sticker</p>
                   <button onClick={() => setGalleryOpen(false)} className="p-1.5 rounded-lg text-[var(--ink-mid)] hover:bg-[var(--muted)] cursor-pointer"><X className="w-4 h-4" /></button>
@@ -677,7 +677,7 @@ export default function LoveLetterPage() {
   // ═══════════════════════════════════════════════════════════════
   if (activeLetter) {
     const cfg = STYLES[activeLetter.envelope_style] || STYLES.classic;
-    const bg = candle ? "linear-gradient(160deg,#110C06,#1A1208)" : "var(--background)";
+    const bg = candle ? "linear-gradient(160deg,#110C06,#1A1208)" : "var(--bg)";
 
     return (
       <div className="relative min-h-screen" style={{ background: bg }}>

@@ -632,7 +632,7 @@ export default function QuizPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <Loader2 className="w-8 h-8 text-[var(--burgundy)] animate-spin" />
         </div>
       </div>
     );
@@ -641,7 +641,7 @@ export default function QuizPage() {
   const partnerName = partner?.display_name || "Partner";
 
   return (
-    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-background text-foreground transition-colors duration-300">
+    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
       {/* soft ambient warmth */}
       <div
         aria-hidden="true"
@@ -658,7 +658,7 @@ export default function QuizPage() {
         {!gameState && (
           <div className="space-y-8">
             {/* Header Description */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-border/40 pb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-[var(--border)]/40 pb-6">
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <span className="bg-pink-500/10 text-pink-500 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-pink-500/20">
@@ -668,22 +668,22 @@ export default function QuizPage() {
                     ● Live now
                   </span>
                 </div>
-                <h1 className="text-3xl font-sans font-black tracking-tight text-foreground">
+                <h1 className="text-3xl font-heading font-bold tracking-tight text-[var(--text)]">
                   How Well Do You Know Me?
                 </h1>
-                <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                <p className="text-sm text-[var(--text-soft)] max-w-2xl leading-relaxed">
                   Both lock in your answers privately, then reveal at the exact same second. 14 packs from cute to spicy, surprise twists like double-points and emoji-only rounds — and a compatibility score to keep at the end.
                 </p>
               </div>
 
               {/* Status widget */}
-              <div className="flex items-center space-x-3 px-4 py-2.5 rounded-button bg-card border border-border">
-                <Users className="w-5 h-5 text-primary" />
+              <div className="flex items-center space-x-3 px-4 py-2.5 rounded-button bg-[var(--bg-secondary)] border border-[var(--border)]">
+                <Users className="w-5 h-5 text-[var(--burgundy)]" />
                 <div className="text-left">
-                  <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest">
+                  <p className="text-[10px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-widest">
                     Partner Connection
                   </p>
-                  <p className="text-xs font-bold text-foreground">
+                  <p className="text-xs font-bold text-[var(--text)]">
                     {partnerOnline ? `${partnerName} is Online` : `Waiting for ${partnerName}...`}
                   </p>
                 </div>
@@ -693,13 +693,13 @@ export default function QuizPage() {
             {/* Grid of 14 packs */}
             <div className="space-y-4">
               <h2 className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest flex items-center space-x-1.5">
-                <Gamepad2 className="w-4 h-4 text-primary" />
+                <Gamepad2 className="w-4 h-4 text-[var(--burgundy)]" />
                 <span>Select a Play Pack to Start</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {quizPacks.map((pack: any) => {
-                  let packColor = "border-border hover:border-primary/40 bg-card";
+                  let packColor = "border-[var(--border)] hover:border-[var(--burgundy)]/40 bg-[var(--bg-secondary)]";
                   if (pack.tag === "Hot" || pack.tag === "Spicy" || pack.tag === "Wild") {
                     packColor = "border-rose-500/20 hover:border-rose-500/50 bg-rose-500/5";
                   } else if (pack.tag === "New" || pack.tag === "Fun") {
@@ -714,15 +714,15 @@ export default function QuizPage() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-3xl select-none">{pack.emoji}</span>
-                          <span className="text-[9px] font-mono font-bold text-muted-foreground uppercase tracking-wider bg-card px-2 py-0.5 rounded border border-border">
+                          <span className="text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider bg-[var(--bg-secondary)] px-2 py-0.5 rounded border border-[var(--border)]">
                             {pack.tag}
                           </span>
                         </div>
                         <div>
-                          <h3 className="text-md font-bold text-foreground font-sans">
+                          <h3 className="text-md font-bold text-[var(--text)] font-sans">
                             {pack.title}
                           </h3>
-                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          <p className="text-xs text-[var(--text-soft)] mt-1 leading-relaxed">
                             {pack.description}
                           </p>
                         </div>
@@ -748,27 +748,27 @@ export default function QuizPage() {
           <div className="max-w-3xl w-full mx-auto space-y-6">
             
             {/* Header details bar */}
-            <div className="flex items-center justify-between pb-4 border-b border-border/40">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]/40">
               <button
                 onClick={handleExitGame}
-                className="inline-flex items-center space-x-1.5 text-xs font-bold text-muted-foreground hover:text-foreground uppercase font-mono tracking-widest cursor-pointer"
+                className="inline-flex items-center space-x-1.5 text-xs font-bold text-[var(--text-soft)] hover:text-[var(--text)] uppercase font-mono tracking-widest cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Exit Quiz</span>
               </button>
               
               <div className="text-right">
-                <span className="bg-primary/10 text-primary text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-primary/20">
+                <span className="bg-[var(--burgundy)]/10 text-[var(--burgundy)] text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-[var(--burgundy)]/20">
                   {selectedPack.title} Pack {selectedPack.emoji}
                 </span>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-[var(--text-soft)] mt-1">
                   Question {gameState.currentQuestionIndex + 1} of {selectedPack.questions.length}
                 </p>
               </div>
             </div>
 
             {/* Question Display Card */}
-            <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6 text-center">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] paper-grain p-6 sm:p-8 shadow-sm space-y-6 text-center">
               
               {/* Question Text */}
               <div className="space-y-2">
@@ -777,7 +777,7 @@ export default function QuizPage() {
                     ? "Answer about yourself!" 
                     : `Guess about ${partnerName}`}
                 </p>
-                <h2 className="text-xl sm:text-2xl font-sans font-black text-foreground leading-snug max-w-xl mx-auto">
+                <h2 className="text-xl sm:text-2xl font-heading font-bold text-[var(--text)] leading-snug max-w-xl mx-auto">
                   "{selectedPack.questions[gameState.currentQuestionIndex]}"
                 </h2>
               </div>
@@ -785,12 +785,12 @@ export default function QuizPage() {
               {/* Reveal Countdown Overlay */}
               {countdown !== null && (
                 <div className="py-6 flex flex-col items-center justify-center space-y-2">
-                  <div className="w-20 h-20 rounded-full border-4 border-dashed border-primary animate-spin flex items-center justify-center">
-                    <span className="text-3xl font-black text-primary font-mono select-none animate-pulse">
+                  <div className="w-20 h-20 rounded-full border-4 border-dashed border-[var(--burgundy)] animate-spin flex items-center justify-center">
+                    <span className="text-3xl font-black text-[var(--burgundy)] font-mono select-none animate-pulse">
                       {countdown}
                     </span>
                   </div>
-                  <p className="text-xs font-mono font-bold text-muted-foreground animate-pulse tracking-widest uppercase">
+                  <p className="text-xs font-mono font-bold text-[var(--text-soft)] animate-pulse tracking-widest uppercase">
                     Locking answers & revealing...
                   </p>
                 </div>
@@ -804,10 +804,10 @@ export default function QuizPage() {
                       <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center">
                         <Lock className="w-5 h-5" />
                       </div>
-                      <p className="text-sm font-bold text-foreground">
+                      <p className="text-sm font-bold text-[var(--text)]">
                         Your answer is locked in privately!
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-[var(--text-soft)]">
                         {gameState.lockedIn[partner?.id || ""] 
                           ? `Revealing instantly...` 
                           : `Waiting for ${partnerName} to lock in their answer...`}
@@ -821,7 +821,7 @@ export default function QuizPage() {
                         placeholder={gameState.turnOwnerId === user.id 
                           ? "Write your private answer here..." 
                           : `What do you think ${partnerName}'s answer is?`}
-                        className="block w-full h-24 px-3.5 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm resize-none placeholder:text-muted-foreground/45 transition-all"
+                        className="block w-full h-24 px-3.5 py-2.5 input-warm text-sm resize-none placeholder:text-[var(--text-soft)]/45 transition-all"
                       />
                       
                       <button
@@ -875,10 +875,10 @@ export default function QuizPage() {
                   </div>
 
                   {/* Grading panel (Subject decides if guess is correct) */}
-                  <div className="max-w-md mx-auto rounded-button border border-border/80 bg-background/50 p-5 space-y-4">
+                  <div className="max-w-md mx-auto rounded-button border border-[var(--border)]/80 bg-[var(--bg)]/50 p-5 space-y-4">
                     {gameState.turnOwnerId === user.id ? (
                       <div className="space-y-3.5">
-                        <p className="text-xs font-bold text-foreground">
+                        <p className="text-xs font-bold text-[var(--text)]">
                           👉 Was {partnerName}'s guess correct?
                         </p>
                         <div className="flex gap-3">
@@ -901,8 +901,8 @@ export default function QuizPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="py-2 text-center text-xs text-muted-foreground flex flex-col items-center justify-center space-y-2">
-                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                      <div className="py-2 text-center text-xs text-[var(--text-soft)] flex flex-col items-center justify-center space-y-2">
+                        <Loader2 className="w-5 h-5 text-[var(--burgundy)] animate-spin" />
                         <p className="font-bold">
                           Waiting for {partnerName} to grade your guess...
                         </p>
@@ -915,7 +915,7 @@ export default function QuizPage() {
 
               {/* Status display footer */}
               {countdown === null && !gameState.revealed && (
-                <div className="flex items-center justify-center gap-6 border-t border-border/40 pt-4 text-xs font-mono">
+                <div className="flex items-center justify-center gap-6 border-t border-[var(--border)]/40 pt-4 text-xs font-mono">
                   <div className="flex items-center space-x-1.5">
                     <span className={`w-2 h-2 rounded-full ${gameState.lockedIn[user.id] ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
                     <span>You: {gameState.lockedIn[user.id] ? "Locked in 🔒" : (typing ? "Typing..." : "Thinking 🤔")}</span>
@@ -937,7 +937,7 @@ export default function QuizPage() {
           <div className="max-w-2xl w-full mx-auto space-y-6 text-center">
             
             {/* Scorecard panel */}
-            <div className="rounded-2xl border border-border bg-card p-8 shadow-sm space-y-6 relative overflow-hidden">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] paper-grain p-8 shadow-sm space-y-6 relative overflow-hidden">
               
               {/* Confetti ambient glow */}
               <div className="absolute inset-0 bg-gradient-to-b from-pink-500/5 to-transparent pointer-events-none" />
@@ -946,10 +946,10 @@ export default function QuizPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 mb-2">
                   <Trophy className="w-8 h-8 fill-pink-500/10" />
                 </div>
-                <h1 className="text-3xl font-sans font-black tracking-tight text-foreground">
+                <h1 className="text-3xl font-heading font-bold tracking-tight text-[var(--text)]">
                   Quiz Completed!
                 </h1>
-                <p className="text-xs text-muted-foreground uppercase font-mono tracking-widest font-bold">
+                <p className="text-xs text-[var(--text-soft)] uppercase font-mono tracking-widest font-bold">
                   {selectedPack.title} Pack {selectedPack.emoji}
                 </p>
               </div>
@@ -977,24 +977,24 @@ export default function QuizPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-black text-foreground font-sans tracking-tight">
+                    <span className="text-3xl font-black text-[var(--text)] font-sans tracking-tight">
                       {gameState.scores.total > 0 
                         ? Math.round((gameState.scores.correct / gameState.scores.total) * 100) 
                         : 0}%
                     </span>
-                    <span className="text-[8px] font-bold text-muted-foreground uppercase font-mono tracking-widest">
+                    <span className="text-[8px] font-bold text-[var(--text-soft)] uppercase font-mono tracking-widest">
                       Compatibility
                     </span>
                   </div>
                 </div>
-                <p className="text-sm font-semibold text-foreground mt-2">
+                <p className="text-sm font-semibold text-[var(--text)] mt-2">
                   You matched {gameState.scores.correct} points out of {gameState.scores.total} total weight!
                 </p>
               </div>
 
               {/* Summary table of answers */}
-              <div className="border border-border/80 rounded-button overflow-hidden text-left bg-background/40">
-                <div className="bg-muted px-4 py-3 border-b border-border/80 text-xs font-mono font-bold text-muted-foreground uppercase tracking-widest">
+              <div className="border border-[var(--border)]/80 rounded-button overflow-hidden text-left bg-[var(--bg)]/40">
+                <div className="bg-muted px-4 py-3 border-b border-[var(--border)]/80 text-xs font-mono font-bold text-[var(--text-soft)] uppercase tracking-widest">
                   Match Summary
                 </div>
                 <div className="divide-y divide-border/60">
@@ -1003,12 +1003,12 @@ export default function QuizPage() {
                     return (
                       <div key={idx} className="p-4 flex items-start justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-xs font-bold text-foreground">
+                          <p className="text-xs font-bold text-[var(--text)]">
                             {idx + 1}. {q}
                           </p>
-                          <div className="text-[11px] text-muted-foreground space-y-0.5">
-                            <p>Actual: <span className="font-mono text-foreground font-medium">"{gameState.answers[idx]?.[gameState.turnOwnerId === user.id ? user.id : (partner?.id || "")] || ""}"</span></p>
-                            <p>Guess: <span className="font-mono text-foreground font-medium">"{gameState.answers[idx]?.[gameState.turnOwnerId === user.id ? (partner?.id || "") : user.id] || ""}"</span></p>
+                          <div className="text-[11px] text-[var(--text-soft)] space-y-0.5">
+                            <p>Actual: <span className="font-mono text-[var(--text)] font-medium">"{gameState.answers[idx]?.[gameState.turnOwnerId === user.id ? user.id : (partner?.id || "")] || ""}"</span></p>
+                            <p>Guess: <span className="font-mono text-[var(--text)] font-medium">"{gameState.answers[idx]?.[gameState.turnOwnerId === user.id ? (partner?.id || "") : user.id] || ""}"</span></p>
                           </div>
                         </div>
 

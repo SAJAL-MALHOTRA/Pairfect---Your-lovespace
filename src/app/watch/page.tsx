@@ -251,7 +251,7 @@ export default function WatchPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-4 border-primary/25 border-t-primary animate-spin"></div>
+          <div className="w-8 h-8 rounded-full border-4 border-[var(--burgundy)]/25 border-t-primary animate-spin"></div>
         </div>
       </div>
     );
@@ -265,8 +265,8 @@ export default function WatchPage() {
         
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-sans font-black text-foreground tracking-tight flex items-center space-x-2.5">
-            <Tv className="w-7 h-7 text-primary" />
+          <h1 className="text-3xl font-heading font-bold text-[var(--text)] tracking-tight flex items-center space-x-2.5">
+            <Tv className="w-7 h-7 text-[var(--burgundy)]" />
             <span>Watch Together</span>
           </h1>
           <p className="text-sm text-[var(--text-soft)] dark:text-[var(--ink-light)] mt-1">
@@ -275,7 +275,7 @@ export default function WatchPage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-button bg-accent/40 border border-border text-primary text-sm flex items-start space-x-2 animate-fade-in">
+          <div className="p-4 rounded-button bg-[var(--bg-secondary)]/40 border border-[var(--border)] text-[var(--burgundy)] text-sm flex items-start space-x-2 animate-fade-in">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -284,7 +284,7 @@ export default function WatchPage() {
         {/* Input Bar */}
         <form onSubmit={handleLoadVideo} className="flex gap-3">
           <div className="relative flex-1 rounded-button shadow-sm">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
               <Link2 className="h-5 w-5" />
             </div>
             <input
@@ -292,7 +292,7 @@ export default function WatchPage() {
               placeholder="Paste any YouTube video URL (e.g. https://www.youtube.com/watch?v=...)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
-              className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-card focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
+              className="input-warm block w-full pl-10 pr-4 py-3 rounded-button"
             />
           </div>
           <button
@@ -304,15 +304,15 @@ export default function WatchPage() {
         </form>
 
         {/* Sync Player Screen */}
-        <div className="aspect-video w-full rounded-card overflow-hidden bg-black border border-border shadow-md relative">
+        <div className="aspect-video w-full rounded-card overflow-hidden bg-black border border-[var(--border)] shadow-md relative">
           {/* 3px top gradient accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa] z-20 pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[3px] btn-primary z-20 pointer-events-none" />
           
           <div id="youtube-player" className="w-full h-full" />
         </div>
 
         {/* Note on sync behaviors */}
-        <div className="p-4 rounded-card border border-border bg-card text-xs text-muted-foreground leading-relaxed shadow-sm">
+        <div className="p-4 rounded-card border border-[var(--border)] bg-[var(--bg-secondary)] text-xs text-[var(--text-soft)] leading-relaxed shadow-sm">
           💡 **How synchronization works**: When you play, pause, or change the video, websocket signals are broadcasted instantly to your partner. If the connection drops, reloading the page will query the database to sync both screens back onto the last played state automatically.
         </div>
 

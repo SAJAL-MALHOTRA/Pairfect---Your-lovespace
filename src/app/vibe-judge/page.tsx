@@ -43,21 +43,9 @@ export default function VibeJudgePage() {
   const fetchDisputes = async () => {
     if (!pair) return;
     try {
-      const { data, error: err } = await supabase
-        .from("vibe_disputes")
-        .select(`
-          *,
-          dispute_verdicts (
-            id,
-            winner_user_id,
-            verdict_text,
-            playful_sentence
-          )
-        `)
-        .eq("pair_id", pair.id)
-        .order("created_at", { ascending: false });
-
-      if (err) throw err;
+      const res = await fetch(`/api/disputes?pairId=${pair.id}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load disputes");
       setDisputes(data || []);
     } catch (e: any) {
       console.error(e);
@@ -90,35 +78,22 @@ export default function VibeJudgePage() {
   // 2. Fetch specific dispute details & arguments
   const loadDisputeDetails = async (disputeId: string) => {
     try {
-      const { data: disp } = await supabase
-        .from("vibe_disputes")
-        .select("*")
-        .eq("id", disputeId)
-        .single();
+      const res = await fetch(`/api/disputes?disputeId=${disputeId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load details");
+
+      const disp = data.dispute;
+      const args = data.arguments;
+      const verd = data.verdict;
 
       if (!disp) return;
-
-      const { data: args } = await supabase
-        .from("dispute_arguments")
-        .select("*")
-        .eq("dispute_id", disputeId);
 
       const myArg = args?.find((a: any) => a.user_id === user?.id);
       const partnerArg = args?.find((a: any) => a.user_id === partner?.id);
 
       setMyArgSubmitted(myArg || null);
       setPartnerArgSubmitted(partnerArg || null);
-
-      if (disp.status === "judged") {
-        const { data: verd } = await supabase
-          .from("dispute_verdicts")
-          .select("*")
-          .eq("dispute_id", disputeId)
-          .single();
-        setVerdict(verd || null);
-      } else {
-        setVerdict(null);
-      }
+      setVerdict(verd || null);
 
       setActiveDispute(disp);
 
@@ -222,17 +197,17 @@ export default function VibeJudgePage() {
     const argText = myArgument.trim() || "I request the court's mercy. I rest my case.";
 
     try {
-      const { data, error: err } = await supabase
-        .from("dispute_arguments")
-        .insert({
-          dispute_id: activeDispute.id,
-          user_id: user.id,
-          argument_text: argText
+      const res = await fetch("/api/disputes/argument", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          disputeId: activeDispute.id,
+          argumentText: argText
         })
-        .select()
-        .single();
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit argument");
 
-      if (err) throw err;
       setMyArgSubmitted(data);
     } catch (e: any) {
       console.error(e);
@@ -302,7 +277,7 @@ export default function VibeJudgePage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <Loader2 className="w-8 h-8 text-[var(--burgundy)] animate-spin" />
         </div>
       </div>
     );
@@ -311,7 +286,7 @@ export default function VibeJudgePage() {
   const partnerName = partner?.display_name || "Partner";
 
   return (
-    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-background text-foreground transition-colors duration-300">
+    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
       {/* soft ambient warmth */}
       <div
         aria-hidden="true"
@@ -327,20 +302,20 @@ export default function VibeJudgePage() {
         {/* HEADER */}
         {!activeDispute && (
           <div className="space-y-8">
-            <div className="border-b border-border/40 pb-6 space-y-2">
-              <h1 className="text-3xl font-sans font-black tracking-tight text-foreground flex items-center space-x-2.5">
-                <Scale className="w-7 h-7 text-primary" />
+            <div className="border-b border-[var(--border)]/40 pb-6 space-y-2">
+              <h1 className="text-3xl font-heading font-bold tracking-tight text-[var(--text)] flex items-center space-x-2.5">
+                <Scale className="w-7 h-7 text-[var(--burgundy)]" />
                 <span>AI Vibe Judge</span>
               </h1>
-              <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+              <p className="text-sm text-[var(--text-soft)] max-w-2xl leading-relaxed">
                 Settle your relationship disputes playfully with Gemini. State your cases privately, lock in arguments, and receive a warm, fun verdict.
               </p>
             </div>
 
             {/* Initiate new case */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] paper-grain p-6 shadow-sm">
               <h2 className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest flex items-center space-x-1.5 mb-4">
-                <Plus className="w-4 h-4 text-primary" />
+                <Plus className="w-4 h-4 text-[var(--burgundy)]" />
                 <span>Initiate a Relationship Case</span>
               </h2>
 
@@ -351,12 +326,12 @@ export default function VibeJudgePage() {
                   value={newTopic}
                   onChange={(e) => setNewTopic(e.target.value)}
                   placeholder="e.g. Kaun movie select karega? or Who is washing the dishes tonight?"
-                  className="block flex-1 px-3.5 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm"
+                  className="block flex-1 px-3.5 py-2.5 input-warm text-sm"
                 />
                 <button
                   type="submit"
                   disabled={submittingDispute}
-                  className="flex items-center justify-center space-x-1.5 py-2.5 px-5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer"
+                  className="flex items-center justify-center space-x-1.5 py-2.5 px-5 rounded-xl text-xs font-bold text-white btn-primary hover:opacity-95 disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   {submittingDispute ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scale className="w-4 h-4" />}
                   <span>Judge Us ⚖️</span>
@@ -367,16 +342,16 @@ export default function VibeJudgePage() {
             {/* Past cases list */}
             <div className="space-y-4">
               <h2 className="text-xs font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest flex items-center space-x-1.5">
-                <MessageSquare className="w-4 h-4 text-primary" />
+                <MessageSquare className="w-4 h-4 text-[var(--burgundy)]" />
                 <span>Relationship Court Log</span>
               </h2>
 
               {fetching ? (
                 <div className="text-center py-8">
-                  <Loader2 className="w-6 h-6 text-primary animate-spin mx-auto" />
+                  <Loader2 className="w-6 h-6 text-[var(--burgundy)] animate-spin mx-auto" />
                 </div>
               ) : disputes.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-card/45 p-12 text-center text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-secondary)]/45 p-12 text-center text-[var(--text-soft)]">
                   No disputes logged yet! Start a case above to settle it with AI.
                 </div>
               ) : (
@@ -390,7 +365,7 @@ export default function VibeJudgePage() {
                       <div 
                         key={d.id}
                         onClick={() => loadDisputeDetails(d.id)}
-                        className="rounded-2xl border border-border bg-card p-5 shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex flex-col justify-between"
+                        className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5 shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex flex-col justify-between"
                       >
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
@@ -401,26 +376,26 @@ export default function VibeJudgePage() {
                             }`}>
                               {d.status}
                             </span>
-                            <span className="text-[9px] text-muted-foreground font-mono">
+                            <span className="text-[9px] text-[var(--text-soft)] font-mono">
                               {format(new Date(d.created_at), "MMM d, h:mm a")}
                             </span>
                           </div>
 
-                          <h3 className="text-base font-bold text-foreground truncate">
+                          <h3 className="text-base font-bold text-[var(--text)] truncate">
                             "{d.topic}"
                           </h3>
 
                           {d.status === "judged" && verdictText && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 italic leading-relaxed">
+                            <p className="text-xs text-[var(--text-soft)] line-clamp-2 italic leading-relaxed">
                               "{verdictText}"
                             </p>
                           )}
                         </div>
 
                         {d.status === "judged" && (
-                          <div className="mt-4 pt-3 border-t border-border/40 flex items-center space-x-1.5 text-xs">
+                          <div className="mt-4 pt-3 border-t border-[var(--border)]/40 flex items-center space-x-1.5 text-xs">
                             <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-                            <span className="font-bold text-foreground">
+                            <span className="font-bold text-[var(--text)]">
                               {winnerId ? (isWinnerMe ? "You Won! 🏆" : `${partnerName} Won 🏆`) : "Draw Verdict 🤝"}
                             </span>
                           </div>
@@ -438,32 +413,32 @@ export default function VibeJudgePage() {
         {activeDispute && (
           <div className="max-w-2xl w-full mx-auto space-y-6">
             {/* Header Details */}
-            <div className="flex items-center justify-between pb-4 border-b border-border/40">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]/40">
               <button
                 onClick={() => {
                   setActiveDispute(null);
                   fetchDisputes();
                 }}
-                className="inline-flex items-center space-x-1.5 text-xs font-bold text-muted-foreground hover:text-foreground uppercase font-mono tracking-widest cursor-pointer"
+                className="inline-flex items-center space-x-1.5 text-xs font-bold text-[var(--text-soft)] hover:text-[var(--text)] uppercase font-mono tracking-widest cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Court Lobby</span>
               </button>
 
-              <span className="bg-primary/10 text-primary text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-primary/20">
+              <span className="bg-[var(--burgundy)]/10 text-[var(--burgundy)] text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-[var(--burgundy)]/20">
                 Dispute status: {activeDispute.status}
               </span>
             </div>
 
             {/* Active dispute details card */}
-            <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6 text-center">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] paper-grain p-6 sm:p-8 shadow-sm space-y-6 text-center">
               
               {/* Question Text */}
               <div className="space-y-1.5">
-                <p className="text-[10px] font-mono font-bold text-primary uppercase tracking-widest">
+                <p className="text-[10px] font-mono font-bold text-[var(--burgundy)] uppercase tracking-widest">
                   Couples Court Topic
                 </p>
-                <h2 className="text-xl sm:text-2xl font-sans font-black text-foreground leading-snug max-w-xl mx-auto">
+                <h2 className="text-xl sm:text-2xl font-heading font-bold text-[var(--text)] leading-snug max-w-xl mx-auto">
                   "{activeDispute.topic}"
                 </h2>
               </div>
@@ -473,8 +448,8 @@ export default function VibeJudgePage() {
                 <div className="max-w-md mx-auto space-y-6">
                   {/* Timer Display */}
                   <div className="flex items-center justify-center space-x-2 py-2">
-                    <Timer className={`w-6 h-6 ${timerSeconds < 15 ? "text-red-500 animate-pulse" : "text-primary"}`} />
-                    <span className="text-2xl font-mono font-black text-foreground">{timerSeconds}s</span>
+                    <Timer className={`w-6 h-6 ${timerSeconds < 15 ? "text-red-500 animate-pulse" : "text-[var(--burgundy)]"}`} />
+                    <span className="text-2xl font-mono font-black text-[var(--text)]">{timerSeconds}s</span>
                   </div>
 
                   <div className="space-y-4">
@@ -482,13 +457,13 @@ export default function VibeJudgePage() {
                       value={myArgument}
                       onChange={(e) => setMyArgument(e.target.value)}
                       placeholder="Write down your argument text here privately. Be creative, Gemini judges humor!"
-                      className="block w-full h-28 px-3.5 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm resize-none placeholder:text-muted-foreground/45 transition-all"
+                      className="block w-full h-28 px-3.5 py-2.5 input-warm text-sm resize-none placeholder:text-[var(--text-soft)]/45 transition-all"
                     />
 
                     <button
                       onClick={submitArgument}
                       disabled={submittingArgument}
-                      className="w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-95 disabled:opacity-50 disabled:scale-100 active:scale-[0.98] transition-all cursor-pointer shadow-md"
+                      className="w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-xl text-sm font-bold text-white btn-primary hover:opacity-95 disabled:opacity-50 disabled:scale-100 active:scale-[0.98] transition-all cursor-pointer shadow-md"
                     >
                       <Lock className="w-4 h-4" />
                       <span>Lock In My Case ⚖️</span>
@@ -503,10 +478,10 @@ export default function VibeJudgePage() {
                   <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center">
                     <Lock className="w-5 h-5" />
                   </div>
-                  <p className="text-sm font-bold text-foreground">
+                  <p className="text-sm font-bold text-[var(--text)]">
                     Your argument has been locked in!
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[var(--text-soft)]">
                     Waiting for {partnerName} to submit their argument. Gemini will evaluate the dispute once both cases are locked.
                   </p>
                 </div>
@@ -515,11 +490,11 @@ export default function VibeJudgePage() {
               {/* Judging Loader */}
               {myArgSubmitted && partnerArgSubmitted && activeDispute.status !== "judged" && (
                 <div className="py-10 flex flex-col items-center justify-center space-y-3 max-w-md mx-auto">
-                  <div className="w-12 h-12 rounded-full border-4 border-dashed border-primary animate-spin flex items-center justify-center" />
-                  <p className="text-sm font-bold text-foreground animate-pulse">
+                  <div className="w-12 h-12 rounded-full border-4 border-dashed border-[var(--burgundy)] animate-spin flex items-center justify-center" />
+                  <p className="text-sm font-bold text-[var(--text)] animate-pulse">
                     Gemini is currently evaluating your cases...
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[var(--text-soft)]">
                     Formulating a warm, playful verdict and sentencing the loser!
                   </p>
                 </div>
@@ -530,27 +505,27 @@ export default function VibeJudgePage() {
                 <div className="space-y-8 animate-fade-in text-left">
                   
                   {/* Verdict detail card */}
-                  <div className="rounded-xl border border-primary/20 bg-pink-500/5 p-6 space-y-4">
-                    <h3 className="text-sm font-mono font-bold text-primary uppercase tracking-widest flex items-center space-x-1.5">
+                  <div className="rounded-xl border border-[var(--burgundy)]/20 bg-pink-500/5 p-6 space-y-4">
+                    <h3 className="text-sm font-mono font-bold text-[var(--burgundy)] uppercase tracking-widest flex items-center space-x-1.5">
                       <Scale className="w-4 h-4" />
                       <span>The Official Verdict</span>
                     </h3>
 
                     <div className="space-y-2">
-                      <p className="text-xl font-bold text-foreground">
+                      <p className="text-xl font-bold text-[var(--text)]">
                         Court Verdict: {verdict.winner_user_id === user.id ? "Victory is Yours! 🏆" : (verdict.winner_user_id === partner?.id ? `${partnerName} Wins 🏆` : "A Draw Decision 🤝")}
                       </p>
-                      <p className="text-sm text-foreground leading-relaxed italic">
+                      <p className="text-sm text-[var(--text)] leading-relaxed italic">
                         "{verdict.verdict_text}"
                       </p>
                     </div>
 
                     {verdict.playful_sentence && (
-                      <div className="pt-4 border-t border-primary/20 space-y-1">
-                        <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest">
+                      <div className="pt-4 border-t border-[var(--burgundy)]/20 space-y-1">
+                        <p className="text-[10px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-widest">
                           Playful sentence decreed
                         </p>
-                        <p className="text-xs font-bold text-primary uppercase tracking-wider bg-primary/10 border border-primary/20 rounded-lg py-2 px-3 inline-block">
+                        <p className="text-xs font-bold text-[var(--burgundy)] uppercase tracking-wider bg-[var(--burgundy)]/10 border border-[var(--burgundy)]/20 rounded-lg py-2 px-3 inline-block">
                           📜 {verdict.playful_sentence}
                         </p>
                       </div>
@@ -559,19 +534,19 @@ export default function VibeJudgePage() {
 
                   {/* Arguments comparison columns */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="rounded-xl border border-border bg-background/50 p-4 space-y-1">
-                      <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 p-4 space-y-1">
+                      <p className="text-[10px] font-mono text-[var(--text-soft)] uppercase tracking-widest">
                         Your Case
                       </p>
-                      <p className="text-xs font-medium text-foreground leading-relaxed">
+                      <p className="text-xs font-medium text-[var(--text)] leading-relaxed">
                         "{myArgSubmitted?.argument_text || "No argument provided"}"
                       </p>
                     </div>
-                    <div className="rounded-xl border border-border bg-background/50 p-4 space-y-1">
-                      <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 p-4 space-y-1">
+                      <p className="text-[10px] font-mono text-[var(--text-soft)] uppercase tracking-widest">
                         {partnerName}'s Case
                       </p>
-                      <p className="text-xs font-medium text-foreground leading-relaxed">
+                      <p className="text-xs font-medium text-[var(--text)] leading-relaxed">
                         "{partnerArgSubmitted?.argument_text || "No argument provided"}"
                       </p>
                     </div>

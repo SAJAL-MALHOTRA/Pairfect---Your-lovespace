@@ -54,7 +54,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Hero Card: Anniversary */}
-        <div className="p-8 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] shadow-sm space-y-6">
+        <div className="p-8 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] paper-grain border border-[var(--border)] shadow-sm space-y-6">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase tracking-widest text-[var(--rose)] font-semibold flex items-center gap-1.5">
               <Heart className="w-4 h-4 fill-current" /> Anniversary Summary
@@ -77,7 +77,7 @@ export default function CalendarPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] space-y-3">
+            <div className="p-5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-3">
               <div className="flex items-center gap-2 text-xs font-mono text-[var(--burgundy)] font-bold uppercase tracking-wider">
                 <Sparkles className="w-4 h-4" /> Next Milestone
               </div>
@@ -111,7 +111,7 @@ export default function CalendarPage() {
                   key={m.days}
                   className={`p-5 rounded-2xl border flex items-center justify-between transition-all ${
                     isPassed
-                      ? "bg-[var(--card)] border-[var(--border)] opacity-80"
+                      ? "bg-[var(--bg-secondary)] border-[var(--border)] opacity-80"
                       : "bg-[var(--bg-secondary)] border-[var(--rose)]/30"
                   }`}
                 >

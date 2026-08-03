@@ -157,7 +157,7 @@ export default function GratitudeJarPage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <Navigation />
         <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
@@ -165,7 +165,7 @@ export default function GratitudeJarPage() {
   }
 
   return (
-    <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="relative min-h-screen" style={{ background: "var(--bg)" }}>
       <Navigation />
 
       {/* Warm ambient shelf light glow */}
@@ -193,7 +193,7 @@ export default function GratitudeJarPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT COLUMN: The Jar + Draw Note Actions */}
-          <div className="lg:col-span-6 flex flex-col items-center select-none bg-[var(--card-bg)] border border-[var(--border-mid)] rounded-3xl p-6 shadow-sm">
+          <div className="lg:col-span-6 flex flex-col items-center select-none bg-[var(--bg-secondary)] border border-[var(--border-mid)] rounded-3xl p-6 shadow-sm paper-grain">
             <motion.div
               className="relative my-4"
               animate={shaking ? {
@@ -337,7 +337,7 @@ export default function GratitudeJarPage() {
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.94, opacity: 0, y: 12 }}
                   transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                  className="w-full paper-grain relative rounded-3xl p-6"
+                  className="w-full paper-grain material-note relative rounded-3xl p-6"
                   style={{
                     background: "linear-gradient(180deg,#FFFDF7 0%,#FBF6EB 100%)",
                     border: "1px solid var(--border-warm)",
@@ -391,11 +391,11 @@ export default function GratitudeJarPage() {
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder="What are you grateful for today? Write a sweet note to drop in your jar..."
-                  className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[var(--seal-red)] resize-none leading-relaxed"
+                  className="input-warm w-full resize-none"
                   style={{
                     fontFamily: "var(--font-handwriting), cursive",
                     borderColor: "var(--border-mid)",
-                    background: "var(--background)",
+                    background: "var(--bg)",
                     color: "var(--ink-dark)",
                   }}
                 />
@@ -432,7 +432,7 @@ export default function GratitudeJarPage() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 32 }}
-              className="w-full max-w-md bg-[var(--background)] h-full shadow-2xl flex flex-col border-l border-[var(--border-mid)] overflow-hidden"
+              className="w-full max-w-md bg-[var(--bg)] h-full shadow-2xl flex flex-col border-l border-[var(--border-mid)] overflow-hidden"
             >
               {/* Drawer Header */}
               <div className="p-6 border-b border-[var(--border-mid)] flex items-center justify-between">
@@ -455,7 +455,7 @@ export default function GratitudeJarPage() {
                   <select
                     value={filterAuthor}
                     onChange={(e) => setFilterAuthor(e.target.value as any)}
-                    className="bg-[var(--card-bg)] border border-[var(--border-mid)] rounded-lg px-2.5 py-1 text-xs focus:outline-none"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-mid)] rounded-lg px-2.5 py-1 text-xs focus:outline-none"
                   >
                     <option value="all">Everyone</option>
                     <option value="me">Only Me</option>
@@ -469,7 +469,7 @@ export default function GratitudeJarPage() {
                     <select
                       value={filterYear}
                       onChange={(e) => setFilterYear(e.target.value)}
-                      className="bg-[var(--card-bg)] border border-[var(--border-mid)] rounded-lg px-2.5 py-1 text-xs focus:outline-none"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-mid)] rounded-lg px-2.5 py-1 text-xs focus:outline-none"
                     >
                       <option value="all">All Time</option>
                       {availableYears.map((y) => (
@@ -493,7 +493,7 @@ export default function GratitudeJarPage() {
                     return (
                       <div
                         key={note.id}
-                        className="paper-grain p-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--card-bg)] space-y-2 relative"
+                        className="paper-grain material-note p-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--bg-secondary)] space-y-2 relative"
                       >
                         <div className="flex items-center justify-between text-[8px] font-mono text-[var(--ink-light)] uppercase tracking-wider">
                           <span>{isMine ? "You" : (partner?.display_name || "Partner")}</span>

@@ -66,7 +66,7 @@ function CircularTimer({ seconds, total }: { seconds: number; total: number }) {
           </linearGradient>
         </defs>
       </svg>
-      <span className={`absolute inset-0 flex items-center justify-center text-sm font-black font-mono ${urgent ? "text-red-500" : "text-foreground"}`}>
+      <span className={`absolute inset-0 flex items-center justify-center text-sm font-black font-mono ${urgent ? "text-red-500" : "text-[var(--text)]"}`}>
         {seconds}
       </span>
     </div>
@@ -455,7 +455,7 @@ export default function IQDuelPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <Loader2 className="w-8 h-8 text-[var(--burgundy)] animate-spin" />
         </div>
       </div>
     );
@@ -467,9 +467,9 @@ export default function IQDuelPage() {
         <Navigation />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center space-y-3 max-w-sm">
-            <Brain className="w-12 h-12 text-primary mx-auto" />
-            <h2 className="font-sans font-black text-xl">IQ Duel</h2>
-            <p className="text-muted-foreground text-sm">Connect with your partner to start a duel.</p>
+            <Brain className="w-12 h-12 text-[var(--burgundy)] mx-auto" />
+            <h2 className="font-heading font-bold text-xl">IQ Duel</h2>
+            <p className="text-[var(--text-soft)] text-sm">Connect with your partner to start a duel.</p>
           </div>
         </div>
       </div>
@@ -480,7 +480,7 @@ export default function IQDuelPage() {
   const correctCount = answersRef.current.filter((a) => a.isCorrect).length;
 
   return (
-    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-background text-foreground">
+    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-[var(--bg)] text-[var(--text)]">
       {/* Ambient gradient */}
       <div
         aria-hidden="true"
@@ -505,25 +505,25 @@ export default function IQDuelPage() {
         {screen === "lobby" && (
           <div className="space-y-6 animate-fade-in">
             {/* Header card */}
-            <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm p-8 text-center">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] paper-grain shadow-sm p-8 text-center">
+              <div className="absolute top-0 left-0 right-0 h-[3px] accent-line" />
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#f472b6] to-[#60a5fa] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-pink-500/20">
                 <Swords className="w-8 h-8 text-white" />
               </div>
-              <h1 className="font-sans font-black text-3xl tracking-tight text-foreground">IQ Duel</h1>
-              <p className="text-muted-foreground text-sm mt-2 max-w-sm mx-auto leading-relaxed">
+              <h1 className="font-heading font-bold text-3xl tracking-tight text-[var(--text)]">IQ Duel</h1>
+              <p className="text-[var(--text-soft)] text-sm mt-2 max-w-sm mx-auto leading-relaxed">
                 A private timed logic, pattern &amp; math challenge — you and{" "}
                 <span className="text-[var(--burgundy)] font-bold">{partner?.display_name || "your partner"}</span>{" "}
                 answer separately. Compare your results after!
               </p>
 
-              <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground font-mono">
+              <div className="mt-6 flex items-center justify-center gap-6 text-xs text-[var(--text-soft)] font-mono">
                 <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-[var(--burgundy)]" /> 6 questions</span>
                 <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#60a5fa]" /> 15-20s each</span>
                 <span className="flex items-center gap-1.5"><Trophy className="w-3.5 h-3.5 text-amber-400" /> IQ estimate</span>
               </div>
 
-              <p className="mt-3 text-[10px] text-muted-foreground/60 font-mono">
+              <p className="mt-3 text-[10px] text-[var(--text-soft)]/60 font-mono">
                 ⚠️ For fun only — not a real IQ test
               </p>
             </div>
@@ -535,9 +535,9 @@ export default function IQDuelPage() {
                 { step: "02", text: "Both answer 6 questions privately", color: "text-amber-400" },
                 { step: "03", text: "Reveal scores together!", color: "text-[#60a5fa]" },
               ].map((s) => (
-                <div key={s.step} className="rounded-xl border border-border bg-card p-4 text-center space-y-2">
+                <div key={s.step} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 text-center space-y-2">
                   <span className={`text-2xl font-black font-mono ${s.color}`}>{s.step}</span>
-                  <p className="text-xs text-muted-foreground leading-snug">{s.text}</p>
+                  <p className="text-xs text-[var(--text-soft)] leading-snug">{s.text}</p>
                 </div>
               ))}
             </div>
@@ -545,7 +545,7 @@ export default function IQDuelPage() {
             <button
               onClick={handleStartDuel}
               disabled={starting}
-              className="w-full py-4 rounded-2xl font-sans font-black text-white text-lg bg-gradient-to-r from-[#f472b6] to-[#60a5fa] hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-pink-500/20 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-2xl font-sans font-black text-white text-lg btn-primary hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-pink-500/20 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
             >
               {starting ? (
                 <><Loader2 className="w-5 h-5 animate-spin" /> Starting…</>
@@ -561,20 +561,20 @@ export default function IQDuelPage() {
           <div className="space-y-4 animate-fade-in">
             {/* Progress bar */}
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">
+              <span className="text-[10px] font-mono font-bold text-[var(--text-soft)] tracking-widest uppercase">
                 Question {qIndex + 1} of {questions.length}
               </span>
               <div className="flex-1 h-1.5 rounded-full bg-border overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#f472b6] to-[#60a5fa] rounded-full transition-all duration-300"
+                  className="h-full btn-primary rounded-full transition-all duration-300"
                   style={{ width: `${((qIndex + 1) / questions.length) * 100}%` }}
                 />
               </div>
             </div>
 
             {/* Question card */}
-            <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] paper-grain shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-[3px] accent-line" />
               <div className="p-6 space-y-5">
                 {/* Type badge + timer row */}
                 <div className="flex items-center justify-between">
@@ -588,7 +588,7 @@ export default function IQDuelPage() {
                 </div>
 
                 {/* Question text */}
-                <p className="text-xl font-sans font-black leading-snug text-foreground">
+                <p className="text-xl font-sans font-black leading-snug text-[var(--text)]">
                   {currentQ.question_text}
                 </p>
 
@@ -614,8 +614,8 @@ export default function IQDuelPage() {
                             : isWrong
                             ? "border-red-400 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400"
                             : isSelected
-                            ? "border-[var(--burgundy)] bg-gradient-to-r from-[#f472b6]/5 to-[#60a5fa]/5 text-foreground"
-                            : "border-border bg-background hover:border-[var(--burgundy)]/50 hover:bg-accent text-foreground"
+                            ? "border-[var(--burgundy)] bg-gradient-to-r from-[#f472b6]/5 to-[#60a5fa]/5 text-[var(--text)]"
+                            : "border-[var(--border)] bg-[var(--bg)] hover:border-[var(--burgundy)]/50 hover:bg-[var(--bg-secondary)] text-[var(--text)]"
                           }`}
                       >
                         {isCorrect && <CheckCircle2 className="w-4 h-4 inline mr-1.5 text-emerald-500" />}
@@ -646,21 +646,21 @@ export default function IQDuelPage() {
         {/* ── WAITING ───────────────────────────────────────────────── */}
         {screen === "waiting" && (
           <div className="text-center space-y-6 animate-fade-in">
-            <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm p-10">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#60a5fa]" />
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] paper-grain shadow-sm p-10">
+              <div className="absolute top-0 left-0 right-0 h-[3px] accent-line" />
 
               {/* Animated brain pulse */}
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#f472b6]/10 to-[#60a5fa]/10 border border-[var(--burgundy)]/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                <Brain className="w-10 h-10 text-primary" />
+                <Brain className="w-10 h-10 text-[var(--burgundy)]" />
               </div>
 
-              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase mb-3">
+              <p className="text-[10px] font-mono font-bold text-[var(--text-soft)] tracking-widest uppercase mb-3">
                 You finished!
               </p>
-              <h2 className="font-sans font-black text-2xl text-foreground">
+              <h2 className="font-heading font-bold text-2xl text-[var(--text)]">
                 {correctCount}/{questions.length} correct
               </h2>
-              <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
+              <p className="text-[var(--text-soft)] text-sm mt-3 leading-relaxed">
                 Waiting for{" "}
                 <span className="text-[#60a5fa] font-bold">{partner?.display_name || "your partner"}</span>{" "}
                 to finish their duel…
@@ -671,7 +671,7 @@ export default function IQDuelPage() {
                 {[0, 1, 2].map((i) => (
                   <div
                     key={i}
-                    className="w-2 h-2 rounded-full bg-gradient-to-r from-[#f472b6] to-[#60a5fa] animate-bounce"
+                    className="w-2 h-2 rounded-full btn-primary animate-bounce"
                     style={{ animationDelay: `${i * 0.15}s` }}
                   />
                 ))}
@@ -685,8 +685,8 @@ export default function IQDuelPage() {
           <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="text-center space-y-1">
-              <p className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Results are in</p>
-              <h2 className="font-sans font-black text-3xl text-foreground flex items-center justify-center gap-2">
+              <p className="text-[10px] font-mono font-bold text-[var(--text-soft)] tracking-widest uppercase">Results are in</p>
+              <h2 className="font-heading font-bold text-3xl text-[var(--text)] flex items-center justify-center gap-2">
                 <Trophy className="w-7 h-7 text-amber-400" /> IQ Duel Results
               </h2>
             </div>
@@ -694,40 +694,40 @@ export default function IQDuelPage() {
             {/* Side-by-side stat cards */}
             <div className="grid grid-cols-2 gap-4">
               {/* My card — pink */}
-              <div className="relative overflow-hidden rounded-2xl border border-[var(--burgundy)]/30 bg-card shadow-sm p-5 text-center space-y-2">
+              <div className="relative overflow-hidden rounded-2xl border border-[var(--burgundy)]/30 bg-[var(--bg-secondary)] shadow-sm p-5 text-center space-y-2">
                 <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#f472b6] to-[#f472b6]/50" />
                 <p className="text-[9px] font-mono font-black text-[var(--burgundy)] tracking-widest uppercase">You</p>
-                <p className="text-4xl font-black font-mono text-foreground">
+                <p className="text-4xl font-black font-mono text-[var(--text)]">
                   <IQCountUp target={myResult.estimatedIq} />
                 </p>
-                <p className="text-[10px] font-bold text-muted-foreground">{myResult.playfulLabel}</p>
-                <div className="pt-1 border-t border-border mt-2">
-                  <span className="text-xs font-mono text-muted-foreground">
+                <p className="text-[10px] font-bold text-[var(--text-soft)]">{myResult.playfulLabel}</p>
+                <div className="pt-1 border-t border-[var(--border)] mt-2">
+                  <span className="text-xs font-mono text-[var(--text-soft)]">
                     {myResult.score}/{questions.length} correct
                   </span>
                 </div>
               </div>
 
               {/* Partner card — blue */}
-              <div className="relative overflow-hidden rounded-2xl border border-[#60a5fa]/30 bg-card shadow-sm p-5 text-center space-y-2">
+              <div className="relative overflow-hidden rounded-2xl border border-[#60a5fa]/30 bg-[var(--bg-secondary)] shadow-sm p-5 text-center space-y-2">
                 <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#60a5fa]/50 to-[#60a5fa]" />
                 <p className="text-[9px] font-mono font-black text-[#60a5fa] tracking-widest uppercase">
                   {partner?.display_name || "Partner"}
                 </p>
                 {partnerResult ? (
                   <>
-                    <p className="text-4xl font-black font-mono text-foreground">
+                    <p className="text-4xl font-black font-mono text-[var(--text)]">
                       <IQCountUp target={partnerResult.estimatedIq} />
                     </p>
-                    <p className="text-[10px] font-bold text-muted-foreground">{partnerResult.playfulLabel}</p>
-                    <div className="pt-1 border-t border-border mt-2">
-                      <span className="text-xs font-mono text-muted-foreground">
+                    <p className="text-[10px] font-bold text-[var(--text-soft)]">{partnerResult.playfulLabel}</p>
+                    <div className="pt-1 border-t border-[var(--border)] mt-2">
+                      <span className="text-xs font-mono text-[var(--text-soft)]">
                         {partnerResult.score}/{questions.length} correct
                       </span>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground py-4">Still calculating…</p>
+                  <p className="text-sm text-[var(--text-soft)] py-4">Still calculating…</p>
                 )}
               </div>
             </div>
@@ -743,7 +743,7 @@ export default function IQDuelPage() {
                 }`}
               >
                 <Sparkles className="w-5 h-5 mx-auto mb-1 text-amber-400" />
-                <p className="text-sm font-bold text-foreground">
+                <p className="text-sm font-bold text-[var(--text)]">
                   {myResult.estimatedIq > partnerResult.estimatedIq
                     ? "🎉 You win this round!"
                     : myResult.estimatedIq < partnerResult.estimatedIq
@@ -755,7 +755,7 @@ export default function IQDuelPage() {
 
             <button
               onClick={handleReset}
-              className="w-full py-3.5 rounded-2xl font-sans font-bold text-sm text-foreground border border-border bg-card hover:bg-accent active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 rounded-2xl font-sans font-bold text-sm text-[var(--text)] border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-secondary)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" /> Duel Again
             </button>

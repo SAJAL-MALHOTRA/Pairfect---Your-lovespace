@@ -157,21 +157,21 @@ export default function LoginPage() {
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-[var(--seal-red)]" />
 
           {error && (
-            <div className="mb-6 p-4 rounded-button bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
+            <div className="mb-6 p-4 rounded-button bg-[var(--bg-secondary)]/40 border border-[var(--border)] flex items-start space-x-2 text-[var(--burgundy)] text-sm">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {emailUnconfirmed && (
-            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-button border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-4 relative overflow-hidden">
+            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-button border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-[var(--text)] text-sm space-y-4 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-red-500" />
               <div className="flex items-start space-x-2 text-red-500">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono">Verify Your Email</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Please verify your email first — enter the 6-digit verification code sent to <span className="font-bold text-foreground">{email}</span>
+                  <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                    Please verify your email first — enter the 6-digit verification code sent to <span className="font-bold text-[var(--text)]">{email}</span>
                   </p>
                 </div>
               </div>
@@ -206,11 +206,11 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
                 Email Address
               </label>
               <div className="relative rounded-button shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
                   <Mail className="h-5 w-5" />
                 </div>
                 <input
@@ -218,18 +218,18 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
+                  className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 transition-all"
                   placeholder="name@example.com"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
                 Password
               </label>
               <div className="relative rounded-button shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
                   <Lock className="h-5 w-5" />
                 </div>
                 <input
@@ -237,7 +237,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/40 transition-all"
+                  className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 transition-all"
                   placeholder="••••••••"
                 />
               </div>
@@ -256,10 +256,10 @@ export default function LoginPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-border" />
+              <div className="w-full border-t border-[var(--border)]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase tracking-wider font-mono">
-              <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
+              <span className="bg-[var(--bg-secondary)] px-3 text-[var(--text-soft)]">Or continue with</span>
             </div>
           </div>
 
@@ -278,12 +278,12 @@ export default function LoginPage() {
             <span>Continue with Google</span>
           </button>
 
-          <div className="mt-8 text-center border-t border-border pt-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-8 text-center border-t border-[var(--border)] pt-6">
+            <p className="text-sm text-[var(--text-soft)]">
               Don't have an account yet?{" "}
               <Link
                 href="/signup"
-                className="font-bold text-primary hover:underline transition-colors"
+                className="font-bold text-[var(--burgundy)] hover:underline transition-colors"
               >
                 Sign up instead
               </Link>

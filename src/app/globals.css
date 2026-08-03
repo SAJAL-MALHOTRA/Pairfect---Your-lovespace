@@ -406,3 +406,284 @@ body {
   animation: shimmer-sweep 12s infinite ease-in-out;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MATERIAL IDENTITY SYSTEM
+   Different memories feel different. Each content type has
+   its own physical material with unique weight, texture,
+   shadow, and hover behavior.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Material: Cotton Paper (Love Letters, keepsake cards) ── */
+.material-cotton {
+  background: var(--paper-warm);
+  border: 1px solid var(--border-warm);
+  border-radius: var(--radius-card);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.5) inset,
+    0 2px 8px rgba(60,40,30,0.05),
+    0 8px 24px var(--shadow);
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.material-cotton:hover {
+  transform: translateY(-2px) rotate(0.3deg);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.5) inset,
+    0 4px 12px rgba(60,40,30,0.07),
+    0 14px 36px var(--shadow);
+}
+.dark .material-cotton {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 2px 8px rgba(0,0,0,0.15),
+    0 8px 24px var(--shadow);
+}
+.dark .material-cotton:hover {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 4px 12px rgba(0,0,0,0.2),
+    0 14px 36px var(--shadow);
+}
+
+/* ── Material: Folded Note (Gratitude slips, appreciation) ── */
+.material-note {
+  background: linear-gradient(168deg, #FFFDF5 0%, #FBF6EA 100%);
+  border: 1px solid rgba(196,168,130,0.25);
+  border-radius: 4px;
+  position: relative;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 4px 12px rgba(60,40,20,0.06);
+  transform: rotate(var(--note-rotate, -0.5deg));
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.material-note:hover {
+  transform: rotate(0deg) scale(1.01);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.06),
+    0 8px 20px rgba(60,40,20,0.08);
+}
+.dark .material-note {
+  background: linear-gradient(168deg, #1C1510 0%, #201A14 100%);
+  border-color: rgba(80,64,48,0.35);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.15),
+    0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* ── Material: Notebook (Timeline, stories, chapters) ── */
+.material-notebook {
+  background: var(--paper-warm);
+  background-image:
+    linear-gradient(
+      transparent calc(32px - 1px),
+      rgba(196,168,130,0.18) calc(32px - 1px),
+      rgba(196,168,130,0.18) 32px,
+      transparent 32px
+    );
+  background-size: 100% 32px;
+  border: 1px solid var(--border-warm);
+  border-radius: 4px 16px 16px 4px;
+  border-left: 3px solid rgba(196,168,130,0.35);
+  position: relative;
+  overflow: hidden;
+}
+.dark .material-notebook {
+  background-image:
+    linear-gradient(
+      transparent calc(32px - 1px),
+      rgba(80,64,48,0.25) calc(32px - 1px),
+      rgba(80,64,48,0.25) 32px,
+      transparent 32px
+    );
+  border-color: var(--border);
+  border-left-color: rgba(80,64,48,0.4);
+}
+
+/* ── Material: Embossed Badge (Milestones, achievements) ── */
+.material-badge {
+  background: linear-gradient(135deg, #FBE9EE 0%, #FFF5F7 100%);
+  border: 3px solid #D4AF37;
+  border-radius: 999px;
+  box-shadow:
+    0 1px 0 rgba(212,175,55,0.4) inset,
+    0 -1px 0 rgba(0,0,0,0.1) inset,
+    0 4px 12px rgba(212,175,55,0.15);
+}
+.dark .material-badge {
+  background: linear-gradient(135deg, #2A1E1A 0%, #1C1510 100%);
+  border-color: #9A7B30;
+  box-shadow:
+    0 1px 0 rgba(212,175,55,0.2) inset,
+    0 -1px 0 rgba(0,0,0,0.3) inset,
+    0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ── Material: Sticky Note (Mood check-ins) ── */
+.material-sticky {
+  background: #FFF9E6;
+  border: none;
+  border-radius: 2px;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.08),
+    0 6px 16px rgba(0,0,0,0.04);
+  transform: rotate(var(--sticky-rotate, 1.5deg));
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.material-sticky:hover {
+  transform: rotate(0deg) translateY(-3px);
+  box-shadow:
+    0 4px 8px rgba(0,0,0,0.1),
+    0 12px 24px rgba(0,0,0,0.06);
+}
+.dark .material-sticky {
+  background: #2A2418;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.2),
+    0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EDITORIAL TYPOGRAPHY SCALE
+   Magazine-quality rhythm: chapter → display → supporting →
+   body → annotation. Not just heading/body/caption.
+   ═══════════════════════════════════════════════════════════ */
+
+.typo-chapter {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+.typo-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink-dark);
+}
+.typo-supporting {
+  font-family: var(--font-quote), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--seal-red);
+  line-height: 1.4;
+}
+.typo-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--ink-mid);
+}
+.typo-annotation {
+  font-family: var(--font-handwriting), cursive;
+  font-size: 14px;
+  color: var(--ink-light);
+  transform: rotate(-1deg);
+  display: inline-block;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WARM FORM INPUTS
+   Every text input should feel like writing on warm paper,
+   not typing into a cold SaaS form.
+   ═══════════════════════════════════════════════════════════ */
+
+.input-warm {
+  background: var(--paper-warm);
+  border: 1px solid var(--border-warm);
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) inset;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input-warm::placeholder {
+  color: var(--ink-light);
+  opacity: 0.7;
+}
+.input-warm:focus {
+  outline: none;
+  border-color: var(--seal-red);
+  box-shadow:
+    0 0 0 3px rgba(232, 82, 125, 0.1),
+    0 1px 2px rgba(0,0,0,0.04) inset;
+}
+.input-warm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dark .input-warm {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15) inset;
+}
+.dark .input-warm:focus {
+  box-shadow:
+    0 0 0 3px rgba(194, 68, 90, 0.15),
+    0 1px 2px rgba(0,0,0,0.15) inset;
+}
+
+/* Textarea variant */
+textarea.input-warm {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACCENT LINES & PROGRESS
+   Replacing the foreign pink→blue gradient with warm
+   Pairfect brand gradients.
+   ═══════════════════════════════════════════════════════════ */
+
+.accent-line {
+  height: 2px;
+  background: linear-gradient(90deg, var(--rose), var(--seal-red), var(--burgundy));
+  border: none;
+}
+.accent-line-thick {
+  height: 3px;
+  background: linear-gradient(90deg, var(--rose), var(--seal-red), var(--burgundy));
+  border: none;
+}
+.progress-warm {
+  background: linear-gradient(90deg, var(--rose), var(--seal-red));
+  border-radius: 999px;
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SEASONAL THEMING
+   Subtle color shifts based on the time of year.
+   Applied via data-season attribute on <html>.
+   ═══════════════════════════════════════════════════════════ */
+
+[data-season="autumn"] {
+  --paper-warm: #FDF6EC;
+  --paper-mid: #F5E8D4;
+}
+[data-season="winter"] {
+  --paper-warm: #FAFBFD;
+  --paper-mid: #F0F2F6;
+}
+.dark [data-season="autumn"] {
+  --paper-warm: #1C1610;
+  --paper-mid: #241E14;
+}
+.dark [data-season="winter"] {
+  --paper-warm: #141618;
+  --paper-mid: #1A1C20;
+}
+

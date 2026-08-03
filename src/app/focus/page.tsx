@@ -446,7 +446,7 @@ export default function FocusZonePage() {
   const allLogs = getCombinedLogs();
 
   return (
-    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-background text-foreground transition-colors duration-300">
+    <div className="relative min-h-screen flex flex-col pb-24 md:pb-8 bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
       {/* soft ambient warmth */}
       <div
         aria-hidden="true"
@@ -474,7 +474,7 @@ export default function FocusZonePage() {
             <div className="space-y-1">
               <p className="font-bold">Focus History Persistence Offline</p>
               <p className="leading-relaxed opacity-90">
-                Study sessions are currently only saving in your local browser storage. To share focus history across devices, copy-paste the SQL script inside <code className="bg-background dark:bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-amber-600 dark:text-amber-400 border border-border">supabase/focus_zone.sql</code> into your Supabase SQL Editor and execute it!
+                Study sessions are currently only saving in your local browser storage. To share focus history across devices, copy-paste the SQL script inside <code className="bg-[var(--bg)] dark:bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-amber-600 dark:text-amber-400 border border-[var(--border)]">supabase/focus_zone.sql</code> into your Supabase SQL Editor and execute it!
               </p>
             </div>
           </div>
@@ -484,7 +484,7 @@ export default function FocusZonePage() {
           
           {/* LEFT/MID: POMODORO TIMER PANEL */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-[20px] border border-border bg-card p-6 sm:p-8 shadow-sm flex flex-col items-center text-center">
+            <div className="rounded-[20px] border border-[var(--border)] bg-[var(--bg-secondary)] p-6 sm:p-8 shadow-sm paper-grain flex flex-col items-center text-center">
               
               {/* Circular Timer Visual */}
               <div className="relative w-48 h-48 flex items-center justify-center mb-6">
@@ -512,10 +512,10 @@ export default function FocusZonePage() {
 
                 {/* Counter text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center select-none">
-                  <span className="text-4xl font-mono font-bold text-foreground">
+                  <span className="text-4xl font-mono font-bold text-[var(--text)]">
                     {formatTime(secondsRemaining)}
                   </span>
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mt-1.5 font-mono">
+                  <span className="text-[10px] uppercase font-bold text-[var(--text-soft)] tracking-widest mt-1.5 font-mono">
                     {status === "work" ? "Focusing" : status === "break" ? "On Break" : "Cozy Timer"}
                   </span>
                 </div>
@@ -538,7 +538,7 @@ export default function FocusZonePage() {
               {/* Focus Topic Input (Only show if idle) */}
               {status === "idle" && (
                 <div className="w-full max-w-sm mb-6 space-y-2">
-                  <label className="block text-[10px] text-left font-bold text-muted-foreground uppercase tracking-widest pl-1 font-mono">
+                  <label className="block text-[10px] text-left font-bold text-[var(--text-soft)] uppercase tracking-widest pl-1 font-mono">
                     What are you studying? (Optional)
                   </label>
                   <input
@@ -546,7 +546,7 @@ export default function FocusZonePage() {
                     value={customLabelInput}
                     onChange={(e) => setCustomLabelInput(e.target.value)}
                     placeholder="e.g. Physics homework, coding React..."
-                    className="block w-full px-3.5 py-2.5 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+                    className="input-warm block w-full px-3.5 py-2.5"
                   />
                 </div>
               )}
@@ -599,7 +599,7 @@ export default function FocusZonePage() {
                     <button
                       onClick={resetTimer}
                       title="Reset Timer"
-                      className="p-3 border border-border rounded-full bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer active:scale-95"
+                      className="p-3 border border-[var(--border)] rounded-full bg-[var(--bg-secondary)] hover:bg-muted text-[var(--text-soft)] hover:text-[var(--text)] transition-all cursor-pointer active:scale-95"
                     >
                       <RotateCcw className="w-4 h-4" />
                     </button>
@@ -609,17 +609,17 @@ export default function FocusZonePage() {
             </div>
 
             {/* STUDY LOG HISTORY */}
-            <div className="rounded-[20px] border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-[20px] border border-[var(--border)] bg-[var(--bg-secondary)] p-6 shadow-sm paper-grain">
               <h2 className="text-sm font-mono font-bold text-[var(--ink-light)] uppercase tracking-widest mb-4">
                 <span>Study History Log</span>
               </h2>
 
               {fetchingLogs ? (
-                <div className="text-center py-6 text-sm text-muted-foreground">
+                <div className="text-center py-6 text-sm text-[var(--text-soft)]">
                   Loading focus logs...
                 </div>
               ) : allLogs.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-border rounded-2xl text-xs text-muted-foreground">
+                <div className="text-center py-8 border border-dashed border-[var(--border)] rounded-2xl text-xs text-[var(--text-soft)]">
                   No logged focus sessions yet. Work your first Pomodoro to see it here!
                 </div>
               ) : (
@@ -631,7 +631,7 @@ export default function FocusZonePage() {
                     return (
                       <div 
                         key={log.id} 
-                        className="flex items-center justify-between p-3 border border-border bg-background/30 rounded-2xl hover:bg-background/50 transition-all"
+                        className="flex items-center justify-between p-3 border border-[var(--border)] bg-[var(--bg)]/30 rounded-2xl hover:bg-[var(--bg)]/50 transition-all"
                       >
                         <div className="flex items-center space-x-3">
                           <div className={`p-2 rounded-xl ${
@@ -648,20 +648,20 @@ export default function FocusZonePage() {
                             )}
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-foreground">
+                            <p className="text-xs font-bold text-[var(--text)]">
                               {log.label}
                             </p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                            <p className="text-[10px] text-[var(--text-soft)] mt-0.5">
                               {log.completed === false ? "Abandoned by " : "Completed by "}
-                              <span className="font-semibold text-foreground/80">{log.display_name || (isMe ? "Me" : "Partner")}</span>
+                              <span className="font-semibold text-[var(--text)]/80">{log.display_name || (isMe ? "Me" : "Partner")}</span>
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className="text-xs font-bold text-foreground block">
+                          <span className="text-xs font-bold text-[var(--text)] block">
                             {log.duration_minutes}m
                           </span>
-                          <span className="text-[9px] text-muted-foreground font-semibold block mt-0.5">
+                          <span className="text-[9px] text-[var(--text-soft)] font-semibold block mt-0.5">
                             {format(date, "MMM d, h:mm a")}
                           </span>
                         </div>
@@ -676,13 +676,13 @@ export default function FocusZonePage() {
 
           {/* RIGHT PANEL: PARTNER FOCUS STATUS */}
           <div className="space-y-6">
-            <div className="rounded-[20px] border border-border bg-card p-6 shadow-sm">
-              <h2 className="text-xl font-sans font-black text-foreground tracking-tight mb-4">
+            <div className="rounded-[20px] border border-[var(--border)] bg-[var(--bg-secondary)] p-6 shadow-sm paper-grain">
+              <h2 className="text-xl font-heading font-bold text-[var(--text)] tracking-tight mb-4">
                 Partner Focus Status
               </h2>
 
               {!partner ? (
-                <div className="text-center py-6 text-sm text-muted-foreground">
+                <div className="text-center py-6 text-sm text-[var(--text-soft)]">
                   You are not currently linked to a partner. Invite a partner in Settings to sync focus sessions!
                 </div>
               ) : partnerFocus ? (
@@ -697,11 +697,11 @@ export default function FocusZonePage() {
                   </div>
 
                   <div>
-                    <h3 className="text-md font-bold text-foreground">
+                    <h3 className="text-md font-bold text-[var(--text)]">
                       {partner.display_name} is in the zone!
                     </h3>
                     
-                    <div className="text-sm text-muted-foreground mt-1 flex items-center justify-center space-x-1.5">
+                    <div className="text-sm text-[var(--text-soft)] mt-1 flex items-center justify-center space-x-1.5">
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -715,8 +715,8 @@ export default function FocusZonePage() {
                   </div>
 
                   {/* Partner Countdown sync indicator */}
-                  <div className="bg-background/60 border border-border py-3 px-4 rounded-2xl flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest font-mono">
+                  <div className="bg-[var(--bg)]/60 border border-[var(--border)] py-3 px-4 rounded-2xl flex items-center justify-between">
+                    <span className="text-[10px] text-[var(--text-soft)] font-semibold uppercase tracking-widest font-mono">
                       Remaining
                     </span>
                     <span className="text-lg font-mono font-bold text-[var(--seal-red)]">
@@ -727,14 +727,14 @@ export default function FocusZonePage() {
               ) : (
                 <div className="space-y-4 text-center py-6">
                   {/* Idle status */}
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-background/80 border border-border text-muted-foreground/40">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg)]/80 border border-[var(--border)] text-[var(--text-soft)]/40">
                     <Timer className="w-8 h-8 opacity-45" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">
+                    <p className="text-sm font-semibold text-[var(--text)]">
                       {partner.display_name} is offline or resting
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                    <p className="text-xs text-[var(--text-soft)] mt-0.5 leading-relaxed">
                       Start focusing or drop a message to study together!
                     </p>
                   </div>
@@ -743,12 +743,12 @@ export default function FocusZonePage() {
             </div>
 
             {/* Pomodoro study tip cards */}
-            <div className="rounded-[20px] border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-[20px] border border-[var(--border)] bg-[var(--bg-secondary)] p-6 shadow-sm paper-grain">
               <h3 className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-3">
                 <span>Focus Zone Tips</span>
               </h3>
               
-              <div className="space-y-3.5 text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-3.5 text-xs text-[var(--text-soft)] leading-relaxed">
                 <div className="flex items-start space-x-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--burgundy)] mt-1.5 flex-shrink-0" />
                   <p>

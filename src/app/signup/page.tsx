@@ -194,9 +194,9 @@ export default function SignupPage() {
                 <Lock className="w-8 h-8" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold tracking-tight text-foreground">Confirm your email</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed text-pretty">
-                  Enter the 6-digit verification code sent to <span className="font-bold text-foreground">{verificationEmail}</span>
+                <h3 className="text-xl font-bold tracking-tight text-[var(--text)]">Confirm your email</h3>
+                <p className="text-sm text-[var(--text-soft)] max-w-xs mx-auto leading-relaxed text-pretty">
+                  Enter the 6-digit verification code sent to <span className="font-bold text-[var(--text)]">{verificationEmail}</span>
                 </p>
               </div>
 
@@ -216,7 +216,7 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-border space-y-3">
+              <div className="pt-4 border-t border-[var(--border)] space-y-3">
                 <button
                   type="submit"
                   disabled={loading || otp.join("").length < 6}
@@ -238,7 +238,7 @@ export default function SignupPage() {
           ) : (
             <>
               {error && (
-                <div className="mb-6 p-4 rounded-button bg-accent/40 border border-border flex items-start space-x-2 text-primary text-sm">
+                <div className="mb-6 p-4 rounded-button bg-[var(--bg-secondary)]/40 border border-[var(--border)] flex items-start space-x-2 text-[var(--burgundy)] text-sm">
                   <AlertCircle className="w-5 h-5 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -246,7 +246,7 @@ export default function SignupPage() {
 
               {isRateLimited ? (
                 <div className="space-y-6 animate-fade-in">
-                  <div className="p-5 rounded-button border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-foreground text-sm space-y-3 relative overflow-hidden">
+                  <div className="p-5 rounded-button border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-[var(--text)] text-sm space-y-3 relative overflow-hidden">
                     {/* top highlight border */}
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-red-500" />
                     
@@ -254,7 +254,7 @@ export default function SignupPage() {
                       <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                       <div className="space-y-1">
                         <p className="font-sans font-extrabold text-xs uppercase tracking-wider font-mono">Signup Limit Reached</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
+                        <p className="text-xs text-[var(--text-soft)] leading-relaxed">
                           We're seeing high signup volume today, so email verification is a bit 
                           delayed. You can sign up instantly with Google instead — or try email 
                           signup again in a few hours.
@@ -292,11 +292,11 @@ export default function SignupPage() {
                 <>
                   <form onSubmit={handleSignup} className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                      <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
                         What should your partner call you?
                       </label>
                       <div className="relative rounded-button shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
                           <User className="h-5 w-5" />
                         </div>
                         <input
@@ -304,18 +304,18 @@ export default function SignupPage() {
                           required
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
-                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+                          className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 transition-all"
                           placeholder="e.g. Sunny, Alex, Bun"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                      <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
                         Email Address
                       </label>
                       <div className="relative rounded-button shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
                           <Mail className="h-5 w-5" />
                         </div>
                         <input
@@ -323,18 +323,18 @@ export default function SignupPage() {
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+                          className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 transition-all"
                           placeholder="name@example.com"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                      <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
                         Password
                       </label>
                       <div className="relative rounded-button shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/60">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
                           <Lock className="h-5 w-5" />
                         </div>
                         <input
@@ -342,7 +342,7 @@ export default function SignupPage() {
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="block w-full pl-10 pr-4 py-3 border border-border rounded-button bg-background focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-sm placeholder:text-muted-foreground/45 transition-all"
+                          className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 transition-all"
                           placeholder="At least 6 characters"
                           minLength={6}
                         />
@@ -362,10 +362,10 @@ export default function SignupPage() {
 
                   <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div className="w-full border-t border-border" />
+                      <div className="w-full border-t border-[var(--border)]" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase tracking-wider font-mono">
-                      <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
+                      <span className="bg-[var(--bg-secondary)] px-3 text-[var(--text-soft)]">Or continue with</span>
                     </div>
                   </div>
 
@@ -386,12 +386,12 @@ export default function SignupPage() {
                 </>
               )}
 
-              <div className="mt-8 text-center border-t border-border pt-6">
-                <p className="text-sm text-muted-foreground">
+              <div className="mt-8 text-center border-t border-[var(--border)] pt-6">
+                <p className="text-sm text-[var(--text-soft)]">
                   Already have an account?{" "}
                   <Link
                     href="/login"
-                    className="font-bold text-primary hover:underline transition-colors"
+                    className="font-bold text-[var(--burgundy)] hover:underline transition-colors"
                   >
                     Log in instead
                   </Link>

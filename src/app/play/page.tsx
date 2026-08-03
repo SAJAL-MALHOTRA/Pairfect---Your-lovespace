@@ -247,7 +247,7 @@ export default function PlayLobbyPage() {
                 >
                   <Link href={game.href} className="block group h-full">
                     <div
-                      className="p-6 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between h-full shadow-sm transition-all duration-300 group-hover:translate-y-[-3px] group-hover:shadow-md group-hover:border-[var(--rose)]/50 relative overflow-hidden"
+                      className="p-6 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] paper-grain border border-[var(--border)] flex flex-col justify-between h-full shadow-sm transition-all duration-300 group-hover:translate-y-[-3px] group-hover:shadow-md group-hover:border-[var(--rose)]/50 relative overflow-hidden"
                     >
                       {/* Top Bar: Icon + Badge */}
                       <div className="flex items-center justify-between gap-3 mb-4">

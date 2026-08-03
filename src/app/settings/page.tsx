@@ -54,7 +54,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--text-soft)] px-1 mb-2">
         {title}
       </p>
-      <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border)] overflow-hidden divide-y divide-[var(--border)] px-5">
+      <div className="bg-[var(--bg-secondary)] paper-grain rounded-2xl border border-[var(--border)] overflow-hidden divide-y divide-[var(--border)] px-5">
         {children}
       </div>
     </div>
@@ -515,7 +515,7 @@ export default function SettingsPage() {
                 <button
                   onClick={() => { setShowDeleteModal(false); setConfirmText(""); }}
                   disabled={deletingAccount}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--card-bg)] cursor-pointer transition-all"
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--bg-secondary)] cursor-pointer transition-all"
                 >
                   Cancel
                 </button>
@@ -587,7 +587,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => { setShowUnlinkModal(false); setUnlinkConfirmText(""); }}
                 disabled={unlinkingPair}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--card-bg)] cursor-pointer transition-all"
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--bg-secondary)] cursor-pointer transition-all"
               >
                 Cancel
               </button>

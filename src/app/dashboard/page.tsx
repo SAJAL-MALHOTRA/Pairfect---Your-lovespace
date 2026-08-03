@@ -5,7 +5,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Gamepad2, Send, Sparkles, PenTool, Music } from "lucide-react";
+import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 import PushOptInBanner from "@/components/push-opt-in-banner";
@@ -451,6 +451,28 @@ export default function DashboardPage() {
     return "Still awake,";
   };
 
+  // ── Time-Aware Ritual Prompt ──
+  const getRitualPrompt = () => {
+    const hours = new Date().getHours();
+    if (hours >= 5 && hours < 10) return { text: "Start the day with a small note of gratitude.", icon: Coffee, href: "/gratitude-jar", label: "Write a note" };
+    if (hours >= 10 && hours < 14) return { text: "Thinking of each other? Send a little letter.", icon: Sun, href: "/love-letter", label: "Write a letter" };
+    if (hours >= 14 && hours < 18) return { text: "Take a moment — maybe play a game together.", icon: Sunset, href: "/play", label: "Play together" };
+    if (hours >= 18 && hours < 22) return { text: "Tonight — maybe write them a goodnight letter.", icon: Moon, href: "/love-letter", label: "Write tonight" };
+    return { text: "Can't sleep? Leave a note for tomorrow.", icon: Moon, href: "/gratitude-jar", label: "Leave a note" };
+  };
+  const ritual = getRitualPrompt();
+  const RitualIcon = ritual.icon;
+
+  // ── Narrative Relationship Summary ──
+  const getNarrativeSummary = () => {
+    if (daysTogether < 30) return `${daysTogether} days of choosing each other. The beginning of your story.`;
+    if (daysTogether < 100) return `${daysTogether} days of choosing each other. Still writing the first chapter.`;
+    if (daysTogether < 365) return `${daysTogether} days of choosing each other. Your story is growing.`;
+    const years = Math.floor(daysTogether / 365);
+    if (years === 1) return `${daysTogether} days of choosing each other. The first year of your story.`;
+    return `${daysTogether} days of choosing each other. ${years} years of your story.`;
+  };
+
   const greetingLine = getGreeting();
   const recipientName = partner?.display_name || "partner";
 
@@ -709,17 +731,17 @@ export default function DashboardPage() {
           
           {/* ─── LEFT COLUMN (HERO) ─── */}
           <div className="lg:col-span-7 flex flex-col items-center text-center lg:items-start lg:text-left space-y-10">
-            {/* Header Greeting & Us Portrait */}
-            <div className="flex flex-row items-center justify-between w-full pb-4 border-b border-[var(--border)] gap-6">
-              <div className="space-y-1 text-left">
-                <p className="font-handwriting text-lg text-[var(--rose)] italic">
-                  {greetingLine} <span className="font-sans text-[11px] not-italic ml-0.5">♥</span>
+            {/* Header Greeting — Editorial Typography */}
+            <div className="flex flex-row items-center justify-between w-full pb-6 gap-6">
+              <div className="space-y-2 text-left">
+                <p className="typo-chapter">
+                  {greetingLine.replace(',', '').toUpperCase()}
                 </p>
-                <h2 className="font-heading font-semibold text-[42px] text-[var(--text)] leading-none">
+                <h2 className="typo-display text-[42px]">
                   {profile?.display_name || "Love"}
                 </h2>
-                <p className="text-[13px] text-[var(--text-soft)] font-mono tracking-wide mt-1">
-                  {daysTogether} days together ♥
+                <p className="typo-body text-sm mt-2">
+                  {getNarrativeSummary()}
                 </p>
               </div>
               <Link href="/profile" className="flex-shrink-0 transition-transform hover:scale-[1.03] active:scale-[0.97]" title="Customize Us / Profile">
@@ -870,124 +892,96 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ─── 3. STAT CARDS WITH CONTENT PREVIEWS ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-[var(--border)]">
+        {/* ─── 3. NARRATIVE KEEPSAKE CARDS (Material Identity) ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
           
-          {/* Card 1: Days Together */}
+          {/* Card 1: Milestone Journey — material-badge inspired */}
           <Link
             href="/checkin"
-            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+            className="material-cotton p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
           >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                <Calendar className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                <span>Days Together</span>
-              </div>
-              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
-                {daysTogether} Days
+            <div className="space-y-2">
+              <p className="typo-chapter">Your Journey</p>
+              <h3 className="typo-display text-2xl">
+                {daysTogether} <span className="text-lg">days</span>
               </h3>
-              <p className="text-xs font-handwriting text-[var(--rose)] italic">Together 🧡</p>
+              <p className="typo-annotation">of choosing each other ♡</p>
             </div>
 
             <div className="pt-3 border-t border-[var(--border)] space-y-2">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Next Milestone</p>
+              <p className="typo-chapter">Next Milestone</p>
               {(() => {
                 const { next, daysToGo, percent } = getUpcomingMilestone(daysTogether);
                 return (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-sans font-semibold text-[var(--text)]">✨ {next.label}</span>
-                      <span className="text-[10px] font-mono text-[var(--rose)]">in {daysToGo} days</span>
+                      <span className="typo-annotation text-[11px]">in {daysToGo} days</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-[var(--border)] overflow-hidden">
-                      <div className="h-full rounded-full bg-[var(--burgundy)] transition-all" style={{ width: `${percent}%` }} />
+                      <div className="progress-warm transition-all" style={{ width: `${percent}%` }} />
                     </div>
-                    <p className="text-[9px] font-mono text-[var(--text-soft)] text-right">{percent}%</p>
                   </div>
                 );
               })()}
-              <p className="text-[9px] font-mono text-[var(--text-soft)] pt-1">
-                Started on {anniversaryDateFormatted || "Recently"}
-              </p>
             </div>
           </Link>
 
-          {/* Card 2: Love Letters */}
+          {/* Card 2: Love Letters — cotton paper material */}
           <Link
             href="/love-letter"
-            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+            className="material-cotton p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
           >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                <Mail className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                <span>Love Letters</span>
-              </div>
-              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
-                {lettersCount} {lettersCount === 1 ? "Letter" : "Letters"}
+            <div className="space-y-2">
+              <p className="typo-chapter">Love Letters</p>
+              <h3 className="typo-display text-2xl">
+                {lettersCount} <span className="text-lg">{lettersCount === 1 ? "letter" : "letters"}</span>
               </h3>
             </div>
 
             <div className="pt-3 border-t border-[var(--border)] space-y-2">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Latest Letter</p>
+              <p className="typo-chapter">Latest</p>
               {latestLetter ? (
                 <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-2 relative shadow-xs">
                   <p className="font-quote italic text-xs text-[var(--text)] line-clamp-2 leading-relaxed">
                     "{getExcerpt(latestLetter.content) || "Goodnight, sunshine. You make my world so much brighter."}"
                   </p>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[9px] font-mono text-[var(--text-soft)]">
-                      {latestLetter.sent_at ? new Date(latestLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] text-[9px] font-mono font-semibold flex items-center gap-1">
-                      2 new reactions ♥
-                    </span>
-                  </div>
+                  <span className="text-[9px] font-mono text-[var(--text-soft)]">
+                    {latestLetter.sent_at ? new Date(latestLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
+                  </span>
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
-                  <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No letters sent yet</p>
-                  <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Write first letter →</p>
-                </div>
+                <p className="typo-supporting text-sm">Write your first letter →</p>
               )}
             </div>
           </Link>
 
-
-
-          {/* Card 4: Gratitude Jar */}
+          {/* Card 3: Gratitude — folded note material */}
           <Link
             href="/gratitude-jar"
-            className="p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-4 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer text-left"
+            className="material-note p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
+            style={{ "--note-rotate": "-0.8deg" } as React.CSSProperties}
           >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                <Gift className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                <span>Gratitude Jar</span>
-              </div>
-              <h3 className="font-heading font-bold text-3xl text-[var(--text)] leading-none pt-1">
-                {gratitudeCount} Notes
+            <div className="space-y-2">
+              <p className="typo-chapter">Gratitude</p>
+              <h3 className="typo-display text-2xl">
+                {gratitudeCount} <span className="text-lg">notes</span>
               </h3>
             </div>
 
-            <div className="pt-3 border-t border-[var(--border)] space-y-2">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)]">Today's Gratitude</p>
+            <div className="pt-3 border-t border-[rgba(196,168,130,0.2)] space-y-2">
+              <p className="typo-chapter">Today</p>
               {latestGratitude ? (
-                <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-2 relative shadow-xs">
+                <div className="p-3 rounded-xl space-y-2">
                   <p className="font-quote italic text-xs text-[var(--text)] line-clamp-2 leading-relaxed">
                     "{getExcerpt(latestGratitude.content) || "I'm grateful for your patience and the little things you do everyday."}"
                   </p>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[9px] font-mono text-[var(--text-soft)]">
-                      {latestGratitude.created_at ? new Date(latestGratitude.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
-                    </span>
-                    <span className="text-xs text-[var(--rose)]">♥</span>
-                  </div>
+                  <span className="text-[9px] font-mono text-[var(--text-soft)]">
+                    {latestGratitude.created_at ? new Date(latestGratitude.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
+                  </span>
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
-                  <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No gratitude added today</p>
-                  <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Add a note →</p>
-                </div>
+                <p className="typo-supporting text-sm">Leave a note of thanks →</p>
               )}
             </div>
           </Link>
@@ -1041,61 +1035,19 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        {/* ─── QUICK ACTIONS ROW (BOTTOM) ─── */}
-        <div className="pt-6 border-t border-[var(--border)] space-y-3">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] px-1">
-            Quick Actions
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-            {[
-              {
-                label: "Write a Love Letter",
-                desc: "Express your feelings",
-                icon: Mail,
-                href: "/love-letter",
-              },
-              {
-                label: "View Calendar",
-                desc: "See important dates",
-                icon: Calendar,
-                href: "/calendar",
-              },
-              {
-                label: "Send a Surprise",
-                desc: "Make them smile",
-                icon: Gift,
-                href: "/love-letter?surprise=true",
-              },
-              {
-                label: "Couple Game",
-                desc: "Play & have fun",
-                icon: Gamepad2,
-                href: "/play",
-              },
-            ].map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={action.label}
-                  href={action.href}
-                  className="p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center gap-3.5 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer select-none"
-                >
-                  <div className="w-10 h-10 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <p className="font-sans font-bold text-xs text-[var(--text)] leading-snug truncate">
-                      {action.label}
-                    </p>
-                    <p className="text-[10px] text-[var(--text-soft)] font-mono leading-tight mt-0.5 truncate">
-                      {action.desc}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
+        {/* ─── RITUAL PROMPT (Time-Aware) ─── */}
+        <Link
+          href={ritual.href}
+          className="material-cotton p-6 paper-grain flex items-center gap-5 cursor-pointer"
+        >
+          <div className="w-12 h-12 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
+            <RitualIcon className="w-6 h-6" />
           </div>
-        </div>
+          <div className="flex-1 min-w-0">
+            <p className="typo-supporting text-base">{ritual.text}</p>
+            <span className="typo-chapter mt-2 inline-block">{ritual.label} →</span>
+          </div>
+        </Link>
 
       </motion.main>
     </div>
