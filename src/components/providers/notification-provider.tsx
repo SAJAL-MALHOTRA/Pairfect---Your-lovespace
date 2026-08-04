@@ -123,7 +123,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           }, 8000);
         }
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "SUBSCRIBED") {
+          fetchNotifications();
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

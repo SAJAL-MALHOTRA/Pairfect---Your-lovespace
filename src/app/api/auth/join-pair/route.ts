@@ -4,10 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 // Initialize Supabase Admin client using Service Role key to bypass client RLS for pair joining
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceKey) {
-    throw new Error("Missing Supabase configuration");
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL configuration for admin operations");
   }
 
   return createClient(url, serviceKey, {

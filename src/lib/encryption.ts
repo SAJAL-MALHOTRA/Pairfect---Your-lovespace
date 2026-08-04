@@ -3,10 +3,20 @@ import crypto from "crypto";
 const IV_LENGTH = 16;
 
 function getKey() {
-  const secret =
-    process.env.APP_ENCRYPTION_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "pairfect-secure-default-encryption-key-32-chars";
+  const secret = process.env.APP_ENCRYPTION_KEY;
+
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "FATAL: APP_ENCRYPTION_KEY environment variable is not defined in production. Insecure encryption fallback rejected."
+      );
+    }
+    // Local development fallback only
+    const devFallback =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      "pairfect-secure-default-encryption-key-32-chars";
+    return crypto.createHash("sha256").update(devFallback, "utf8").digest();
+  }
 
   return crypto.createHash("sha256").update(secret, "utf8").digest();
 }

@@ -59,6 +59,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dispute not found" }, { status: 404 });
     }
 
+    if (dispute.status === "judged") {
+      const { data: existingVerd } = await supabase
+        .from("dispute_verdicts")
+        .select("*")
+        .eq("dispute_id", disputeId)
+        .maybeSingle();
+
+      if (existingVerd) {
+        return NextResponse.json({ success: true, verdict: existingVerd });
+      }
+    }
+
     // 2. Fetch pair profiles to match A and B names & verify authorization
     const { data: pair } = await supabase
       .from("pairs")
