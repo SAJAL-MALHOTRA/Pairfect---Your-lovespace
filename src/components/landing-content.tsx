@@ -148,9 +148,9 @@ export default function LandingContent() {
   return (
     <div className="landing-journal relative min-h-screen flex flex-col overflow-hidden bg-[var(--bg)]">
 
-      {/* ── TOP ANNOUNCEMENT BANNER (Pairfect Originality + Angie Ribbon Style) ── */}
+      {/* ── TOP ANNOUNCEMENT BANNER ── */}
       <div className="bg-gradient-to-r from-[var(--burgundy)] via-[#D13D68] to-[var(--burgundy)] text-white text-[11px] font-mono py-2 px-4 text-center tracking-wide font-medium flex items-center justify-center gap-2 shadow-xs z-30 relative">
-        <Heart className="w-3.5 h-3.5 fill-white animate-pulse" />
+        <Image src="/logo-book.png" alt="Pairfect" width={14} height={14} className="rounded-xs" />
         <span>♡ Pairfect · The private digital sanctuary &amp; living archive for two</span>
       </div>
 
@@ -265,7 +265,7 @@ export default function LandingContent() {
                 custom={0}
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[9px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase shadow-xs"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                <Image src="/logo-book.png" alt="Pairfect" width={14} height={14} className="rounded-xs" />
                 <span>BUILT FOR TWO · 15 REALTIME RITUALS &amp; DATES</span>
               </motion.div>
 
