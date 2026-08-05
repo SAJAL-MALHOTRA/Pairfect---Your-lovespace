@@ -319,7 +319,7 @@ export default function LandingContent() {
               </motion.div>
             </div>
 
-            {/* Right Column: Visual Anchor with Live Cursor Badges */}
+            {/* Right Column: Real Interactive Pairfect Sanctuary Room UI Mockup */}
             <motion.div
               variants={fadeUp}
               initial="hidden"
@@ -327,33 +327,91 @@ export default function LandingContent() {
               custom={0.45}
               className="w-full lg:w-5/12 relative"
             >
-              <div className="relative p-4 sm:p-5 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl rotate-1 hover:rotate-0 transition-transform duration-500 keepsake-lift">
+              <div className="relative p-5 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-2xl space-y-4 paper-grain keepsake-lift">
                 <div className="washi-tape-top" />
                 
-                {/* Photobooth Film Strip Preview */}
-                <div className="editorial-image rounded-2xl relative overflow-hidden aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5]">
-                  <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transform -rotate-45 shimmer-active" />
+                {/* App Window Titlebar */}
+                <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <span className="font-heading font-bold text-xs text-[var(--text)] ml-1">
+                      Mia &amp; Alex&apos;s Lovespace
+                    </span>
                   </div>
-                  <img
-                    src="/hero-journal.jpg"
-                    alt="An open vintage journal with keepsake memories"
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-mono font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    2 Online
+                  </span>
                 </div>
 
-                {/* Floating Partner Cursor Badges */}
-                <div className="absolute top-8 -left-3 bg-[var(--burgundy)] text-white text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-20 animate-bounce">
-                  <span>✨ You</span>
-                </div>
-                <div className="absolute bottom-8 -right-3 bg-purple-600 text-white text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-20">
-                  <span>❤️ Partner</span>
+                {/* App Feature Cards Stack */}
+                <div className="space-y-3 pt-1">
+                  
+                  {/* Item 1: Wax Letter Unsealed */}
+                  <div className="p-3.5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-[var(--burgundy)] transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-[var(--burgundy)]/10 border border-[var(--burgundy)]/30 flex items-center justify-center text-lg">
+                        💌
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[var(--text)]">Wax Letter Unsealed</p>
+                        <p className="text-[10px] font-mono text-[var(--text-soft)]">&quot;Written 365 days ago on our 1st date...&quot;</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-full">
+                      UNSEALED
+                    </span>
+                  </div>
+
+                  {/* Item 2: Photobooth Strip */}
+                  <div className="p-3.5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-purple-400 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-lg">
+                        📸
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[var(--text)]">4-Frame Photostrip</p>
+                        <p className="text-[10px] font-mono text-[var(--text-soft)]">Saved to shared memory wall</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">
+                      SAVED
+                    </span>
+                  </div>
+
+                  {/* Item 3: Movie Night */}
+                  <div className="p-3.5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-blue-400 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-lg">
+                        🍿
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[var(--text)]">Movie Night: Studio Ghibli</p>
+                        <p className="text-[10px] font-mono text-[var(--text-soft)]">Alex synchronized playhead</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                      LIVE SYNC
+                    </span>
+                  </div>
+
                 </div>
 
-                <div className="pt-3 px-1 flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
-                  <span className="font-bold text-[var(--burgundy)] uppercase tracking-wider">YOUR PRIVATE LOVESPACE</span>
-                  <span>KEPT FOREVER ♡</span>
+                {/* Live Partner Badges Footer */}
+                <div className="pt-2 px-1 flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)] border-t border-[var(--border)]">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-full bg-[var(--burgundy)] text-white font-bold text-[9px] shadow-xs">
+                      ✨ You
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full bg-purple-600 text-white font-bold text-[9px] shadow-xs">
+                      ❤️ Partner
+                    </span>
+                  </div>
+                  <span className="font-bold text-[var(--burgundy)]">152 DAYS TOGETHER 🔥</span>
                 </div>
+
               </div>
             </motion.div>
 
