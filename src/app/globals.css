@@ -801,14 +801,15 @@ textarea.input-warm {
 /* Editorial image container with subtle parallax-ready transform */
 .landing-journal .editorial-image {
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 20px;
   position: relative;
+  border: 1px solid #E8DFD3;
 }
 .landing-journal .editorial-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .landing-journal .editorial-image:hover img {
   transform: scale(1.03);
@@ -816,8 +817,8 @@ textarea.input-warm {
 
 /* Photo lift effect for keepsakes */
 .landing-journal .keepsake-lift {
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1),
+              box-shadow 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .landing-journal .keepsake-lift:hover {
   transform: translateY(-6px) rotate(0deg);
@@ -889,7 +890,7 @@ textarea.input-warm {
   align-items: center;
   gap: 8px;
   padding: 14px 32px;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -898,7 +899,7 @@ textarea.input-warm {
   color: #FFFDF8;
   border: none;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
   box-shadow: 0 4px 16px rgba(140, 44, 61, 0.2),
               0 2px 6px rgba(140, 44, 61, 0.1);
 }
@@ -914,7 +915,7 @@ textarea.input-warm {
   align-items: center;
   gap: 8px;
   padding: 14px 32px;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -923,7 +924,7 @@ textarea.input-warm {
   color: #8C2C3D;
   border: 1.5px solid #E0D5C8;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .landing-journal .btn-journal-ghost:hover {
   background: #F8F4EB;
