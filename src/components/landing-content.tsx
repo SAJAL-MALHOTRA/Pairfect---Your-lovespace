@@ -1,9 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, Lock, Shield, Heart, Eye } from "lucide-react";
+import { ArrowRight, Lock, Shield, Heart, Eye, Volume2, VolumeX } from "lucide-react";
 import { motion } from "framer-motion";
+
+/* ─── Easing curve as specified in motion language system ─── */
+const EASE_CUBIC = [0.22, 0.61, 0.36, 1] as const;
 
 /* ─── Shared animation variants ─── */
 const fadeUp = {
@@ -11,7 +14,7 @@ const fadeUp = {
   visible: (delay: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.9, delay, ease: "easeOut" as const },
+    transition: { duration: 0.8, delay, ease: EASE_CUBIC },
   }),
 };
 
@@ -19,7 +22,7 @@ const fadeIn = {
   hidden: { opacity: 0 },
   visible: (delay: number = 0) => ({
     opacity: 1,
-    transition: { duration: 1.0, delay, ease: "easeOut" as const },
+    transition: { duration: 0.6, delay, ease: EASE_CUBIC },
   }),
 };
 
@@ -51,10 +54,71 @@ const timelineMilestones = [
 ];
 
 export default function LandingContent() {
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Synthesize tactile micro-sounds via Web Audio API (zero external asset dependency)
+  const playTactileSound = (type: "paper" | "tap" | "pop") => {
+    if (!soundEnabled) return;
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+
+      if (type === "tap") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === "pop") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === "paper") {
+        // Soft paper noise burst
+        const bufferSize = ctx.sampleRate * 0.06;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 1200;
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        noise.start(now);
+        noise.stop(now + 0.06);
+      }
+    } catch (e) {}
+  };
+
   return (
     <div className="landing-journal relative min-h-screen flex flex-col overflow-hidden">
 
-      {/* ── Floating Dust & Petal Particles (replaces hearts) ── */}
+      {/* ── Floating Dust & Petal Particles ── */}
       <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
         {[6, 15, 28, 42, 58, 72, 88].map((left, i) => (
           <div
@@ -85,11 +149,10 @@ export default function LandingContent() {
         ))}
       </div>
 
-
       {/* ══════════════════════════════════════════════════════════
-          HEADER — Minimal editorial wordmark
+          HEADER — Minimal editorial wordmark & soundscape toggle
           ══════════════════════════════════════════════════════════ */}
-      <header className="px-6 py-5 max-w-6xl w-full mx-auto flex items-center justify-between z-20 relative">
+      <header className="px-6 py-5 max-w-[1100px] w-full mx-auto flex items-center justify-between z-20 relative">
         <div className="flex items-center space-x-2.5">
           <span className="font-display italic text-2xl font-black tracking-tight text-[#2C2628]">
             pairfect
@@ -98,26 +161,53 @@ export default function LandingContent() {
         </div>
 
         <div className="flex items-center space-x-4">
+          <button
+            onClick={() => {
+              setSoundEnabled(!soundEnabled);
+              playTactileSound("pop");
+            }}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E8DFD3] bg-[#FFFDF8] text-[9px] font-mono font-bold text-[#6B5E58] uppercase tracking-wider hover:border-[#8C2C3D] transition-colors cursor-pointer"
+            aria-label="Toggle ambient tactile soundscapes"
+          >
+            {soundEnabled ? (
+              <>
+                <Volume2 className="w-3 h-3 text-[#8C2C3D]" />
+                <span>Soundscapes On</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3 h-3 text-[#9A8E85]" />
+                <span>Soundscapes Off</span>
+              </>
+            )}
+          </button>
+
           <Link
             href="/login"
             className="text-xs font-mono uppercase tracking-widest text-[#9A8E85] hover:text-[#2C2628] transition-colors px-3 py-2"
           >
             Sign In
           </Link>
-          <Link href="/signup" className="btn-journal">
+          <Link
+            href="/signup"
+            className="btn-journal"
+            onMouseEnter={() => playTactileSound("tap")}
+          >
             Open Your Journal
           </Link>
         </div>
       </header>
 
-
       {/* ══════════════════════════════════════════════════════════
-          CHAPTER 1 — HERO
-          Emotion first. No features. Just a feeling.
+          MAIN STORYLINE
           ══════════════════════════════════════════════════════════ */}
       <main className="flex-1 w-full z-10 relative">
-        <section className="max-w-5xl mx-auto px-6 pt-16 md:pt-28 pb-24 flex flex-col items-center text-center">
 
+        {/* CHAPTER 1 — HERO */}
+        <section
+          aria-label="Hero Introduction"
+          className="max-w-[1400px] mx-auto px-6 pt-16 md:pt-28 pb-24 flex flex-col items-center text-center"
+        >
           <motion.p
             variants={fadeUp}
             initial="hidden"
@@ -151,7 +241,7 @@ export default function LandingContent() {
             initial="hidden"
             animate="visible"
             custom={0.25}
-            className="mt-8 font-quote italic text-lg sm:text-xl text-[#6B5E58] max-w-lg leading-relaxed"
+            className="mt-8 font-quote italic text-lg sm:text-xl text-[#6B5E58] max-w-[850px] leading-relaxed"
           >
             Not another messaging app. A shared journal, memory book, gratitude
             space, and little universe — for just the two of you.
@@ -162,23 +252,31 @@ export default function LandingContent() {
             initial="hidden"
             animate="visible"
             custom={0.4}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12 max-w-[800px]"
           >
-            <Link href="/signup" className="btn-journal">
+            <Link
+              href="/signup"
+              className="btn-journal"
+              onMouseEnter={() => playTactileSound("tap")}
+            >
               Start Your Story <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/login" className="btn-journal-ghost">
+            <Link
+              href="/login"
+              className="btn-journal-ghost"
+              onMouseEnter={() => playTactileSound("tap")}
+            >
               Sign In With Partner
             </Link>
           </motion.div>
 
-          {/* Hero Image — Journal with pressed flowers */}
+          {/* Hero Visual — Journal with shimmer sweep */}
           <motion.div
             variants={fadeUp}
             initial="hidden"
             animate="visible"
             custom={0.55}
-            className="mt-20 w-full max-w-2xl mx-auto"
+            className="mt-20 w-full max-w-[1100px] mx-auto"
           >
             <div className="editorial-image rounded-2xl shadow-xl relative overflow-hidden">
               <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
@@ -193,12 +291,11 @@ export default function LandingContent() {
           </motion.div>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 2 — EMOTIONAL PULL
-            Make them fall in love before explaining features
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-4xl mx-auto px-6 py-28 text-center space-y-10">
+        {/* CHAPTER 2 — EMOTIONAL PULL */}
+        <section
+          aria-label="Emotional Narrative"
+          className="max-w-[850px] mx-auto px-6 py-28 text-center space-y-10"
+        >
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -236,12 +333,11 @@ export default function LandingContent() {
           <hr className="stitch-line max-w-xs mx-auto mt-16" />
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 3 — LOVE LETTERS (Cotton paper + wax seal)
-            Image LEFT, Text RIGHT
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-5xl mx-auto px-6 py-20">
+        {/* CHAPTER 3 — LOVE LETTERS */}
+        <section
+          aria-label="Wax-Sealed Letters"
+          className="max-w-[1100px] mx-auto px-6 py-20"
+        >
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-16">
             <motion.div
               variants={fadeUp}
@@ -251,7 +347,10 @@ export default function LandingContent() {
               custom={0}
               className="flex-1 w-full"
             >
-              <div className="editorial-image rounded-2xl shadow-lg keepsake-lift overflow-hidden">
+              <div
+                className="editorial-image rounded-2xl shadow-lg keepsake-lift overflow-hidden cursor-pointer"
+                onMouseEnter={() => playTactileSound("paper")}
+              >
                 <img
                   src="/love-letter-seal.jpg"
                   alt="A wax-sealed love letter on cotton paper"
@@ -278,19 +377,22 @@ export default function LandingContent() {
                 encrypted, private, and yours to keep forever. Like passing
                 notes — but beautiful.
               </p>
-              <Link href="/signup" className="btn-journal inline-flex">
+              <Link
+                href="/signup"
+                className="btn-journal inline-flex"
+                onMouseEnter={() => playTactileSound("tap")}
+              >
                 Write a Letter <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
           </div>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 4 — MEMORIES & POLAROIDS
-            Text LEFT, Image RIGHT
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-5xl mx-auto px-6 py-20">
+        {/* CHAPTER 4 — MEMORIES & POLAROIDS */}
+        <section
+          aria-label="Polaroid Memories"
+          className="max-w-[1100px] mx-auto px-6 py-20"
+        >
           <div className="flex flex-col md:flex-row-reverse items-center gap-12 md:gap-16">
             <motion.div
               variants={fadeUp}
@@ -300,7 +402,10 @@ export default function LandingContent() {
               custom={0}
               className="flex-1 w-full"
             >
-              <div className="editorial-image rounded-2xl shadow-lg keepsake-lift overflow-hidden">
+              <div
+                className="editorial-image rounded-2xl shadow-lg keepsake-lift overflow-hidden cursor-pointer"
+                onMouseEnter={() => playTactileSound("paper")}
+              >
                 <img
                   src="/polaroid-memories.jpg"
                   alt="Scattered polaroid photographs on a cream linen surface"
@@ -327,19 +432,22 @@ export default function LandingContent() {
                 in arcade photo booths. Stickers, themes, and instant keepsakes.
                 No filters. Just you.
               </p>
-              <Link href="/signup" className="btn-journal inline-flex">
+              <Link
+                href="/signup"
+                className="btn-journal inline-flex"
+                onMouseEnter={() => playTactileSound("tap")}
+              >
                 Open Photobooth <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
           </div>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 5 — GRATITUDE (Handwritten sticky notes)
-            Image LEFT, Text RIGHT
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-5xl mx-auto px-6 py-20">
+        {/* CHAPTER 5 — GRATITUDE */}
+        <section
+          aria-label="Gratitude Jar"
+          className="max-w-[1100px] mx-auto px-6 py-20"
+        >
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-16">
             <motion.div
               variants={fadeUp}
@@ -349,7 +457,10 @@ export default function LandingContent() {
               custom={0}
               className="flex-1 w-full"
             >
-              <div className="editorial-image rounded-2xl shadow-lg keepsake-lift overflow-hidden">
+              <div
+                className="editorial-image rounded-2xl shadow-lg keepsake-lift overflow-hidden cursor-pointer"
+                onMouseEnter={() => playTactileSound("paper")}
+              >
                 <img
                   src="/gratitude-notes.jpg"
                   alt="Handwritten gratitude notes with dried flowers"
@@ -376,18 +487,22 @@ export default function LandingContent() {
                 Small thank-yous that become the foundation of something
                 extraordinary.
               </p>
-              <Link href="/signup" className="btn-journal inline-flex">
+              <Link
+                href="/signup"
+                className="btn-journal inline-flex"
+                onMouseEnter={() => playTactileSound("tap")}
+              >
                 Start a Jar <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
           </div>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 6 — MOVIE NIGHT (Full-width atmospheric)
-            ══════════════════════════════════════════════════════════ */}
-        <section className="relative py-32 overflow-hidden">
+        {/* CHAPTER 6 — MOVIE NIGHT */}
+        <section
+          aria-label="Synchronized Movie Night"
+          className="relative py-32 overflow-hidden"
+        >
           <div className="absolute inset-0">
             <img
               src="/cozy-movie-night.jpg"
@@ -403,7 +518,7 @@ export default function LandingContent() {
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             custom={0}
-            className="relative z-10 max-w-3xl mx-auto px-6 text-center space-y-6"
+            className="relative z-10 max-w-[850px] mx-auto px-6 text-center space-y-6"
           >
             <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[#D6B36A] uppercase">
               Synchronized Streaming
@@ -419,18 +534,18 @@ export default function LandingContent() {
             <Link
               href="/signup"
               className="btn-journal inline-flex !bg-white/15 !text-white !border !border-white/20 backdrop-blur-sm hover:!bg-white/25"
+              onMouseEnter={() => playTactileSound("tap")}
             >
               Start Movie Night <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </motion.div>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 7 — THE MEMORY WALL (The "wow" section)
-            Hundreds of Polaroids floating in 3D
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-5xl mx-auto px-6 py-28 space-y-12">
+        {/* CHAPTER 7 — THE MEMORY WALL (3D Perspective Grid) */}
+        <section
+          aria-label="The Memory Wall"
+          className="max-w-[1100px] mx-auto px-6 py-28 space-y-12"
+        >
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -460,6 +575,7 @@ export default function LandingContent() {
             {memoryWallItems.map((item, i) => (
               <div
                 key={item.label}
+                onMouseEnter={() => playTactileSound("paper")}
                 className="memory-wall-card rounded-xl p-4 sm:p-5 flex flex-col items-center gap-2 cursor-pointer shadow-md border border-[#E8DFD3]"
                 style={{
                   background: item.color,
@@ -487,11 +603,11 @@ export default function LandingContent() {
           </motion.p>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 8 — TIMELINE (Real memories, not numbers)
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-4xl mx-auto px-6 py-28 text-center space-y-12">
+        {/* CHAPTER 8 — TIMELINE */}
+        <section
+          aria-label="Shared Memory Timeline"
+          className="max-w-[850px] mx-auto px-6 py-28 text-center space-y-12"
+        >
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -523,7 +639,10 @@ export default function LandingContent() {
                     →
                   </span>
                 )}
-                <div className="px-4 py-3 rounded-xl bg-[#FFFDF8] border border-[#E8DFD3] shadow-sm text-center keepsake-lift">
+                <div
+                  className="px-4 py-3 rounded-xl bg-[#FFFDF8] border border-[#E8DFD3] shadow-sm text-center keepsake-lift cursor-pointer"
+                  onMouseEnter={() => playTactileSound("tap")}
+                >
                   <p className="text-xl mb-1">{m.emoji}</p>
                   <p className="text-[9px] font-mono font-bold text-[#6B5E58] uppercase tracking-wider whitespace-nowrap">
                     {m.label}
@@ -545,11 +664,11 @@ export default function LandingContent() {
           </motion.p>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 8.5 — TRUST & PRIVACY (Understated, editorial)
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-3xl mx-auto px-6 py-20">
+        {/* CHAPTER 8.5 — TRUST & PRIVACY */}
+        <section
+          aria-label="Privacy Guarantees"
+          className="max-w-[800px] mx-auto px-6 py-20"
+        >
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -592,11 +711,11 @@ export default function LandingContent() {
           </motion.div>
         </section>
 
-
-        {/* ══════════════════════════════════════════════════════════
-            CHAPTER 9 — YOUR STORY BEGINS NOW (Emotional closing CTA)
-            ══════════════════════════════════════════════════════════ */}
-        <section className="max-w-3xl mx-auto px-6 py-28">
+        {/* CHAPTER 9 — YOUR STORY BEGINS NOW */}
+        <section
+          aria-label="Call to Action"
+          className="max-w-[800px] mx-auto px-6 py-28"
+        >
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -630,7 +749,11 @@ export default function LandingContent() {
             </div>
 
             <div className="pt-4 flex justify-center">
-              <Link href="/signup" className="btn-journal">
+              <Link
+                href="/signup"
+                className="btn-journal"
+                onMouseEnter={() => playTactileSound("pop")}
+              >
                 Start Writing Together <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -638,12 +761,11 @@ export default function LandingContent() {
         </section>
       </main>
 
-
       {/* ══════════════════════════════════════════════════════════
-          FOOTER — Minimal, warm, editorial
+          FOOTER
           ══════════════════════════════════════════════════════════ */}
       <footer className="border-t border-[#E8DFD3] py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-[1100px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col items-center md:items-start space-y-2">
             <div className="flex items-center space-x-2">
               <span className="font-display italic text-lg font-black tracking-tight text-[#2C2628]">
