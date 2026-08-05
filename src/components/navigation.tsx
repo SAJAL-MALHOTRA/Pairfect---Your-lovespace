@@ -1,10 +1,16 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { parseAvatarConfig, ChibiAvatar } from "@/components/chibi-avatar";
@@ -24,35 +30,49 @@ import {
   Flame,
 } from "lucide-react";
 
-/* ─── Easing & Motion timing scale from spec ─── */
-const EASE_PAPER = [0.22, 0.61, 0.36, 1] as const;
+/* ══════════════════════════════════════════════════
+   SPRING PHYSICS — Apple Liquid Glass spec
+   stiffness 250, damping 26, mass 0.9
+   ══════════════════════════════════════════════════ */
+const DOCK_SPRING = { stiffness: 250, damping: 26, mass: 0.9 };
+const ACTIVE_SPRING = { stiffness: 400, damping: 32 };
 
-/* ─── Grouped Navigation Clusters (Apple HI spec) ─── */
-const NAV_GROUPS = [
-  {
-    title: "Relationship",
-    items: [
-      { href: "/dashboard", icon: Home, label: "Home" },
-      { href: "/love-letter", icon: Mail, label: "Letters" },
-      { href: "/photo-booth", icon: Camera, label: "Photobooth" },
-      { href: "/play", icon: Gamepad2, label: "Playroom" },
-    ],
-  },
-  {
-    title: "Connection",
-    items: [
-      { href: "/gratitude-jar", icon: Gift, label: "Gratitude" },
-      { href: "/stories", icon: Clock, label: "Timeline" },
-      { href: "/watch", icon: Tv, label: "Watch" },
-    ],
-  },
-  {
-    title: "Profile",
-    items: [
-      { href: "/profile", icon: User, label: "Profile" },
-      { href: "/settings", icon: Settings, label: "Settings" },
-    ],
-  },
+/* ── Dock icon geometry ── */
+const ICON_SIZE = 44;       // Base icon container size
+const ICON_GAP = 6;         // Gap between icons
+const MAGNIFY_SCALE = 1.35; // Hovered icon max scale
+const NEIGHBOR_SCALE = 1.12; // Adjacent icons scale
+const DOCK_BASE_WIDTH = 78;
+const DOCK_EXPANDED_WIDTH = 180;
+
+/* ── Flat list of all nav items for the dock fish-eye ── */
+interface NavItem {
+  href: string;
+  icon: React.ComponentType<any>;
+  label: string;
+  group: number;
+}
+
+const DOCK_ITEMS: NavItem[] = [
+  { href: "/dashboard",    icon: Home,     label: "Home",       group: 0 },
+  { href: "/love-letter",  icon: Mail,     label: "Letters",    group: 0 },
+  { href: "/photo-booth",  icon: Camera,   label: "Photobooth", group: 0 },
+  { href: "/play",         icon: Gamepad2, label: "Playroom",   group: 0 },
+  { href: "/gratitude-jar",icon: Gift,     label: "Gratitude",  group: 1 },
+  { href: "/stories",      icon: Clock,    label: "Timeline",   group: 1 },
+  { href: "/watch",        icon: Tv,       label: "Watch",      group: 1 },
+  { href: "/profile",      icon: User,     label: "Profile",    group: 2 },
+  { href: "/settings",     icon: Settings, label: "Settings",   group: 2 },
+];
+
+const MOBILE_ITEMS = [
+  { href: "/dashboard",     icon: Home,     label: "Home" },
+  { href: "/love-letter",   icon: Mail,     label: "Letters" },
+  { href: "/photo-booth",   icon: Camera,   label: "Photos" },
+  { href: "/play",          icon: Gamepad2, label: "Play" },
+  { href: "/gratitude-jar", icon: Gift,     label: "Gratitude" },
+  { href: "/stories",       icon: Clock,    label: "Timeline" },
+  { href: "/profile",       icon: User,     label: "Profile" },
 ];
 
 const PING_PHRASES = [
@@ -62,14 +82,154 @@ const PING_PHRASES = [
   "Can't wait to see you ✨",
 ];
 
+
+/* ══════════════════════════════════════════════════
+   LIQUID DOCK ICON — macOS-style fish-eye per icon
+   ══════════════════════════════════════════════════ */
+function LiquidDockIcon({
+  item,
+  index,
+  mouseY,
+  isActive,
+  isHovered,
+  onHover,
+  onLeave,
+}: {
+  item: NavItem;
+  index: number;
+  mouseY: any;
+  isActive: boolean;
+  isHovered: boolean;
+  onHover: () => void;
+  onLeave: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const Icon = item.icon;
+
+  // Calculate distance from cursor to this icon's center
+  const distance = useTransform(mouseY, (val: number) => {
+    if (!ref.current || val < 0) return 150; // far away
+    const rect = ref.current.getBoundingClientRect();
+    const iconCenter = rect.top + rect.height / 2;
+    return Math.abs(val - iconCenter);
+  });
+
+  // Map distance → scale using smooth interpolation
+  const scaleMotion = useTransform(distance, [0, 60, 120], [MAGNIFY_SCALE, NEIGHBOR_SCALE, 1]);
+  const scale = useSpring(scaleMotion, DOCK_SPRING);
+
+  return (
+    <motion.div
+      ref={ref}
+      className="relative flex items-center justify-center"
+      style={{ scale }}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      <Link
+        href={item.href}
+        aria-label={item.label}
+        className="relative flex items-center justify-center w-11 h-11 rounded-full focus-visible:outline-none"
+        style={{ WebkitTapHighlightColor: "transparent" }}
+      >
+        {/* ── Active: Wine glass orb with inner glow ── */}
+        {isActive && (
+          <motion.div
+            layoutId="liquid-active-orb"
+            className="absolute inset-0 rounded-full"
+            transition={ACTIVE_SPRING}
+            style={{
+              background: "radial-gradient(circle at 35% 30%, rgba(180,60,80,0.95), rgba(140,44,61,0.88))",
+              boxShadow: [
+                "0 12px 30px rgba(140,44,61,0.25)",
+                "0 4px 12px rgba(140,44,61,0.15)",
+                "inset 0 1px 2px rgba(255,255,255,0.25)",
+                "inset 0 -1px 2px rgba(0,0,0,0.08)",
+              ].join(", "),
+            }}
+          >
+            {/* Specular highlight — tiny reflection */}
+            <div
+              className="absolute top-[5px] left-1/2 -translate-x-1/2 w-[18px] h-[6px] rounded-full"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0))",
+              }}
+            />
+          </motion.div>
+        )}
+
+        {/* ── Hover highlight (non-active) ── */}
+        {!isActive && isHovered && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.85 }}
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: "rgba(255,255,255,0.45)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.35)",
+              boxShadow: "inset 0 1px 2px rgba(255,255,255,0.3)",
+            }}
+          />
+        )}
+
+        {/* Icon */}
+        <Icon
+          strokeWidth={1.75}
+          className={`w-[19px] h-[19px] relative z-10 transition-colors duration-150 ${
+            isActive
+              ? "text-white"
+              : isHovered
+              ? "text-[#8C2C3D]"
+              : "text-[rgba(60,45,45,0.8)]"
+          }`}
+        />
+      </Link>
+
+      {/* ── Floating glass tooltip ── */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            initial={{ opacity: 0, x: -8, filter: "blur(4px)" }}
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, x: -8, filter: "blur(4px)" }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-full ml-4 px-[18px] py-[10px] rounded-[999px] whitespace-nowrap z-50 pointer-events-none select-none"
+            style={{
+              background: "rgba(255,255,255,0.55)",
+              backdropFilter: "blur(20px) saturate(180%)",
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
+              border: "1px solid rgba(255,255,255,0.35)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.4)",
+              fontSize: "14px",
+              fontWeight: 500,
+              fontFamily: "var(--font-sans), Inter, system-ui, sans-serif",
+              letterSpacing: "0.02em",
+              color: "#3D2432",
+            }}
+          >
+            {item.label}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════
+   MAIN NAVIGATION COMPONENT
+   ══════════════════════════════════════════════════ */
 export default function Navigation() {
   const pathname = usePathname();
   const { profile, pair, partner } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, sendPing } = useNotifications();
 
   const [visible, setVisible] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [hoveredHref, setHoveredHref] = useState<string | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [isDockHovered, setIsDockHovered] = useState(false);
   const [showPingMenu, setShowPingMenu] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [pingStatus, setPingStatus] = useState<string | null>(null);
@@ -77,6 +237,9 @@ export default function Navigation() {
 
   const pingMenuRef = useRef<HTMLDivElement>(null);
   const notifPanelRef = useRef<HTMLDivElement>(null);
+
+  // Mouse Y for dock fish-eye magnification
+  const mouseY = useMotionValue(-1);
 
   useEffect(() => {
     const onHide = () => setVisible(false);
@@ -124,7 +287,6 @@ export default function Navigation() {
       setShowPingMenu(false);
       return;
     }
-
     setLastPingTime(now);
     setShowPingMenu(false);
     const res = await sendPing(phrase);
@@ -135,14 +297,24 @@ export default function Navigation() {
   const currentStreak = pair?.current_streak || 0;
   const isStreakPaused = pair?.is_paused || false;
 
+  // Build group divider positions
+  const groupBoundaries = new Set<number>();
+  let runningIdx = 0;
+  for (const item of DOCK_ITEMS) {
+    if (runningIdx > 0 && DOCK_ITEMS[runningIdx - 1].group !== item.group) {
+      groupBoundaries.add(runningIdx);
+    }
+    runningIdx++;
+  }
+
   return (
     <>
-      {/* ══════════════════════════════════════════════════════════
-          GLOBAL TOP CONTROL BAR
-          ══════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════
+          TOP CONTROL BAR — Logo, Streak, Ping, Bell, Avatar
+          ══════════════════════════════════════════════════ */}
       <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:px-12 flex items-center justify-between pointer-events-none">
-        
-        {/* Left: Brand Logo & Streak Counter */}
+
+        {/* Left: Logo & Streak */}
         <div className="flex items-center gap-4 pointer-events-auto">
           <Link
             href="/dashboard"
@@ -171,7 +343,7 @@ export default function Navigation() {
           )}
         </div>
 
-        {/* Right Controls: Ping, Notifications & Profile Avatar */}
+        {/* Right: Ping + Bell + Avatar */}
         <div className="flex items-center gap-3 pointer-events-auto select-none">
 
           {/* Thinking of You Ping */}
@@ -179,10 +351,18 @@ export default function Navigation() {
             <div className="relative" ref={pingMenuRef}>
               <button
                 onClick={() => setShowPingMenu(!showPingMenu)}
-                className="btn-journal-ghost px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 !rounded-full shadow-xs"
-                title="Send a Thinking of You ping to your partner"
+                className="px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 rounded-full shadow-xs transition-all hover:scale-105 active:scale-95"
+                title="Send a Thinking of You ping"
+                style={{
+                  background: "rgba(255,255,255,0.5)",
+                  backdropFilter: "blur(16px) saturate(180%)",
+                  WebkitBackdropFilter: "blur(16px) saturate(180%)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  color: "var(--burgundy)",
+                  fontWeight: 600,
+                }}
               >
-                <Heart className="w-3.5 h-3.5 fill-current text-[var(--burgundy)]" />
+                <Heart className="w-3.5 h-3.5 fill-current" />
                 <span className="hidden sm:inline font-sans text-xs">Ping</span>
               </button>
 
@@ -192,8 +372,15 @@ export default function Navigation() {
                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{ duration: 0.2, ease: EASE_PAPER }}
-                    className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl z-50 space-y-1 paper-grain"
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 mt-2 w-56 p-2 rounded-2xl z-50 space-y-1"
+                    style={{
+                      background: "rgba(255,255,255,0.65)",
+                      backdropFilter: "blur(24px) saturate(180%)",
+                      WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      boxShadow: "0 20px 60px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.4)",
+                    }}
                   >
                     <p className="px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
                       Send a Ping to {partner.display_name || "partner"}
@@ -202,7 +389,7 @@ export default function Navigation() {
                       <button
                         key={idx}
                         onClick={() => handleTriggerPing(phrase)}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-sans text-[var(--text)] hover:bg-[var(--bg-secondary)] hover:text-[var(--burgundy)] transition-colors flex items-center justify-between"
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-sans text-[var(--text)] hover:bg-white/40 hover:text-[var(--burgundy)] transition-colors flex items-center justify-between"
                       >
                         <span>{phrase}</span>
                         <Heart className="w-3 h-3 text-[var(--rose)] opacity-60" />
@@ -218,8 +405,16 @@ export default function Navigation() {
           <div className="relative" ref={notifPanelRef}>
             <button
               onClick={() => setShowNotifPanel(!showNotifPanel)}
-              className="relative w-9 h-9 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xs"
+              className="relative w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
               aria-label="Notifications"
+              style={{
+                background: "rgba(255,255,255,0.45)",
+                backdropFilter: "blur(16px) saturate(180%)",
+                WebkitBackdropFilter: "blur(16px) saturate(180%)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "var(--text-soft)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
@@ -235,10 +430,17 @@ export default function Navigation() {
                   initial={{ opacity: 0, y: 8, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: EASE_PAPER }}
-                  className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto p-3 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-2xl z-50 space-y-2 paper-grain"
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto p-3 rounded-2xl z-50 space-y-2"
+                  style={{
+                    background: "rgba(255,255,255,0.7)",
+                    backdropFilter: "blur(32px) saturate(180%)",
+                    WebkitBackdropFilter: "blur(32px) saturate(180%)",
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    boxShadow: "0 20px 60px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.4)",
+                  }}
                 >
-                  <div className="flex items-center justify-between px-2 pb-2 border-b border-[var(--border)]">
+                  <div className="flex items-center justify-between px-2 pb-2 border-b border-white/20">
                     <p className="font-heading font-bold text-sm text-[var(--burgundy)]">Notifications</p>
                     {unreadCount > 0 && (
                       <button
@@ -276,12 +478,12 @@ export default function Navigation() {
                             }}
                             className={`block p-2.5 rounded-xl transition-all cursor-pointer ${
                               !n.read
-                                ? "bg-[var(--bg-secondary)] border border-[var(--border)] font-medium"
-                                : "hover:bg-black/5 opacity-80"
+                                ? "bg-white/40 border border-white/30 font-medium"
+                                : "hover:bg-white/20 opacity-80"
                             }`}
                           >
                             <div className="flex items-start gap-2">
-                              <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${!n.read ? "bg-[var(--burgundy)]" : "bg-[var(--border)]"}`} />
+                              <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${!n.read ? "bg-[var(--burgundy)]" : "bg-black/10"}`} />
                               <div className="flex-1">
                                 <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
                                 {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
@@ -300,7 +502,12 @@ export default function Navigation() {
           {/* Profile Avatar */}
           <Link
             href="/profile"
-            className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-white font-sans flex items-center justify-center text-sm font-bold select-none shadow-sm transition-transform hover:scale-105 active:scale-95 border border-[var(--border)]"
+            className="w-9 h-9 rounded-full overflow-hidden text-white font-sans flex items-center justify-center text-sm font-bold select-none transition-transform hover:scale-105 active:scale-95"
+            style={{
+              background: "var(--burgundy)",
+              boxShadow: "0 4px 12px rgba(140,44,61,0.2), inset 0 1px 1px rgba(255,255,255,0.15)",
+              border: "1.5px solid rgba(255,255,255,0.2)",
+            }}
           >
             {profile?.avatar_url ? (
               <ChibiAvatar
@@ -322,7 +529,12 @@ export default function Navigation() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[var(--burgundy)] text-white text-xs font-sans font-medium shadow-lg flex items-center gap-2"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-xs font-sans font-medium shadow-lg flex items-center gap-2"
+            style={{
+              background: "rgba(140,44,61,0.88)",
+              backdropFilter: "blur(16px)",
+              boxShadow: "0 12px 30px rgba(140,44,61,0.25)",
+            }}
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{pingStatus}</span>
@@ -331,159 +543,155 @@ export default function Navigation() {
       </AnimatePresence>
 
 
-      {/* ══════════════════════════════════════════════════════════
-          DESKTOP FLOATING HANDCRAFTED BOOKMARK SIDEBAR
-          Designed to Apple Human Interface Specifications
-          ══════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════
+          DESKTOP — LIQUID GLASS DOCK
+          macOS Dock fish-eye + Apple Liquid Glass material
+          ══════════════════════════════════════════════════ */}
       <AnimatePresence>
         {visible && (
           <motion.nav
             initial={{ x: -100, opacity: 0, y: "-50%" }}
             animate={{ x: 0, opacity: 1, y: "-50%" }}
             exit={{ x: -100, opacity: 0, y: "-50%" }}
-            transition={{ type: "spring", stiffness: 350, damping: 35 }}
-            className="hidden md:block fixed left-6 top-1/2 z-50"
+            transition={{ type: "spring", ...DOCK_SPRING }}
+            className="hidden md:block fixed left-8 top-1/2 z-50"
             aria-label="Main Navigation"
+            onMouseMove={(e) => mouseY.set(e.clientY)}
+            onMouseEnter={() => setIsDockHovered(true)}
+            onMouseLeave={() => {
+              mouseY.set(-1);
+              setIsDockHovered(false);
+              setHoveredIndex(null);
+            }}
           >
-            <motion.div
-              onMouseEnter={() => setIsExpanded(true)}
-              onMouseLeave={() => setIsExpanded(false)}
-              animate={{ width: isExpanded ? 110 : 84 }}
-              transition={{ duration: 0.22, ease: EASE_PAPER }}
-              className="relative flex flex-col items-center py-6 px-3 rounded-[999px] bg-[#FFFDF9] border border-[rgba(140,44,61,0.08)] paper-grain select-none overflow-visible"
+            {/* Liquid Glass Container */}
+            <div
+              className="relative flex flex-col items-center py-5 rounded-[999px] select-none overflow-visible"
               style={{
-                boxShadow: "0 2px 6px rgba(44,38,40,0.04), 0 14px 36px rgba(44,38,40,0.08), 0 28px 60px rgba(44,38,40,0.06)",
+                width: `${DOCK_BASE_WIDTH}px`,
+                background: "rgba(255,255,255,0.18)",
+                backdropFilter: "blur(32px) saturate(180%) brightness(115%)",
+                WebkitBackdropFilter: "blur(32px) saturate(180%) brightness(115%)",
+                border: "1px solid rgba(255,255,255,0.28)",
+                boxShadow: [
+                  "0 20px 60px rgba(0,0,0,0.15)",
+                  "inset 0 8px 20px rgba(255,255,255,0.15)",
+                  "inset 0 1px 0 rgba(255,255,255,0.3)",
+                ].join(", "),
               }}
             >
-              {/* Inner highlight ring */}
-              <div className="absolute inset-0 rounded-[999px] border border-white/60 pointer-events-none" />
+              {/* Inner glass gradient highlight */}
+              <div
+                className="absolute inset-0 rounded-[999px] pointer-events-none"
+                style={{
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))",
+                }}
+              />
 
-              {/* Grouped Navigation Clusters */}
-              <div className="flex flex-col items-center gap-5 relative z-10 w-full">
-                {NAV_GROUPS.map((group, gIdx) => (
-                  <React.Fragment key={group.title}>
-                    {gIdx > 0 && (
-                      <div
-                        className="w-[28px] h-[1px] my-0.5 rounded-full"
-                        style={{ backgroundColor: "var(--border-warm)" }}
-                      />
-                    )}
-
-                    <div className="flex flex-col items-center gap-2.5 w-full">
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        const isActive =
-                          currentPath === item.href ||
-                          (item.href !== "/dashboard" && currentPath.startsWith(item.href));
-
-                        return (
-                          <div
-                            key={item.href}
-                            className="relative flex items-center justify-center w-full"
-                            onMouseEnter={() => setHoveredHref(item.href)}
-                            onMouseLeave={() => setHoveredHref(null)}
-                          >
-                            <Link
-                              href={item.href}
-                              aria-label={item.label}
-                              className={`relative flex items-center ${
-                                isExpanded ? "justify-start px-3 gap-2.5 w-full" : "justify-center w-11"
-                              } h-11 rounded-full transition-all duration-200 active:scale-95 focus-visible:outline-none`}
-                            >
-                              {/* Layered Active Item Object */}
-                              {isActive && (
-                                <motion.div
-                                  layoutId="bookmark-active-indicator"
-                                  className="absolute inset-0 rounded-full bg-[var(--burgundy)] shadow-md"
-                                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                                  style={{
-                                    boxShadow: "0 10px 24px rgba(140,44,61,0.22)",
-                                  }}
-                                />
-                              )}
-
-                              {/* Hover Highlight (inactive items) */}
-                              {!isActive && hoveredHref === item.href && (
-                                <div className="absolute inset-0 rounded-full bg-[var(--paper-mid)] border border-[var(--border)] opacity-80" />
-                              )}
-
-                              {/* Icon & Label */}
-                              <Icon
-                                strokeWidth={1.75}
-                                className={`w-5 h-5 relative z-10 transition-transform duration-200 ${
-                                  isActive
-                                    ? "text-white rotate-[1deg]"
-                                    : hoveredHref === item.href
-                                    ? "text-[var(--burgundy)] -translate-y-0.5"
-                                    : "text-[var(--text-soft)]"
-                                }`}
-                              />
-
-                              {isExpanded && (
-                                <span
-                                  className={`text-xs font-sans font-medium tracking-[0.02em] whitespace-nowrap relative z-10 ${
-                                    isActive ? "text-white font-bold" : "text-[var(--text)]"
-                                  }`}
-                                >
-                                  {item.label}
-                                </span>
-                              )}
-                            </Link>
-
-                            {/* Floating Premium Paper Tooltip (when collapsed) */}
-                            {!isExpanded && hoveredHref === item.href && (
-                              <motion.div
-                                initial={{ opacity: 0, x: -8, scale: 0.95 }}
-                                animate={{ opacity: 1, x: 0, scale: 1 }}
-                                exit={{ opacity: 0, x: -8, scale: 0.95 }}
-                                transition={{ duration: 0.18, ease: EASE_PAPER }}
-                                className="absolute left-full ml-3 px-3 py-1.5 rounded-[14px] bg-[#FFFDF9] border border-[rgba(140,44,61,0.1)] shadow-md whitespace-nowrap z-50 text-[13px] font-sans font-medium tracking-[0.02em] text-[#3D2432] pointer-events-none paper-grain"
-                              >
-                                {item.label}
-                              </motion.div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </React.Fragment>
-                ))}
+              {/* Animated specular shimmer */}
+              <div
+                className="absolute inset-0 rounded-[999px] pointer-events-none overflow-hidden"
+              >
+                <motion.div
+                  animate={{
+                    y: ["-100%", "200%"],
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  className="absolute inset-x-0 h-[40%]"
+                  style={{
+                    background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.08), transparent)",
+                  }}
+                />
               </div>
-            </motion.div>
+
+              {/* Glass reflection underneath (floor reflection) */}
+              <div
+                className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[60%] h-[6px] rounded-full pointer-events-none"
+                style={{
+                  background: "radial-gradient(ellipse, rgba(255,255,255,0.12), transparent)",
+                  filter: "blur(3px)",
+                }}
+              />
+
+              {/* Navigation Icons */}
+              <div className="flex flex-col items-center gap-1 relative z-10 w-full px-2.5">
+                {DOCK_ITEMS.map((item, i) => {
+                  const isActive =
+                    currentPath === item.href ||
+                    (item.href !== "/dashboard" && currentPath.startsWith(item.href));
+
+                  const showDivider = groupBoundaries.has(i);
+
+                  return (
+                    <React.Fragment key={item.href}>
+                      {/* Group Divider */}
+                      {showDivider && (
+                        <div
+                          className="w-[28px] h-[1px] my-1.5 rounded-full"
+                          style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+                        />
+                      )}
+
+                      <LiquidDockIcon
+                        item={item}
+                        index={i}
+                        mouseY={mouseY}
+                        isActive={isActive}
+                        isHovered={hoveredIndex === i}
+                        onHover={() => setHoveredIndex(i)}
+                        onLeave={() => setHoveredIndex(null)}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
           </motion.nav>
         )}
       </AnimatePresence>
 
 
-      {/* ══════════════════════════════════════════════════════════
-          MOBILE FLOATING BOTTOM BOOKMARK CAPSULE
-          Reuses exact same paper bookmark design language
-          ══════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════
+          MOBILE — BOTTOM FLOATING LIQUID GLASS DOCK
+          Same glass material, horizontal layout
+          ══════════════════════════════════════════════════ */}
       <AnimatePresence>
         {visible && (
           <motion.nav
             initial={{ y: 80, opacity: 0, x: "-50%" }}
             animate={{ y: 0, opacity: 1, x: "-50%" }}
             exit={{ y: 80, opacity: 0, x: "-50%" }}
-            transition={{ type: "spring", stiffness: 350, damping: 35 }}
+            transition={{ type: "spring", ...DOCK_SPRING }}
             className="md:hidden fixed bottom-6 left-1/2 z-50"
             aria-label="Mobile Navigation"
           >
             <div
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-[999px] bg-[#FFFDF9] border border-[rgba(140,44,61,0.08)] paper-grain select-none shadow-2xl"
+              className="flex items-center gap-1 px-3 py-2 rounded-[999px] select-none"
               style={{
-                boxShadow: "0 10px 30px rgba(44,38,40,0.12), 0 4px 12px rgba(44,38,40,0.06)",
+                background: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(32px) saturate(180%) brightness(115%)",
+                WebkitBackdropFilter: "blur(32px) saturate(180%) brightness(115%)",
+                border: "1px solid rgba(255,255,255,0.28)",
+                boxShadow: [
+                  "0 20px 60px rgba(0,0,0,0.15)",
+                  "inset 0 4px 12px rgba(255,255,255,0.12)",
+                  "inset 0 1px 0 rgba(255,255,255,0.3)",
+                ].join(", "),
               }}
             >
-              {[
-                { href: "/dashboard", icon: Home, label: "Home" },
-                { href: "/love-letter", icon: Mail, label: "Letters" },
-                { href: "/photo-booth", icon: Camera, label: "Photos" },
-                { href: "/play", icon: Gamepad2, label: "Play" },
-                { href: "/gratitude-jar", icon: Gift, label: "Gratitude" },
-                { href: "/stories", icon: Clock, label: "Timeline" },
-                { href: "/profile", icon: User, label: "Profile" },
-              ].map((item) => {
+              {/* Inner gradient highlight */}
+              <div
+                className="absolute inset-0 rounded-[999px] pointer-events-none"
+                style={{
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.02))",
+                }}
+              />
+
+              {MOBILE_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive =
                   currentPath === item.href ||
@@ -494,19 +702,31 @@ export default function Navigation() {
                     key={item.href}
                     href={item.href}
                     aria-label={item.label}
-                    className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-90"
+                    className="relative flex items-center justify-center w-10 h-10 rounded-full transition-transform active:scale-90 z-10"
                   >
                     {isActive && (
                       <motion.div
-                        layoutId="mobile-active-pill"
-                        className="absolute inset-0 rounded-full bg-[var(--burgundy)]"
-                        transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                      />
+                        layoutId="mobile-liquid-active"
+                        className="absolute inset-0 rounded-full"
+                        transition={ACTIVE_SPRING}
+                        style={{
+                          background: "radial-gradient(circle at 35% 30%, rgba(180,60,80,0.95), rgba(140,44,61,0.88))",
+                          boxShadow: "0 8px 20px rgba(140,44,61,0.25), inset 0 1px 2px rgba(255,255,255,0.2)",
+                        }}
+                      >
+                        {/* Tiny specular dot */}
+                        <div
+                          className="absolute top-[4px] left-1/2 -translate-x-1/2 w-[14px] h-[5px] rounded-full"
+                          style={{
+                            background: "linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0))",
+                          }}
+                        />
+                      </motion.div>
                     )}
                     <Icon
                       strokeWidth={1.75}
                       className={`w-4 h-4 relative z-10 ${
-                        isActive ? "text-white" : "text-[var(--text-soft)]"
+                        isActive ? "text-white" : "text-[rgba(60,45,45,0.8)]"
                       }`}
                     />
                   </Link>
