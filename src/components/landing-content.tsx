@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight, Lock, Shield, Heart, Eye, Volume2, VolumeX, Sparkles, Tv, Camera,
-  HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight
+  HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight, MessageSquare, BookOpen
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -30,7 +30,7 @@ const fadeIn = {
   }),
 };
 
-/* ─── Memory Wall data (the "wow" section) ─── */
+/* ─── Memory Wall data ─── */
 const memoryWallItems = [
   { emoji: "☕", label: "First Coffee", rotate: -4, color: "#FFF8FA" },
   { emoji: "🌅", label: "Sunset Walk", rotate: 3, color: "#FFEEF3" },
@@ -149,7 +149,7 @@ export default function LandingContent() {
       {/* ── TOP ANNOUNCEMENT BANNER ── */}
       <div className="bg-gradient-to-r from-[var(--burgundy)] via-[#D13D68] to-[var(--burgundy)] text-white text-[11px] font-mono py-2 px-4 text-center tracking-wide font-medium flex items-center justify-center gap-2 shadow-xs z-30 relative">
         <Heart className="w-3.5 h-3.5 fill-white animate-pulse" />
-        <span>Making long distance &amp; close couples experience date nights together</span>
+        <span>Designed for couples to share dates, letters &amp; daily memories together</span>
       </div>
 
       {/* ── FLOATING PARTICLES ── */}
@@ -261,7 +261,7 @@ export default function LandingContent() {
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[9px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase shadow-xs"
               >
                 <Sparkles className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                <span>MADE FOR TWO · 15 REALTIME RITUALS &amp; DATES</span>
+                <span>BUILT FOR TWO · RITUALS, DATES &amp; MEMORIES</span>
               </motion.div>
 
               <motion.h1
@@ -271,11 +271,11 @@ export default function LandingContent() {
                 custom={0.1}
                 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.1rem] font-display italic font-black text-[var(--text)] tracking-tight leading-[1.08]"
               >
-                Fun Dates for <br />
+                Love deserves <br />
                 <span className="text-[var(--burgundy)] font-black">
-                  Long Distance
+                  better than a chat
                 </span> <br />
-                Relationships.
+                history.
               </motion.h1>
 
               <motion.p
@@ -285,7 +285,7 @@ export default function LandingContent() {
                 custom={0.25}
                 className="font-sans text-base sm:text-lg text-[var(--text-soft)] max-w-[560px] leading-relaxed"
               >
-                This was made for long distance &amp; co-located couples. A private room of dates, memories, and rituals — from wax-sealed love letters to synchronized movie nights, photobooth strips, and live couple games.
+                Pairfect is your private digital sanctuary — a place for wax-sealed love letters, photobooth strips, synchronized movie nights, and daily connection rituals designed exclusively for two.
               </motion.p>
 
               <motion.div
@@ -300,7 +300,7 @@ export default function LandingContent() {
                   className="btn-journal"
                   onMouseEnter={() => playTactileSound("tap")}
                 >
-                  Pick an activity ▷
+                  Explore activities ▷
                 </a>
                 <Link
                   href="/photo-booth"
@@ -314,12 +314,12 @@ export default function LandingContent() {
                   className="btn-journal-ghost"
                   onMouseEnter={() => playTactileSound("tap")}
                 >
-                  Create a date ▷
+                  Create your room ▷
                 </Link>
               </motion.div>
             </div>
 
-            {/* Right Column: Photobooth & Memory Strip Visual Anchor with Live Cursor Badges */}
+            {/* Right Column: Visual Anchor */}
             <motion.div
               variants={fadeUp}
               initial="hidden"
@@ -330,29 +330,29 @@ export default function LandingContent() {
               <div className="relative p-4 sm:p-5 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl rotate-1 hover:rotate-0 transition-transform duration-500 keepsake-lift">
                 <div className="washi-tape-top" />
                 
-                {/* Photobooth Film Strip Preview */}
+                {/* Journal Visual */}
                 <div className="editorial-image rounded-2xl relative overflow-hidden aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5]">
                   <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
                     <div className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transform -rotate-45 shimmer-active" />
                   </div>
                   <img
                     src="/hero-journal.jpg"
-                    alt="An open vintage journal with pressed flowers between the pages"
+                    alt="An open vintage relationship journal with keepsake memories"
                     className="w-full h-full object-cover rounded-2xl"
                   />
                 </div>
 
-                {/* Floating Partner Cursor Badges (WeTime Style) */}
-                <div className="absolute top-8 -left-3 bg-[var(--burgundy)] text-white text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-20 animate-bounce">
-                  <span>✨ You</span>
+                {/* Floating Badges */}
+                <div className="absolute top-8 -left-3 bg-[var(--burgundy)] text-white text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-20">
+                  <span>✨ Private Sanctuary</span>
                 </div>
                 <div className="absolute bottom-8 -right-3 bg-purple-600 text-white text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-20">
-                  <span>❤️ Partner</span>
+                  <span>❤️ Built for Two</span>
                 </div>
 
                 <div className="pt-3 px-1 flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
-                  <span className="font-bold text-[var(--burgundy)] uppercase tracking-wider">PHOTOBOOTH STRIP · SHOT 4/4</span>
-                  <span>152 DAYS TOGETHER 🔥</span>
+                  <span className="font-bold text-[var(--burgundy)] uppercase tracking-wider">YOUR PRIVATE LOVESPACE</span>
+                  <span>KEPT FOREVER ♡</span>
                 </div>
               </div>
             </motion.div>
@@ -360,7 +360,7 @@ export default function LandingContent() {
           </div>
         </section>
 
-        {/* ── ROOM CODE QUICK JOIN BOX (WeTime Style) ── */}
+        {/* ── ROOM CODE QUICK JOIN BOX ── */}
         <section className="max-w-[800px] mx-auto px-6 py-10 text-center">
           <motion.div
             variants={fadeUp}
@@ -405,52 +405,22 @@ export default function LandingContent() {
           </motion.div>
         </section>
 
-        {/* ── LIVE COUPLE STATS BANNER (WeTime Style) ── */}
-        <section className="border-y border-[var(--border)] bg-[var(--paper-warm)]/60 py-12 px-6">
-          <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-[var(--border)]">
-            <div className="space-y-1 pt-4 md:pt-0">
-              <p className="text-3xl sm:text-4xl font-display italic font-black text-[var(--burgundy)]">
-                15,420+
-              </p>
-              <p className="text-[10px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase">
-                ACTIVE COUPLE DATES
-              </p>
-            </div>
-            <div className="space-y-1 pt-4 md:pt-0">
-              <p className="text-3xl sm:text-4xl font-display italic font-black text-purple-600">
-                84,910+
-              </p>
-              <p className="text-[10px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase">
-                LOVE LETTERS SEALED
-              </p>
-            </div>
-            <div className="space-y-1 pt-4 md:pt-0">
-              <p className="text-3xl sm:text-4xl font-display italic font-black text-blue-600">
-                142,800+
-              </p>
-              <p className="text-[10px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase">
-                PHOTOSTRIPS PRINTED
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── CHAPTER 2 — PICK TONIGHT'S ACTIVITY (WeTime Feature Directory) ── */}
-        <section id="activities" className="max-w-[1100px] mx-auto px-6 py-24 space-y-12">
+        {/* ── CHAPTER 2 — ACTIVITIES DIRECTORY ── */}
+        <section id="activities" className="max-w-[1100px] mx-auto px-6 py-20 space-y-12">
           
           <div className="text-center space-y-3 max-w-xl mx-auto">
             <span className="text-[9px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase">
-              ACTIVITIES TO DO TOGETHER, APART
+              ACTIVITIES &amp; CONNECTION RITUALS
             </span>
             <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)]">
               Pick tonight&apos;s <span className="text-[var(--burgundy)]">activity.</span>
             </h2>
             <p className="text-xs font-mono text-[var(--text-soft)]">
-              Open a room and send the code. They&apos;ll be there in a tap.
+              Open a room and send the code to start a shared session together.
             </p>
           </div>
 
-          {/* 1. Featured Top Activities (2 Cards) */}
+          {/* Featured Top Activities (2 Cards) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Feature 1: Riddle Night */}
@@ -460,7 +430,7 @@ export default function LandingContent() {
                   🧩
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold uppercase tracking-wider">
-                  NEW
+                  CO-OP
                 </span>
               </div>
               <div className="space-y-1.5">
@@ -468,7 +438,7 @@ export default function LandingContent() {
                   Riddle Night
                 </h3>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  The world&apos;s legendary riddles — the two doors, the bridge crossing. Talk them out loud together, lock in privately, reveal at the same second.
+                  Mind-bending logic puzzles and team riddles. Talk through solutions together and submit your answers to solve them as a team.
                 </p>
               </div>
               <Link href="/riddle" className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-2">
@@ -483,7 +453,7 @@ export default function LandingContent() {
                   🧠
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-purple-600 text-white text-[9px] font-mono font-bold uppercase tracking-wider">
-                  NEW
+                  PLAYFUL CHALLENGE
                 </span>
               </div>
               <div className="space-y-1.5">
@@ -491,7 +461,7 @@ export default function LandingContent() {
                   IQ Duel
                 </h3>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  The same pattern, logic and math puzzles on both screens, answered privately against the clock. Nothing reveals until the end — then a playful IQ score.
+                  Fast-paced pattern and logic challenges. Answer privately against the clock to see who scores highest in quick 1-on-1 rounds.
                 </p>
               </div>
               <Link href="/iq-duel" className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-purple-600 hover:underline pt-2">
@@ -501,13 +471,13 @@ export default function LandingContent() {
 
           </div>
 
-          {/* 2. Full Activities Directory Grid */}
+          {/* Full Activities Directory Grid */}
           <div className="space-y-6">
             <span className="text-[9px] font-mono font-bold tracking-widest text-[var(--ink-light)] uppercase">
               ALL GAMES &amp; ACTIVITIES
             </span>
 
-            {/* Featured Wide Photobooth Strip */}
+            {/* Featured Wide Photobooth Card */}
             <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 paper-grain keepsake-lift">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl">
@@ -519,11 +489,11 @@ export default function LandingContent() {
                       Online Photobooth
                     </h3>
                     <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 text-[8px] font-mono font-bold uppercase tracking-wider border border-emerald-500/30">
-                      ALWAYS FREE
+                      FREE TOOL
                     </span>
                   </div>
                   <p className="text-xs text-[var(--text-soft)]">
-                    The realtime booth for two — a shared countdown fires the shot on both screens at once, so every frame holds both of you.
+                    Take your own 4-frame photo strip, customize it with filters and stickers, and save it to your shared memories.
                   </p>
                 </div>
               </div>
@@ -539,11 +509,11 @@ export default function LandingContent() {
               <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
                 <div className="flex items-center justify-between">
                   <span className="text-xl">❓</span>
-                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[8px] font-mono font-bold uppercase">MOST PLAYED</span>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[8px] font-mono font-bold uppercase">QUIZ</span>
                 </div>
                 <h4 className="font-display italic font-bold text-base text-[var(--text)]">Know Me Quiz</h4>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Lock in privately, reveal together, score your compatibility — 17 packs from cute to spicy.
+                  Lock in privately, reveal together, and score your compatibility across 17 distinct question packs.
                 </p>
                 <Link href="/quiz" className="inline-block text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-1">
                   Play quiz ▷
@@ -558,7 +528,7 @@ export default function LandingContent() {
                 </div>
                 <h4 className="font-display italic font-bold text-base text-[var(--text)]">Wax-Sealed Letters</h4>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  AES-256 encrypted letters sealed with digital wax. Unseal them together on special dates.
+                  AES-256 encrypted letters sealed with digital wax. Schedule them to unseal on future anniversaries.
                 </p>
                 <Link href="/love-letter" className="inline-block text-xs font-mono font-bold text-purple-600 hover:underline pt-1">
                   Write a letter ▷
@@ -569,11 +539,11 @@ export default function LandingContent() {
               <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
                 <div className="flex items-center justify-between">
                   <span className="text-xl">🍿</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[8px] font-mono font-bold uppercase">LIVE SYNC</span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[8px] font-mono font-bold uppercase">WATCH</span>
                 </div>
                 <h4 className="font-display italic font-bold text-base text-[var(--text)]">Movie Night</h4>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Watch YouTube together in sync or stream Netflix via Virtual Cinema tab share.
+                  Watch YouTube videos together with synchronized playback and live floating emojis.
                 </p>
                 <Link href="/watch" className="inline-block text-xs font-mono font-bold text-blue-600 hover:underline pt-1">
                   Start watching ▷
@@ -588,7 +558,7 @@ export default function LandingContent() {
                 </div>
                 <h4 className="font-display italic font-bold text-base text-[var(--text)]">Couples Debate</h4>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Argue it out on camera — Groq AI judge evaluates arguments and crowns a playful winner.
+                  Argue your case — an AI judge evaluates both arguments and crowns a playful winner.
                 </p>
                 <Link href="/vibe-judge" className="inline-block text-xs font-mono font-bold text-amber-600 hover:underline pt-1">
                   Start debate ▷
@@ -603,7 +573,7 @@ export default function LandingContent() {
                 </div>
                 <h4 className="font-display italic font-bold text-base text-[var(--text)]">Gratitude Jar</h4>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Drop folded notes into a shared jar. Read them together on rainy days.
+                  Drop handwritten appreciation notes into a shared jar to surprise your partner every day.
                 </p>
                 <Link href="/gratitude-jar" className="inline-block text-xs font-mono font-bold text-emerald-600 hover:underline pt-1">
                   Open jar ▷
@@ -615,146 +585,73 @@ export default function LandingContent() {
 
         </section>
 
-        {/* ── CHAPTER 2.5 — SEE IT IN ACTION (Live Game Demo like Screenshot 1) ── */}
-        <section aria-label="See It In Action" className="max-w-[1100px] mx-auto px-6 py-20">
+        {/* ── CHAPTER 2.5 — TODAY'S STORY PREVIEW (Pairfect-Original Daily Feed) ── */}
+        <section aria-label="Today's Story Preview" className="max-w-[1100px] mx-auto px-6 py-16">
           <div className="p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md grid grid-cols-1 lg:grid-cols-12 gap-10 items-center paper-grain">
             
             {/* Left Info Column */}
             <div className="lg:col-span-5 text-left space-y-5">
               <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
-                SEE IT IN ACTION
+                TODAY&apos;S STORY
               </span>
               <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)] leading-tight">
-                Watch a round of our <span className="text-[var(--burgundy)]">most-played game.</span>
+                Your private daily <span className="text-[var(--burgundy)]">relationship feed.</span>
               </h2>
               <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed">
-                One question, two screens. You both lock in privately — nobody can peek — then the answers flip at the exact same second. Match, and the confetti flies.
+                Every letter sealed, photostrip taken, and quiz answered automatically weaves into your shared daily timeline — creating a living digital keepsake of your relationship over time.
               </p>
-              <Link href="/quiz" className="btn-journal inline-flex py-3 px-6 text-[10px]">
-                Play it free ▷
+              <Link href="/dashboard" className="btn-journal inline-flex py-3 px-6 text-[10px]">
+                Open your dashboard ▷
               </Link>
             </div>
 
-            {/* Right Interactive Quiz Match Demo Card (Matching Screenshot 1) */}
+            {/* Right Story Feed Card Showcase */}
             <div className="lg:col-span-7 relative">
               <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-inner space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-3">
                   
-                  {/* Mia Card */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-rose-300 shadow-xs space-y-3 text-left">
-                    <div className="flex items-center justify-between text-[9px] font-mono font-bold text-rose-500 uppercase">
-                      <span>MIA · ANSWERS HONESTLY</span>
-                    </div>
-                    <p className="text-xs font-bold text-[var(--text)]">
-                      What&apos;s Mia&apos;s go-to karaoke song? 🎤
-                    </p>
-                    <div className="space-y-1.5 text-[11px] font-medium">
-                      <div className="p-2 rounded-lg bg-[var(--burgundy)] text-white font-bold flex items-center justify-between">
-                        <span>Bohemian Rhapsody 🎤</span>
-                        <span>✓</span>
-                      </div>
-                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
-                        Something by IU 🎧
-                      </div>
-                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
-                        Rap god, allegedly 🎤
+                  {/* Story Entry 1: Love Letter */}
+                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">💌</span>
+                      <div>
+                        <p className="text-xs font-bold text-[var(--text)]">Letter Sealed for Anniversary</p>
+                        <p className="text-[10px] text-[var(--text-soft)]">Unseals in 14 days · Encrypted</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-emerald-600">locked in ✓</span>
+                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-full">
+                      SEALED
+                    </span>
                   </div>
 
-                  {/* Alex Card */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-blue-300 shadow-xs space-y-3 text-left">
-                    <div className="flex items-center justify-between text-[9px] font-mono font-bold text-blue-500 uppercase">
-                      <span>ALEX · GUESSES HER ANSWER</span>
-                    </div>
-                    <p className="text-xs font-bold text-[var(--text)]">
-                      What&apos;s Mia&apos;s go-to karaoke song? 🎤
-                    </p>
-                    <div className="space-y-1.5 text-[11px] font-medium">
-                      <div className="p-2 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-between">
-                        <span>Bohemian Rhapsody 🎤</span>
-                        <span>✓</span>
-                      </div>
-                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
-                        Something by IU 🎧
-                      </div>
-                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
-                        Rap god, allegedly 🎤
+                  {/* Story Entry 2: Photobooth */}
+                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">📸</span>
+                      <div>
+                        <p className="text-xs font-bold text-[var(--text)]">4-Frame Photobooth Strip</p>
+                        <p className="text-[10px] text-[var(--text-soft)]">Saved to shared memories</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-emerald-600">locked in ✓</span>
+                    <span className="text-[9px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                      SAVED
+                    </span>
                   </div>
 
-                </div>
-
-                {/* Confetti Match Badge */}
-                <div className="pt-2 flex justify-center">
-                  <div className="px-6 py-2 rounded-full bg-emerald-600 text-white text-xs font-mono font-bold uppercase tracking-wider shadow-md animate-bounce flex items-center gap-2">
-                    <Check className="w-4 h-4" />
-                    <span>Matched! 💖</span>
+                  {/* Story Entry 3: Daily Quiz */}
+                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">✨</span>
+                      <div>
+                        <p className="text-xs font-bold text-[var(--text)]">Know Me Quiz · 100% Match</p>
+                        <p className="text-[10px] text-[var(--text-soft)]">Karaoke Songs Pack</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-500/10 px-2.5 py-1 rounded-full">
+                      MATCHED
+                    </span>
                   </div>
-                </div>
-              </div>
-            </div>
 
-          </div>
-        </section>
-
-        {/* ── CHAPTER 2.6 — KEEPSAKES & PRINTING PHOTOBOOTH STRIPS (Matching Screenshot 2) ── */}
-        <section aria-label="Preserve Your Memories" className="max-w-[1100px] mx-auto px-6 py-20">
-          <div className="p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md grid grid-cols-1 lg:grid-cols-12 gap-10 items-center paper-grain">
-            
-            {/* Left Copy & Bullet Points */}
-            <div className="lg:col-span-6 text-left space-y-6">
-              <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[#E8527D] uppercase">
-                KEEPSAKES · SHIPS WORLDWIDE
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)] leading-tight">
-                Preserve your LDR memories by <span className="text-[var(--burgundy)]">printing your photobooth strips.</span>
-              </h2>
-              <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed">
-                Turn today&apos;s session into something you can actually hold. Export your HD photostrips, print acrylic keychains, or turn them into fridge magnets — so the same memory lives on both your desks.
-              </p>
-
-              <ul className="space-y-2 text-xs font-mono text-[var(--text)]">
-                <li className="flex items-center gap-2">
-                  <Heart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                  <span>Die-cut vinyl magnets from your real HD strip</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                  <span>One order can ship to both your addresses</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                  <span>Instant high-res PNG &amp; PDF download anytime</span>
-                </li>
-              </ul>
-
-              <div className="pt-2">
-                <Link href="/photo-booth" className="btn-journal inline-flex py-3 px-8 text-[10px]">
-                  Print &amp; Export Your Strips ▷
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Visual (Keychain & Printed Photostrip Showcase) */}
-            <div className="lg:col-span-6 relative">
-              <div className="p-4 rounded-3xl bg-[var(--bg)] border border-[var(--border)] shadow-lg keepsake-lift relative overflow-hidden">
-                <div className="aspect-[4/3] rounded-2xl overflow-hidden relative">
-                  <img
-                    src="/polaroid-memories.jpg"
-                    alt="Acrylic keychain and printed photostrip keepsake"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-4 right-4 bg-purple-600 text-white text-[10px] font-mono font-bold px-3 py-1 rounded-full shadow-md">
-                    REAL KEEPSAKES
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md text-white p-3 rounded-xl text-[10px] font-mono">
-                    <p className="font-bold">Acrylic Keychain &amp; Magnet Strips — 3 × 9 cm</p>
-                    <p className="text-white/70 text-[9px]">High-res printed physical pieces from your private session</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -881,10 +778,10 @@ export default function LandingContent() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto">
               {[
-                { icon: <Shield className="w-4 h-4" />, label: "AES-256 Encrypted" },
-                { icon: <Lock className="w-4 h-4" />, label: "Invite Only" },
-                { icon: <Eye className="w-4 h-4" />, label: "No Public Profiles" },
-                { icon: <Heart className="w-4 h-4" />, label: "No Followers" },
+                { icon: <Shield className="w-4 h-4" />, label: "AES-256 Encrypted Letters" },
+                { icon: <Lock className="w-4 h-4" />, label: "Invite Only Rooms" },
+                { icon: <Eye className="w-4 h-4" />, label: "No Public Feeds" },
+                { icon: <Heart className="w-4 h-4" />, label: "Only 2 People" },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -900,7 +797,7 @@ export default function LandingContent() {
           </motion.div>
         </section>
 
-        {/* ── CHAPTER 5.5 — FREQUENTLY ASKED QUESTIONS (Matching Screenshot 3) ── */}
+        {/* ── CHAPTER 5.5 — FREQUENTLY ASKED QUESTIONS ── */}
         <section aria-label="Frequently Asked Questions" className="max-w-[800px] mx-auto px-6 py-16 text-left">
           <div className="space-y-6">
             <div className="space-y-2">
@@ -916,10 +813,10 @@ export default function LandingContent() {
               {[
                 {
                   q: "What games and activities can we play on Pairfect?",
-                  a: "Fifteen realtime activities are live: the Know Me Quiz, Riddle Night, IQ Duel, Wax-Sealed Love Letters, Online Photobooth, Couples Debate (AI Judge), Movie Night, Gratitude Jar, Spotify Mixtape, and Stitched Memory Stories. Everything happens in one shared room at the exact same second."
+                  a: "Fifteen realtime activities are live: the Know Me Quiz, Riddle Night, IQ Duel, Wax-Sealed Love Letters, Online Photobooth, Couples Debate, Movie Night, Gratitude Jar, Spotify Mixtape, and Stitched Memory Stories. Everything happens in one shared room."
                 },
                 {
-                  q: "Is Pairfect free to play?",
+                  q: "Is Pairfect free to use?",
                   a: "Yes! Every activity, photobooth session, quiz, and wax-sealed letter is 100% free for both of you."
                 },
                 {
@@ -931,8 +828,8 @@ export default function LandingContent() {
                   a: "No app installation required. Pairfect runs directly in any web browser on iOS, Android, Mac, or Windows."
                 },
                 {
-                  q: "Is the photobooth like Life4Cuts / 인생네컷?",
-                  a: "Yes! It's a shared 4-frame live webcam photobooth with a synchronized countdown timer, custom theme borders, draggable stickers, and HD print exports."
+                  q: "How is the online photobooth different from a physical photo booth?",
+                  a: "Take your own 4-frame photo strip right from your browser, customize it with frame borders and stickers, and export or save it to your shared memories."
                 }
               ].map((faq, idx) => (
                 <div key={idx} className="pt-4 first:pt-0 space-y-2">
