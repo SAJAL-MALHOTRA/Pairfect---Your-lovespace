@@ -318,9 +318,15 @@ export default function Navigation() {
         <div className="flex items-center gap-4 pointer-events-auto">
           <Link
             href="/dashboard"
-            className="flex items-center select-none transition-opacity hover:opacity-85"
+            className="flex items-center gap-2.5 select-none transition-opacity hover:opacity-85"
           >
-            <Image src="/logo-book.png" alt="Pairfect" height={36} width={36} className="rounded-lg shadow-sm" priority />
+            <Image src="/logo-book.png" alt="Pairfect" height={32} width={32} className="rounded-lg shadow-xs" priority />
+            <div className="flex items-center gap-1.5">
+              <span className="font-display italic text-xl font-black tracking-tight text-[#3D2432]">
+                pairfect
+              </span>
+              <span className="w-2 h-2 rounded-full bg-[#FF8DA1] inline-block" />
+            </div>
           </Link>
 
           {pair && currentStreak > 0 && (

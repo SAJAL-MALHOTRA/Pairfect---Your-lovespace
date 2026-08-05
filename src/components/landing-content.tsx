@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight, Lock, Shield, Heart, Eye, Volume2, VolumeX, Sparkles, Tv, Camera,
@@ -188,11 +189,14 @@ export default function LandingContent() {
           ══════════════════════════════════════════════════════════ */}
       <header className="px-6 py-4 max-w-[1280px] w-full mx-auto flex items-center justify-between z-20 relative bg-[var(--bg)]/90 backdrop-blur-md sticky top-0 border-b border-[var(--border)]">
         <div className="flex items-center space-x-3">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="font-display italic text-2xl font-black tracking-tight text-[var(--text)]">
-              pairfect
-            </span>
-            <div className="w-2 h-2 rounded-full bg-[var(--burgundy)] animate-pulse" />
+          <Link href="/" className="flex items-center gap-2.5 group select-none">
+            <Image src="/logo-book.png" alt="Pairfect" height={32} width={32} className="rounded-lg shadow-xs" priority />
+            <div className="flex items-center gap-1.5">
+              <span className="font-display italic text-2xl font-black tracking-tight text-[var(--text)]">
+                pairfect
+              </span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FF8DA1] inline-block shadow-xs" />
+            </div>
           </Link>
         </div>
 
@@ -952,11 +956,14 @@ export default function LandingContent() {
       <footer className="border-t border-[var(--border)] py-12 px-6 bg-[var(--paper-warm)]">
         <div className="max-w-[1100px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col items-center md:items-start space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className="font-display italic text-lg font-black tracking-tight text-[var(--text)]">
-                pairfect
-              </span>
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--burgundy)]" />
+            <div className="flex items-center gap-2 select-none">
+              <Image src="/logo-book.png" alt="Pairfect" height={26} width={26} className="rounded-md shadow-xs" />
+              <div className="flex items-center gap-1.5">
+                <span className="font-display italic text-lg font-black tracking-tight text-[var(--text)]">
+                  pairfect
+                </span>
+                <span className="w-2 h-2 rounded-full bg-[#FF8DA1] inline-block" />
+              </div>
             </div>
             <p className="text-[10px] text-[var(--text-soft)] font-mono">
               The private digital sanctuary &amp; living archive for two.
