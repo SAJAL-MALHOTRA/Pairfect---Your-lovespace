@@ -798,32 +798,80 @@ textarea.input-warm {
   color-scheme: light;
 }
 
-/* Editorial image container with subtle parallax-ready transform */
-.landing-journal .editorial-image {
+/* ══════════════════════════════════════════════
+   GLOBAL TACTILE & MATERIAL UTILITIES
+   Shared across Dashboard, Playroom, Photo Booth & Landing
+   ══════════════════════════════════════════════ */
+
+.editorial-image {
   overflow: hidden;
   border-radius: 20px;
   position: relative;
-  border: 1px solid #E8DFD3;
+  border: 1px solid var(--border-mid);
 }
-.landing-journal .editorial-image img {
+.editorial-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
-.landing-journal .editorial-image:hover img {
+.editorial-image:hover img {
   transform: scale(1.03);
 }
 
-/* Photo lift effect for keepsakes */
-.landing-journal .keepsake-lift {
+.keepsake-lift {
   transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1),
               box-shadow 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
-.landing-journal .keepsake-lift:hover {
-  transform: translateY(-6px) rotate(0deg);
-  box-shadow: 0 20px 40px rgba(44, 38, 40, 0.12),
-              0 8px 16px rgba(44, 38, 40, 0.06);
+.keepsake-lift:hover {
+  transform: translateY(-5px) rotate(0deg);
+  box-shadow: 0 16px 32px var(--shadow),
+              0 6px 12px rgba(0, 0, 0, 0.04);
+}
+
+.btn-journal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--burgundy);
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+.btn-journal:hover {
+  background: var(--seal-red-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+
+.btn-journal-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--burgundy);
+  border: 1.5px solid var(--border-warm);
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.btn-journal-ghost:hover {
+  background: var(--paper-mid);
+  border-color: var(--burgundy);
+  transform: translateY(-2px);
 }
 
 /* Floating dust particle keyframes */
