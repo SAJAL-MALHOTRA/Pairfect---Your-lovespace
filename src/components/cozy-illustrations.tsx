@@ -71,42 +71,15 @@ const PaperFilter = ({ id }: { id: string }) => (
   </defs>
 );
 
-// 1. Profile / Us: The primary Pairfect Portrait of the couple
 export function PairfectPortrait({ className = "h-48 w-48", ...props }: CozyIllustrationProps) {
-  const id = useId();
-  const { profile, partner } = useAuth();
-  const configA = parseAvatarConfig(profile?.avatar_url);
-  const configB = parseAvatarConfig(partner?.avatar_url);
-
   return (
-    <svg viewBox="0 0 280 280" className={className} {...a11y("Pairfect Portrait")} {...props}>
-      <defs>
-        <linearGradient id={`${id}-pastel`} x1="0" y1="0" x2="280" y2="280" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFF0F4" />
-          <stop offset="30%" stopColor="#FDE2E4" />
-          <stop offset="60%" stopColor="#E2ECE9" />
-          <stop offset="100%" stopColor="#FFF1E6" />
-        </linearGradient>
-      </defs>
-
-      {/* Outer Pastel Holo Card */}
-      <rect x="10" y="10" width="260" height="260" rx="38" fill={`url(#${id}-pastel)`} stroke="#FFD0DD" strokeWidth="4" />
-      
-      {/* Inner Soft Frame Line */}
-      <rect x="25" y="25" width="230" height="230" rx="28" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeOpacity="0.35" />
-      
-      {/* Nested customizable chibi avatars */}
-      <ChibiAvatar config={configA} pose="standing" x="22" y="70" width="120" height="120" noBackground={true} />
-      <ChibiAvatar config={configB} pose="standing" x="122" y="70" width="120" height="120" noBackground={true} />
-      
-      {/* Floating Rose Heart between them */}
-      <path d="M 135 106 C 127 94, 115 104, 135 120 C 155 104, 143 94, 135 106 Z" fill="#D16D82" />
-      
-      {/* Botanical details in bottom left corner */}
-      <path d="M 35 225 Q 45 212 50 230 M 45 212 Q 55 200 60 215" stroke="#7A9A8B" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <circle cx="60" cy="215" r="3" fill="#E8B4B8" />
-      <circle cx="50" cy="230" r="2.5" fill="#E8B4B8" />
-    </svg>
+    <div className={`relative inline-flex items-center justify-center select-none overflow-hidden ${className}`}>
+      <img
+        src="/pairfect-portrait.png"
+        alt="Pairfect Portrait"
+        className="w-full h-full object-contain drop-shadow-md transition-transform hover:scale-[1.02]"
+      />
+    </div>
   );
 }
 
