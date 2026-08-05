@@ -39,8 +39,18 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Pairfect — Private Relationship Companion",
-  description: "A private, bold space to share check-ins, moods, and scrapbook memories with your partner.",
+  title: "Pairfect — Private Relationship Sanctuary",
+  description: "A private digital sanctuary & living archive for two.",
+  icons: {
+    icon: [
+      { url: "/logo-book.png", type: "image/png" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: ["/logo-book.png"],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
