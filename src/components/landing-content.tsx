@@ -61,6 +61,7 @@ export default function LandingContent() {
   const router = useRouter();
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [joinCode, setJoinCode] = useState(["", "", "", "", "", ""]);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Synthesize tactile micro-sounds via Web Audio API
@@ -609,24 +610,156 @@ export default function LandingContent() {
                 </Link>
               </div>
 
-              {/* Card 6: Spotify Shared Mixtape */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">🎵</span>
-                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[8px] font-mono font-bold uppercase">MUSIC</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Shared Mixtape</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Search Spotify tracks and build your shared romantic mixtape with cassette graphics.
-                </p>
-                <Link href="/mixtape" className="inline-block text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-1">
-                  Create mixtape ▷
-                </Link>
-              </div>
-
             </div>
           </div>
 
+        </section>
+
+        {/* ── CHAPTER 2.5 — SEE IT IN ACTION (Live Game Demo like Screenshot 1) ── */}
+        <section aria-label="See It In Action" className="max-w-[1100px] mx-auto px-6 py-20">
+          <div className="p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md grid grid-cols-1 lg:grid-cols-12 gap-10 items-center paper-grain">
+            
+            {/* Left Info Column */}
+            <div className="lg:col-span-5 text-left space-y-5">
+              <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
+                SEE IT IN ACTION
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)] leading-tight">
+                Watch a round of our <span className="text-[var(--burgundy)]">most-played game.</span>
+              </h2>
+              <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed">
+                One question, two screens. You both lock in privately — nobody can peek — then the answers flip at the exact same second. Match, and the confetti flies.
+              </p>
+              <Link href="/quiz" className="btn-journal inline-flex py-3 px-6 text-[10px]">
+                Play it free ▷
+              </Link>
+            </div>
+
+            {/* Right Interactive Quiz Match Demo Card (Matching Screenshot 1) */}
+            <div className="lg:col-span-7 relative">
+              <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-inner space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  
+                  {/* Mia Card */}
+                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-rose-300 shadow-xs space-y-3 text-left">
+                    <div className="flex items-center justify-between text-[9px] font-mono font-bold text-rose-500 uppercase">
+                      <span>MIA · ANSWERS HONESTLY</span>
+                    </div>
+                    <p className="text-xs font-bold text-[var(--text)]">
+                      What&apos;s Mia&apos;s go-to karaoke song? 🎤
+                    </p>
+                    <div className="space-y-1.5 text-[11px] font-medium">
+                      <div className="p-2 rounded-lg bg-[var(--burgundy)] text-white font-bold flex items-center justify-between">
+                        <span>Bohemian Rhapsody 🎤</span>
+                        <span>✓</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
+                        Something by IU 🎧
+                      </div>
+                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
+                        Rap god, allegedly 🎤
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-emerald-600">locked in ✓</span>
+                  </div>
+
+                  {/* Alex Card */}
+                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-blue-300 shadow-xs space-y-3 text-left">
+                    <div className="flex items-center justify-between text-[9px] font-mono font-bold text-blue-500 uppercase">
+                      <span>ALEX · GUESSES HER ANSWER</span>
+                    </div>
+                    <p className="text-xs font-bold text-[var(--text)]">
+                      What&apos;s Mia&apos;s go-to karaoke song? 🎤
+                    </p>
+                    <div className="space-y-1.5 text-[11px] font-medium">
+                      <div className="p-2 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-between">
+                        <span>Bohemian Rhapsody 🎤</span>
+                        <span>✓</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
+                        Something by IU 🎧
+                      </div>
+                      <div className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text-soft)]">
+                        Rap god, allegedly 🎤
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-emerald-600">locked in ✓</span>
+                  </div>
+
+                </div>
+
+                {/* Confetti Match Badge */}
+                <div className="pt-2 flex justify-center">
+                  <div className="px-6 py-2 rounded-full bg-emerald-600 text-white text-xs font-mono font-bold uppercase tracking-wider shadow-md animate-bounce flex items-center gap-2">
+                    <Check className="w-4 h-4" />
+                    <span>Matched! 💖</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ── CHAPTER 2.6 — KEEPSAKES & PRINTING PHOTOBOOTH STRIPS (Matching Screenshot 2) ── */}
+        <section aria-label="Preserve Your Memories" className="max-w-[1100px] mx-auto px-6 py-20">
+          <div className="p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md grid grid-cols-1 lg:grid-cols-12 gap-10 items-center paper-grain">
+            
+            {/* Left Copy & Bullet Points */}
+            <div className="lg:col-span-6 text-left space-y-6">
+              <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[#E8527D] uppercase">
+                KEEPSAKES · SHIPS WORLDWIDE
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)] leading-tight">
+                Preserve your LDR memories by <span className="text-[var(--burgundy)]">printing your photobooth strips.</span>
+              </h2>
+              <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed">
+                Turn today&apos;s session into something you can actually hold. Export your HD photostrips, print acrylic keychains, or turn them into fridge magnets — so the same memory lives on both your desks.
+              </p>
+
+              <ul className="space-y-2 text-xs font-mono text-[var(--text)]">
+                <li className="flex items-center gap-2">
+                  <Heart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                  <span>Die-cut vinyl magnets from your real HD strip</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Heart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                  <span>One order can ship to both your addresses</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Heart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                  <span>Instant high-res PNG &amp; PDF download anytime</span>
+                </li>
+              </ul>
+
+              <div className="pt-2">
+                <Link href="/photo-booth" className="btn-journal inline-flex py-3 px-8 text-[10px]">
+                  Print &amp; Export Your Strips ▷
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Visual (Keychain & Printed Photostrip Showcase) */}
+            <div className="lg:col-span-6 relative">
+              <div className="p-4 rounded-3xl bg-[var(--bg)] border border-[var(--border)] shadow-lg keepsake-lift relative overflow-hidden">
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden relative">
+                  <img
+                    src="/polaroid-memories.jpg"
+                    alt="Acrylic keychain and printed photostrip keepsake"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-4 right-4 bg-purple-600 text-white text-[10px] font-mono font-bold px-3 py-1 rounded-full shadow-md">
+                    REAL KEEPSAKES
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md text-white p-3 rounded-xl text-[10px] font-mono">
+                    <p className="font-bold">Acrylic Keychain &amp; Magnet Strips — 3 × 9 cm</p>
+                    <p className="text-white/70 text-[9px]">High-res printed physical pieces from your private session</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </section>
 
         {/* ── CHAPTER 3 — THE MEMORY WALL (3D Perspective Grid) ── */}
@@ -765,6 +898,65 @@ export default function LandingContent() {
               ))}
             </div>
           </motion.div>
+        </section>
+
+        {/* ── CHAPTER 5.5 — FREQUENTLY ASKED QUESTIONS (Matching Screenshot 3) ── */}
+        <section aria-label="Frequently Asked Questions" className="max-w-[800px] mx-auto px-6 py-16 text-left">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
+                FREQUENTLY ASKED QUESTIONS
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)]">
+                Everything you need to <span className="text-[var(--burgundy)]">ask.</span>
+              </h2>
+            </div>
+
+            <div className="space-y-3 pt-4 divide-y divide-[var(--border)] border-t border-[var(--border)]">
+              {[
+                {
+                  q: "What games and activities can we play on Pairfect?",
+                  a: "Fifteen realtime activities are live: the Know Me Quiz, Riddle Night, IQ Duel, Wax-Sealed Love Letters, Online Photobooth, Couples Debate (AI Judge), Movie Night, Gratitude Jar, Spotify Mixtape, and Stitched Memory Stories. Everything happens in one shared room at the exact same second."
+                },
+                {
+                  q: "Is Pairfect free to play?",
+                  a: "Yes! Every activity, photobooth session, quiz, and wax-sealed letter is 100% free for both of you."
+                },
+                {
+                  q: "How does a realtime online date work?",
+                  a: "Open a room, copy your 6-character code, and send it to your partner. They'll join in a single tap, and both of your screens synchronize live in real time."
+                },
+                {
+                  q: "Do we need to install an app?",
+                  a: "No app installation required. Pairfect runs directly in any web browser on iOS, Android, Mac, or Windows."
+                },
+                {
+                  q: "Is the photobooth like Life4Cuts / 인생네컷?",
+                  a: "Yes! It's a shared 4-frame live webcam photobooth with a synchronized countdown timer, custom theme borders, draggable stickers, and HD print exports."
+                }
+              ].map((faq, idx) => (
+                <div key={idx} className="pt-4 first:pt-0 space-y-2">
+                  <button
+                    onClick={() => {
+                      setOpenFaqIndex(openFaqIndex === idx ? null : idx);
+                      playTactileSound("tap");
+                    }}
+                    className="w-full flex items-center justify-between text-left text-sm sm:text-base font-bold text-[var(--text)] hover:text-[var(--burgundy)] transition-colors cursor-pointer py-1"
+                  >
+                    <span>{faq.q}</span>
+                    <span className="font-mono text-xs text-[var(--text-soft)] pl-4">
+                      {openFaqIndex === idx ? "✕" : "+"}
+                    </span>
+                  </button>
+                  {openFaqIndex === idx && (
+                    <p className="text-xs text-[var(--text-soft)] font-sans leading-relaxed pt-1 pb-2">
+                      {faq.a}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* ── CHAPTER 6 — CLOSING CTA ── */}
