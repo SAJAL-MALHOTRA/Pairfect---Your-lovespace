@@ -62,14 +62,11 @@ export function PhotoboothFilmStrip({ title, className = "h-40 w-40", ...props }
   </svg>;
 }
 
-// Global shared paper texture filter
+// Global shared crisp drop shadow filter
 const PaperFilter = ({ id }: { id: string }) => (
   <defs>
     <filter id={id} x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#5C4D3C" floodOpacity="0.08" />
-      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
-      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.03 0" />
-      <feBlend mode="multiply" in="SourceGraphic" in2="noise" />
+      <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#3D2432" floodOpacity="0.08" />
     </filter>
   </defs>
 );
