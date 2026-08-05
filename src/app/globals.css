@@ -760,3 +760,197 @@ textarea.input-warm {
 }
 
 
+/* ══════════════════════════════════════════════
+   LANDING PAGE — Journal Experience Scope
+   Forces light warm palette regardless of theme
+   ══════════════════════════════════════════════ */
+
+.landing-journal {
+  --bg:               #FAF7F0;
+  --bg-secondary:     #F5EFE5;
+  --text:             #2C2628;
+  --text-soft:        #6B5E58;
+  --burgundy:         #8C2C3D;
+  --rose:             #D86B8A;
+  --border:           #E8DFD3;
+  --shadow:           rgba(140, 44, 61, 0.08);
+  --paper-warm:       #FFFDF8;
+  --paper-mid:        #F8F4EB;
+  --paper-deep:       #F0EAE0;
+  --ink-dark:         #2C2628;
+  --ink-mid:          #6B5E58;
+  --ink-light:        #9A8E85;
+  --seal-red:         #8C2C3D;
+  --seal-red-hover:   #6E1F30;
+  --washi-warm:       rgba(140, 44, 61, 0.08);
+  --border-warm:      #E0D5C8;
+  --border-mid:       #E8DFD3;
+  --card-bg:          #FFFDF8;
+  --gold:             #D6B36A;
+  --accent:           #B85C7A;
+  --background:       #FAF7F0;
+  --foreground:       #2C2628;
+  --primary:          #8C2C3D;
+  --primary-foreground: #FFFDF8;
+
+  background: #FAF7F0;
+  color: #2C2628;
+  color-scheme: light;
+}
+
+/* Editorial image container with subtle parallax-ready transform */
+.landing-journal .editorial-image {
+  overflow: hidden;
+  border-radius: 16px;
+  position: relative;
+}
+.landing-journal .editorial-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing-journal .editorial-image:hover img {
+  transform: scale(1.03);
+}
+
+/* Photo lift effect for keepsakes */
+.landing-journal .keepsake-lift {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing-journal .keepsake-lift:hover {
+  transform: translateY(-6px) rotate(0deg);
+  box-shadow: 0 20px 40px rgba(44, 38, 40, 0.12),
+              0 8px 16px rgba(44, 38, 40, 0.06);
+}
+
+/* Floating dust particle keyframes */
+@keyframes float-dust {
+  0%   { transform: translateY(0) translateX(0) scale(1);   opacity: 0; }
+  10%  { opacity: 0.4; }
+  90%  { opacity: 0.15; }
+  100% { transform: translateY(-100vh) translateX(30px) scale(0.6); opacity: 0; }
+}
+
+@keyframes float-petal {
+  0%   { transform: translateY(0) rotate(0deg) scale(0.8);   opacity: 0; }
+  15%  { opacity: 0.5; }
+  50%  { transform: translateY(-50vh) rotate(180deg) translateX(40px) scale(1); opacity: 0.3; }
+  85%  { opacity: 0.1; }
+  100% { transform: translateY(-105vh) rotate(360deg) translateX(-20px) scale(0.6); opacity: 0; }
+}
+
+@keyframes grain-drift {
+  0%, 100% { background-position: 0% 0%; }
+  50%      { background-position: 100% 100%; }
+}
+
+.landing-journal .dust-particle {
+  position: absolute;
+  bottom: -20px;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 50%;
+  background: #D6B36A;
+}
+
+.landing-journal .petal-particle {
+  position: absolute;
+  bottom: -30px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+}
+
+/* Memory Wall 3D perspective grid */
+.landing-journal .memory-wall {
+  perspective: 1200px;
+  perspective-origin: 50% 40%;
+}
+
+.landing-journal .memory-wall-card {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              z-index 0s;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+.landing-journal .memory-wall-card:hover {
+  transform: translateY(-12px) rotateX(2deg) rotateY(0deg) scale(1.05) !important;
+  box-shadow: 0 24px 48px rgba(44, 38, 40, 0.18),
+              0 12px 24px rgba(44, 38, 40, 0.08);
+  z-index: 30 !important;
+}
+
+/* Landing page button overrides */
+.landing-journal .btn-journal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: #8C2C3D;
+  color: #FFFDF8;
+  border: none;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 4px 16px rgba(140, 44, 61, 0.2),
+              0 2px 6px rgba(140, 44, 61, 0.1);
+}
+.landing-journal .btn-journal:hover {
+  background: #6E1F30;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(140, 44, 61, 0.3),
+              0 4px 10px rgba(140, 44, 61, 0.15);
+}
+
+.landing-journal .btn-journal-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  color: #8C2C3D;
+  border: 1.5px solid #E0D5C8;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing-journal .btn-journal-ghost:hover {
+  background: #F8F4EB;
+  border-color: #8C2C3D;
+  transform: translateY(-2px);
+}
+
+/* Section divider — stitched line */
+.landing-journal .stitch-line {
+  border: none;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    #E0D5C8 0px,
+    #E0D5C8 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  opacity: 0.6;
+}
+
+/* Shimmer sweep for hero */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-120%) rotate(-15deg); }
+  100% { transform: translateX(120%) rotate(-15deg); }
+}
+.landing-journal .shimmer-active {
+  animation: shimmer-sweep 4s ease-in-out infinite;
+  animation-delay: 2s;
+}
