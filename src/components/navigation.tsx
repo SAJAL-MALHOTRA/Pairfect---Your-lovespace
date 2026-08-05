@@ -313,16 +313,12 @@ export default function Navigation() {
           >
             {/* Sidebar Capsule */}
             <div
-              className="relative flex flex-col items-center py-4 px-2.5 rounded-[999px] select-none paper-grain"
+              className="relative flex flex-col items-center py-4 px-2.5 rounded-[999px] select-none"
               style={{
                 width: "84px",
                 background: "linear-gradient(180deg, #FFF2F5 0%, #FFF8FA 100%)",
                 border: "2px solid rgba(255, 255, 255, 0.95)",
-                boxShadow: [
-                  "0 20px 48px rgba(232, 82, 125, 0.16)",
-                  "0 6px 16px rgba(232, 82, 125, 0.08)",
-                  "inset 0 2px 4px rgba(255, 255, 255, 0.9)",
-                ].join(", "),
+                boxShadow: "0 12px 32px rgba(232, 82, 125, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.9)",
               }}
             >
               {/* Subtle top heart accent on capsule */}
