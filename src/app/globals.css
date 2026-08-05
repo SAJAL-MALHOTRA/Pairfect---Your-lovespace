@@ -766,35 +766,35 @@ textarea.input-warm {
    ══════════════════════════════════════════════ */
 
 .landing-journal {
-  --bg:               #FAF7F0;
-  --bg-secondary:     #F5EFE5;
-  --text:             #2C2628;
-  --text-soft:        #6B5E58;
-  --burgundy:         #8C2C3D;
-  --rose:             #D86B8A;
-  --border:           #E8DFD3;
-  --shadow:           rgba(140, 44, 61, 0.08);
-  --paper-warm:       #FFFDF8;
-  --paper-mid:        #F8F4EB;
-  --paper-deep:       #F0EAE0;
-  --ink-dark:         #2C2628;
-  --ink-mid:          #6B5E58;
-  --ink-light:        #9A8E85;
-  --seal-red:         #8C2C3D;
-  --seal-red-hover:   #6E1F30;
-  --washi-warm:       rgba(140, 44, 61, 0.08);
-  --border-warm:      #E0D5C8;
-  --border-mid:       #E8DFD3;
-  --card-bg:          #FFFDF8;
+  --bg:               #FFF6F8;
+  --bg-secondary:     #FFEBF0;
+  --text:             #3D2432;
+  --text-soft:        #7A4B5D;
+  --burgundy:         #E8527D;
+  --rose:             #FFB3C6;
+  --border:           #FFD0DD;
+  --shadow:           rgba(232, 82, 125, 0.12);
+  --paper-warm:       #FFF8FA;
+  --paper-mid:        #FFEEF3;
+  --paper-deep:       #FFE0E9;
+  --ink-dark:         #3D2432;
+  --ink-mid:          #7A4B5D;
+  --ink-light:        #9E6B7F;
+  --seal-red:         #E8527D;
+  --seal-red-hover:   #D13D68;
+  --washi-warm:       rgba(232, 82, 125, 0.12);
+  --border-warm:      #FFD0DD;
+  --border-mid:       #FFD9E3;
+  --card-bg:          #FFF8FA;
   --gold:             #D6B36A;
-  --accent:           #B85C7A;
-  --background:       #FAF7F0;
-  --foreground:       #2C2628;
-  --primary:          #8C2C3D;
-  --primary-foreground: #FFFDF8;
+  --accent:           #E8527D;
+  --background:       #FFF6F8;
+  --foreground:       #3D2432;
+  --primary:          #E8527D;
+  --primary-foreground: #FFFFFF;
 
-  background: #FAF7F0;
-  color: #2C2628;
+  background: #FFF6F8;
+  color: #3D2432;
   color-scheme: light;
 }
 
@@ -895,19 +895,19 @@ textarea.input-warm {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  background: #8C2C3D;
-  color: #FFFDF8;
+  background: #E8527D;
+  color: #FFFFFF;
   border: none;
   cursor: pointer;
   transition: all 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
-  box-shadow: 0 4px 16px rgba(140, 44, 61, 0.2),
-              0 2px 6px rgba(140, 44, 61, 0.1);
+  box-shadow: 0 4px 16px rgba(232, 82, 125, 0.25),
+              0 2px 6px rgba(232, 82, 125, 0.15);
 }
 .landing-journal .btn-journal:hover {
-  background: #6E1F30;
+  background: #D13D68;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(140, 44, 61, 0.3),
-              0 4px 10px rgba(140, 44, 61, 0.15);
+  box-shadow: 0 8px 24px rgba(232, 82, 125, 0.35),
+              0 4px 10px rgba(232, 82, 125, 0.2);
 }
 
 .landing-journal .btn-journal-ghost {
@@ -921,14 +921,14 @@ textarea.input-warm {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: transparent;
-  color: #8C2C3D;
-  border: 1.5px solid #E0D5C8;
+  color: #E8527D;
+  border: 1.5px solid #FFD0DD;
   cursor: pointer;
   transition: all 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .landing-journal .btn-journal-ghost:hover {
-  background: #F8F4EB;
-  border-color: #8C2C3D;
+  background: #FFEEF3;
+  border-color: #E8527D;
   transform: translateY(-2px);
 }
 

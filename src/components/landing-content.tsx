@@ -154,10 +154,10 @@ export default function LandingContent() {
           ══════════════════════════════════════════════════════════ */}
       <header className="px-6 py-5 max-w-[1100px] w-full mx-auto flex items-center justify-between z-20 relative">
         <div className="flex items-center space-x-2.5">
-          <span className="font-display italic text-2xl font-black tracking-tight text-[#2C2628]">
+          <span className="font-display italic text-2xl font-black tracking-tight text-[var(--text)]">
             pairfect
           </span>
-          <div className="w-1.5 h-1.5 rounded-full bg-[#8C2C3D]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--burgundy)]" />
         </div>
 
         <div className="flex items-center space-x-4">
@@ -166,17 +166,17 @@ export default function LandingContent() {
               setSoundEnabled(!soundEnabled);
               playTactileSound("pop");
             }}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E8DFD3] bg-[#FFFDF8] text-[9px] font-mono font-bold text-[#6B5E58] uppercase tracking-wider hover:border-[#8C2C3D] transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--paper-warm)] text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider hover:border-[var(--burgundy)] transition-colors cursor-pointer"
             aria-label="Toggle ambient tactile soundscapes"
           >
             {soundEnabled ? (
               <>
-                <Volume2 className="w-3 h-3 text-[#8C2C3D]" />
+                <Volume2 className="w-3 h-3 text-[var(--burgundy)]" />
                 <span>Soundscapes On</span>
               </>
             ) : (
               <>
-                <VolumeX className="w-3 h-3 text-[#9A8E85]" />
+                <VolumeX className="w-3 h-3 text-[var(--ink-light)]" />
                 <span>Soundscapes Off</span>
               </>
             )}
@@ -184,7 +184,7 @@ export default function LandingContent() {
 
           <Link
             href="/login"
-            className="text-xs font-mono uppercase tracking-widest text-[#9A8E85] hover:text-[#2C2628] transition-colors px-3 py-2"
+            className="text-xs font-mono uppercase tracking-widest text-[var(--text-soft)] hover:text-[var(--text)] transition-colors px-3 py-2"
           >
             Sign In
           </Link>
@@ -217,7 +217,7 @@ export default function LandingContent() {
                 initial="hidden"
                 animate="visible"
                 custom={0}
-                className="text-[10px] font-mono font-bold tracking-[0.22em] text-[#9A8E85] uppercase"
+                className="text-[10px] font-mono font-bold tracking-[0.22em] text-[var(--ink-light)] uppercase"
               >
                 Built for two. Kept forever.
               </motion.p>
@@ -227,11 +227,11 @@ export default function LandingContent() {
                 initial="hidden"
                 animate="visible"
                 custom={0.1}
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.2rem] font-display italic font-black text-[#2C2628] tracking-tight leading-[1.08]"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.2rem] font-display italic font-black text-[var(--text)] tracking-tight leading-[1.08]"
               >
                 Some days <br />
                 become memories. <br />
-                <span className="text-[#8C2C3D]">
+                <span className="text-[var(--burgundy)]">
                   Some memories <br />
                   become home.
                 </span>
@@ -242,7 +242,7 @@ export default function LandingContent() {
                 initial="hidden"
                 animate="visible"
                 custom={0.25}
-                className="font-quote italic text-base sm:text-lg text-[#6B5E58] max-w-[540px] leading-relaxed pt-2"
+                className="font-quote italic text-base sm:text-lg text-[var(--text-soft)] max-w-[540px] leading-relaxed pt-2"
               >
                 Not another messaging app. A shared journal, memory book, gratitude
                 space, and little universe — for just the two of you.
