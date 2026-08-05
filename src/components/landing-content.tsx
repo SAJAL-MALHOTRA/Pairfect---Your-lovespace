@@ -5,16 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight, Lock, Shield, Heart, Eye, Volume2, VolumeX, Sparkles, Tv, Camera,
-  HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight, MessageSquare, BookOpen
+  HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight, MessageSquare, BookOpen, Key
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 /* ─── Easing curve as specified in motion language system ─── */
 const EASE_CUBIC = [0.22, 0.61, 0.36, 1] as const;
 
 /* ─── Shared animation variants ─── */
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 28 },
   visible: (delay: number = 0) => ({
     opacity: 1,
     y: 0,
@@ -30,31 +30,31 @@ const fadeIn = {
   }),
 };
 
-/* ─── Memory Wall data ─── */
-const memoryWallItems = [
-  { emoji: "☕", label: "First Coffee", rotate: -4, color: "#FFF8FA" },
-  { emoji: "🌅", label: "Sunset Walk", rotate: 3, color: "#FFEEF3" },
-  { emoji: "🎵", label: "Our Song", rotate: -2, color: "#FFF8FA" },
-  { emoji: "✈️", label: "First Trip", rotate: 5, color: "#FFEEF3" },
-  { emoji: "🌧️", label: "Rainy Day In", rotate: -6, color: "#FFF8FA" },
-  { emoji: "🍕", label: "Pizza Night", rotate: 2, color: "#FFEEF3" },
-  { emoji: "📸", label: "Photobooth", rotate: -3, color: "#FFF8FA" },
-  { emoji: "💌", label: "First Letter", rotate: 4, color: "#FFEEF3" },
-  { emoji: "🎂", label: "Birthday", rotate: -5, color: "#FFF8FA" },
-  { emoji: "🌸", label: "Spring Walk", rotate: 1, color: "#FFEEF3" },
-  { emoji: "🏠", label: "Moved In", rotate: -2, color: "#FFF8FA" },
-  { emoji: "❤️", label: "Still Us", rotate: 3, color: "#FFEEF3" },
+/* ─── Memory Wall Scrapbook Cards ─── */
+const memoryScrapbookItems = [
+  { emoji: "☕", title: "First Coffee", date: "Oct 14", weather: "☀️ 68°F", rotate: -4, tapeColor: "#FFE3EC" },
+  { emoji: "🌅", title: "Sunset Walk", date: "Nov 02", weather: "🌅 62°F", rotate: 3, tapeColor: "#FFD0DD" },
+  { emoji: "🎵", title: "Our Song", date: "Nov 19", weather: "🌙 55°F", rotate: -2, tapeColor: "#FFE3EC" },
+  { emoji: "✈️", title: "First Trip", date: "Dec 12", weather: "❄️ 42°F", rotate: 5, tapeColor: "#FFD0DD" },
+  { emoji: "🌧️", title: "Rainy Day In", date: "Jan 08", weather: "🌧️ 48°F", rotate: -6, tapeColor: "#FFE3EC" },
+  { emoji: "🍕", title: "Pizza Night", date: "Jan 24", weather: "🌙 50°F", rotate: 2, tapeColor: "#FFD0DD" },
+  { emoji: "📸", title: "Photobooth", date: "Feb 14", weather: "💖 65°F", rotate: -3, tapeColor: "#FFE3EC" },
+  { emoji: "💌", title: "First Letter", date: "Mar 01", weather: "🌸 58°F", rotate: 4, tapeColor: "#FFD0DD" },
+  { emoji: "🎂", title: "Birthday", date: "Apr 10", weather: "☀️ 72°F", rotate: -5, tapeColor: "#FFE3EC" },
+  { emoji: "🌸", title: "Spring Walk", date: "May 04", weather: "🌺 75°F", rotate: 1, tapeColor: "#FFD0DD" },
+  { emoji: "🏠", title: "Moved In", date: "Jun 18", weather: "☀️ 80°F", rotate: -2, tapeColor: "#FFE3EC" },
+  { emoji: "❤️", title: "Still Us", date: "Today", weather: "✨ Warm", rotate: 3, tapeColor: "#FFD0DD" },
 ];
 
 /* ─── Timeline milestones ─── */
 const timelineMilestones = [
-  { emoji: "👋", label: "First Hello" },
-  { emoji: "☕", label: "First Date" },
-  { emoji: "✈️", label: "First Trip" },
-  { emoji: "⚡", label: "First Fight" },
-  { emoji: "🤝", label: "Made Up" },
-  { emoji: "🏠", label: "Moved Together" },
-  { emoji: "💍", label: "Still Choosing Each Other" },
+  { emoji: "👋", label: "First Hello", date: "Day 1" },
+  { emoji: "☕", label: "First Date", date: "Day 14" },
+  { emoji: "✈️", label: "First Trip", date: "Day 90" },
+  { emoji: "⚡", label: "First Fight", date: "Day 140" },
+  { emoji: "🤝", label: "Made Up", date: "Day 141" },
+  { emoji: "🏠", label: "Moved Together", date: "Day 365" },
+  { emoji: "💍", label: "Still Choosing Us", date: "Forever" },
 ];
 
 export default function LandingContent() {
@@ -144,15 +144,15 @@ export default function LandingContent() {
   };
 
   return (
-    <div className="landing-journal relative min-h-screen flex flex-col overflow-hidden bg-[var(--bg)]">
+    <div className="landing-journal relative min-h-screen flex flex-col overflow-hidden bg-[#FFF9FA]">
 
       {/* ── TOP ANNOUNCEMENT BANNER ── */}
-      <div className="bg-gradient-to-r from-[var(--burgundy)] via-[#D13D68] to-[var(--burgundy)] text-white text-[11px] font-mono py-2 px-4 text-center tracking-wide font-medium flex items-center justify-center gap-2 shadow-xs z-30 relative">
+      <div className="bg-gradient-to-r from-[#8C2C3D] via-[#D13D68] to-[#8C2C3D] text-white text-[11px] font-mono py-2.5 px-4 text-center tracking-wide font-medium flex items-center justify-center gap-2 shadow-xs z-30 relative">
         <Heart className="w-3.5 h-3.5 fill-white animate-pulse" />
-        <span>Designed for couples to share dates, letters &amp; daily memories together</span>
+        <span>Built for two. Kept forever. Your private digital sanctuary.</span>
       </div>
 
-      {/* ── FLOATING PARTICLES ── */}
+      {/* ── FLOATING DUST PARTICLES ── */}
       <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
         {[6, 15, 28, 42, 58, 72, 88].map((left, i) => (
           <div
@@ -167,40 +167,26 @@ export default function LandingContent() {
             }}
           />
         ))}
-        {[10, 35, 60, 82].map((left, i) => (
-          <div
-            key={`petal-${i}`}
-            className="petal-particle"
-            style={{
-              left: `${left}%`,
-              fontSize: `${10 + i * 2}px`,
-              animation: `float-petal ${24 + i * 6}s infinite linear`,
-              animationDelay: `${i * 4}s`,
-            }}
-          >
-            {["🌸", "🥀", "🍂", "✿"][i]}
-          </div>
-        ))}
       </div>
 
       {/* ══════════════════════════════════════════════════════════
-          HEADER — Logo, Navigation & Soundscapes Toggle
+          HEADER — Minimal Brand Ribbon & Soundscapes Toggle
           ══════════════════════════════════════════════════════════ */}
-      <header className="px-6 py-4 max-w-[1280px] w-full mx-auto flex items-center justify-between z-20 relative bg-[var(--bg)]/90 backdrop-blur-md sticky top-0 border-b border-[var(--border)]">
+      <header className="px-6 py-4 max-w-[1280px] w-full mx-auto flex items-center justify-between z-20 relative bg-[#FFF9FA]/90 backdrop-blur-md sticky top-0 border-b border-[#FFD0DD]">
         <div className="flex items-center space-x-3">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-display italic text-2xl font-black tracking-tight text-[var(--text)]">
+            <span className="font-display italic text-2xl font-black tracking-tight text-[#3D2432]">
               pairfect
             </span>
-            <div className="w-2 h-2 rounded-full bg-[var(--burgundy)] animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-[#8C2C3D] animate-pulse" />
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center space-x-8 text-xs font-mono font-medium text-[var(--text-soft)] uppercase tracking-wider">
-          <a href="#activities" className="hover:text-[var(--text)] transition-colors">Activities</a>
-          <Link href="/photo-booth" className="hover:text-[var(--text)] transition-colors">Photobooth</Link>
-          <Link href="/love-letter" className="hover:text-[var(--text)] transition-colors">Love Letters</Link>
-          <Link href="/watch" className="hover:text-[var(--text)] transition-colors">Watch Together</Link>
+        <nav className="hidden md:flex items-center space-x-8 text-xs font-mono font-medium text-[#7A4B5D] uppercase tracking-wider">
+          <a href="#rituals" className="hover:text-[#3D2432] transition-colors">Rituals</a>
+          <Link href="/photo-booth" className="hover:text-[#3D2432] transition-colors">Photobooth</Link>
+          <Link href="/love-letter" className="hover:text-[#3D2432] transition-colors">Love Letters</Link>
+          <Link href="/watch" className="hover:text-[#3D2432] transition-colors">Watch</Link>
         </nav>
 
         <div className="flex items-center space-x-3">
@@ -209,17 +195,17 @@ export default function LandingContent() {
               setSoundEnabled(!soundEnabled);
               playTactileSound("pop");
             }}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--paper-warm)] text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider hover:border-[var(--burgundy)] transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FFD0DD] bg-[#FFF8FA] text-[9px] font-mono font-bold text-[#7A4B5D] uppercase tracking-wider hover:border-[#8C2C3D] transition-colors cursor-pointer"
             aria-label="Toggle ambient soundscapes"
           >
             {soundEnabled ? (
               <>
-                <Volume2 className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                <Volume2 className="w-3.5 h-3.5 text-[#8C2C3D]" />
                 <span>Soundscapes On</span>
               </>
             ) : (
               <>
-                <VolumeX className="w-3.5 h-3.5 text-[var(--ink-light)]" />
+                <VolumeX className="w-3.5 h-3.5 text-[#7A4B5D]" />
                 <span>Soundscapes Off</span>
               </>
             )}
@@ -227,7 +213,7 @@ export default function LandingContent() {
 
           <Link
             href="/login"
-            className="text-xs font-mono uppercase tracking-widest text-[var(--text-soft)] hover:text-[var(--text)] transition-colors px-3 py-2"
+            className="text-xs font-mono uppercase tracking-widest text-[#7A4B5D] hover:text-[#3D2432] transition-colors px-3 py-2"
           >
             Sign In
           </Link>
@@ -242,26 +228,26 @@ export default function LandingContent() {
       </header>
 
       {/* ══════════════════════════════════════════════════════════
-          MAIN CONTENT
+          MAIN CONTENT — OBJECTS ON A MEMORY DESK
           ══════════════════════════════════════════════════════════ */}
       <main className="flex-1 w-full z-10 relative">
 
-        {/* ── CHAPTER 1 — HERO SECTION (2-Column High Impact) ── */}
-        <section aria-label="Hero Introduction" className="max-w-[1280px] mx-auto px-6 pt-10 md:pt-16 pb-16">
+        {/* ── HERO SECTION: REAL PAIRFECT ROOM UI MOCKUP ── */}
+        <section aria-label="Hero Introduction" className="max-w-[1280px] mx-auto px-6 pt-12 md:pt-20 pb-20">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             
-            {/* Left Column: Headline, Subheadline & Action Buttons */}
-            <div className="w-full lg:w-7/12 text-left space-y-6">
+            {/* Left Column: Focused Single Promise & Action */}
+            <div className="w-full lg:w-6/12 text-left space-y-6">
               
               <motion.div
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
                 custom={0}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[9px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase shadow-xs"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFF8FA] border border-[#FFD0DD] text-[9px] font-mono font-bold tracking-widest text-[#7A4B5D] uppercase shadow-xs"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                <span>BUILT FOR TWO · RITUALS, DATES &amp; MEMORIES</span>
+                <Sparkles className="w-3.5 h-3.5 text-[#8C2C3D]" />
+                <span>THE PRIVATE LOVESPACE FOR TWO</span>
               </motion.div>
 
               <motion.h1
@@ -269,10 +255,10 @@ export default function LandingContent() {
                 initial="hidden"
                 animate="visible"
                 custom={0.1}
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.1rem] font-display italic font-black text-[var(--text)] tracking-tight leading-[1.08]"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-[4rem] font-display italic font-black text-[#3D2432] tracking-tight leading-[1.06]"
               >
                 Love deserves <br />
-                <span className="text-[var(--burgundy)] font-black">
+                <span className="text-[#8C2C3D] font-black">
                   better than a chat
                 </span> <br />
                 history.
@@ -283,9 +269,9 @@ export default function LandingContent() {
                 initial="hidden"
                 animate="visible"
                 custom={0.25}
-                className="font-sans text-base sm:text-lg text-[var(--text-soft)] max-w-[560px] leading-relaxed"
+                className="font-sans text-base sm:text-lg text-[#7A4B5D] max-w-[520px] leading-relaxed"
               >
-                Pairfect is your private digital sanctuary — a place for wax-sealed love letters, photobooth strips, synchronized movie nights, and daily connection rituals designed exclusively for two.
+                A private room built exclusively for two people. Share wax-sealed letters, photobooth strips, synchronized movie nights, and daily connection rituals that turn into lifetime keepsakes.
               </motion.p>
 
               <motion.div
@@ -293,88 +279,127 @@ export default function LandingContent() {
                 initial="hidden"
                 animate="visible"
                 custom={0.4}
-                className="flex flex-wrap items-center gap-3 pt-2"
+                className="flex flex-wrap items-center gap-4 pt-2"
               >
-                <a
-                  href="#activities"
-                  className="btn-journal"
-                  onMouseEnter={() => playTactileSound("tap")}
-                >
-                  Explore activities ▷
-                </a>
-                <Link
-                  href="/photo-booth"
-                  className="btn-journal-ghost"
-                  onMouseEnter={() => playTactileSound("tap")}
-                >
-                  Open photobooth
-                </Link>
                 <Link
                   href="/onboarding"
-                  className="btn-journal-ghost"
+                  className="btn-journal py-3 px-8 text-[11px]"
                   onMouseEnter={() => playTactileSound("tap")}
                 >
-                  Create your room ▷
+                  Create Your Room ▷
                 </Link>
+                <a
+                  href="#rituals"
+                  className="btn-journal-ghost py-3 px-8 text-[11px]"
+                  onMouseEnter={() => playTactileSound("tap")}
+                >
+                  Explore Keepsakes
+                </a>
               </motion.div>
             </div>
 
-            {/* Right Column: Visual Anchor */}
+            {/* Right Column: REAL PAIRFECT ROOM INTERACTIVE UI MOCKUP (No generic stock image) */}
             <motion.div
               variants={fadeUp}
               initial="hidden"
               animate="visible"
               custom={0.45}
-              className="w-full lg:w-5/12 relative"
+              className="w-full lg:w-6/12 relative"
             >
-              <div className="relative p-4 sm:p-5 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl rotate-1 hover:rotate-0 transition-transform duration-500 keepsake-lift">
-                <div className="washi-tape-top" />
+              <div className="relative p-6 rounded-3xl bg-[#FFF8FA] border border-[#FFD0DD] shadow-2xl space-y-4 paper-grain">
                 
-                {/* Journal Visual */}
-                <div className="editorial-image rounded-2xl relative overflow-hidden aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5]">
-                  <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transform -rotate-45 shimmer-active" />
+                {/* Room Top Bar with Live Partner Cursors */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#FFD0DD]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-heading font-bold text-sm text-[#3D2432]">Mia &amp; Alex&apos;s Sanctuary</span>
                   </div>
-                  <img
-                    src="/hero-journal.jpg"
-                    alt="An open vintage relationship journal with keepsake memories"
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
+                  <span className="text-[10px] font-mono text-[#7A4B5D] uppercase tracking-wider">ROOM #4829</span>
                 </div>
 
-                {/* Floating Badges */}
-                <div className="absolute top-8 -left-3 bg-[var(--burgundy)] text-white text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-20">
-                  <span>✨ Private Sanctuary</span>
-                </div>
-                <div className="absolute bottom-8 -right-3 bg-purple-600 text-white text-[10px] font-mono font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-20">
-                  <span>❤️ Built for Two</span>
+                {/* Live Room Activity Feed Mockup */}
+                <div className="space-y-3 pt-1">
+                  
+                  {/* Live Card 1: Wax Letter Unsealing */}
+                  <div className="p-4 rounded-2xl bg-white border border-[#FFD0DD] shadow-xs flex items-center justify-between text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-[#8C2C3D]/10 border border-[#8C2C3D]/30 flex items-center justify-center text-lg">
+                        💌
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[#3D2432]">Wax Letter Unsealed Today</p>
+                        <p className="text-[10px] text-[#7A4B5D]">Written 365 days ago · Encrypted</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-[#8C2C3D] bg-[#FFEEF3] px-2.5 py-1 rounded-full">
+                      UNSEALED
+                    </span>
+                  </div>
+
+                  {/* Live Card 2: Photobooth Strip */}
+                  <div className="p-4 rounded-2xl bg-white border border-[#FFD0DD] shadow-xs flex items-center justify-between text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-lg">
+                        📸
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[#3D2432]">4-Frame Photobooth Strip</p>
+                        <p className="text-[10px] text-[#7A4B5D]">Added by Mia · Saved to memory wall</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">
+                      SAVED
+                    </span>
+                  </div>
+
+                  {/* Live Card 3: Synchronized Movie Night */}
+                  <div className="p-4 rounded-2xl bg-white border border-[#FFD0DD] shadow-xs flex items-center justify-between text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-lg">
+                        🍿
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[#3D2432]">Movie Night: Studio Ghibli</p>
+                        <p className="text-[10px] text-[#7A4B5D]">Alex synchronized playhead</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                      LIVE SYNC
+                    </span>
+                  </div>
+
                 </div>
 
-                <div className="pt-3 px-1 flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
-                  <span className="font-bold text-[var(--burgundy)] uppercase tracking-wider">YOUR PRIVATE LOVESPACE</span>
-                  <span>KEPT FOREVER ♡</span>
+                {/* Live Presence Badges */}
+                <div className="pt-2 flex items-center justify-between text-[10px] font-mono text-[#7A4B5D] border-t border-[#FFD0DD]">
+                  <div className="flex items-center gap-3">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-bold">✨ You Online</span>
+                    <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 font-bold">❤️ Partner Online</span>
+                  </div>
+                  <span>142 DAYS TOGETHER 🔥</span>
                 </div>
+
               </div>
             </motion.div>
 
           </div>
         </section>
 
-        {/* ── ROOM CODE QUICK JOIN BOX ── */}
-        <section className="max-w-[800px] mx-auto px-6 py-10 text-center">
+        {/* ── QUICK ROOM JOIN CODE BOX ── */}
+        <section className="max-w-[760px] mx-auto px-6 py-8 text-center">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="p-8 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md space-y-5 paper-grain"
+            className="p-8 rounded-3xl bg-[#FFF8FA] border border-[#FFD0DD] shadow-md space-y-4 paper-grain"
           >
             <div className="space-y-1">
-              <h3 className="text-xl font-display italic font-bold text-[var(--text)]">
+              <h3 className="text-xl font-display italic font-bold text-[#3D2432]">
                 Have an invite code from your partner?
               </h3>
-              <p className="text-xs font-mono text-[var(--text-soft)]">
-                Enter your 6-character code to open your private room instantly.
+              <p className="text-xs font-mono text-[#7A4B5D]">
+                Enter your 6-character code to step directly into your shared room.
               </p>
             </div>
 
@@ -388,7 +413,7 @@ export default function LandingContent() {
                     maxLength={1}
                     value={joinCode[idx]}
                     onChange={(e) => handleCodeChange(idx, e.target.value)}
-                    className="w-10 h-12 text-center text-lg font-mono font-bold uppercase rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:border-[var(--burgundy)] focus:ring-2 focus:ring-[var(--burgundy)]/20 outline-none transition-all"
+                    className="w-10 h-12 text-center text-lg font-mono font-bold uppercase rounded-xl border border-[#FFD0DD] bg-white text-[#3D2432] focus:border-[#8C2C3D] focus:ring-2 focus:ring-[#8C2C3D]/20 outline-none transition-all"
                   />
                 ))}
               </div>
@@ -405,277 +430,213 @@ export default function LandingContent() {
           </motion.div>
         </section>
 
-        {/* ── CHAPTER 2 — ACTIVITIES DIRECTORY ── */}
-        <section id="activities" className="max-w-[1100px] mx-auto px-6 py-20 space-y-12">
+
+        {/* ══════════════════════════════════════════════════════════
+            CHAPTER 2 — OBJECTS ON A MEMORY DESK (Tactile Rituals)
+            No rounded rectangle syndrome! Every ritual has its own material.
+            ══════════════════════════════════════════════════════════ */}
+        <section id="rituals" className="max-w-[1150px] mx-auto px-6 py-24 space-y-16">
           
           <div className="text-center space-y-3 max-w-xl mx-auto">
-            <span className="text-[9px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase">
-              ACTIVITIES &amp; CONNECTION RITUALS
+            <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[#7A4B5D] uppercase">
+              RITUALS &amp; KEEPSAKES
             </span>
-            <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)]">
-              Pick tonight&apos;s <span className="text-[var(--burgundy)]">activity.</span>
+            <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[#3D2432]">
+              Objects on a <span className="text-[#8C2C3D]">memory desk.</span>
             </h2>
-            <p className="text-xs font-mono text-[var(--text-soft)]">
-              Open a room and send the code to start a shared session together.
+            <p className="text-xs font-mono text-[#7A4B5D]">
+              Every feature in Pairfect is designed like a physical keepsake you can open, seal, or hold.
             </p>
           </div>
 
-          {/* Featured Top Activities (2 Cards) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ── OBJECT GRID ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             
-            {/* Feature 1: Riddle Night */}
-            <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm space-y-4 paper-grain keepsake-lift">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-xl">
-                  🧩
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold uppercase tracking-wider">
-                  CO-OP
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <h3 className="text-xl font-display italic font-bold text-[var(--text)]">
-                  Riddle Night
-                </h3>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Mind-bending logic puzzles and team riddles. Talk through solutions together and submit your answers to solve them as a team.
-                </p>
-              </div>
-              <Link href="/riddle" className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-2">
-                <span>Start riddling ▷</span>
-              </Link>
-            </div>
-
-            {/* Feature 2: IQ Duel */}
-            <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm space-y-4 paper-grain keepsake-lift">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-xl">
-                  🧠
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-purple-600 text-white text-[9px] font-mono font-bold uppercase tracking-wider">
-                  PLAYFUL CHALLENGE
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <h3 className="text-xl font-display italic font-bold text-[var(--text)]">
-                  IQ Duel
-                </h3>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Fast-paced pattern and logic challenges. Answer privately against the clock to see who scores highest in quick 1-on-1 rounds.
-                </p>
-              </div>
-              <Link href="/iq-duel" className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-purple-600 hover:underline pt-2">
-                <span>Start the duel ▷</span>
-              </Link>
-            </div>
-
-          </div>
-
-          {/* Full Activities Directory Grid */}
-          <div className="space-y-6">
-            <span className="text-[9px] font-mono font-bold tracking-widest text-[var(--ink-light)] uppercase">
-              ALL GAMES &amp; ACTIVITIES
-            </span>
-
-            {/* Featured Wide Photobooth Card */}
-            <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 paper-grain keepsake-lift">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl">
-                  📸
-                </div>
-                <div className="space-y-1 text-left">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-display italic font-bold text-[var(--text)]">
-                      Online Photobooth
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 text-[8px] font-mono font-bold uppercase tracking-wider border border-emerald-500/30">
-                      FREE TOOL
-                    </span>
+            {/* OBJECT 1: WAX-SEALED ENVELOPE (Love Letters) */}
+            <div className="relative group cursor-pointer" onClick={() => router.push("/love-letter")}>
+              <div className="p-6 rounded-t-3xl rounded-b-xl bg-[#FFF8FA] border border-[#FFD0DD] shadow-md space-y-4 transition-transform duration-300 group-hover:-translate-y-2 paper-grain relative overflow-hidden">
+                
+                {/* Envelope Flap Cutout */}
+                <div className="absolute top-0 inset-x-0 h-10 bg-[#FFEEF3] border-b border-[#FFD0DD] [clip-path:polygon(0_0,50%_100%,100%_0)]" />
+                
+                {/* Embossed Wax Seal Button */}
+                <div className="pt-6 flex justify-center">
+                  <div className="w-12 h-12 rounded-full bg-[#8C2C3D] text-white flex items-center justify-center text-xl shadow-md border-2 border-white font-serif font-black">
+                    ⚜️
                   </div>
-                  <p className="text-xs text-[var(--text-soft)]">
-                    Take your own 4-frame photo strip, customize it with filters and stickers, and save it to your shared memories.
+                </div>
+
+                <div className="text-center space-y-1.5">
+                  <span className="text-[8px] font-mono font-bold uppercase tracking-widest text-[#8C2C3D]">AES-256 ENCRYPTED</span>
+                  <h3 className="text-xl font-display italic font-bold text-[#3D2432]">Wax-Sealed Letter</h3>
+                  <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                    Write letters sealed with digital wax. Schedule them to open together on future anniversaries or rainy days.
                   </p>
                 </div>
+
+                <div className="pt-2 text-center">
+                  <span className="text-[10px] font-mono font-bold text-[#8C2C3D] group-hover:underline">Write a letter ▷</span>
+                </div>
               </div>
-              <Link href="/photo-booth" className="btn-journal py-2.5 px-6 text-[10px] whitespace-nowrap">
-                Open the booth ▷
-              </Link>
             </div>
 
-            {/* 3-Column Directory Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              {/* Card 1: Know Me Quiz */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">❓</span>
-                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[8px] font-mono font-bold uppercase">QUIZ</span>
+            {/* OBJECT 2: FILM STRIP WITH SPROCKET HOLES (Photobooth) */}
+            <div className="relative group cursor-pointer" onClick={() => router.push("/photo-booth")}>
+              <div className="p-6 rounded-2xl bg-[#2C2628] text-white shadow-xl space-y-4 transition-transform duration-300 group-hover:-translate-y-2 relative overflow-hidden">
+                
+                {/* Film Sprocket Holes (Left & Right) */}
+                <div className="absolute left-2 top-0 bottom-0 flex flex-col justify-between py-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="w-2.5 h-3 rounded-xs bg-white/20" />
+                  ))}
                 </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Know Me Quiz</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Lock in privately, reveal together, and score your compatibility across 17 distinct question packs.
-                </p>
-                <Link href="/quiz" className="inline-block text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-1">
-                  Play quiz ▷
-                </Link>
-              </div>
-
-              {/* Card 2: Wax-Sealed Love Letters */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">💌</span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[8px] font-mono font-bold uppercase">ENCRYPTED</span>
+                <div className="absolute right-2 top-0 bottom-0 flex flex-col justify-between py-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="w-2.5 h-3 rounded-xs bg-white/20" />
+                  ))}
                 </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Wax-Sealed Letters</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  AES-256 encrypted letters sealed with digital wax. Schedule them to unseal on future anniversaries.
-                </p>
-                <Link href="/love-letter" className="inline-block text-xs font-mono font-bold text-purple-600 hover:underline pt-1">
-                  Write a letter ▷
-                </Link>
-              </div>
 
-              {/* Card 3: Synchronized Movie Night */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">🍿</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[8px] font-mono font-bold uppercase">WATCH</span>
+                <div className="px-5 space-y-3">
+                  <div className="flex items-center justify-between text-[8px] font-mono text-white/60 uppercase">
+                    <span>FRAME STRIP 35MM</span>
+                    <span>FREE TOOL</span>
+                  </div>
+
+                  <div className="aspect-[4/3] rounded-lg bg-black/40 border border-white/20 flex items-center justify-center text-3xl">
+                    📸
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-display italic font-bold text-white">4-Frame Photobooth</h3>
+                    <p className="text-xs text-white/70 leading-relaxed">
+                      Take your own 4-frame strip right from your browser, customize with stickers, and save to memories.
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="text-[10px] font-mono font-bold text-pink-300 group-hover:underline">Open photobooth ▷</span>
+                  </div>
                 </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Movie Night</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Watch YouTube videos together with synchronized playback and live floating emojis.
-                </p>
-                <Link href="/watch" className="inline-block text-xs font-mono font-bold text-blue-600 hover:underline pt-1">
-                  Start watching ▷
-                </Link>
+
               </div>
-
-              {/* Card 4: AI Couples Debate / Vibe Judge */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">⚖️</span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[8px] font-mono font-bold uppercase">AI JUDGE</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Couples Debate</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Argue your case — an AI judge evaluates both arguments and crowns a playful winner.
-                </p>
-                <Link href="/vibe-judge" className="inline-block text-xs font-mono font-bold text-amber-600 hover:underline pt-1">
-                  Start debate ▷
-                </Link>
-              </div>
-
-              {/* Card 5: Gratitude Jar */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">🫙</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-mono font-bold uppercase">DAILY</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Gratitude Jar</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Drop handwritten appreciation notes into a shared jar to surprise your partner every day.
-                </p>
-                <Link href="/gratitude-jar" className="inline-block text-xs font-mono font-bold text-emerald-600 hover:underline pt-1">
-                  Open jar ▷
-                </Link>
-              </div>
-
-            </div>
-          </div>
-
-        </section>
-
-        {/* ── CHAPTER 2.5 — TODAY'S STORY PREVIEW (Pairfect-Original Daily Feed) ── */}
-        <section aria-label="Today's Story Preview" className="max-w-[1100px] mx-auto px-6 py-16">
-          <div className="p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md grid grid-cols-1 lg:grid-cols-12 gap-10 items-center paper-grain">
-            
-            {/* Left Info Column */}
-            <div className="lg:col-span-5 text-left space-y-5">
-              <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
-                TODAY&apos;S STORY
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)] leading-tight">
-                Your private daily <span className="text-[var(--burgundy)]">relationship feed.</span>
-              </h2>
-              <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed">
-                Every letter sealed, photostrip taken, and quiz answered automatically weaves into your shared daily timeline — creating a living digital keepsake of your relationship over time.
-              </p>
-              <Link href="/dashboard" className="btn-journal inline-flex py-3 px-6 text-[10px]">
-                Open your dashboard ▷
-              </Link>
             </div>
 
-            {/* Right Story Feed Card Showcase */}
-            <div className="lg:col-span-7 relative">
-              <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-inner space-y-4">
-                <div className="space-y-3">
-                  
-                  {/* Story Entry 1: Love Letter */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">💌</span>
-                      <div>
-                        <p className="text-xs font-bold text-[var(--text)]">Letter Sealed for Anniversary</p>
-                        <p className="text-[10px] text-[var(--text-soft)]">Unseals in 14 days · Encrypted</p>
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-full">
-                      SEALED
-                    </span>
+            {/* OBJECT 3: VINTAGE CINEMA TICKET (Movie Night) */}
+            <div className="relative group cursor-pointer" onClick={() => router.push("/watch")}>
+              <div className="p-6 rounded-2xl bg-[#1A1418] border border-amber-500/30 text-amber-100 shadow-xl space-y-4 transition-transform duration-300 group-hover:-translate-y-2 relative overflow-hidden">
+                
+                {/* Ticket Notch (Left & Right Cutouts) */}
+                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#FFF9FA]" />
+                <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#FFF9FA]" />
+
+                <div className="px-3 space-y-3">
+                  <div className="flex items-center justify-between text-[8px] font-mono text-amber-400 uppercase tracking-widest border-b border-amber-500/20 pb-2">
+                    <span>ADM-01 · LIVE SYNC</span>
+                    <span>ADMIT TWO</span>
                   </div>
 
-                  {/* Story Entry 2: Photobooth */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">📸</span>
-                      <div>
-                        <p className="text-xs font-bold text-[var(--text)]">4-Frame Photobooth Strip</p>
-                        <p className="text-[10px] text-[var(--text-soft)]">Saved to shared memories</p>
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                      SAVED
-                    </span>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-display italic font-bold text-amber-200">Movie Night Ticket</h3>
+                    <p className="text-xs text-amber-100/70 leading-relaxed">
+                      Watch YouTube videos together with synchronized playback controls and live reaction floating emojis.
+                    </p>
                   </div>
 
-                  {/* Story Entry 3: Daily Quiz */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">✨</span>
-                      <div>
-                        <p className="text-xs font-bold text-[var(--text)]">Know Me Quiz · 100% Match</p>
-                        <p className="text-[10px] text-[var(--text-soft)]">Karaoke Songs Pack</p>
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-500/10 px-2.5 py-1 rounded-full">
-                      MATCHED
-                    </span>
+                  {/* Golden Barcode */}
+                  <div className="pt-2 flex items-center justify-between border-t border-amber-500/20">
+                    <span className="text-[8px] font-mono text-amber-400/60">||| |||| || | |||||</span>
+                    <span className="text-[10px] font-mono font-bold text-amber-300 group-hover:underline">Start watching ▷</span>
                   </div>
+                </div>
 
+              </div>
+            </div>
+
+            {/* OBJECT 4: GLASS GRATITUDE JAR */}
+            <div className="relative group cursor-pointer" onClick={() => router.push("/gratitude-jar")}>
+              <div className="p-6 rounded-3xl bg-[#FFF8FA] border border-emerald-200 shadow-md space-y-4 transition-transform duration-300 group-hover:-translate-y-2 paper-grain relative">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl">
+                  🫙
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[8px] font-mono font-bold uppercase tracking-widest text-emerald-600">DAILY APPRECIATION</span>
+                  <h3 className="text-xl font-display italic font-bold text-[#3D2432]">Gratitude Jar</h3>
+                  <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                    Drop folded notes into a shared glass jar. Draw random notes together on quiet evenings.
+                  </p>
+                </div>
+                <div className="pt-1">
+                  <span className="text-[10px] font-mono font-bold text-emerald-600 group-hover:underline">Open jar ▷</span>
+                </div>
+              </div>
+            </div>
+
+            {/* OBJECT 5: PLAYING CARD (Riddle & Quiz) */}
+            <div className="relative group cursor-pointer" onClick={() => router.push("/quiz")}>
+              <div className="p-6 rounded-2xl bg-[#FFF8FA] border-2 border-[#FFD0DD] shadow-md space-y-4 transition-transform duration-300 group-hover:-translate-y-2 paper-grain relative">
+                
+                {/* Playing card corner suits */}
+                <div className="flex justify-between text-xs font-mono font-bold text-[#8C2C3D]">
+                  <span>A ♥</span>
+                  <span>♥ A</span>
+                </div>
+
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-xl font-display italic font-bold text-[#3D2432]">Know Me Quiz</h3>
+                  <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                    Lock in privately, reveal together, and score your compatibility across 17 distinct packs.
+                  </p>
+                </div>
+
+                <div className="pt-1 text-center">
+                  <span className="text-[10px] font-mono font-bold text-[#8C2C3D] group-hover:underline">Play quiz ▷</span>
+                </div>
+              </div>
+            </div>
+
+            {/* OBJECT 6: STITCHED LINEN NOTEBOOK (Timeline) */}
+            <div className="relative group cursor-pointer" onClick={() => router.push("/stories")}>
+              <div className="p-6 rounded-2xl bg-[#FFF8FA] border border-[#FFD0DD] shadow-md space-y-4 transition-transform duration-300 group-hover:-translate-y-2 paper-grain relative border-l-4 border-l-[#8C2C3D]">
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-xl">
+                  📜
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[8px] font-mono font-bold uppercase tracking-widest text-purple-600">STITCHED TIMELINE</span>
+                  <h3 className="text-xl font-display italic font-bold text-[#3D2432]">Memory Timeline</h3>
+                  <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                    A living notebook of your relationship milestones from first hello to years from now.
+                  </p>
+                </div>
+                <div className="pt-1">
+                  <span className="text-[10px] font-mono font-bold text-purple-600 group-hover:underline">View timeline ▷</span>
                 </div>
               </div>
             </div>
 
           </div>
+
         </section>
 
-        {/* ── CHAPTER 3 — THE MEMORY WALL (3D Perspective Grid) ── */}
-        <section aria-label="The Memory Wall" className="max-w-[1100px] mx-auto px-6 py-20 space-y-12">
+
+        {/* ══════════════════════════════════════════════════════════
+            CHAPTER 3 — THE MEMORY SCRAPBOOK WALL (Real Memories Feel)
+            Scrapbook cards with tape corners, weather & date stamps
+            ══════════════════════════════════════════════════════════ */}
+        <section aria-label="The Memory Wall" className="max-w-[1150px] mx-auto px-6 py-20 space-y-12">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             custom={0}
-            className="text-center space-y-4"
+            className="text-center space-y-3"
           >
-            <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
+            <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[#7A4B5D] uppercase">
               The Memory Wall
             </p>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display italic font-black text-[var(--text)] leading-[1.15]">
-              Every moment you&apos;ve kept.
-              <br />
-              <span className="text-[var(--burgundy)]">All in one place.</span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display italic font-black text-[#3D2432] leading-[1.12]">
+              Every moment you&apos;ve kept. <br />
+              <span className="text-[#8C2C3D]">All in your private vault.</span>
             </h2>
           </motion.div>
 
@@ -685,42 +646,52 @@ export default function LandingContent() {
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
             custom={0.2}
-            className="memory-wall grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-5"
+            className="memory-wall grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5"
           >
-            {memoryWallItems.map((item, i) => (
+            {memoryScrapbookItems.map((item, i) => (
               <div
-                key={item.label}
+                key={item.title}
                 onMouseEnter={() => playTactileSound("paper")}
-                className="memory-wall-card rounded-xl p-4 sm:p-5 flex flex-col items-center gap-2 cursor-pointer shadow-md border border-[var(--border)]"
+                className="relative rounded-2xl p-4 flex flex-col items-center justify-between gap-3 cursor-pointer shadow-md border border-[#FFD0DD] transition-all hover:scale-105 hover:shadow-xl hover:z-20 paper-grain"
                 style={{
-                  background: item.color,
+                  background: "#FFF8FA",
                   transform: `rotate(${item.rotate}deg)`,
-                  zIndex: i % 3 === 0 ? 10 : 5,
                 }}
               >
-                <span className="text-2xl sm:text-3xl">{item.emoji}</span>
-                <span className="text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider text-center">
-                  {item.label}
-                </span>
+                {/* Translucent Washi Tape Corner */}
+                <div
+                  className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-10 h-4 opacity-75 backdrop-blur-xs border border-white/40 shadow-xs"
+                  style={{ background: item.tapeColor }}
+                />
+
+                <span className="text-3xl pt-2">{item.emoji}</span>
+
+                <div className="text-center space-y-0.5">
+                  <p className="text-xs font-bold text-[#3D2432]">{item.title}</p>
+                  <p className="text-[9px] font-mono text-[#7A4B5D]">{item.date} · {item.weather}</p>
+                </div>
               </div>
             ))}
           </motion.div>
         </section>
 
-        {/* ── CHAPTER 4 — TIMELINE ── */}
-        <section aria-label="Shared Memory Timeline" className="max-w-[850px] mx-auto px-6 py-20 text-center space-y-12">
+
+        {/* ══════════════════════════════════════════════════════════
+            CHAPTER 4 — STITCHED LINEN TIMELINE
+            ══════════════════════════════════════════════════════════ */}
+        <section aria-label="Shared Memory Timeline" className="max-w-[900px] mx-auto px-6 py-20 text-center space-y-12">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             custom={0}
-            className="space-y-4"
+            className="space-y-3"
           >
-            <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
-              Your Shared Timeline
+            <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[#7A4B5D] uppercase">
+              Stitched Notebook Timeline
             </p>
-            <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)] leading-[1.15]">
+            <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[#3D2432]">
               Time passes. Love stays.
             </h2>
           </motion.div>
@@ -731,89 +702,101 @@ export default function LandingContent() {
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
             custom={0.15}
-            className="flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+            className="p-8 rounded-3xl bg-[#FFF8FA] border-2 border-dashed border-[#FFD0DD] shadow-md paper-grain"
           >
-            {timelineMilestones.map((m, i) => (
-              <React.Fragment key={m.label}>
-                {i > 0 && (
-                  <span className="hidden sm:inline text-[var(--border)] font-mono text-sm">
-                    →
-                  </span>
-                )}
-                <div
-                  className="px-4 py-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm text-center keepsake-lift cursor-pointer"
-                  onMouseEnter={() => playTactileSound("tap")}
-                >
-                  <p className="text-xl mb-1">{m.emoji}</p>
-                  <p className="text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider whitespace-nowrap">
-                    {m.label}
-                  </p>
-                </div>
-              </React.Fragment>
-            ))}
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              {timelineMilestones.map((m, i) => (
+                <React.Fragment key={m.label}>
+                  {i > 0 && (
+                    <span className="hidden sm:inline text-[#FFD0DD] font-mono text-sm font-bold">
+                      ➔
+                    </span>
+                  )}
+                  <div
+                    className="px-4 py-3 rounded-2xl bg-white border border-[#FFD0DD] shadow-xs text-center keepsake-lift cursor-pointer hover:border-[#8C2C3D]"
+                    onMouseEnter={() => playTactileSound("tap")}
+                  >
+                    <p className="text-xl mb-0.5">{m.emoji}</p>
+                    <p className="text-xs font-bold text-[#3D2432]">{m.label}</p>
+                    <p className="text-[9px] font-mono text-[#7A4B5D] uppercase">{m.date}</p>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
           </motion.div>
         </section>
 
-        {/* ── CHAPTER 5 — TRUST & PRIVACY ── */}
-        <section aria-label="Privacy Guarantees" className="max-w-[800px] mx-auto px-6 py-16">
+
+        {/* ══════════════════════════════════════════════════════════
+            CHAPTER 5 — PRIVACY VAULT (Show Privacy, Don't Tell!)
+            A physical embossed lockbox vault instead of generic 4 boxes
+            ══════════════════════════════════════════════════════════ */}
+        <section aria-label="Privacy Guarantees" className="max-w-[850px] mx-auto px-6 py-16">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             custom={0}
-            className="bg-[var(--paper-warm)] border border-[var(--border)] p-10 md:p-14 rounded-3xl text-center space-y-8 shadow-sm relative overflow-hidden paper-grain"
+            className="p-10 md:p-14 rounded-3xl bg-[#2C2628] text-white text-center space-y-8 shadow-2xl relative overflow-hidden border border-white/10"
           >
-            <div className="space-y-4 max-w-md mx-auto">
-              <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
-                Privacy by Design
+            {/* Embossed Brass Lock Icon */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-b from-amber-300 to-amber-600 text-[#2C2628] flex items-center justify-center shadow-xl border-2 border-white/40">
+                <Key className="w-7 h-7 stroke-[2.5]" />
+              </div>
+            </div>
+
+            <div className="space-y-3 max-w-md mx-auto">
+              <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-amber-300 uppercase">
+                PRIVACY BY DESIGN
               </p>
-              <h2 className="text-2xl sm:text-3xl font-display italic font-black text-[var(--text)]">
+              <h2 className="text-2xl sm:text-3xl font-display italic font-black text-white">
                 Your memories belong here.
               </h2>
-              <p className="font-quote italic text-base text-[var(--text-soft)] leading-relaxed">
-                Not on a public feed. Not inside an algorithm. Only you two can open them.
+              <p className="font-quote italic text-base text-white/70 leading-relaxed">
+                Not on a public feed. Not inside an algorithm. Only you two hold the key.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto">
-              {[
-                { icon: <Shield className="w-4 h-4" />, label: "AES-256 Encrypted Letters" },
-                { icon: <Lock className="w-4 h-4" />, label: "Invite Only Rooms" },
-                { icon: <Eye className="w-4 h-4" />, label: "No Public Feeds" },
-                { icon: <Heart className="w-4 h-4" />, label: "Only 2 People" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="p-3 rounded-xl bg-[var(--paper-mid)] border border-[var(--border)] flex flex-col items-center space-y-1.5"
-                >
-                  <span className="text-[var(--burgundy)]">{item.icon}</span>
-                  <span className="text-[9px] font-mono font-bold text-[var(--text-soft)] text-center">
-                    {item.label}
-                  </span>
-                </div>
-              ))}
+            <div className="flex flex-wrap justify-center gap-4 max-w-lg mx-auto pt-2">
+              <div className="px-4 py-2 rounded-full bg-white/10 border border-white/15 text-xs font-mono text-white/90 flex items-center gap-2">
+                <Shield className="w-3.5 h-3.5 text-amber-300" />
+                <span>AES-256 Encrypted Letters</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-white/10 border border-white/15 text-xs font-mono text-white/90 flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5 text-amber-300" />
+                <span>Invite-Only Rooms</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-white/10 border border-white/15 text-xs font-mono text-white/90 flex items-center gap-2">
+                <Eye className="w-3.5 h-3.5 text-amber-300" />
+                <span>No Public Feeds</span>
+              </div>
             </div>
           </motion.div>
         </section>
 
-        {/* ── CHAPTER 5.5 — FREQUENTLY ASKED QUESTIONS ── */}
-        <section aria-label="Frequently Asked Questions" className="max-w-[800px] mx-auto px-6 py-16 text-left">
+
+        {/* ══════════════════════════════════════════════════════════
+            CHAPTER 5.5 — TACTILE INDEX CARD FAQ BOX
+            Cards flip & lift like an index card box
+            ══════════════════════════════════════════════════════════ */}
+        <section aria-label="Frequently Asked Questions" className="max-w-[850px] mx-auto px-6 py-16 text-left">
           <div className="space-y-6">
-            <div className="space-y-2">
-              <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
+            <div className="space-y-2 text-center">
+              <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[#7A4B5D] uppercase">
                 FREQUENTLY ASKED QUESTIONS
               </span>
-              <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)]">
-                Everything you need to <span className="text-[var(--burgundy)]">ask.</span>
+              <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[#3D2432]">
+                Everything you need to <span className="text-[#8C2C3D]">ask.</span>
               </h2>
             </div>
 
-            <div className="space-y-3 pt-4 divide-y divide-[var(--border)] border-t border-[var(--border)]">
+            <div className="space-y-4 pt-4">
               {[
                 {
                   q: "What games and activities can we play on Pairfect?",
-                  a: "Fifteen realtime activities are live: the Know Me Quiz, Riddle Night, IQ Duel, Wax-Sealed Love Letters, Online Photobooth, Couples Debate, Movie Night, Gratitude Jar, Spotify Mixtape, and Stitched Memory Stories. Everything happens in one shared room."
+                  a: "Fifteen realtime activities are live: Know Me Quiz, Riddle Night, IQ Duel, Wax-Sealed Love Letters, Online Photobooth, Couples Debate, Movie Night, Gratitude Jar, Spotify Mixtape, and Stitched Memory Stories."
                 },
                 {
                   q: "Is Pairfect free to use?",
@@ -832,21 +815,22 @@ export default function LandingContent() {
                   a: "Take your own 4-frame photo strip right from your browser, customize it with frame borders and stickers, and export or save it to your shared memories."
                 }
               ].map((faq, idx) => (
-                <div key={idx} className="pt-4 first:pt-0 space-y-2">
-                  <button
-                    onClick={() => {
-                      setOpenFaqIndex(openFaqIndex === idx ? null : idx);
-                      playTactileSound("tap");
-                    }}
-                    className="w-full flex items-center justify-between text-left text-sm sm:text-base font-bold text-[var(--text)] hover:text-[var(--burgundy)] transition-colors cursor-pointer py-1"
-                  >
+                <div
+                  key={idx}
+                  onClick={() => {
+                    setOpenFaqIndex(openFaqIndex === idx ? null : idx);
+                    playTactileSound("tap");
+                  }}
+                  className="p-5 rounded-2xl bg-[#FFF8FA] border border-[#FFD0DD] shadow-xs cursor-pointer transition-all hover:border-[#8C2C3D] hover:shadow-md paper-grain"
+                >
+                  <div className="flex items-center justify-between text-sm sm:text-base font-bold text-[#3D2432]">
                     <span>{faq.q}</span>
-                    <span className="font-mono text-xs text-[var(--text-soft)] pl-4">
+                    <span className="font-mono text-xs text-[#8C2C3D] pl-4">
                       {openFaqIndex === idx ? "✕" : "+"}
                     </span>
-                  </button>
+                  </div>
                   {openFaqIndex === idx && (
-                    <p className="text-xs text-[var(--text-soft)] font-sans leading-relaxed pt-1 pb-2">
+                    <p className="text-xs text-[#7A4B5D] font-sans leading-relaxed pt-3 border-t border-[#FFD0DD] mt-3">
                       {faq.a}
                     </p>
                   )}
@@ -856,30 +840,32 @@ export default function LandingContent() {
           </div>
         </section>
 
-        {/* ── CHAPTER 6 — CLOSING CTA ── */}
-        <section aria-label="Call to Action" className="max-w-[800px] mx-auto px-6 py-24">
+
+        {/* ══════════════════════════════════════════════════════════
+            CHAPTER 6 — CINEMATIC CLOSING CTA (Handwritten Letter)
+            Everything fades into a quiet candlelit ending
+            ══════════════════════════════════════════════════════════ */}
+        <section aria-label="Call to Action" className="max-w-[850px] mx-auto px-6 py-24">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             custom={0}
-            className="bg-[var(--paper-warm)] border border-[var(--border)] p-12 md:p-16 rounded-3xl text-center space-y-8 shadow-lg relative overflow-hidden paper-grain"
+            className="bg-[#2C2628] text-white p-12 md:p-16 rounded-3xl text-center space-y-8 shadow-2xl relative overflow-hidden border border-white/10"
           >
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--rose)] via-[var(--burgundy)] to-[var(--gold)]" />
-
             <div className="space-y-6 max-w-md mx-auto">
-              <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
-                One last page waits
+              <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-pink-300 uppercase">
+                ONE LAST PAGE WAITS
               </p>
 
-              <p className="text-xl sm:text-2xl font-display italic font-bold text-[var(--text)] leading-relaxed">
+              <p className="text-xl sm:text-2xl font-display italic font-bold text-white leading-relaxed">
                 Imagine this.
               </p>
-              <p className="font-handwriting text-2xl text-[var(--text)] leading-relaxed">
+              <p className="font-handwriting text-2xl sm:text-3xl text-pink-200 leading-relaxed">
                 One day — years from now — you&apos;ll forget what happened on an ordinary Tuesday.
               </p>
-              <p className="font-quote italic text-lg text-[var(--burgundy)] font-bold">
+              <p className="font-quote italic text-lg text-pink-300 font-bold">
                 But Pairfect won&apos;t.
               </p>
             </div>
@@ -887,10 +873,10 @@ export default function LandingContent() {
             <div className="pt-4 flex justify-center">
               <Link
                 href="/signup"
-                className="btn-journal"
+                className="btn-journal bg-[#8C2C3D] hover:bg-[#D13D68] text-white py-3.5 px-10 text-xs shadow-xl"
                 onMouseEnter={() => playTactileSound("pop")}
               >
-                Start Writing Together <ArrowRight className="w-4 h-4" />
+                Start Writing Together <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </motion.div>
@@ -899,37 +885,37 @@ export default function LandingContent() {
       </main>
 
       {/* ══════════════════════════════════════════════════════════
-          FOOTER
+          FOOTER — Handcrafted Book Binding Stamp
           ══════════════════════════════════════════════════════════ */}
-      <footer className="border-t border-[var(--border)] py-12 px-6 bg-[var(--paper-warm)]">
-        <div className="max-w-[1100px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="border-t border-[#FFD0DD] py-12 px-6 bg-[#FFF8FA]">
+        <div className="max-w-[1150px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col items-center md:items-start space-y-2">
             <div className="flex items-center space-x-2">
-              <span className="font-display italic text-lg font-black tracking-tight text-[var(--text)]">
+              <span className="font-display italic text-lg font-black tracking-tight text-[#3D2432]">
                 pairfect
               </span>
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--burgundy)]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[#8C2C3D]" />
             </div>
-            <p className="text-[10px] text-[var(--text-soft)] font-mono">
-              The place where relationships become memories.
+            <p className="text-[10px] text-[#7A4B5D] font-mono">
+              The private digital sanctuary &amp; living archive for two.
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6 text-xs text-[var(--text-soft)] font-mono">
-            <Link href="/privacy" className="hover:text-[var(--text)] transition-colors">
+          <div className="flex flex-wrap justify-center gap-6 text-xs text-[#7A4B5D] font-mono">
+            <Link href="/privacy" className="hover:text-[#3D2432] transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="hover:text-[var(--text)] transition-colors">
+            <Link href="/terms" className="hover:text-[#3D2432] transition-colors">
               Terms of Service
             </Link>
-            <a href="mailto:support@pairfect.app" className="hover:text-[var(--text)] transition-colors">
+            <a href="mailto:support@pairfect.app" className="hover:text-[#3D2432] transition-colors">
               Contact
             </a>
           </div>
 
           <div className="text-center md:text-right">
-            <p className="text-[10px] text-[var(--text-soft)] font-mono">
-              &copy; 2026 Pairfect. All rights reserved.
+            <p className="text-[10px] text-[#7A4B5D] font-mono">
+              &copy; 2026 Pairfect. Built for two. Kept forever.
             </p>
           </div>
         </div>
