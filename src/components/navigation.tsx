@@ -11,41 +11,48 @@ import { parseAvatarConfig, ChibiAvatar } from "@/components/chibi-avatar";
 import {
   Home,
   Mail,
-  BookOpen,
-  Gift,
-  Image as ImageIcon,
-  Clock,
+  Camera,
   Gamepad2,
+  Gift,
+  Clock,
+  Tv,
   User,
   Settings,
-  Music,
-  Camera,
   Heart,
   Bell,
-  Check,
-  Flame,
   Sparkles,
-  X,
+  Flame,
 } from "lucide-react";
 
-const CLUSTERS = [
-  [
-    { href: "/dashboard", icon: Home, label: "Home" }
-  ],
-  [
-    { href: "/love-letter", icon: Mail, label: "Letters" },
-    { href: "/mixtape", icon: Music, label: "Mixtape" }
-  ],
-  [
-    { href: "/photo-booth", icon: Camera, label: "Photo Booth" },
-    { href: "/play", icon: Gamepad2, label: "Playroom" },
-    { href: "/gratitude-jar", icon: Gift, label: "Gratitude" },
-    { href: "/stories", icon: Clock, label: "Timeline" }
-  ],
-  [
-    { href: "/profile", icon: User, label: "Profile" },
-    { href: "/settings", icon: Settings, label: "Settings" }
-  ]
+/* ─── Easing & Motion timing scale from spec ─── */
+const EASE_PAPER = [0.22, 0.61, 0.36, 1] as const;
+
+/* ─── Grouped Navigation Clusters (Apple HI spec) ─── */
+const NAV_GROUPS = [
+  {
+    title: "Relationship",
+    items: [
+      { href: "/dashboard", icon: Home, label: "Home" },
+      { href: "/love-letter", icon: Mail, label: "Letters" },
+      { href: "/photo-booth", icon: Camera, label: "Photobooth" },
+      { href: "/play", icon: Gamepad2, label: "Playroom" },
+    ],
+  },
+  {
+    title: "Connection",
+    items: [
+      { href: "/gratitude-jar", icon: Gift, label: "Gratitude" },
+      { href: "/stories", icon: Clock, label: "Timeline" },
+      { href: "/watch", icon: Tv, label: "Watch" },
+    ],
+  },
+  {
+    title: "Profile",
+    items: [
+      { href: "/profile", icon: User, label: "Profile" },
+      { href: "/settings", icon: Settings, label: "Settings" },
+    ],
+  },
 ];
 
 const PING_PHRASES = [
@@ -57,10 +64,12 @@ const PING_PHRASES = [
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { user, profile, pair, partner } = useAuth();
+  const { profile, pair, partner } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, sendPing } = useNotifications();
-  
+
   const [visible, setVisible] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [hoveredHref, setHoveredHref] = useState<string | null>(null);
   const [showPingMenu, setShowPingMenu] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [pingStatus, setPingStatus] = useState<string | null>(null);
@@ -106,10 +115,10 @@ export default function Navigation() {
 
   const userInitial = getInitials(profile?.display_name);
 
-  // Rate limited Ping trigger
+  // Rate-limited Ping trigger
   const handleTriggerPing = async (phrase?: string) => {
     const now = Date.now();
-    if (now - lastPingTime < 120000) { // 2 minute cooldown
+    if (now - lastPingTime < 120000) {
       setPingStatus("Sent with love! Give it a minute before sending another ♡");
       setTimeout(() => setPingStatus(null), 3000);
       setShowPingMenu(false);
@@ -128,28 +137,30 @@ export default function Navigation() {
 
   return (
     <>
-      {/* ─── GLOBAL TOP BAR ─── */}
+      {/* ══════════════════════════════════════════════════════════
+          GLOBAL TOP CONTROL BAR
+          ══════════════════════════════════════════════════════════ */}
       <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:px-12 flex items-center justify-between pointer-events-none">
-        {/* Left: Logo image + Soft Streak Badge */}
+        
+        {/* Left: Brand Logo & Streak Counter */}
         <div className="flex items-center gap-4 pointer-events-auto">
           <Link
             href="/dashboard"
             className="flex items-center select-none transition-opacity hover:opacity-85"
           >
-            <Image src="/logo-book.png" alt="Pairfect" height={36} width={36} className="rounded-lg" priority />
+            <Image src="/logo-book.png" alt="Pairfect" height={36} width={36} className="rounded-lg shadow-sm" priority />
           </Link>
 
-          {/* Soft Streak Badge — Zero Red, Zero Broken Hearts */}
           {pair && currentStreak > 0 && (
             <div
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border transition-all ${
                 isStreakPaused
                   ? "bg-[var(--paper-warm)] border-[var(--border)] text-[var(--text-soft)]"
-                  : "bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--burgundy)] font-bold shadow-xs"
+                  : "bg-[var(--paper-warm)] border-[var(--border)] text-[var(--burgundy)] font-bold shadow-xs"
               }`}
             >
               {isStreakPaused ? (
-                <span>💛 Streak paused at {currentStreak} — pick it back up anytime</span>
+                <span>💛 Streak paused at {currentStreak}</span>
               ) : (
                 <>
                   <Flame className="w-3.5 h-3.5 fill-current text-[var(--burgundy)]" />
@@ -160,28 +171,28 @@ export default function Navigation() {
           )}
         </div>
 
-        {/* Right Controls: Ping Button + Notification Bell + Avatar */}
+        {/* Right Controls: Ping, Notifications & Profile Avatar */}
         <div className="flex items-center gap-3 pointer-events-auto select-none">
 
-          {/* "Thinking of You" Ping Button */}
+          {/* Thinking of You Ping */}
           {partner && (
             <div className="relative" ref={pingMenuRef}>
               <button
                 onClick={() => setShowPingMenu(!showPingMenu)}
-                className="btn-secondary px-3 py-1.5 text-xs inline-flex items-center gap-1.5 rounded-full border-[var(--border)] bg-[var(--paper-warm)] text-[var(--burgundy)] hover:scale-105 active:scale-95 transition-all shadow-xs"
+                className="btn-journal-ghost px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 !rounded-full shadow-xs"
                 title="Send a Thinking of You ping to your partner"
               >
-                <Heart className="w-3.5 h-3.5 fill-current" />
+                <Heart className="w-3.5 h-3.5 fill-current text-[var(--burgundy)]" />
                 <span className="hidden sm:inline font-sans text-xs">Ping</span>
               </button>
 
-              {/* Ping Presets Popover */}
               <AnimatePresence>
                 {showPingMenu && (
                   <motion.div
                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: EASE_PAPER }}
                     className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl z-50 space-y-1 paper-grain"
                   >
                     <p className="px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
@@ -203,7 +214,7 @@ export default function Navigation() {
             </div>
           )}
 
-          {/* Notification Bell Icon & Drawer */}
+          {/* Notification Bell */}
           <div className="relative" ref={notifPanelRef}>
             <button
               onClick={() => setShowNotifPanel(!showNotifPanel)}
@@ -218,13 +229,13 @@ export default function Navigation() {
               )}
             </button>
 
-            {/* Notification Flyout Drawer */}
             <AnimatePresence>
               {showNotifPanel && (
                 <motion.div
                   initial={{ opacity: 0, y: 8, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: EASE_PAPER }}
                   className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto p-3 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-2xl z-50 space-y-2 paper-grain"
                 >
                   <div className="flex items-center justify-between px-2 pb-2 border-b border-[var(--border)]">
@@ -254,12 +265,11 @@ export default function Navigation() {
                           if (notif.type === "game_started") return "/play";
                           return "/dashboard";
                         };
-                        const targetRoute = getNotifRoute(n);
 
                         return (
                           <Link
                             key={n.id}
-                            href={targetRoute}
+                            href={getNotifRoute(n)}
                             onClick={() => {
                               markAsRead(n.id);
                               setShowNotifPanel(false);
@@ -275,9 +285,6 @@ export default function Navigation() {
                               <div className="flex-1">
                                 <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
                                 {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
-                                <p className="text-[9px] font-mono text-[var(--ink-light)] mt-1">
-                                  {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                </p>
                               </div>
                             </div>
                           </Link>
@@ -290,11 +297,10 @@ export default function Navigation() {
             </AnimatePresence>
           </div>
 
-          {/* User Avatar */}
+          {/* Profile Avatar */}
           <Link
             href="/profile"
-            className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-[var(--bg)] font-sans flex items-center justify-center text-sm font-bold select-none shadow-sm transition-transform hover:scale-105 active:scale-95"
-            style={{ boxShadow: "0 2px 8px var(--shadow)" }}
+            className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-white font-sans flex items-center justify-center text-sm font-bold select-none shadow-sm transition-transform hover:scale-105 active:scale-95 border border-[var(--border)]"
           >
             {profile?.avatar_url ? (
               <ChibiAvatar
@@ -309,7 +315,7 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Ping Status Toast Feedback */}
+      {/* Ping Status Feedback */}
       <AnimatePresence>
         {pingStatus && (
           <motion.div
@@ -324,62 +330,188 @@ export default function Navigation() {
         )}
       </AnimatePresence>
 
-      {/* ─── FLOATING LEFT VERTICAL DOCK ─── */}
+
+      {/* ══════════════════════════════════════════════════════════
+          DESKTOP FLOATING HANDCRAFTED BOOKMARK SIDEBAR
+          Designed to Apple Human Interface Specifications
+          ══════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {visible && (
           <motion.nav
-            initial={{ x: -80, opacity: 0, y: "-50%" }}
+            initial={{ x: -100, opacity: 0, y: "-50%" }}
             animate={{ x: 0, opacity: 1, y: "-50%" }}
-            exit={{ x: -80, opacity: 0, y: "-50%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 38 }}
-            className="fixed left-6 top-1/2 z-50"
-            aria-label="Main navigation"
+            exit={{ x: -100, opacity: 0, y: "-50%" }}
+            transition={{ type: "spring", stiffness: 350, damping: 35 }}
+            className="hidden md:block fixed left-6 top-1/2 z-50"
+            aria-label="Main Navigation"
           >
-            <div className="nav-dock flex flex-col items-center gap-2 py-4 px-2.5 rounded-full">
-              {CLUSTERS.map((cluster, cIdx) => (
-                <React.Fragment key={cIdx}>
-                  {cIdx > 0 && (
-                    <div
-                      className="w-5 h-px self-center"
-                      style={{ backgroundColor: "var(--border)" }}
-                    />
-                  )}
-                  <div className="flex flex-col items-center gap-1">
-                    {cluster.map((item) => {
-                      const Icon = item.icon;
-                      const isActive =
-                        currentPath === item.href ||
-                        (item.href !== "/dashboard" && currentPath.startsWith(item.href));
+            <motion.div
+              onMouseEnter={() => setIsExpanded(true)}
+              onMouseLeave={() => setIsExpanded(false)}
+              animate={{ width: isExpanded ? 110 : 84 }}
+              transition={{ duration: 0.22, ease: EASE_PAPER }}
+              className="relative flex flex-col items-center py-6 px-3 rounded-[999px] bg-[#FFFDF9] border border-[rgba(140,44,61,0.08)] paper-grain select-none overflow-visible"
+              style={{
+                boxShadow: "0 2px 6px rgba(44,38,40,0.04), 0 14px 36px rgba(44,38,40,0.08), 0 28px 60px rgba(44,38,40,0.06)",
+              }}
+            >
+              {/* Inner highlight ring */}
+              <div className="absolute inset-0 rounded-[999px] border border-white/60 pointer-events-none" />
 
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          aria-label={item.label}
-                          className="relative flex items-center justify-center w-10 h-10 rounded-full transition-colors focus-visible:outline-none"
-                          style={{
-                            color: isActive ? "var(--burgundy)" : "var(--text-soft)",
-                          }}
-                        >
-                          {/* Active state rose circle background */}
-                          {isActive && (
-                            <motion.div
-                              layoutId="nav-active-pill"
-                              className="absolute inset-0 rounded-full bg-[var(--burgundy)]/10"
-                              transition={{
-                                type: "spring",
-                                stiffness: 450,
-                                damping: 35,
-                              }}
-                            />
-                          )}
-                          <Icon strokeWidth={isActive ? 2.2 : 1.7} className="w-[18px] h-[18px] relative z-10" />
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </React.Fragment>
-              ))}
+              {/* Grouped Navigation Clusters */}
+              <div className="flex flex-col items-center gap-5 relative z-10 w-full">
+                {NAV_GROUPS.map((group, gIdx) => (
+                  <React.Fragment key={group.title}>
+                    {gIdx > 0 && (
+                      <div
+                        className="w-[28px] h-[1px] my-0.5 rounded-full"
+                        style={{ backgroundColor: "var(--border-warm)" }}
+                      />
+                    )}
+
+                    <div className="flex flex-col items-center gap-2.5 w-full">
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive =
+                          currentPath === item.href ||
+                          (item.href !== "/dashboard" && currentPath.startsWith(item.href));
+
+                        return (
+                          <div
+                            key={item.href}
+                            className="relative flex items-center justify-center w-full"
+                            onMouseEnter={() => setHoveredHref(item.href)}
+                            onMouseLeave={() => setHoveredHref(null)}
+                          >
+                            <Link
+                              href={item.href}
+                              aria-label={item.label}
+                              className={`relative flex items-center ${
+                                isExpanded ? "justify-start px-3 gap-2.5 w-full" : "justify-center w-11"
+                              } h-11 rounded-full transition-all duration-200 active:scale-95 focus-visible:outline-none`}
+                            >
+                              {/* Layered Active Item Object */}
+                              {isActive && (
+                                <motion.div
+                                  layoutId="bookmark-active-indicator"
+                                  className="absolute inset-0 rounded-full bg-[var(--burgundy)] shadow-md"
+                                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                                  style={{
+                                    boxShadow: "0 10px 24px rgba(140,44,61,0.22)",
+                                  }}
+                                />
+                              )}
+
+                              {/* Hover Highlight (inactive items) */}
+                              {!isActive && hoveredHref === item.href && (
+                                <div className="absolute inset-0 rounded-full bg-[var(--paper-mid)] border border-[var(--border)] opacity-80" />
+                              )}
+
+                              {/* Icon & Label */}
+                              <Icon
+                                strokeWidth={1.75}
+                                className={`w-5 h-5 relative z-10 transition-transform duration-200 ${
+                                  isActive
+                                    ? "text-white rotate-[1deg]"
+                                    : hoveredHref === item.href
+                                    ? "text-[var(--burgundy)] -translate-y-0.5"
+                                    : "text-[var(--text-soft)]"
+                                }`}
+                              />
+
+                              {isExpanded && (
+                                <span
+                                  className={`text-xs font-sans font-medium tracking-[0.02em] whitespace-nowrap relative z-10 ${
+                                    isActive ? "text-white font-bold" : "text-[var(--text)]"
+                                  }`}
+                                >
+                                  {item.label}
+                                </span>
+                              )}
+                            </Link>
+
+                            {/* Floating Premium Paper Tooltip (when collapsed) */}
+                            {!isExpanded && hoveredHref === item.href && (
+                              <motion.div
+                                initial={{ opacity: 0, x: -8, scale: 0.95 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: -8, scale: 0.95 }}
+                                transition={{ duration: 0.18, ease: EASE_PAPER }}
+                                className="absolute left-full ml-3 px-3 py-1.5 rounded-[14px] bg-[#FFFDF9] border border-[rgba(140,44,61,0.1)] shadow-md whitespace-nowrap z-50 text-[13px] font-sans font-medium tracking-[0.02em] text-[#3D2432] pointer-events-none paper-grain"
+                              >
+                                {item.label}
+                              </motion.div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            </motion.div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+
+
+      {/* ══════════════════════════════════════════════════════════
+          MOBILE FLOATING BOTTOM BOOKMARK CAPSULE
+          Reuses exact same paper bookmark design language
+          ══════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {visible && (
+          <motion.nav
+            initial={{ y: 80, opacity: 0, x: "-50%" }}
+            animate={{ y: 0, opacity: 1, x: "-50%" }}
+            exit={{ y: 80, opacity: 0, x: "-50%" }}
+            transition={{ type: "spring", stiffness: 350, damping: 35 }}
+            className="md:hidden fixed bottom-6 left-1/2 z-50"
+            aria-label="Mobile Navigation"
+          >
+            <div
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-[999px] bg-[#FFFDF9] border border-[rgba(140,44,61,0.08)] paper-grain select-none shadow-2xl"
+              style={{
+                boxShadow: "0 10px 30px rgba(44,38,40,0.12), 0 4px 12px rgba(44,38,40,0.06)",
+              }}
+            >
+              {[
+                { href: "/dashboard", icon: Home, label: "Home" },
+                { href: "/love-letter", icon: Mail, label: "Letters" },
+                { href: "/photo-booth", icon: Camera, label: "Photos" },
+                { href: "/play", icon: Gamepad2, label: "Play" },
+                { href: "/gratitude-jar", icon: Gift, label: "Gratitude" },
+                { href: "/stories", icon: Clock, label: "Timeline" },
+                { href: "/profile", icon: User, label: "Profile" },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  currentPath === item.href ||
+                  (item.href !== "/dashboard" && currentPath.startsWith(item.href));
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-label={item.label}
+                    className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-90"
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="mobile-active-pill"
+                        className="absolute inset-0 rounded-full bg-[var(--burgundy)]"
+                        transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                      />
+                    )}
+                    <Icon
+                      strokeWidth={1.75}
+                      className={`w-4 h-4 relative z-10 ${
+                        isActive ? "text-white" : "text-[var(--text-soft)]"
+                      }`}
+                    />
+                  </Link>
+                );
+              })}
             </div>
           </motion.nav>
         )}
