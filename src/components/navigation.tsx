@@ -26,15 +26,15 @@ import {
 
 /* ─── Navigation Items matching user's exact design spec ─── */
 const SIDEBAR_ITEMS = [
-  { href: "/dashboard",    icon: Home,     label: "HOME",      title: "Home",       subtitle: "Your love space" },
-  { href: "/love-letter",  icon: Mail,     label: "LETTERS",   title: "Letters",    subtitle: "Sealed with love" },
-  { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Shared snapshots" },
-  { href: "/play",         icon: Gamepad2, label: "GAMES",     title: "Games",      subtitle: "Play together" },
-  { href: "/gratitude-jar",icon: Gift,     label: "RITUALS",   title: "Rituals",    subtitle: "Daily appreciation" },
-  { href: "/stories",      icon: Clock,    label: "TIMELINE",  title: "Timeline",   subtitle: "Our story so far" },
-  { href: "/calendar",     icon: Calendar, label: "DATES",     title: "Dates",      subtitle: "Special milestones" },
-  { href: "/profile",      icon: User,     label: "PROFILE",   title: "Profile",    subtitle: "Your sanctuary" },
-  { href: "/settings",     icon: Settings, label: "SETTINGS",  title: "Settings",   subtitle: "Preferences" },
+  { href: "/dashboard",    icon: Home,     label: "HOME",      title: "Home",       subtitle: "Return to your story →" },
+  { href: "/love-letter",  icon: Mail,     label: "LETTERS",   title: "Letters",    subtitle: "Sealed with wax, kept forever →" },
+  { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Four frames of us →" },
+  { href: "/play",         icon: Gamepad2, label: "PLAYROOM",  title: "Playroom",   subtitle: "Play tonight's date night →" },
+  { href: "/gratitude-jar",icon: Gift,     label: "RITUALS",   title: "Rituals",    subtitle: "Daily appreciation jar →" },
+  { href: "/stories",      icon: Clock,    label: "TIMELINE",  title: "Timeline",   subtitle: "Our story so far →" },
+  { href: "/calendar",     icon: Calendar, label: "DATES",     title: "Dates",      subtitle: "Special milestones →" },
+  { href: "/profile",      icon: User,     label: "PROFILE",   title: "Profile",    subtitle: "Your sanctuary →" },
+  { href: "/settings",     icon: Settings, label: "SETTINGS",  title: "Settings",   subtitle: "Preferences & security →" },
 ];
 
 const PING_PHRASES = [
@@ -120,7 +120,7 @@ export default function Navigation() {
       {/* ══════════════════════════════════════════════════
           TOP CONTROL BAR — Logo, Streak, Ping, Bell, Avatar
           ══════════════════════════════════════════════════ */}
-      <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:px-12 flex items-center justify-between pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:pl-36 md:pr-12 flex items-center justify-between pointer-events-none">
 
         {/* Left: Brand Logo */}
         <div className="flex items-center gap-4 pointer-events-auto">
