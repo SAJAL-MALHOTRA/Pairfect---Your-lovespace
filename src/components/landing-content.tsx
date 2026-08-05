@@ -9,6 +9,7 @@ import {
   HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight, MessageSquare, BookOpen
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { PairfectPortrait } from "@/components/cozy-illustrations";
 
 /* ─── Easing curve for motion system ─── */
 const EASE_CUBIC = [0.22, 0.61, 0.36, 1] as const;
@@ -352,6 +353,11 @@ export default function LandingContent() {
 
                 {/* App Feature Cards Stack */}
                 <div className="space-y-3 pt-1">
+                  
+                  {/* Pairfect Portrait Card */}
+                  <div className="p-2 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-center">
+                    <PairfectPortrait className="w-full h-40 rounded-xl" />
+                  </div>
                   
                   {/* Item 1: Wax Letter Unsealed */}
                   <div className="p-3.5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-[var(--burgundy)] transition-colors">

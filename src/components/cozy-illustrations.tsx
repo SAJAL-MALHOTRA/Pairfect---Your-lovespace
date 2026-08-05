@@ -80,20 +80,32 @@ export function PairfectPortrait({ className = "h-48 w-48", ...props }: CozyIllu
 
   return (
     <svg viewBox="0 0 280 280" className={className} {...a11y("Pairfect Portrait")} {...props}>
-      <PaperFilter id={`${id}-paper`} />
-      <rect x="15" y="15" width="250" height="250" rx="36" fill="#FAF6EE" stroke="#E6DFD3" strokeWidth="2" filter={`url(#${id}-paper)`} />
+      <defs>
+        <linearGradient id={`${id}-pastel`} x1="0" y1="0" x2="280" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFF0F4" />
+          <stop offset="30%" stopColor="#FDE2E4" />
+          <stop offset="60%" stopColor="#E2ECE9" />
+          <stop offset="100%" stopColor="#FFF1E6" />
+        </linearGradient>
+      </defs>
+
+      {/* Outer Pastel Holo Card */}
+      <rect x="10" y="10" width="260" height="260" rx="38" fill={`url(#${id}-pastel)`} stroke="#FFD0DD" strokeWidth="4" />
+      
+      {/* Inner Soft Frame Line */}
+      <rect x="25" y="25" width="230" height="230" rx="28" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeOpacity="0.35" />
       
       {/* Nested customizable chibi avatars */}
-      <ChibiAvatar config={configA} pose="standing" x="22" y="72" width="120" height="120" noBackground={true} />
-      <ChibiAvatar config={configB} pose="standing" x="122" y="72" width="120" height="120" noBackground={true} />
+      <ChibiAvatar config={configA} pose="standing" x="22" y="70" width="120" height="120" noBackground={true} />
+      <ChibiAvatar config={configB} pose="standing" x="122" y="70" width="120" height="120" noBackground={true} />
       
-      {/* Floating Heart between them */}
-      <path d="M 135 106 C 127 94, 115 104, 135 120 C 155 104, 143 94, 135 106 Z" fill="#C98892" />
+      {/* Floating Rose Heart between them */}
+      <path d="M 135 106 C 127 94, 115 104, 135 120 C 155 104, 143 94, 135 106 Z" fill="#D16D82" />
       
-      {/* Decorative botanical details in corners */}
-      <path d="M 25 220 Q 35 210 40 225 M 35 210 Q 45 200 48 212" stroke="#A6B3A8" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      <circle cx="48" cy="212" r="2.5" fill="#DDBFBF" />
-      <circle cx="40" cy="225" r="2" fill="#DDBFBF" />
+      {/* Botanical details in bottom left corner */}
+      <path d="M 35 225 Q 45 212 50 230 M 45 212 Q 55 200 60 215" stroke="#7A9A8B" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <circle cx="60" cy="215" r="3" fill="#E8B4B8" />
+      <circle cx="50" cy="230" r="2.5" fill="#E8B4B8" />
     </svg>
   );
 }
