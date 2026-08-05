@@ -203,92 +203,103 @@ export default function LandingContent() {
           ══════════════════════════════════════════════════════════ */}
       <main className="flex-1 w-full z-10 relative">
 
-        {/* CHAPTER 1 — HERO */}
+        {/* CHAPTER 1 — HERO (Asymmetric 2-Column Magazine Spread) */}
         <section
           aria-label="Hero Introduction"
-          className="max-w-[1400px] mx-auto px-6 pt-16 md:pt-28 pb-24 flex flex-col items-center text-center"
+          className="max-w-[1280px] mx-auto px-6 pt-8 md:pt-16 pb-20"
         >
-          <motion.p
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0}
-            className="text-[10px] font-mono font-bold tracking-[0.2em] text-[#9A8E85] uppercase mb-8"
-          >
-            Built for two. Kept forever.
-          </motion.p>
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            
+            {/* Left Column: Editorial Copy & Actions */}
+            <div className="w-full lg:w-7/12 text-left space-y-6">
+              <motion.p
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                custom={0}
+                className="text-[10px] font-mono font-bold tracking-[0.22em] text-[#9A8E85] uppercase"
+              >
+                Built for two. Kept forever.
+              </motion.p>
 
-          <motion.h1
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0.1}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display italic font-black text-[#2C2628] tracking-tight leading-[1.1] max-w-4xl"
-          >
-            Some days{" "}
-            <br className="hidden sm:block" />
-            become memories.
-            <br />
-            <span className="text-[#8C2C3D]">
-              Some memories{" "}
-              <br className="hidden sm:block" />
-              become home.
-            </span>
-          </motion.h1>
+              <motion.h1
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                custom={0.1}
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.2rem] font-display italic font-black text-[#2C2628] tracking-tight leading-[1.08]"
+              >
+                Some days <br />
+                become memories. <br />
+                <span className="text-[#8C2C3D]">
+                  Some memories <br />
+                  become home.
+                </span>
+              </motion.h1>
 
-          <motion.p
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0.25}
-            className="mt-8 font-quote italic text-lg sm:text-xl text-[#6B5E58] max-w-[850px] leading-relaxed"
-          >
-            Not another messaging app. A shared journal, memory book, gratitude
-            space, and little universe — for just the two of you.
-          </motion.p>
+              <motion.p
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                custom={0.25}
+                className="font-quote italic text-base sm:text-lg text-[#6B5E58] max-w-[540px] leading-relaxed pt-2"
+              >
+                Not another messaging app. A shared journal, memory book, gratitude
+                space, and little universe — for just the two of you.
+              </motion.p>
 
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0.4}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12 max-w-[800px]"
-          >
-            <Link
-              href="/signup"
-              className="btn-journal"
-              onMouseEnter={() => playTactileSound("tap")}
-            >
-              Start Your Story <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/login"
-              className="btn-journal-ghost"
-              onMouseEnter={() => playTactileSound("tap")}
-            >
-              Sign In With Partner
-            </Link>
-          </motion.div>
-
-          {/* Hero Visual — Journal with shimmer sweep */}
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0.55}
-            className="mt-20 w-full max-w-[1100px] mx-auto"
-          >
-            <div className="editorial-image rounded-2xl shadow-xl relative overflow-hidden">
-              <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent transform -rotate-45 shimmer-active" />
-              </div>
-              <img
-                src="/hero-journal.jpg"
-                alt="An open vintage journal with pressed flowers between the pages"
-                className="w-full h-auto rounded-2xl"
-              />
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                custom={0.4}
+                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4"
+              >
+                <Link
+                  href="/signup"
+                  className="btn-journal"
+                  onMouseEnter={() => playTactileSound("tap")}
+                >
+                  Start Your Story <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/login"
+                  className="btn-journal-ghost"
+                  onMouseEnter={() => playTactileSound("tap")}
+                >
+                  Sign In With Partner
+                </Link>
+              </motion.div>
             </div>
-          </motion.div>
+
+            {/* Right Column: Visual Anchor (Passepartout Framed Journal Photograph) */}
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0.45}
+              className="w-full lg:w-5/12"
+            >
+              <div className="relative p-3 sm:p-4 rounded-3xl bg-[#FFFDF8] border border-[#E8DFD3] shadow-xl rotate-1 hover:rotate-0 transition-transform duration-500 keepsake-lift">
+                <div className="washi-tape-top" />
+                <div className="editorial-image rounded-2xl relative overflow-hidden aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5]">
+                  <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+                    <div className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transform -rotate-45 shimmer-active" />
+                  </div>
+                  <img
+                    src="/hero-journal.jpg"
+                    alt="An open vintage journal with pressed flowers between the pages"
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                </div>
+                <div className="pt-3 px-1 flex items-center justify-between text-[10px] font-mono text-[#9A8E85]">
+                  <span className="font-bold text-[#8C2C3D] uppercase tracking-wider">CHAPTER 01 · THE LIVING JOURNAL</span>
+                  <span>PAIR #28,910</span>
+                </div>
+              </div>
+            </motion.div>
+
+          </div>
         </section>
 
         {/* CHAPTER 2 — EMOTIONAL PULL */}
