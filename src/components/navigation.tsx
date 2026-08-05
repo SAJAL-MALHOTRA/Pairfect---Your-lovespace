@@ -1,16 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { parseAvatarConfig, ChibiAvatar } from "@/components/chibi-avatar";
@@ -21,7 +15,7 @@ import {
   Gamepad2,
   Gift,
   Clock,
-  Tv,
+  Calendar,
   User,
   Settings,
   Heart,
@@ -30,49 +24,17 @@ import {
   Flame,
 } from "lucide-react";
 
-/* ══════════════════════════════════════════════════
-   SPRING PHYSICS — Apple Liquid Glass spec
-   stiffness 250, damping 26, mass 0.9
-   ══════════════════════════════════════════════════ */
-const DOCK_SPRING = { stiffness: 250, damping: 26, mass: 0.9 };
-const ACTIVE_SPRING = { stiffness: 400, damping: 32 };
-
-/* ── Dock icon geometry ── */
-const ICON_SIZE = 44;       // Base icon container size
-const ICON_GAP = 6;         // Gap between icons
-const MAGNIFY_SCALE = 1.35; // Hovered icon max scale
-const NEIGHBOR_SCALE = 1.12; // Adjacent icons scale
-const DOCK_BASE_WIDTH = 78;
-const DOCK_EXPANDED_WIDTH = 180;
-
-/* ── Flat list of all nav items for the dock fish-eye ── */
-interface NavItem {
-  href: string;
-  icon: React.ComponentType<any>;
-  label: string;
-  group: number;
-}
-
-const DOCK_ITEMS: NavItem[] = [
-  { href: "/dashboard",    icon: Home,     label: "Home",       group: 0 },
-  { href: "/love-letter",  icon: Mail,     label: "Letters",    group: 0 },
-  { href: "/photo-booth",  icon: Camera,   label: "Photobooth", group: 0 },
-  { href: "/play",         icon: Gamepad2, label: "Playroom",   group: 0 },
-  { href: "/gratitude-jar",icon: Gift,     label: "Gratitude",  group: 1 },
-  { href: "/stories",      icon: Clock,    label: "Timeline",   group: 1 },
-  { href: "/watch",        icon: Tv,       label: "Watch",      group: 1 },
-  { href: "/profile",      icon: User,     label: "Profile",    group: 2 },
-  { href: "/settings",     icon: Settings, label: "Settings",   group: 2 },
-];
-
-const MOBILE_ITEMS = [
-  { href: "/dashboard",     icon: Home,     label: "Home" },
-  { href: "/love-letter",   icon: Mail,     label: "Letters" },
-  { href: "/photo-booth",   icon: Camera,   label: "Photos" },
-  { href: "/play",          icon: Gamepad2, label: "Play" },
-  { href: "/gratitude-jar", icon: Gift,     label: "Gratitude" },
-  { href: "/stories",       icon: Clock,    label: "Timeline" },
-  { href: "/profile",       icon: User,     label: "Profile" },
+/* ─── Navigation Items matching user's exact design spec ─── */
+const SIDEBAR_ITEMS = [
+  { href: "/dashboard",    icon: Home,     label: "HOME",      title: "Home",       subtitle: "Your love space" },
+  { href: "/love-letter",  icon: Mail,     label: "LETTERS",   title: "Letters",    subtitle: "Sealed with love" },
+  { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Shared snapshots" },
+  { href: "/play",         icon: Gamepad2, label: "GAMES",     title: "Games",      subtitle: "Play together" },
+  { href: "/gratitude-jar",icon: Gift,     label: "RITUALS",   title: "Rituals",    subtitle: "Daily appreciation" },
+  { href: "/stories",      icon: Clock,    label: "TIMELINE",  title: "Timeline",   subtitle: "Our story so far" },
+  { href: "/calendar",     icon: Calendar, label: "DATES",     title: "Dates",      subtitle: "Special milestones" },
+  { href: "/profile",      icon: User,     label: "PROFILE",   title: "Profile",    subtitle: "Your sanctuary" },
+  { href: "/settings",     icon: Settings, label: "SETTINGS",  title: "Settings",   subtitle: "Preferences" },
 ];
 
 const PING_PHRASES = [
@@ -82,154 +44,13 @@ const PING_PHRASES = [
   "Can't wait to see you ✨",
 ];
 
-
-/* ══════════════════════════════════════════════════
-   LIQUID DOCK ICON — macOS-style fish-eye per icon
-   ══════════════════════════════════════════════════ */
-function LiquidDockIcon({
-  item,
-  index,
-  mouseY,
-  isActive,
-  isHovered,
-  onHover,
-  onLeave,
-}: {
-  item: NavItem;
-  index: number;
-  mouseY: any;
-  isActive: boolean;
-  isHovered: boolean;
-  onHover: () => void;
-  onLeave: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const Icon = item.icon;
-
-  // Calculate distance from cursor to this icon's center
-  const distance = useTransform(mouseY, (val: number) => {
-    if (!ref.current || val < 0) return 150; // far away
-    const rect = ref.current.getBoundingClientRect();
-    const iconCenter = rect.top + rect.height / 2;
-    return Math.abs(val - iconCenter);
-  });
-
-  // Map distance → scale using smooth interpolation
-  const scaleMotion = useTransform(distance, [0, 60, 120], [MAGNIFY_SCALE, NEIGHBOR_SCALE, 1]);
-  const scale = useSpring(scaleMotion, DOCK_SPRING);
-
-  return (
-    <motion.div
-      ref={ref}
-      className="relative flex items-center justify-center"
-      style={{ scale }}
-      onMouseEnter={onHover}
-      onMouseLeave={onLeave}
-    >
-      <Link
-        href={item.href}
-        aria-label={item.label}
-        className="relative flex items-center justify-center w-11 h-11 rounded-full focus-visible:outline-none"
-        style={{ WebkitTapHighlightColor: "transparent" }}
-      >
-        {/* ── Active: Wine glass orb with inner glow ── */}
-        {isActive && (
-          <motion.div
-            layoutId="liquid-active-orb"
-            className="absolute inset-0 rounded-full"
-            transition={ACTIVE_SPRING}
-            style={{
-              background: "radial-gradient(circle at 35% 30%, rgba(180,60,80,0.95), rgba(140,44,61,0.88))",
-              boxShadow: [
-                "0 12px 30px rgba(140,44,61,0.25)",
-                "0 4px 12px rgba(140,44,61,0.15)",
-                "inset 0 1px 2px rgba(255,255,255,0.25)",
-                "inset 0 -1px 2px rgba(0,0,0,0.08)",
-              ].join(", "),
-            }}
-          >
-            {/* Specular highlight — tiny reflection */}
-            <div
-              className="absolute top-[5px] left-1/2 -translate-x-1/2 w-[18px] h-[6px] rounded-full"
-              style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0))",
-              }}
-            />
-          </motion.div>
-        )}
-
-        {/* ── Hover highlight (non-active) ── */}
-        {!isActive && isHovered && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            transition={{ duration: 0.15 }}
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: "rgba(255,255,255,0.45)",
-              backdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.35)",
-              boxShadow: "inset 0 1px 2px rgba(255,255,255,0.3)",
-            }}
-          />
-        )}
-
-        {/* Icon */}
-        <Icon
-          strokeWidth={1.75}
-          className={`w-[19px] h-[19px] relative z-10 transition-colors duration-150 ${
-            isActive
-              ? "text-white"
-              : isHovered
-              ? "text-[#8C2C3D]"
-              : "text-[rgba(60,45,45,0.8)]"
-          }`}
-        />
-      </Link>
-
-      {/* ── Floating glass tooltip ── */}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, x: -8, filter: "blur(4px)" }}
-            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, x: -8, filter: "blur(4px)" }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-full ml-4 px-[18px] py-[10px] rounded-[999px] whitespace-nowrap z-50 pointer-events-none select-none"
-            style={{
-              background: "rgba(255,255,255,0.55)",
-              backdropFilter: "blur(20px) saturate(180%)",
-              WebkitBackdropFilter: "blur(20px) saturate(180%)",
-              border: "1px solid rgba(255,255,255,0.35)",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.4)",
-              fontSize: "14px",
-              fontWeight: 500,
-              fontFamily: "var(--font-sans), Inter, system-ui, sans-serif",
-              letterSpacing: "0.02em",
-              color: "#3D2432",
-            }}
-          >
-            {item.label}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-
-/* ══════════════════════════════════════════════════
-   MAIN NAVIGATION COMPONENT
-   ══════════════════════════════════════════════════ */
 export default function Navigation() {
   const pathname = usePathname();
   const { profile, pair, partner } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, sendPing } = useNotifications();
 
   const [visible, setVisible] = useState(true);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [isDockHovered, setIsDockHovered] = useState(false);
+  const [hoveredHref, setHoveredHref] = useState<string | null>(null);
   const [showPingMenu, setShowPingMenu] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [pingStatus, setPingStatus] = useState<string | null>(null);
@@ -237,9 +58,6 @@ export default function Navigation() {
 
   const pingMenuRef = useRef<HTMLDivElement>(null);
   const notifPanelRef = useRef<HTMLDivElement>(null);
-
-  // Mouse Y for dock fish-eye magnification
-  const mouseY = useMotionValue(-1);
 
   useEffect(() => {
     const onHide = () => setVisible(false);
@@ -278,7 +96,6 @@ export default function Navigation() {
 
   const userInitial = getInitials(profile?.display_name);
 
-  // Rate-limited Ping trigger
   const handleTriggerPing = async (phrase?: string) => {
     const now = Date.now();
     if (now - lastPingTime < 120000) {
@@ -287,6 +104,7 @@ export default function Navigation() {
       setShowPingMenu(false);
       return;
     }
+
     setLastPingTime(now);
     setShowPingMenu(false);
     const res = await sendPing(phrase);
@@ -297,16 +115,6 @@ export default function Navigation() {
   const currentStreak = pair?.current_streak || 0;
   const isStreakPaused = pair?.is_paused || false;
 
-  // Build group divider positions
-  const groupBoundaries = new Set<number>();
-  let runningIdx = 0;
-  for (const item of DOCK_ITEMS) {
-    if (runningIdx > 0 && DOCK_ITEMS[runningIdx - 1].group !== item.group) {
-      groupBoundaries.add(runningIdx);
-    }
-    runningIdx++;
-  }
-
   return (
     <>
       {/* ══════════════════════════════════════════════════
@@ -314,7 +122,7 @@ export default function Navigation() {
           ══════════════════════════════════════════════════ */}
       <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:px-12 flex items-center justify-between pointer-events-none">
 
-        {/* Left: Logo & Streak */}
+        {/* Left: Brand Logo */}
         <div className="flex items-center gap-4 pointer-events-auto">
           <Link
             href="/dashboard"
@@ -349,26 +157,16 @@ export default function Navigation() {
           )}
         </div>
 
-        {/* Right: Ping + Bell + Avatar */}
+        {/* Right Controls */}
         <div className="flex items-center gap-3 pointer-events-auto select-none">
-
-          {/* Thinking of You Ping */}
           {partner && (
             <div className="relative" ref={pingMenuRef}>
               <button
                 onClick={() => setShowPingMenu(!showPingMenu)}
-                className="px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 rounded-full shadow-xs transition-all hover:scale-105 active:scale-95"
+                className="btn-journal-ghost px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 !rounded-full shadow-xs"
                 title="Send a Thinking of You ping"
-                style={{
-                  background: "rgba(255,255,255,0.5)",
-                  backdropFilter: "blur(16px) saturate(180%)",
-                  WebkitBackdropFilter: "blur(16px) saturate(180%)",
-                  border: "1px solid rgba(255,255,255,0.3)",
-                  color: "var(--burgundy)",
-                  fontWeight: 600,
-                }}
               >
-                <Heart className="w-3.5 h-3.5 fill-current" />
+                <Heart className="w-3.5 h-3.5 fill-current text-[var(--burgundy)]" />
                 <span className="hidden sm:inline font-sans text-xs">Ping</span>
               </button>
 
@@ -378,15 +176,7 @@ export default function Navigation() {
                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-56 p-2 rounded-2xl z-50 space-y-1"
-                    style={{
-                      background: "rgba(255,255,255,0.65)",
-                      backdropFilter: "blur(24px) saturate(180%)",
-                      WebkitBackdropFilter: "blur(24px) saturate(180%)",
-                      border: "1px solid rgba(255,255,255,0.3)",
-                      boxShadow: "0 20px 60px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.4)",
-                    }}
+                    className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl z-50 space-y-1 paper-grain"
                   >
                     <p className="px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
                       Send a Ping to {partner.display_name || "partner"}
@@ -395,7 +185,7 @@ export default function Navigation() {
                       <button
                         key={idx}
                         onClick={() => handleTriggerPing(phrase)}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-sans text-[var(--text)] hover:bg-white/40 hover:text-[var(--burgundy)] transition-colors flex items-center justify-between"
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-sans text-[var(--text)] hover:bg-[var(--bg-secondary)] hover:text-[var(--burgundy)] transition-colors flex items-center justify-between"
                       >
                         <span>{phrase}</span>
                         <Heart className="w-3 h-3 text-[var(--rose)] opacity-60" />
@@ -407,20 +197,12 @@ export default function Navigation() {
             </div>
           )}
 
-          {/* Notification Bell */}
+          {/* Bell */}
           <div className="relative" ref={notifPanelRef}>
             <button
               onClick={() => setShowNotifPanel(!showNotifPanel)}
-              className="relative w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              className="relative w-9 h-9 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xs"
               aria-label="Notifications"
-              style={{
-                background: "rgba(255,255,255,0.45)",
-                backdropFilter: "blur(16px) saturate(180%)",
-                WebkitBackdropFilter: "blur(16px) saturate(180%)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                color: "var(--text-soft)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              }}
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
@@ -436,17 +218,9 @@ export default function Navigation() {
                   initial={{ opacity: 0, y: 8, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto p-3 rounded-2xl z-50 space-y-2"
-                  style={{
-                    background: "rgba(255,255,255,0.7)",
-                    backdropFilter: "blur(32px) saturate(180%)",
-                    WebkitBackdropFilter: "blur(32px) saturate(180%)",
-                    border: "1px solid rgba(255,255,255,0.35)",
-                    boxShadow: "0 20px 60px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.4)",
-                  }}
+                  className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto p-3 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-2xl z-50 space-y-2 paper-grain"
                 >
-                  <div className="flex items-center justify-between px-2 pb-2 border-b border-white/20">
+                  <div className="flex items-center justify-between px-2 pb-2 border-b border-[var(--border)]">
                     <p className="font-heading font-bold text-sm text-[var(--burgundy)]">Notifications</p>
                     {unreadCount > 0 && (
                       <button
@@ -460,44 +234,28 @@ export default function Navigation() {
 
                   {notifications.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[var(--text-soft)] italic">
-                      No notifications yet. When {partner?.display_name || "your partner"} sends a letter or ping, it will appear here ♡
+                      No notifications yet ♡
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      {notifications.map((n) => {
-                        const getNotifRoute = (notif: any) => {
-                          if (notif.metadata?.route) return notif.metadata.route;
-                          if (notif.type === "letter_sent" || notif.type === "reaction_reply") return "/love-letter";
-                          if (notif.type === "gratitude_note") return "/gratitude-jar";
-                          if (notif.type === "memory_added") return "/stories";
-                          if (notif.type === "game_started") return "/play";
-                          return "/dashboard";
-                        };
-
-                        return (
-                          <Link
-                            key={n.id}
-                            href={getNotifRoute(n)}
-                            onClick={() => {
-                              markAsRead(n.id);
-                              setShowNotifPanel(false);
-                            }}
-                            className={`block p-2.5 rounded-xl transition-all cursor-pointer ${
-                              !n.read
-                                ? "bg-white/40 border border-white/30 font-medium"
-                                : "hover:bg-white/20 opacity-80"
-                            }`}
-                          >
-                            <div className="flex items-start gap-2">
-                              <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${!n.read ? "bg-[var(--burgundy)]" : "bg-black/10"}`} />
-                              <div className="flex-1">
-                                <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
-                                {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
+                      {notifications.map((n) => (
+                        <Link
+                          key={n.id}
+                          href="/dashboard"
+                          onClick={() => {
+                            markAsRead(n.id);
+                            setShowNotifPanel(false);
+                          }}
+                          className={`block p-2.5 rounded-xl transition-all cursor-pointer ${
+                            !n.read
+                              ? "bg-[var(--bg-secondary)] border border-[var(--border)] font-medium"
+                              : "hover:bg-black/5 opacity-80"
+                          }`}
+                        >
+                          <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
+                          {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
+                        </Link>
+                      ))}
                     </div>
                   )}
                 </motion.div>
@@ -508,12 +266,7 @@ export default function Navigation() {
           {/* Profile Avatar */}
           <Link
             href="/profile"
-            className="w-9 h-9 rounded-full overflow-hidden text-white font-sans flex items-center justify-center text-sm font-bold select-none transition-transform hover:scale-105 active:scale-95"
-            style={{
-              background: "var(--burgundy)",
-              boxShadow: "0 4px 12px rgba(140,44,61,0.2), inset 0 1px 1px rgba(255,255,255,0.15)",
-              border: "1.5px solid rgba(255,255,255,0.2)",
-            }}
+            className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-white font-sans flex items-center justify-center text-sm font-bold select-none shadow-sm transition-transform hover:scale-105 active:scale-95 border border-[var(--border)]"
           >
             {profile?.avatar_url ? (
               <ChibiAvatar
@@ -528,19 +281,14 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Ping Status Feedback */}
+      {/* Ping Status Toast */}
       <AnimatePresence>
         {pingStatus && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-xs font-sans font-medium shadow-lg flex items-center gap-2"
-            style={{
-              background: "rgba(140,44,61,0.88)",
-              backdropFilter: "blur(16px)",
-              boxShadow: "0 12px 30px rgba(140,44,61,0.25)",
-            }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[var(--burgundy)] text-white text-xs font-sans font-medium shadow-lg flex items-center gap-2"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{pingStatus}</span>
@@ -550,8 +298,8 @@ export default function Navigation() {
 
 
       {/* ══════════════════════════════════════════════════
-          DESKTOP — LIQUID GLASS DOCK
-          macOS Dock fish-eye + Apple Liquid Glass material
+          DESKTOP — SIGNATURE COZY PINK CAPSULE SIDEBAR
+          Matches exact design from reference screenshot
           ══════════════════════════════════════════════════ */}
       <AnimatePresence>
         {visible && (
@@ -559,99 +307,130 @@ export default function Navigation() {
             initial={{ x: -100, opacity: 0, y: "-50%" }}
             animate={{ x: 0, opacity: 1, y: "-50%" }}
             exit={{ x: -100, opacity: 0, y: "-50%" }}
-            transition={{ type: "spring", ...DOCK_SPRING }}
-            className="hidden md:block fixed left-8 top-1/2 z-50"
+            transition={{ type: "spring", stiffness: 350, damping: 35 }}
+            className="hidden md:block fixed left-6 top-1/2 z-50"
             aria-label="Main Navigation"
-            onMouseMove={(e) => mouseY.set(e.clientY)}
-            onMouseEnter={() => setIsDockHovered(true)}
-            onMouseLeave={() => {
-              mouseY.set(-1);
-              setIsDockHovered(false);
-              setHoveredIndex(null);
-            }}
           >
-            {/* Liquid Glass Container */}
+            {/* Sidebar Capsule */}
             <div
-              className="relative flex flex-col items-center py-5 rounded-[999px] select-none overflow-visible"
+              className="relative flex flex-col items-center py-7 px-3.5 rounded-[999px] select-none paper-grain"
               style={{
-                width: `${DOCK_BASE_WIDTH}px`,
-                background: "rgba(255,255,255,0.18)",
-                backdropFilter: "blur(32px) saturate(180%) brightness(115%)",
-                WebkitBackdropFilter: "blur(32px) saturate(180%) brightness(115%)",
-                border: "1px solid rgba(255,255,255,0.28)",
+                width: "90px",
+                background: "linear-gradient(180deg, #FFF2F5 0%, #FFF8FA 100%)",
+                border: "2px solid rgba(255, 255, 255, 0.95)",
                 boxShadow: [
-                  "0 20px 60px rgba(0,0,0,0.15)",
-                  "inset 0 8px 20px rgba(255,255,255,0.15)",
-                  "inset 0 1px 0 rgba(255,255,255,0.3)",
+                  "0 20px 48px rgba(232, 82, 125, 0.16)",
+                  "0 6px 16px rgba(232, 82, 125, 0.08)",
+                  "inset 0 2px 4px rgba(255, 255, 255, 0.9)",
                 ].join(", "),
               }}
             >
-              {/* Inner glass gradient highlight */}
-              <div
-                className="absolute inset-0 rounded-[999px] pointer-events-none"
-                style={{
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))",
-                }}
-              />
-
-              {/* Animated specular shimmer */}
-              <div
-                className="absolute inset-0 rounded-[999px] pointer-events-none overflow-hidden"
-              >
-                <motion.div
-                  animate={{
-                    y: ["-100%", "200%"],
-                  }}
-                  transition={{
-                    duration: 6,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  className="absolute inset-x-0 h-[40%]"
-                  style={{
-                    background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.08), transparent)",
-                  }}
-                />
+              {/* Subtle top heart accent on capsule */}
+              <div className="absolute top-2.5 right-4 text-[#FF7597] text-[10px] animate-pulse pointer-events-none select-none">
+                ♥
               </div>
 
-              {/* Glass reflection underneath (floor reflection) */}
-              <div
-                className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[60%] h-[6px] rounded-full pointer-events-none"
-                style={{
-                  background: "radial-gradient(ellipse, rgba(255,255,255,0.12), transparent)",
-                  filter: "blur(3px)",
-                }}
-              />
-
-              {/* Navigation Icons */}
-              <div className="flex flex-col items-center gap-1 relative z-10 w-full px-2.5">
-                {DOCK_ITEMS.map((item, i) => {
+              {/* Navigation Items Stack */}
+              <div className="flex flex-col items-center gap-4 relative z-10 w-full">
+                {SIDEBAR_ITEMS.map((item) => {
+                  const Icon = item.icon;
                   const isActive =
                     currentPath === item.href ||
                     (item.href !== "/dashboard" && currentPath.startsWith(item.href));
 
-                  const showDivider = groupBoundaries.has(i);
+                  const isHovered = hoveredHref === item.href;
 
                   return (
-                    <React.Fragment key={item.href}>
-                      {/* Group Divider */}
-                      {showDivider && (
-                        <div
-                          className="w-[28px] h-[1px] my-1.5 rounded-full"
-                          style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
-                        />
-                      )}
+                    <div
+                      key={item.href}
+                      className="relative flex flex-col items-center justify-center w-full"
+                      onMouseEnter={() => setHoveredHref(item.href)}
+                      onMouseLeave={() => setHoveredHref(null)}
+                    >
+                      <Link
+                        href={item.href}
+                        aria-label={item.title}
+                        className="relative flex flex-col items-center justify-center w-full group focus-visible:outline-none"
+                      >
+                        {/* Active State Glowing Pink Orb */}
+                        {isActive ? (
+                          <motion.div
+                            layoutId="active-glowing-orb"
+                            className="relative flex items-center justify-center w-13 h-13 rounded-full mb-1"
+                            transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                            style={{
+                              background: "linear-gradient(135deg, #FF6B95 0%, #E8527D 100%)",
+                              boxShadow: "0 8px 24px rgba(232, 82, 125, 0.42), inset 0 2px 3px rgba(255, 255, 255, 0.4)",
+                            }}
+                          >
+                            {/* Tiny top heart on active orb */}
+                            <span className="absolute -top-1 right-1 text-[9px] text-[#FFB3C6]">♥</span>
+                            <Icon className="w-5 h-5 text-white stroke-[2]" />
+                          </motion.div>
+                        ) : (
+                          <div
+                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${
+                              isHovered ? "bg-white/80 scale-105 shadow-xs" : ""
+                            }`}
+                          >
+                            <Icon
+                              strokeWidth={1.75}
+                              className={`w-5 h-5 transition-colors duration-200 ${
+                                isHovered ? "text-[#E8527D]" : "text-[#7A4B5D]"
+                              }`}
+                            />
+                          </div>
+                        )}
 
-                      <LiquidDockIcon
-                        item={item}
-                        index={i}
-                        mouseY={mouseY}
-                        isActive={isActive}
-                        isHovered={hoveredIndex === i}
-                        onHover={() => setHoveredIndex(i)}
-                        onLeave={() => setHoveredIndex(null)}
-                      />
-                    </React.Fragment>
+                        {/* Label below icon (as in reference image) */}
+                        <span
+                          className={`text-[9px] font-mono font-bold tracking-wider uppercase transition-colors duration-150 ${
+                            isActive
+                              ? "text-[#E8527D] font-black"
+                              : isHovered
+                              ? "text-[#E8527D]"
+                              : "text-[#7A4B5D]/80"
+                          }`}
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+
+                      {/* ── Active / Hover Floating Popout Tooltip Card ── */}
+                      <AnimatePresence>
+                        {(isActive || isHovered) && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10, scale: 0.94 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: -10, scale: 0.94 }}
+                            transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
+                            className="absolute left-full ml-4 px-4 py-3 rounded-2xl bg-white border border-[#FFD0DD] shadow-xl z-50 pointer-events-none select-none flex items-center gap-3"
+                            style={{
+                              boxShadow: "0 12px 32px rgba(232, 82, 125, 0.15), 0 4px 12px rgba(0,0,0,0.04)",
+                            }}
+                          >
+                            {/* Speech Bubble Triangle Pointer */}
+                            <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-y-6 border-y-transparent border-r-6 border-r-white" />
+
+                            {/* Left Pink Square Icon Badge */}
+                            <div className="w-9 h-9 rounded-xl bg-[#FFF0F4] border border-[#FFD0DD] flex items-center justify-center text-[#E8527D] shrink-0">
+                              <Icon className="w-4.5 h-4.5 stroke-[2]" />
+                            </div>
+
+                            {/* Title & Subtitle */}
+                            <div className="text-left space-y-0.5 whitespace-nowrap">
+                              <p className="font-heading font-bold text-sm text-[#3D2432]">
+                                {item.title}
+                              </p>
+                              <p className="font-sans text-[11px] text-[#7A4B5D]">
+                                {item.subtitle}
+                              </p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                    </div>
                   );
                 })}
               </div>
@@ -662,8 +441,7 @@ export default function Navigation() {
 
 
       {/* ══════════════════════════════════════════════════
-          MOBILE — BOTTOM FLOATING LIQUID GLASS DOCK
-          Same glass material, horizontal layout
+          MOBILE — FLOATING BOTTOM CAPSULE
           ══════════════════════════════════════════════════ */}
       <AnimatePresence>
         {visible && (
@@ -671,33 +449,17 @@ export default function Navigation() {
             initial={{ y: 80, opacity: 0, x: "-50%" }}
             animate={{ y: 0, opacity: 1, x: "-50%" }}
             exit={{ y: 80, opacity: 0, x: "-50%" }}
-            transition={{ type: "spring", ...DOCK_SPRING }}
+            transition={{ type: "spring", stiffness: 350, damping: 35 }}
             className="md:hidden fixed bottom-6 left-1/2 z-50"
             aria-label="Mobile Navigation"
           >
             <div
-              className="flex items-center gap-1 px-3 py-2 rounded-[999px] select-none"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-[999px] bg-[#FFF2F5] border-2 border-white paper-grain select-none shadow-2xl"
               style={{
-                background: "rgba(255,255,255,0.2)",
-                backdropFilter: "blur(32px) saturate(180%) brightness(115%)",
-                WebkitBackdropFilter: "blur(32px) saturate(180%) brightness(115%)",
-                border: "1px solid rgba(255,255,255,0.28)",
-                boxShadow: [
-                  "0 20px 60px rgba(0,0,0,0.15)",
-                  "inset 0 4px 12px rgba(255,255,255,0.12)",
-                  "inset 0 1px 0 rgba(255,255,255,0.3)",
-                ].join(", "),
+                boxShadow: "0 12px 36px rgba(232, 82, 125, 0.22)",
               }}
             >
-              {/* Inner gradient highlight */}
-              <div
-                className="absolute inset-0 rounded-[999px] pointer-events-none"
-                style={{
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.02))",
-                }}
-              />
-
-              {MOBILE_ITEMS.map((item) => {
+              {SIDEBAR_ITEMS.slice(0, 7).map((item) => {
                 const Icon = item.icon;
                 const isActive =
                   currentPath === item.href ||
@@ -707,32 +469,24 @@ export default function Navigation() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    aria-label={item.label}
-                    className="relative flex items-center justify-center w-10 h-10 rounded-full transition-transform active:scale-90 z-10"
+                    aria-label={item.title}
+                    className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-90"
                   >
                     {isActive && (
                       <motion.div
-                        layoutId="mobile-liquid-active"
+                        layoutId="mobile-active-orb-pill"
                         className="absolute inset-0 rounded-full"
-                        transition={ACTIVE_SPRING}
                         style={{
-                          background: "radial-gradient(circle at 35% 30%, rgba(180,60,80,0.95), rgba(140,44,61,0.88))",
-                          boxShadow: "0 8px 20px rgba(140,44,61,0.25), inset 0 1px 2px rgba(255,255,255,0.2)",
+                          background: "linear-gradient(135deg, #FF6B95 0%, #E8527D 100%)",
+                          boxShadow: "0 4px 14px rgba(232, 82, 125, 0.4)",
                         }}
-                      >
-                        {/* Tiny specular dot */}
-                        <div
-                          className="absolute top-[4px] left-1/2 -translate-x-1/2 w-[14px] h-[5px] rounded-full"
-                          style={{
-                            background: "linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0))",
-                          }}
-                        />
-                      </motion.div>
+                        transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                      />
                     )}
                     <Icon
                       strokeWidth={1.75}
                       className={`w-4 h-4 relative z-10 ${
-                        isActive ? "text-white" : "text-[rgba(60,45,45,0.8)]"
+                        isActive ? "text-white" : "text-[#7A4B5D]"
                       }`}
                     />
                   </Link>
