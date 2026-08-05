@@ -304,18 +304,18 @@ export default function Navigation() {
       <AnimatePresence>
         {visible && (
           <motion.nav
-            initial={{ x: -100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -100, opacity: 0 }}
+            initial={{ x: -100, opacity: 0, y: "-50%" }}
+            animate={{ x: 0, opacity: 1, y: "-50%" }}
+            exit={{ x: -100, opacity: 0, y: "-50%" }}
             transition={{ type: "spring", stiffness: 350, damping: 35 }}
-            className="hidden md:block fixed left-6 top-24 z-50"
+            className="hidden md:block fixed left-6 top-1/2 -translate-y-1/2 mt-5 z-50"
             aria-label="Main Navigation"
           >
             {/* Sidebar Capsule */}
             <div
-              className="relative flex flex-col items-center py-7 px-3.5 rounded-[999px] select-none paper-grain"
+              className="relative flex flex-col items-center py-5 px-3 rounded-[999px] select-none paper-grain"
               style={{
-                width: "90px",
+                width: "86px",
                 background: "linear-gradient(180deg, #FFF2F5 0%, #FFF8FA 100%)",
                 border: "2px solid rgba(255, 255, 255, 0.95)",
                 boxShadow: [
@@ -326,12 +326,12 @@ export default function Navigation() {
               }}
             >
               {/* Subtle top heart accent on capsule */}
-              <div className="absolute top-2.5 right-4 text-[#FF7597] text-[10px] animate-pulse pointer-events-none select-none">
+              <div className="absolute top-2.5 right-3.5 text-[#FF7597] text-[10px] animate-pulse pointer-events-none select-none">
                 ♥
               </div>
 
               {/* Navigation Items Stack */}
-              <div className="flex flex-col items-center gap-4 relative z-10 w-full">
+              <div className="flex flex-col items-center gap-2.5 relative z-10 w-full">
                 {SIDEBAR_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const isActive =

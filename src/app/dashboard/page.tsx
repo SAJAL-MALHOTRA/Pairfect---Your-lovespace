@@ -722,7 +722,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="relative max-w-6xl mx-auto w-full px-6 py-16 pb-36 pt-24 space-y-10"
+        className="relative max-w-6xl mx-auto w-full px-6 md:pl-36 md:pr-12 py-16 pb-36 pt-24 space-y-10"
         style={{ zIndex: 10 }}
       >
         <PushOptInBanner />
