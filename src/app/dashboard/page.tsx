@@ -447,8 +447,7 @@ export default function DashboardPage() {
     const hours = new Date().getHours();
     if (hours >= 5 && hours < 12) return "Good morning,";
     if (hours >= 12 && hours < 17) return "Good afternoon,";
-    if (hours >= 17 && hours < 22) return "Good evening,";
-    return "Still awake,";
+    return "Good evening,";
   };
 
   // ── Time-Aware Ritual Prompt ──
