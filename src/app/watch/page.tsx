@@ -30,6 +30,9 @@ import {
   Music,
   Smile,
   Zap,
+  Volume2,
+  VolumeX,
+  Loader2,
 } from "lucide-react";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,6 +58,13 @@ interface QueueItem {
   title: string;
   addedBy: string;
 }
+
+const RTC_CONFIG: RTCConfiguration = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
+};
 
 const PRESET_VIDEOS = [
   { label: "☕ Lofi Hip Hop Radio", id: "jfKfPfyJRdk" },
@@ -99,8 +109,18 @@ export default function WatchPage() {
 
   // Screen Sharing states
   const [isSharing, setIsSharing] = useState(false);
+  const [isReceivingStream, setIsReceivingStream] = useState(false);
+  const [isConnectingWebRTC, setIsConnectingWebRTC] = useState(false);
+  const [remoteSharerName, setRemoteSharerName] = useState<string>("");
+  const [isRemoteMuted, setIsRemoteMuted] = useState(false);
+
+  // Screen Sharing refs
   const screenVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const iceCandidatesQueueRef = useRef<RTCIceCandidateInit[]>([]);
 
   const supabase = createClient();
   const playerRef = useRef<any>(null);
@@ -113,6 +133,29 @@ export default function WatchPage() {
       sendGameNotification("Movie Night", "/watch");
     }
   }, [pair, user]);
+
+  // Clean up screen share media & peer connections on component unmount
+  useEffect(() => {
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      }
+      closePeerConnection();
+    };
+  }, []);
+
+  // Rebind stream targets whenever activeTab or stream states update
+  useEffect(() => {
+    if (activeTab === "screenshare") {
+      if (isSharing && mediaStreamRef.current && screenVideoRef.current) {
+        screenVideoRef.current.srcObject = mediaStreamRef.current;
+      }
+      if (isReceivingStream && remoteStreamRef.current && remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStreamRef.current;
+      }
+    }
+  }, [activeTab, isSharing, isReceivingStream]);
 
   const extractVideoId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -196,7 +239,150 @@ export default function WatchPage() {
     });
   };
 
-  // 3. Supabase Realtime Broadcast & Presence Listener
+  // 3. WebRTC Peer Connection Helper Methods
+  const closePeerConnection = () => {
+    if (pcRef.current) {
+      try {
+        pcRef.current.ontrack = null;
+        pcRef.current.onicecandidate = null;
+        pcRef.current.onconnectionstatechange = null;
+        pcRef.current.oniceconnectionstatechange = null;
+        pcRef.current.close();
+      } catch (e) {}
+      pcRef.current = null;
+    }
+    iceCandidatesQueueRef.current = [];
+  };
+
+  const createPeerConnection = (isSharer: boolean): RTCPeerConnection => {
+    closePeerConnection();
+
+    const pc = new RTCPeerConnection(RTC_CONFIG);
+    pcRef.current = pc;
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && channelRef.current && user) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "webrtc-ice",
+          payload: { sender: user.id, candidate: event.candidate.toJSON() },
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      if (event.streams && event.streams[0]) {
+        const incomingStream = event.streams[0];
+        remoteStreamRef.current = incomingStream;
+        setIsReceivingStream(true);
+        setIsConnectingWebRTC(false);
+
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = incomingStream;
+        }
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState;
+      if (state === "connected") {
+        setIsConnectingWebRTC(false);
+      } else if (state === "disconnected" || state === "failed" || state === "closed") {
+        setIsConnectingWebRTC(false);
+        if (!isSharer && state !== "disconnected") {
+          setIsReceivingStream(false);
+          remoteStreamRef.current = null;
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+          }
+        }
+      }
+    };
+
+    return pc;
+  };
+
+  const handleWebRTCOffer = async (offer: RTCSessionDescriptionInit, senderId: string) => {
+    try {
+      setIsConnectingWebRTC(true);
+      setIsReceivingStream(true);
+      setActiveTab("screenshare");
+
+      const pc = createPeerConnection(false);
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+      while (iceCandidatesQueueRef.current.length > 0) {
+        const cand = iceCandidatesQueueRef.current.shift();
+        if (cand) {
+          await pc.addIceCandidate(new RTCIceCandidate(cand));
+        }
+      }
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      if (channelRef.current && user) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "webrtc-answer",
+          payload: { sender: user.id, answer },
+        });
+      }
+    } catch (err) {
+      console.error("Error handling WebRTC offer:", err);
+      setIsConnectingWebRTC(false);
+      showSyncFeedback("Failed to connect to partner's screen share.");
+    }
+  };
+
+  const handleWebRTCAnswer = async (answer: RTCSessionDescriptionInit) => {
+    const pc = pcRef.current;
+    if (!pc) return;
+
+    try {
+      if (pc.signalingState === "have-local-offer") {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+        while (iceCandidatesQueueRef.current.length > 0) {
+          const cand = iceCandidatesQueueRef.current.shift();
+          if (cand) {
+            await pc.addIceCandidate(new RTCIceCandidate(cand));
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error handling WebRTC answer:", err);
+    }
+  };
+
+  const handleWebRTCIce = async (candidate: RTCIceCandidateInit) => {
+    const pc = pcRef.current;
+    if (!candidate) return;
+
+    if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error("Error adding ICE candidate:", err);
+      }
+    } else {
+      iceCandidatesQueueRef.current.push(candidate);
+    }
+  };
+
+  const handleRemoteScreenStop = () => {
+    closePeerConnection();
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    remoteStreamRef.current = null;
+    setIsReceivingStream(false);
+    setIsConnectingWebRTC(false);
+    setRemoteSharerName("");
+    showSyncFeedback("Partner ended screen share.");
+  };
+
+  // 4. Supabase Realtime Broadcast & Presence Listener
   useEffect(() => {
     if (!pair || !user) return;
 
@@ -237,10 +423,37 @@ export default function WatchPage() {
       .on("broadcast", { event: "reaction" }, ({ payload }: any) => {
         triggerEmojiAnimation(payload.emoji, payload.senderName || "Partner", payload.burst);
       })
+      .on("broadcast", { event: "screen-start" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return;
+        setRemoteSharerName(payload.senderName || "Partner");
+        setIsReceivingStream(true);
+        setIsConnectingWebRTC(true);
+        setActiveTab("screenshare");
+        showSyncFeedback(`${payload.senderName || "Partner"} started Virtual Cinema screen sharing!`);
+      })
+      .on("broadcast", { event: "webrtc-offer" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return;
+        handleWebRTCOffer(payload.offer, payload.sender);
+      })
+      .on("broadcast", { event: "webrtc-answer" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return;
+        handleWebRTCAnswer(payload.answer);
+      })
+      .on("broadcast", { event: "webrtc-ice" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return;
+        handleWebRTCIce(payload.candidate);
+      })
+      .on("broadcast", { event: "screen-stop" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return;
+        handleRemoteScreenStop();
+      })
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
         const partnerPresent = Object.keys(state).some((id) => id !== user.id);
         setIsPartnerPresent(partnerPresent);
+        if (!partnerPresent && isReceivingStream) {
+          handleRemoteScreenStop();
+        }
       })
       .subscribe(async (status: string) => {
         if (status === "SUBSCRIBED") {
@@ -253,7 +466,7 @@ export default function WatchPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [pair, user]);
+  }, [pair, user, isReceivingStream]);
 
   const showSyncFeedback = (msg: string) => {
     setSyncStatus(msg);
@@ -350,26 +563,70 @@ export default function WatchPage() {
   };
 
   const startScreenShare = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      setError("Screen sharing is not supported in this browser.");
+      return;
+    }
+
     try {
       setError(null);
+      setIsConnectingWebRTC(true);
+
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: "always" } as any,
+        video: {
+          width: { max: 1920, ideal: 1280 },
+          height: { max: 1080, ideal: 720 },
+          frameRate: { max: 30, ideal: 24 },
+          cursor: "always",
+        } as any,
         audio: true,
       });
 
       mediaStreamRef.current = stream;
+      setIsSharing(true);
+      setActiveTab("screenshare");
+      showSyncFeedback("Virtual Cinema started! Switch to your streaming tab to watch together.");
+
       if (screenVideoRef.current) {
         screenVideoRef.current.srcObject = stream;
       }
-      setIsSharing(true);
-      showSyncFeedback("Virtual Cinema started! Switch to your streaming tab to watch together.");
 
+      // Handle stream end when user stops sharing via browser native floating bar
       stream.getVideoTracks()[0].onended = () => {
         stopScreenShare();
       };
+
+      const pc = createPeerConnection(true);
+
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      if (channelRef.current && user) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "screen-start",
+          payload: { sender: user.id, senderName: profile?.display_name || "Partner" },
+        });
+
+        channelRef.current.send({
+          type: "broadcast",
+          event: "webrtc-offer",
+          payload: { sender: user.id, offer },
+        });
+      }
     } catch (err: any) {
-      console.error("Screen share error:", err);
-      setError(err?.message || "Screen sharing permission was cancelled or not supported.");
+      setIsConnectingWebRTC(false);
+      setIsSharing(false);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        showSyncFeedback("Screen sharing permission was cancelled.");
+      } else {
+        console.error("Screen share error:", err);
+        setError(err?.message || "Screen sharing failed.");
+      }
     }
   };
 
@@ -381,7 +638,19 @@ export default function WatchPage() {
     if (screenVideoRef.current) {
       screenVideoRef.current.srcObject = null;
     }
+
+    closePeerConnection();
+
+    if (channelRef.current && user) {
+      channelRef.current.send({
+        type: "broadcast",
+        event: "screen-stop",
+        payload: { sender: user.id },
+      });
+    }
+
     setIsSharing(false);
+    setIsConnectingWebRTC(false);
     showSyncFeedback("Virtual Cinema ended.");
   };
 
@@ -604,6 +873,9 @@ export default function WatchPage() {
             }`}
           >
             <Monitor className="w-4 h-4" /> 📺 Virtual Cinema (Netflix/Prime)
+            {(isSharing || isReceivingStream) && (
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            )}
           </button>
 
           <button
@@ -839,41 +1111,78 @@ export default function WatchPage() {
           </div>
         )}
 
-        {/* TAB 2: VIRTUAL CINEMA (SCREEN SHARE FOR NETFLIX / PRIME) */}
+        {/* TAB 2: VIRTUAL CINEMA (REAL-TIME WEBRTC SCREEN SHARE FOR NETFLIX / PRIME) */}
         {activeTab === "screenshare" && (
           <div className="space-y-4">
             <div className="p-4 rounded-card bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <h3 className="font-heading font-bold text-base text-[var(--burgundy)] flex items-center gap-2">
-                    <Monitor className="w-5 h-5" /> Virtual Cinema Mode
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-heading font-bold text-base text-[var(--burgundy)] flex items-center gap-2">
+                      <Monitor className="w-5 h-5" /> Virtual Cinema Mode
+                    </h3>
+                    {isSharing && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-500 text-white animate-pulse flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white" /> Live (Sharer)
+                      </span>
+                    )}
+                    {isReceivingStream && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-600 text-white animate-pulse flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white" /> Live ({remoteSharerName || partnerName})
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-[var(--text-soft)] mt-0.5 leading-relaxed">
-                    Share a browser tab or your screen to watch compatible streaming services together with {partnerName}. Availability depends on your browser and the streaming provider's DRM protections.
+                    Real-time peer-to-peer tab & screen streaming over WebRTC. Share your browser tab to watch together with {partnerName}.
                   </p>
                 </div>
 
-                {!isSharing ? (
-                  <button
-                    onClick={startScreenShare}
-                    className="btn-primary py-2.5 px-5 text-xs inline-flex items-center gap-2"
-                  >
-                    <Video className="w-4 h-4" /> Share Netflix / Prime Tab
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopScreenShare}
-                    className="btn-secondary py-2.5 px-4 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
-                  >
-                    Stop Sharing
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {isReceivingStream && (
+                    <button
+                      onClick={() => {
+                        if (remoteVideoRef.current) {
+                          remoteVideoRef.current.muted = !isRemoteMuted;
+                          setIsRemoteMuted(!isRemoteMuted);
+                        }
+                      }}
+                      className="btn-secondary py-2 px-3 text-xs inline-flex items-center gap-1.5"
+                      title={isRemoteMuted ? "Unmute Stream Audio" : "Mute Stream Audio"}
+                    >
+                      {isRemoteMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4" />}
+                      <span>{isRemoteMuted ? "Unmute" : "Mute"}</span>
+                    </button>
+                  )}
+
+                  {!isSharing ? (
+                    <button
+                      onClick={startScreenShare}
+                      disabled={isConnectingWebRTC}
+                      className="btn-primary py-2.5 px-5 text-xs inline-flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isConnectingWebRTC ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Video className="w-4 h-4" />
+                      )}
+                      <span>Share Netflix / Prime Tab</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={stopScreenShare}
+                      className="btn-secondary py-2.5 px-4 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+                    >
+                      Stop Sharing
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Virtual Cinema Video Screen Container */}
               <div className="relative aspect-video w-full rounded-card overflow-hidden bg-black border border-[var(--border)] shadow-xl paper-grain flex items-center justify-center">
                 <div className="accent-line absolute top-0 left-0 right-0 z-20 pointer-events-none" />
 
+                {/* Local Sharer Video Screen */}
                 <video
                   ref={screenVideoRef}
                   autoPlay
@@ -882,13 +1191,32 @@ export default function WatchPage() {
                   className={`w-full h-full object-contain ${isSharing ? "block" : "hidden"}`}
                 />
 
-                {!isSharing && (
+                {/* Remote Partner Incoming Video Screen */}
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  muted={isRemoteMuted}
+                  className={`w-full h-full object-contain ${isReceivingStream && !isSharing ? "block" : "hidden"}`}
+                />
+
+                {/* Connecting WebRTC Spinner */}
+                {isConnectingWebRTC && (
+                  <div className="absolute inset-0 z-30 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3">
+                    <Loader2 className="w-10 h-10 text-[var(--burgundy)] animate-spin" />
+                    <p className="font-heading font-bold text-sm text-white">Establishing Secure WebRTC Connection...</p>
+                    <p className="text-xs text-stone-300 max-w-xs">Connecting peer-to-peer stream with {partnerName}.</p>
+                  </div>
+                )}
+
+                {/* Cinema Screen Offline Placeholder */}
+                {!isSharing && !isReceivingStream && !isConnectingWebRTC && (
                   <div className="text-center p-6 space-y-3">
                     <Film className="w-12 h-12 text-[var(--burgundy)]/40 mx-auto" />
                     <div>
                       <p className="font-heading font-bold text-sm text-white">Cinema Screen Offline</p>
                       <p className="text-xs text-stone-400 mt-1 max-w-sm mx-auto leading-relaxed">
-                        Click "Share Netflix / Prime Tab" above. In the browser popup, select your Netflix or Prime Video tab and ensure "Also share tab audio" is enabled.
+                        Click "Share Netflix / Prime Tab" above to start streaming live over WebRTC. In the browser popup, select your streaming tab and make sure "Also share tab audio" is enabled.
                       </p>
                     </div>
                   </div>
@@ -914,13 +1242,13 @@ export default function WatchPage() {
               {/* Method 1: Virtual Cinema */}
               <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--burgundy)] text-white">
-                  Method 1 (Built-In)
+                  Method 1 (Built-In WebRTC)
                 </span>
                 <h4 className="font-heading font-bold text-sm text-[var(--text)]">
                   Pairfect Virtual Cinema (Tab Share)
                 </h4>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Switch to the **Virtual Cinema** tab inside Pairfect. Click "Share Netflix / Prime Tab" and enable tab audio. One partner streams, and both watch live inside Pairfect!
+                  Switch to the **Virtual Cinema** tab inside Pairfect. Click "Share Netflix / Prime Tab" and enable tab audio. WebRTC stream will transmit live to your partner inside Pairfect!
                 </p>
               </div>
 
@@ -950,7 +1278,7 @@ export default function WatchPage() {
 
         {/* Sync Info Footer */}
         <div className="p-4 rounded-card border border-[var(--border)] bg-[var(--paper-warm)] text-xs text-[var(--text-soft)] leading-relaxed shadow-xs paper-grain">
-          💡 **Real-time Movie Night Active**: Playback, seeking, and floating reactions sync live across both partner devices via Supabase Realtime WebSockets.
+          💡 **Real-time Movie Night Active**: Playback, WebRTC screen sharing, seeking, and floating reactions sync live across both partner devices via Supabase Realtime WebSockets.
         </div>
       </main>
     </div>
