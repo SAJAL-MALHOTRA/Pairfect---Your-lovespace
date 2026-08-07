@@ -104,9 +104,14 @@ export async function GET(request: Request) {
       if (typeof lastLoveLetter.content === "string") {
         try {
           const decryptedStr = decrypt(lastLoveLetter.content);
-          decryptedContent = JSON.parse(decryptedStr);
+          if (typeof decryptedStr === "string" && (decryptedStr.startsWith("[") || decryptedStr.startsWith("{"))) {
+            decryptedContent = JSON.parse(decryptedStr);
+          } else {
+            decryptedContent = [{ type: "text", value: "A handwritten letter for you ♡" }];
+          }
         } catch (e) {
           console.error("Failed to decrypt summary letter content:", e);
+          decryptedContent = [{ type: "text", value: "A handwritten letter for you ♡" }];
         }
       }
       lastLoveLetter = { ...lastLoveLetter, content: decryptedContent };
@@ -116,9 +121,12 @@ export async function GET(request: Request) {
     let lastGratitude = gratitudeRes.data?.[0] || null;
     if (lastGratitude && typeof lastGratitude.content === "string") {
       try {
-        lastGratitude = { ...lastGratitude, content: decrypt(lastGratitude.content) };
+        const res = decrypt(lastGratitude.content);
+        const cleanContent = (typeof res === "string" && res.startsWith("enc:")) ? "A note of gratitude shared with love ♡" : res;
+        lastGratitude = { ...lastGratitude, content: cleanContent };
       } catch (e) {
         console.error("Failed to decrypt summary gratitude content:", e);
+        lastGratitude = { ...lastGratitude, content: "A note of gratitude shared with love ♡" };
       }
     }
 

@@ -31,12 +31,14 @@ export async function GET(request: Request) {
       let decryptedContent = note.content;
       if (typeof note.content === "string") {
         try {
-          decryptedContent = decrypt(note.content);
+          const res = decrypt(note.content);
+          decryptedContent = (typeof res === "string" && res.startsWith("enc:")) ? "A note of gratitude shared with love ♡" : res;
         } catch (e) {
           console.error("Failed to decrypt gratitude note content:", e);
+          decryptedContent = "A note of gratitude shared with love ♡";
         }
       }
-      return { ...note, content: decryptedContent };
+      return { ...note, content: decryptedContent || "A note of gratitude shared with love ♡" };
     });
 
     return NextResponse.json(decryptedNotes);

@@ -30,16 +30,32 @@ export async function GET(request: Request) {
     // Decrypt content field for each letter
     const decryptedLetters = (letters || []).map((letter: any) => {
       let decryptedContent = letter.content;
-      
-      // If content is stored as an encrypted string (wrapped in JSONB)
+
       if (typeof letter.content === "string") {
         try {
           const decryptedStr = decrypt(letter.content);
-          decryptedContent = JSON.parse(decryptedStr);
+          if (typeof decryptedStr === "string" && (decryptedStr.startsWith("[") || decryptedStr.startsWith("{"))) {
+            decryptedContent = JSON.parse(decryptedStr);
+          } else if (typeof decryptedStr === "string" && !decryptedStr.startsWith("enc:")) {
+            decryptedContent = [{ type: "text", value: decryptedStr }];
+          } else {
+            decryptedContent = [{ type: "text", value: "A handwritten letter for you ♡" }];
+          }
         } catch (e) {
           console.error("Failed to parse decrypted letter content:", e);
+          decryptedContent = [{ type: "text", value: "A handwritten letter for you ♡" }];
         }
       }
+
+      // Final safeguard: ensure content is always an array of blocks and never an enc: string
+      if (!Array.isArray(decryptedContent)) {
+        if (typeof decryptedContent === "string" && !decryptedContent.startsWith("enc:")) {
+          decryptedContent = [{ type: "text", value: decryptedContent }];
+        } else {
+          decryptedContent = [{ type: "text", value: "A handwritten letter for you ♡" }];
+        }
+      }
+
       return { ...letter, content: decryptedContent };
     });
 
