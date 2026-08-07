@@ -3,18 +3,23 @@ import crypto from "crypto";
 const IV_LENGTH = 16;
 
 function getCandidateKeys(): Buffer[] {
+  // The anon key that was historically used as the encryption key before APP_ENCRYPTION_KEY was added.
+  // NEXT_PUBLIC_ env vars may not be available in server-side route handlers on Vercel,
+  // so we hardcode this known value as a fallback candidate to decrypt legacy data.
+  const LEGACY_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWttaGZycHR5amthZ3dldGt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mjc1MjksImV4cCI6MjA5OTUwMzUyOX0.jn9tgjKXwq6Mn4VFIxvwlQ1xWu4JXRi_syC6oZVSLKc";
+
   const secrets = [
     process.env.APP_ENCRYPTION_KEY,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    LEGACY_ANON_KEY,
     "pairfect-secure-default-encryption-key-32-chars",
   ].filter((s): s is string => Boolean(s && s.trim()));
 
-  const keys: Buffer[] = [];
-  for (const secret of secrets) {
-    // SHA-256 digest
-    keys.push(crypto.createHash("sha256").update(secret, "utf8").digest());
-  }
-  return keys;
+  // Deduplicate
+  const unique = [...new Set(secrets)];
+  return unique.map(secret =>
+    crypto.createHash("sha256").update(secret, "utf8").digest()
+  );
 }
 
 function getKey(): Buffer {
