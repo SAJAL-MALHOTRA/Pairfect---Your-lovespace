@@ -811,25 +811,33 @@ export default function LoveLetterPage() {
                       </div>
 
                       <div className="space-y-5">
-                        {activeLetter.content.map((block: any, idx: number) => {
-                          if (revealCount <= idx) return null;
-                          return (
-                            <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                              {block.type === "text" ? (
-                                <p className="text-base leading-8 whitespace-pre-wrap" style={{
-                                  fontFamily: "var(--font-handwriting),cursive",
-                                  color: candle ? "rgba(245,210,150,0.88)" : "var(--ink-dark)",
-                                }}>
-                                  {typewriter ? <TypewriterText text={block.value} sound={typeSound} /> : block.value}
-                                </p>
-                              ) : (
-                                <div className="rounded-xl overflow-hidden border border-[var(--border-warm)] max-w-xs p-2 bg-white/60">
-                                  <GiphyRenderer giphyId={block.giphy_id} />
-                                </div>
-                              )}
-                            </motion.div>
-                          );
-                        })}
+                        {Array.isArray(activeLetter.content) ? (
+                          activeLetter.content.map((block: any, idx: number) => {
+                            if (revealCount <= idx) return null;
+                            return (
+                              <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                                {block.type === "text" ? (
+                                  <p className="text-base leading-8 whitespace-pre-wrap" style={{
+                                    fontFamily: "var(--font-handwriting),cursive",
+                                    color: candle ? "rgba(245,210,150,0.88)" : "var(--ink-dark)",
+                                  }}>
+                                    {typewriter ? <TypewriterText text={block.value || ""} sound={typeSound} /> : (block.value || "")}
+                                  </p>
+                                ) : (
+                                  <div className="rounded-xl overflow-hidden border border-[var(--border-warm)] max-w-xs p-2 bg-white/60">
+                                    <GiphyRenderer giphyId={block.giphy_id} />
+                                  </div>
+                                )}
+                              </motion.div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-base leading-8 whitespace-pre-wrap font-handwriting" style={{
+                            color: candle ? "rgba(245,210,150,0.88)" : "var(--ink-dark)",
+                          }}>
+                            {typeof activeLetter.content === "string" ? activeLetter.content : "A handwritten letter for you ♡"}
+                          </p>
+                        )}
                       </div>
 
                       {revealCount > activeLetter.content.length && (

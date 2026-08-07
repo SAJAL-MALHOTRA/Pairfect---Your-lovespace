@@ -42,15 +42,19 @@ export function decrypt(encryptedText: string): string {
 
   const parts = encryptedText.split(":");
   if (parts.length !== 3) {
-    throw new Error("Invalid encrypted payload");
+    return "A keepsake shared with love ♡";
   }
 
-  const iv = Buffer.from(parts[1], "hex");
-  const encrypted = parts[2];
-  const decipher = crypto.createDecipheriv("aes-256-cbc", getKey(), iv);
+  try {
+    const iv = Buffer.from(parts[1], "hex");
+    const encrypted = parts[2];
+    const decipher = crypto.createDecipheriv("aes-256-cbc", getKey(), iv);
 
-  let decrypted = decipher.update(encrypted, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-
-  return decrypted;
+    let decrypted = decipher.update(encrypted, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  } catch (err) {
+    console.error("[Encryption] Decryption failed:", err);
+    return "A keepsake shared with love ♡";
+  }
 }
