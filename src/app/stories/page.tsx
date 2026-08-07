@@ -22,21 +22,28 @@ function parseContent(raw: string) {
 }
 
 // ── Heart node that appears when scrolled into view ─────────────────────────
-function HeartNode({ filled }: { filled: boolean }) {
+function HeartNode({ filled, index }: { filled: boolean; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-20px" });
   return (
     <div ref={ref}>
-      <motion.svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+      <motion.div
+        className="w-8 h-8 rounded-full flex items-center justify-center"
         initial={{ scale: 0, opacity: 0 }}
         animate={inView ? { scale: 1, opacity: 1 } : {}}
-        transition={{ type: "spring", stiffness: 400, damping: 24, delay: 0.1 }}
+        transition={{ type: "spring", stiffness: 400, damping: 24, delay: 0.1 + index * 0.05 }}
+        style={{
+          background: filled
+            ? "linear-gradient(135deg, #FF6B95 0%, #E8527D 100%)"
+            : "var(--bg)",
+          border: filled ? "2px solid rgba(232, 82, 125, 0.3)" : "2px solid var(--border-mid)",
+          boxShadow: filled
+            ? "0 4px 12px rgba(232, 82, 125, 0.25)"
+            : "0 2px 8px rgba(0,0,0,0.04)",
+        }}
       >
-        <path d="M9 15C9 15 2.5 10.5 2.5 6.5C2.5 4.3 4.1 2.5 6.25 2.5C7.4 2.5 8.4 3.2 9 4C9.6 3.2 10.6 2.5 11.75 2.5C13.9 2.5 15.5 4.3 15.5 6.5C15.5 10.5 9 15 9 15Z"
-          fill={filled ? "var(--seal-red)" : "none"}
-          stroke={filled ? "var(--seal-red)" : "var(--ink-light)"}
-          strokeWidth="1.2" />
-      </motion.svg>
+        <Heart className={`w-3.5 h-3.5 ${filled ? "text-white fill-white" : "text-[var(--ink-light)]"}`} />
+      </motion.div>
     </div>
   );
 }
@@ -53,55 +60,81 @@ function Chapter({ story, index, isMe, authorName, onDelete, onLike, profilesMap
   const dateStr = (() => { try { return format(new Date(story.created_at), "MMMM d, yyyy"); } catch { return story.created_at; } })();
 
   return (
-    <div ref={ref} className="relative flex gap-6">
-      {/* Rail side */}
-      <div className="flex flex-col items-center" style={{ width: "18px", flexShrink: 0, paddingTop: "2px" }}>
-        <HeartNode filled={isMe} />
+    <div ref={ref} className="relative flex gap-5">
+      {/* Rail side — node + connector */}
+      <div className="flex flex-col items-center" style={{ width: "32px", flexShrink: 0 }}>
+        <HeartNode filled={isMe} index={index} />
       </div>
 
-      {/* Content */}
+      {/* Content card */}
       <motion.div
-        className="flex-1 pb-14 material-notebook"
-        initial={{ opacity: 0, x: 16 }}
-        animate={inView ? { opacity: 1, x: 0 } : {}}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+        className="flex-1 pb-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.15 + index * 0.05 }}
       >
-        <p className="text-[8px] font-mono uppercase tracking-widest text-[var(--ink-light)] mb-1">
-          Chapter {index + 1}
-        </p>
-        <span className="inline-block text-[8px] font-mono uppercase tracking-widest text-[var(--ink-mid)] bg-[var(--bg-secondary)] px-2 py-0.5 rounded-full border border-[var(--border-mid)] mb-2">
-          {badge}
-        </span>
-
-        {/* The title IS the story */}
-        <h2 className="font-display italic font-bold text-2xl md:text-3xl text-[var(--ink-dark)] leading-tight mb-1">
-          {story.title}
-        </h2>
-
-        <p className="font-handwriting text-xs text-[var(--ink-light)] mb-4">
-          {authorName} · {dateStr}
-        </p>
-
-        {story.resolved_cover && (
-          <div className="rounded-2xl overflow-hidden mb-5 border border-[var(--border-mid)]" style={{ maxHeight: "220px" }}>
-            <img src={story.resolved_cover} alt={story.title} className="w-full h-full object-cover" style={{ maxHeight: "220px" }} />
-          </div>
-        )}
-
-        <p className="text-sm text-[var(--ink-mid)] leading-relaxed whitespace-pre-wrap">{body}</p>
-
-        {/* Actions */}
-        <div className="flex items-center gap-5 mt-5">
-          <motion.button onClick={onLike} whileTap={{ scale: 0.82 }}
-            className="inline-flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-[var(--seal-red)] cursor-pointer transition-colors">
-            <Heart className="w-3 h-3" /> {story.likes || 0}
-          </motion.button>
-          {isMe && (
-            <button onClick={onDelete}
-              className="inline-flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-red-500 cursor-pointer transition-colors">
-              <Trash2 className="w-3 h-3" /> Remove
-            </button>
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            background: "var(--card-bg, var(--paper-warm))",
+            border: "1px solid var(--border-warm)",
+            boxShadow: "0 4px 20px -4px rgba(60,40,20,0.08), 0 1px 3px rgba(60,40,20,0.04)",
+          }}
+        >
+          {/* Cover image */}
+          {story.resolved_cover && (
+            <div className="relative" style={{ maxHeight: "200px", overflow: "hidden" }}>
+              <img src={story.resolved_cover} alt={story.title} className="w-full h-full object-cover" style={{ maxHeight: "200px" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.15) 100%)" }} />
+            </div>
           )}
+
+          {/* Card body */}
+          <div className="p-5 space-y-3">
+            {/* Top meta row */}
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 text-[8px] font-mono uppercase tracking-[0.15em] text-[var(--ink-light)]">
+                Chapter {index + 1}
+              </span>
+              <span
+                className="text-[8px] font-mono uppercase tracking-widest px-2.5 py-1 rounded-full"
+                style={{
+                  background: "linear-gradient(135deg, rgba(255,107,149,0.1) 0%, rgba(232,82,125,0.08) 100%)",
+                  color: "var(--seal-red)",
+                  border: "1px solid rgba(232,82,125,0.15)",
+                }}
+              >
+                {badge}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h2 className="font-display italic font-bold text-xl md:text-2xl text-[var(--ink-dark)] leading-tight">
+              {story.title}
+            </h2>
+
+            {/* Author & date */}
+            <p className="font-handwriting text-xs text-[var(--ink-light)]">
+              {authorName} · {dateStr}
+            </p>
+
+            {/* Body text */}
+            <p className="text-sm text-[var(--ink-mid)] leading-[1.8] whitespace-pre-wrap">{body}</p>
+
+            {/* Actions footer */}
+            <div className="flex items-center justify-between pt-3 mt-1" style={{ borderTop: "1px solid var(--border-mid)" }}>
+              <motion.button onClick={onLike} whileTap={{ scale: 0.85 }}
+                className="inline-flex items-center gap-2 text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-[var(--seal-red)] cursor-pointer transition-colors py-1">
+                <Heart className="w-3.5 h-3.5" /> {story.likes || 0}
+              </motion.button>
+              {isMe && (
+                <button onClick={onDelete}
+                  className="inline-flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-red-500 cursor-pointer transition-colors py-1">
+                  <Trash2 className="w-3 h-3" /> Remove
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>
@@ -244,22 +277,22 @@ export default function StoriesPage() {
             </div>
           </motion.div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Header illustration */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex justify-center mb-6"
+              className="flex justify-center mb-8"
             >
-              <TimelineStory className="w-44 h-44 rounded-3xl" />
+              <TimelineStory className="w-40 h-40 rounded-3xl" />
             </motion.div>
 
             <div className="relative">
             {/* The vertical rail — draws itself from top */}
             <motion.div
-              className="absolute top-2 bottom-0 bg-[var(--border-mid)]"
-              style={{ left: "8px", width: "1px", transformOrigin: "top", scaleY: 0 }}
+              className="absolute bg-gradient-to-b from-[var(--seal-red)] via-[var(--border-mid)] to-transparent"
+              style={{ left: "15px", top: "16px", bottom: "0", width: "2px", transformOrigin: "top", scaleY: 0, borderRadius: "1px" }}
               animate={{ scaleY: 1 }}
               transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
             />
