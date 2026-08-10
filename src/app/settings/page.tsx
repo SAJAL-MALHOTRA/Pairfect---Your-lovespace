@@ -7,8 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { useTheme } from "@/components/providers/theme-provider";
 import {
-  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight
+  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight, MapPin, Trash2
 } from "lucide-react";
+import CitySelectorModal from "@/components/city-selector-modal";
 
 const APP_VERSION = "0.1.0";
 const DEFAULT_NOTIFICATION_SETTINGS = {
@@ -100,6 +101,8 @@ export default function SettingsPage() {
   const [partnerCheckInAlert, setPartnerCheckInAlert] = useState(true);
   const [newGratitudeAlert, setNewGratitudeAlert] = useState(true);
   const [updatingNotifications, setUpdatingNotifications] = useState(false);
+  const [isCityModalOpen, setIsCityModalOpen] = useState(false);
+  const [clearingCity, setClearingCity] = useState(false);
 
   const [unlinkingPair, setUnlinkingPair] = useState(false);
   const [showUnlinkModal, setShowUnlinkModal] = useState(false);
@@ -390,6 +393,56 @@ export default function SettingsPage() {
                 checked={theme === "dark"}
                 onChange={toggleTheme}
               />
+            }
+          />
+        </Section>
+
+        {/* Your City (Meanwhile Proximity) */}
+        <Section title="Your City (Meanwhile Proximity)">
+          <SettingsRow
+            label="Current City"
+            description={profile?.city ? `${profile.city.name}, ${profile.city.country}` : "No city selected yet"}
+            right={
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCityModalOpen(true)}
+                  className="btn-secondary py-1.5 px-3 text-[10px] uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                >
+                  <MapPin className="w-3 h-3 text-[var(--burgundy)]" />
+                  <span>{profile?.city ? "Change" : "Choose City"}</span>
+                </button>
+
+                {profile?.city && (
+                  <button
+                    type="button"
+                    disabled={clearingCity}
+                    onClick={async () => {
+                      const confirmClear = window.confirm(
+                        "Stop sharing your city?\n\nYour partner will no longer see your distance, local weather or local time."
+                      );
+                      if (!confirmClear) return;
+
+                      setClearingCity(true);
+                      try {
+                        const res = await fetch("/api/city", { method: "DELETE" });
+                        if (res.ok) {
+                          setSuccessMessage("City cleared.");
+                          await refreshSession();
+                        }
+                      } catch (e) {
+                        setError("Failed to clear city.");
+                      } finally {
+                        setClearingCity(false);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 text-[10px] font-mono cursor-pointer transition-colors"
+                    title="Clear city"
+                  >
+                    {clearingCity ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+              </div>
             }
           />
         </Section>

@@ -9,6 +9,8 @@ import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, S
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 import PushOptInBanner from "@/components/push-opt-in-banner";
+import MeanwhileCard from "@/components/meanwhile-card";
+import CitySelectorModal from "@/components/city-selector-modal";
 
 export const moodDetails = {
   joyful:   { label: "Joyful",   emoji: "😊", color: "text-yellow-600  bg-yellow-50  dark:bg-yellow-950/20  border-yellow-100 dark:border-yellow-900/25" },
@@ -287,6 +289,8 @@ export default function DashboardPage() {
   const [mixtapeCount, setMixtapeCount] = useState(0);
   const [latestMixtape, setLatestMixtape] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
+  const [isCityModalOpen, setIsCityModalOpen] = useState(false);
+  const { refreshSession } = useAuth();
   const supabase = createClient();
 
   // prefers-reduced-motion hook (declared before early returns)
@@ -725,6 +729,21 @@ export default function DashboardPage() {
         style={{ zIndex: 10 }}
       >
         <PushOptInBanner />
+
+        {/* ─── MEANWHILE ♥ PROXIMITY HERO CENTERPIECE ─── */}
+        <MeanwhileCard
+          userProfile={profile}
+          partnerProfile={partner}
+          onOpenCitySelector={() => setIsCityModalOpen(true)}
+        />
+
+        {/* ─── CITY SELECTOR MODAL ─── */}
+        <CitySelectorModal
+          isOpen={isCityModalOpen}
+          onClose={() => setIsCityModalOpen(false)}
+          onCitySelected={() => refreshSession(false)}
+        />
+
         {/* ─── MAIN HERO & WIDGETS GRID ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           

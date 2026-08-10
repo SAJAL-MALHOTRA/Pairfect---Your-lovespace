@@ -11,6 +11,11 @@ interface UserProfile {
   avatar_url: string | null;
   avatar_config?: any;
   spotify_connected: boolean;
+  city?: {
+    name: string;
+    country: string;
+    timezone: string;
+  } | null;
   notification_settings?: {
     partner_check_in?: boolean;
     new_gratitude?: boolean;
