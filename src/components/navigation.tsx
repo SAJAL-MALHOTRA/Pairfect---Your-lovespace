@@ -22,6 +22,7 @@ import {
   Bell,
   Sparkles,
   Flame,
+  BookOpen,
 } from "lucide-react";
 
 /* ─── Navigation Items matching user's exact design spec ─── */
@@ -31,7 +32,7 @@ const SIDEBAR_ITEMS = [
   { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Four frames of us →" },
   { href: "/play",         icon: Gamepad2, label: "PLAYROOM",  title: "Playroom",   subtitle: "Play tonight's date night →" },
   { href: "/gratitude-jar",icon: Gift,     label: "RITUALS",   title: "Rituals",    subtitle: "Daily appreciation jar →" },
-  { href: "/stories",      icon: Clock,    label: "TIMELINE",  title: "Timeline",   subtitle: "Our story so far →" },
+  { href: "/stories",      icon: BookOpen, label: "STORIES",   title: "Stories & Explore", subtitle: "Living story archive & community →" },
   { href: "/calendar",     icon: Calendar, label: "DATES",     title: "Dates",      subtitle: "Special milestones →" },
   { href: "/profile",      icon: User,     label: "PROFILE",   title: "Profile",    subtitle: "Your sanctuary →" },
   { href: "/settings",     icon: Settings, label: "SETTINGS",  title: "Settings",   subtitle: "Preferences & security →" },
