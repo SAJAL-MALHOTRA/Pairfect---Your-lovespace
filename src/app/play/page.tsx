@@ -123,13 +123,13 @@ const GAMES: GameItem[] = [
   {
     id: "stories",
     href: "/stories",
-    title: "Timeline & Milestones",
-    desc: "Relive your relationship story, romantic milestones, and chapter memories together.",
+    title: "Stories & Explore",
+    desc: "Explore living relationship stories, community wisdom, and write your shared chapters.",
     category: "bonding",
-    badge: "TIMELINE",
+    badge: "STORIES",
     badgeType: "new",
     icon: Bookmark,
-    playersInfo: "Timeline · Milestones",
+    playersInfo: "Living Archive · Explore",
     accent: "#A24B68",
   },
   {
