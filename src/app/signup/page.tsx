@@ -62,14 +62,7 @@ export default function SignupPage() {
         throw signupError;
       } else {
         if (data.user && !data.session) {
-          // Email confirmation is enabled. Resend code to guarantee dispatch (bypasses silent suppression for existing unconfirmed accounts)
-          console.log("[SignupPage] signUp succeeded. Dispatching explicit resend to cleanEmail:", cleanEmail);
-          const { data: resendData, error: resendError } = await supabase.auth.resend({
-            type: "signup",
-            email: cleanEmail,
-          });
-          console.log("[SignupPage] Explicit resend outcome:", { data: resendData, error: resendError });
-
+          // Email confirmation is enabled. Supabase automatically sends the verification email on signUp.
           setVerificationEmail(cleanEmail);
           setNeedsVerification(true);
           setLoading(false);
