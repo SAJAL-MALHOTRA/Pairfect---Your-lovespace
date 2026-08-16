@@ -52,8 +52,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/watch") ||
     path.startsWith("/play") ||
     path.startsWith("/settings") ||
-    path.startsWith("/profile") ||
-    path.startsWith("/onboarding");
+    path.startsWith("/profile");
 
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
 
@@ -62,8 +61,6 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && isAuthRoute) {
-    // Check if user is paired already. We let onboarding handle redirection if they aren't,
-    // but redirecting to dashboard is standard.
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

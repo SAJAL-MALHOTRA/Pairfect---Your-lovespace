@@ -68,7 +68,7 @@ export default function SignupPage() {
           setLoading(false);
         } else {
           // Direct login after signup if confirmation is disabled
-          router.push("/onboarding");
+          window.location.href = "/onboarding";
         }
       }
     } catch (err: any) {
@@ -131,7 +131,7 @@ export default function SignupPage() {
       if (verifyErr) throw verifyErr;
 
       // Direct redirect to onboarding page on success
-      router.push("/onboarding");
+      window.location.href = "/onboarding";
     } catch (err: any) {
       console.error("Verification error:", err);
       setError("Incorrect code, please try again.");
@@ -289,17 +289,17 @@ export default function SignupPage() {
                         What should your partner call you?
                       </label>
                       <div className="relative rounded-button shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
-                          <User className="h-5 w-5" />
+                        <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
+                          <User className="h-5 w-5 text-[var(--text-soft)]/60 shrink-0" />
+                          <input
+                            type="text"
+                            required
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 focus:outline-none focus:ring-0"
+                            placeholder="e.g. Sunny, Alex, Bun"
+                          />
                         </div>
-                        <input
-                          type="text"
-                          required
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 transition-all"
-                          placeholder="e.g. Sunny, Alex, Bun"
-                        />
                       </div>
                     </div>
 
@@ -308,17 +308,17 @@ export default function SignupPage() {
                         Email Address
                       </label>
                       <div className="relative rounded-button shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
-                          <Mail className="h-5 w-5" />
+                        <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
+                          <Mail className="h-5 w-5 text-[var(--text-soft)]/60 shrink-0" />
+                          <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 focus:outline-none focus:ring-0"
+                            placeholder="name@example.com"
+                          />
                         </div>
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 transition-all"
-                          placeholder="name@example.com"
-                        />
                       </div>
                     </div>
 
@@ -327,18 +327,18 @@ export default function SignupPage() {
                         Password
                       </label>
                       <div className="relative rounded-button shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-soft)]/60">
-                          <Lock className="h-5 w-5" />
+                        <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
+                          <Lock className="h-5 w-5 text-[var(--text-soft)]/60 shrink-0" />
+                          <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 focus:outline-none focus:ring-0"
+                            placeholder="At least 6 characters"
+                            minLength={6}
+                          />
                         </div>
-                        <input
-                          type="password"
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="input-warm block w-full pl-10 pr-4 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)] text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 transition-all"
-                          placeholder="At least 6 characters"
-                          minLength={6}
-                        />
                       </div>
                     </div>
 
