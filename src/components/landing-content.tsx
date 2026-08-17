@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight, Lock, Shield, Heart, Eye, Volume2, VolumeX, Sparkles, Tv, Camera,
-  HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight, MessageSquare, BookOpen
+  HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight, MessageSquare,
+  BookOpen, Scale, PenTool, Search, Shirt, FlaskConical, Calendar, Gamepad2, Sun,
+  Smile, Share2, Layers, Compass, Gift
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 
 /* ─── Easing curve for motion system ─── */
@@ -58,6 +60,210 @@ const timelineMilestones = [
   { emoji: "🏠", label: "Moved Together" },
   { emoji: "💍", label: "Still Choosing Each Other" },
 ];
+
+/* ─── Interactive Dual-Phone Quiz Simulation Component ─── */
+function DualPhoneInteractiveDemo() {
+  const [step, setStep] = useState<"picking" | "locked" | "revealed">("picking");
+
+  useEffect(() => {
+    const timer1 = setTimeout(() => setStep("locked"), 2200);
+    const timer2 = setTimeout(() => setStep("revealed"), 4200);
+    const timer3 = setTimeout(() => setStep("picking"), 8500);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [step]);
+
+  return (
+    <div className="relative w-full max-w-[620px] mx-auto p-6 sm:p-10 rounded-[32px] bg-gradient-to-b from-[#FFF5F8] via-[#FFF9FB] to-[#FFF0F4] border border-[#FFDCE5] shadow-xl overflow-hidden paper-grain select-none">
+      {/* Decorative ambient sparkles & floating hearts */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{ y: [0, -12, 0], opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-6 left-10 text-xl"
+        >
+          💖
+        </motion.div>
+        <motion.div
+          animate={{ y: [0, -16, 0], opacity: [0.5, 0.9, 0.5] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute top-10 right-12 text-lg"
+        >
+          ✨
+        </motion.div>
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-8 left-14 text-sm"
+        >
+          🌸
+        </motion.div>
+      </div>
+
+      {/* Main Dual Phone Stage */}
+      <div className="flex items-center justify-center gap-3 sm:gap-6 relative z-10">
+        
+        {/* ── Left Phone (User A - Pink Theme) ── */}
+        <div className="w-[145px] sm:w-[210px] rounded-[24px] sm:rounded-[30px] p-2.5 sm:p-3.5 bg-white border-[3px] border-[#FF8DA1] shadow-lg flex flex-col justify-between aspect-[9/16] relative transition-transform duration-300 hover:scale-[1.02]">
+          {/* Phone Notch & Header */}
+          <div className="flex items-center justify-between pb-1.5 border-b border-rose-100">
+            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-rose-500 uppercase tracking-wider">
+              ✨ Mia
+            </span>
+            <div className="w-8 sm:w-12 h-2 rounded-full bg-rose-200" />
+            <span className="text-[8px] sm:text-[9px] font-mono text-rose-400">Live</span>
+          </div>
+
+          {/* Question Banner */}
+          <div className="my-1.5 p-2 rounded-xl bg-rose-50 border border-rose-100 text-center">
+            <span className="text-[7px] sm:text-[9px] font-mono uppercase font-bold text-rose-400 block">Question 04</span>
+            <p className="text-[9px] sm:text-[11px] font-display italic font-bold text-[#3D2432] leading-tight mt-0.5">
+              Ideal Friday night ritual?
+            </p>
+          </div>
+
+          {/* Answer Options */}
+          <div className="space-y-1.5 flex-1 flex flex-col justify-center relative">
+            
+            {/* Option 1: Midnight Drive (The Match) */}
+            <div className={`p-2 rounded-xl text-left border transition-all duration-300 relative ${
+              step === "revealed"
+                ? "bg-rose-500 text-white border-rose-600 shadow-md scale-[1.02]"
+                : step === "locked"
+                ? "bg-rose-100 border-rose-300 text-rose-900"
+                : "bg-rose-50/70 border-rose-100 text-[#3D2432]"
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] sm:text-[10px] font-bold">Midnight Drive 🌙</span>
+                {step === "revealed" && <span className="text-[10px]">✓</span>}
+              </div>
+              {/* Pink Cursor Locking in */}
+              {step === "picking" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20, y: 20 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  className="absolute -right-2 -bottom-2 z-20 pointer-events-none"
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#E8527D] drop-shadow-md" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 0l16 12.279-6.951 1.17 4.325 8.817-3.596 1.734-4.35-8.879-5.428 5.702z" />
+                  </svg>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Option 2 */}
+            <div className="p-2 rounded-xl bg-gray-50/80 border border-gray-100 text-left opacity-70">
+              <span className="text-[8px] sm:text-[10px] font-medium text-gray-500">Cook Ramen Together 🍜</span>
+            </div>
+
+            {/* Option 3 */}
+            <div className="p-2 rounded-xl bg-gray-50/80 border border-gray-100 text-left opacity-70">
+              <span className="text-[8px] sm:text-[10px] font-medium text-gray-500">Watch Studio Ghibli 🍿</span>
+            </div>
+
+          </div>
+
+          {/* Status Bar */}
+          <div className="pt-1 text-center">
+            <span className="text-[8px] sm:text-[9px] font-mono font-bold text-rose-500 uppercase tracking-widest">
+              {step === "picking" ? "Selecting..." : step === "locked" ? "🔒 Locked In" : "🎉 Matched!"}
+            </span>
+          </div>
+        </div>
+
+        {/* ── Center Match Indicator & Countdown ── */}
+        <div className="flex flex-col items-center justify-center space-y-2 z-20">
+          <motion.div
+            animate={step === "revealed" ? { scale: [1, 1.3, 1], rotate: [0, 10, -10, 0] } : {}}
+            transition={{ duration: 0.5 }}
+            className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-[#E8527D] to-[#4A88E8] text-white flex items-center justify-center font-bold text-base sm:text-xl shadow-lg border-2 border-white"
+          >
+            {step === "revealed" ? "💖" : "?"}
+          </motion.div>
+
+          <div className="px-2.5 py-1 rounded-full bg-white/90 border border-pink-200 shadow-xs text-center backdrop-blur-xs">
+            <span className="text-[8px] sm:text-[10px] font-mono font-bold uppercase text-[var(--text)] tracking-wider">
+              {step === "revealed" ? "100% MATCH" : "REVEAL SYNC"}
+            </span>
+          </div>
+        </div>
+
+        {/* ── Right Phone (User B - Blue Theme) ── */}
+        <div className="w-[145px] sm:w-[210px] rounded-[24px] sm:rounded-[30px] p-2.5 sm:p-3.5 bg-white border-[3px] border-[#5B95F5] shadow-lg flex flex-col justify-between aspect-[9/16] relative transition-transform duration-300 hover:scale-[1.02]">
+          {/* Phone Notch & Header */}
+          <div className="flex items-center justify-between pb-1.5 border-b border-blue-100">
+            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-blue-500 uppercase tracking-wider">
+              💙 Alex
+            </span>
+            <div className="w-8 sm:w-12 h-2 rounded-full bg-blue-200" />
+            <span className="text-[8px] sm:text-[9px] font-mono text-blue-400">Live</span>
+          </div>
+
+          {/* Question Banner */}
+          <div className="my-1.5 p-2 rounded-xl bg-blue-50 border border-blue-100 text-center">
+            <span className="text-[7px] sm:text-[9px] font-mono uppercase font-bold text-blue-400 block">Question 04</span>
+            <p className="text-[9px] sm:text-[11px] font-display italic font-bold text-[#3D2432] leading-tight mt-0.5">
+              Ideal Friday night ritual?
+            </p>
+          </div>
+
+          {/* Answer Options */}
+          <div className="space-y-1.5 flex-1 flex flex-col justify-center relative">
+            
+            {/* Option 1: Midnight Drive (The Match) */}
+            <div className={`p-2 rounded-xl text-left border transition-all duration-300 relative ${
+              step === "revealed"
+                ? "bg-blue-500 text-white border-blue-600 shadow-md scale-[1.02]"
+                : step === "locked"
+                ? "bg-blue-100 border-blue-300 text-blue-900"
+                : "bg-blue-50/70 border-blue-100 text-[#3D2432]"
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] sm:text-[10px] font-bold">Midnight Drive 🌙</span>
+                {step === "revealed" && <span className="text-[10px]">✓</span>}
+              </div>
+              {/* Blue Cursor Locking in */}
+              {step === "picking" && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20, y: 20 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  className="absolute -left-2 -bottom-2 z-20 pointer-events-none"
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#4A88E8] drop-shadow-md" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 0l16 12.279-6.951 1.17 4.325 8.817-3.596 1.734-4.35-8.879-5.428 5.702z" />
+                  </svg>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Option 2 */}
+            <div className="p-2 rounded-xl bg-gray-50/80 border border-gray-100 text-left opacity-70">
+              <span className="text-[8px] sm:text-[10px] font-medium text-gray-500">Cook Ramen Together 🍜</span>
+            </div>
+
+            {/* Option 3 */}
+            <div className="p-2 rounded-xl bg-gray-50/80 border border-gray-100 text-left opacity-70">
+              <span className="text-[8px] sm:text-[10px] font-medium text-gray-500">Watch Studio Ghibli 🍿</span>
+            </div>
+
+          </div>
+
+          {/* Status Bar */}
+          <div className="pt-1 text-center">
+            <span className="text-[8px] sm:text-[9px] font-mono font-bold text-blue-500 uppercase tracking-widest">
+              {step === "picking" ? "Selecting..." : step === "locked" ? "🔒 Locked In" : "🎉 Matched!"}
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
 
 export default function LandingContent() {
   const router = useRouter();
@@ -202,10 +408,10 @@ export default function LandingContent() {
         </div>
 
         <nav className="hidden md:flex items-center space-x-8 text-xs font-mono font-medium text-[var(--text-soft)] uppercase tracking-wider">
-          <a href="#rituals" className="hover:text-[var(--text)] transition-colors">Rituals</a>
+          <a href="#see-in-action" className="hover:text-[var(--text)] transition-colors">See In Action</a>
+          <a href="#all-activities" className="hover:text-[var(--text)] transition-colors">Games &amp; Activities</a>
           <Link href="/photo-booth" className="hover:text-[var(--text)] transition-colors">Photobooth</Link>
           <Link href="/love-letter" className="hover:text-[var(--text)] transition-colors">Love Letters</Link>
-          <Link href="/watch" className="hover:text-[var(--text)] transition-colors">Watch Together</Link>
         </nav>
 
         <div className="flex items-center space-x-3">
@@ -247,15 +453,15 @@ export default function LandingContent() {
       </header>
 
       {/* ══════════════════════════════════════════════════════════
-          MAIN CONTENT — PAIRFECT ORIGINALITY + ANGIE UI SPACING
+          MAIN CONTENT
           ══════════════════════════════════════════════════════════ */}
       <main className="flex-1 w-full z-10 relative">
 
-        {/* ── HERO SECTION (Pairfect Iconic Positioning + Angie Layout Mechanics) ── */}
+        {/* ── HERO SECTION ── */}
         <section aria-label="Hero Introduction" className="max-w-[1280px] mx-auto px-6 pt-10 md:pt-16 pb-16">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             
-            {/* Left Column: Pairfect Iconic Headline & Single Clear Promise */}
+            {/* Left Column: Pairfect Iconic Headline */}
             <div className="w-full lg:w-7/12 text-left space-y-6">
               
               <motion.div
@@ -308,11 +514,11 @@ export default function LandingContent() {
                   Create your room ▷
                 </Link>
                 <a
-                  href="#rituals"
+                  href="#see-in-action"
                   className="btn-journal-ghost"
                   onMouseEnter={() => playTactileSound("tap")}
                 >
-                  Explore rituals ▷
+                  Watch game demo ▷
                 </a>
                 <Link
                   href="/photo-booth"
@@ -324,7 +530,7 @@ export default function LandingContent() {
               </motion.div>
             </div>
 
-            {/* Right Column: Real Interactive Pairfect Sanctuary Room UI Mockup */}
+            {/* Right Column: Live Interactive Sanctuary Room UI Mockup */}
             <motion.div
               variants={fadeUp}
               initial="hidden"
@@ -428,6 +634,345 @@ export default function LandingContent() {
           </div>
         </section>
 
+        {/* ══════════════════════════════════════════════════════════
+            SECTION: SEE IT IN ACTION (NEW - Exact from User Image 1)
+            ══════════════════════════════════════════════════════════ */}
+        <section id="see-in-action" aria-label="See It In Action Game Demo" className="max-w-[1000px] mx-auto px-6 py-20">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+            className="space-y-8 text-left"
+          >
+            {/* Header */}
+            <div className="space-y-2 max-w-xl">
+              <span className="text-[11px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase block">
+                SEE IT IN ACTION
+              </span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-sans font-black text-[var(--text)] tracking-tight leading-[1.12]">
+                Watch a round of our most-played game.
+              </h2>
+            </div>
+
+            {/* Interactive Dual-Phone Visual Showcase */}
+            <DualPhoneInteractiveDemo />
+
+            {/* Description and CTA matching image 1 */}
+            <div className="max-w-2xl space-y-6 pt-2">
+              <p className="font-sans text-base sm:text-lg text-[var(--text-soft)] leading-relaxed">
+                One question, two screens. You both lock in privately — nobody can peek — then the answers flip at the exact same second. Match, and the confetti flies.
+              </p>
+              
+              <div>
+                <Link
+                  href="/quiz"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#1E191D] hover:bg-[#32282F] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md hover:translate-y-[-1px]"
+                  onMouseEnter={() => playTactileSound("tap")}
+                >
+                  <span>Play it free ▷</span>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════════
+            SECTION: ALL GAMES & ACTIVITIES (NEW - Exact from User Image 2)
+            ══════════════════════════════════════════════════════════ */}
+        <section id="all-activities" aria-label="All Games and Activities Directory" className="max-w-[1180px] mx-auto px-6 py-20 space-y-10">
+          
+          {/* Section Divider Header */}
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase whitespace-nowrap">
+              ALL GAMES &amp; ACTIVITIES
+            </span>
+            <div className="flex-1 h-[1px] bg-[var(--border)]" />
+          </div>
+
+          {/* ── Featured Banner: Online Photobooth (ALWAYS FREE) ── */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="p-6 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6 paper-grain"
+          >
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
+                <Camera className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h3 className="text-xl font-sans font-bold text-[var(--text)]">
+                    Online Photobooth
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-mono font-bold uppercase tracking-wider">
+                    ALWAYS FREE
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-[var(--text-soft)] leading-relaxed max-w-2xl">
+                  The realtime 인생네컷 booth for two — a shared countdown fires the shot on both screens at once, so every frame holds both of you.
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/photo-booth"
+              className="shrink-0 text-xs font-mono font-bold text-[var(--text)] hover:text-[var(--burgundy)] inline-flex items-center gap-1.5 group transition-colors"
+            >
+              <span>Open the booth ▷</span>
+            </Link>
+          </motion.div>
+
+          {/* ── 12-Card Catalog Grid (3-Column Layout from Image 2) ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            
+            {/* Card 1: Know Me Quiz */}
+            <Link
+              href="/quiz"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-[var(--burgundy)]/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-500">
+                  <HelpCircle className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-[var(--burgundy)] transition-colors">
+                    Know Me Quiz
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-pink-50 text-pink-600 border border-pink-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    ★ MOST PLAYED
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Lock in privately, reveal together, score your compatibility — 17 packs from cute to spicy.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 2: Love Match */}
+            <Link
+              href="/play"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-purple-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                  <Heart className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-purple-600 transition-colors">
+                    Love Match
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Take the same personality test at the same instant — 16 types, Big Five, the stars — and get your match score.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 3: Our Future */}
+            <Link
+              href="/stories"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-amber-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                  <Sun className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-amber-600 transition-colors">
+                    Our Future
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Design your future together — home, travel, money, tiny humans — then turn it into a scrapbook vision board + plan.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 4: Arcade */}
+            <Link
+              href="/play"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-blue-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                  <Gamepad2 className="w-5 h-5" />
+                </div>
+                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-blue-600 transition-colors">
+                  Arcade
+                </h4>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Your face on cartoon legs in ten tiny games — flappy, tetris duel, whack-a-partner.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 5: Couples Debate */}
+            <Link
+              href="/vibe-judge"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-emerald-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-emerald-600 transition-colors">
+                  Couples Debate
+                </h4>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Argue it out on camera — an AI judge scores every round and crowns a winner.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 6: Draw Together */}
+            <Link
+              href="/play"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-pink-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600">
+                  <PenTool className="w-5 h-5" />
+                </div>
+                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-pink-600 transition-colors">
+                  Draw Together
+                </h4>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Same prompt, two canvases — watch each other&apos;s strokes appear live.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 7: Couples Court */}
+            <Link
+              href="/vibe-judge"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-indigo-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-indigo-600 transition-colors">
+                  Couples Court
+                </h4>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Plead your case, snap photo evidence — the AI judge delivers a verdict.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 8: Snap Hunt */}
+            <Link
+              href="/moments"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-cyan-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600">
+                  <Search className="w-5 h-5" />
+                </div>
+                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-cyan-600 transition-colors">
+                  Snap Hunt
+                </h4>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Race your homes to match a loose clue — cleverest find takes the round.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 9: Fashion Show */}
+            <Link
+              href="/play"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-rose-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+                  <Shirt className="w-5 h-5" />
+                </div>
+                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-rose-600 transition-colors">
+                  Fashion Show
+                </h4>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Style the same brief with a twist — an AI stylist crowns best dressed.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 10: The Lab */}
+            <Link
+              href="/iq-duel"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-teal-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
+                  <FlaskConical className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-teal-600 transition-colors">
+                    The Lab
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  A study date with a scoreboard — real math &amp; science, versus or co-op.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 11: Honest Cards */}
+            <Link
+              href="/quiz"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-violet-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-violet-600 transition-colors">
+                    Honest Cards
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  A deck of honest questions — you both answer privately, it opens at once.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 12: Create a Date */}
+            <Link
+              href="/calendar"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-pink-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600">
+                  <Heart className="w-5 h-5" />
+                </div>
+                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-pink-600 transition-colors">
+                  Create a Date
+                </h4>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Build a slideshow date that embeds any game — then play it together.
+                </p>
+              </div>
+            </Link>
+
+          </div>
+
+        </section>
+
         {/* ── ROOM CODE QUICK JOIN BOX ── */}
         <section className="max-w-[800px] mx-auto px-6 py-10 text-center">
           <motion.div
@@ -471,176 +1016,6 @@ export default function LandingContent() {
               </div>
             </form>
           </motion.div>
-        </section>
-
-        {/* ── RITUALS DIRECTORY (Pairfect Features + Angie Clean Spacing & Badges) ── */}
-        <section id="rituals" className="max-w-[1100px] mx-auto px-6 py-24 space-y-12">
-          
-          <div className="text-center space-y-3 max-w-xl mx-auto">
-            <span className="text-[9px] font-mono font-bold tracking-widest text-[var(--text-soft)] uppercase">
-              CONNECTION RITUALS &amp; MEMORIES
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)]">
-              Rituals built for <span className="text-[var(--burgundy)]">two.</span>
-            </h2>
-            <p className="text-xs font-mono text-[var(--text-soft)]">
-              Open a room and send the code to start a shared date night together.
-            </p>
-          </div>
-
-          {/* 1. Featured Top Activities (2 Cards) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Feature 1: Wax-Sealed Letters */}
-            <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm space-y-4 paper-grain keepsake-lift">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-xl">
-                  💌
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold uppercase tracking-wider">
-                  AES-256 ENCRYPTED
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <h3 className="text-xl font-display italic font-bold text-[var(--text)]">
-                  Wax-Sealed Love Letters
-                </h3>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Write letters sealed with digital wax. Schedule them to unseal together on future anniversaries or rainy days.
-                </p>
-              </div>
-              <Link href="/love-letter" className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-2">
-                <span>Write a letter ▷</span>
-              </Link>
-            </div>
-
-            {/* Feature 2: Online Photobooth */}
-            <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm space-y-4 paper-grain keepsake-lift">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-xl">
-                  📸
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-purple-600 text-white text-[9px] font-mono font-bold uppercase tracking-wider">
-                  FREE TOOL
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <h3 className="text-xl font-display italic font-bold text-[var(--text)]">
-                  Online Photobooth
-                </h3>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Take your own 4-frame photo strip right from your browser, customize with stickers &amp; borders, and save to memories.
-                </p>
-              </div>
-              <Link href="/photo-booth" className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-purple-600 hover:underline pt-2">
-                <span>Open photobooth ▷</span>
-              </Link>
-            </div>
-
-          </div>
-
-          {/* 2. Full Activities Directory Grid */}
-          <div className="space-y-6">
-            <span className="text-[9px] font-mono font-bold tracking-widest text-[var(--ink-light)] uppercase">
-              ALL GAMES &amp; ACTIVITIES
-            </span>
-
-            {/* 3-Column Directory Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              {/* Card 1: Know Me Quiz */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">❓</span>
-                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[8px] font-mono font-bold uppercase">MOST PLAYED</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Know Me Quiz</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Lock in privately, reveal together, score your compatibility — 17 packs from cute to spicy.
-                </p>
-                <Link href="/quiz" className="inline-block text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-1">
-                  Play quiz ▷
-                </Link>
-              </div>
-
-              {/* Card 2: Synchronized Movie Night */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">🍿</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[8px] font-mono font-bold uppercase">LIVE SYNC</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Movie Night</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Watch YouTube together in sync or stream Netflix via Virtual Cinema tab share.
-                </p>
-                <Link href="/watch" className="inline-block text-xs font-mono font-bold text-blue-600 hover:underline pt-1">
-                  Start watching ▷
-                </Link>
-              </div>
-
-              {/* Card 3: Gratitude Jar */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">🫙</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-mono font-bold uppercase">DAILY RITUAL</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Gratitude Jar</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Drop folded notes into a shared jar. Read them together on rainy days.
-                </p>
-                <Link href="/gratitude-jar" className="inline-block text-xs font-mono font-bold text-emerald-600 hover:underline pt-1">
-                  Open jar ▷
-                </Link>
-              </div>
-
-              {/* Card 4: Riddle Night */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">🧩</span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[8px] font-mono font-bold uppercase">CO-OP</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Riddle Night</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Mind-bending logic puzzles and team riddles. Solve clues together before time runs out.
-                </p>
-                <Link href="/riddle" className="inline-block text-xs font-mono font-bold text-amber-600 hover:underline pt-1">
-                  Start riddling ▷
-                </Link>
-              </div>
-
-              {/* Card 5: IQ Duel */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">🧠</span>
-                  <span className="px-2 py-0.5 rounded-full bg-[#2E6E9E] text-white text-[8px] font-mono font-bold uppercase">VERSUS</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">IQ Duel</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Fast-paced pattern and logic challenges. Answer privately against the clock in 1-on-1 rounds.
-                </p>
-                <Link href="/iq-duel" className="inline-block text-xs font-mono font-bold text-[#2E6E9E] hover:underline pt-1">
-                  Start duel ▷
-                </Link>
-              </div>
-
-              {/* Card 6: AI Couples Debate */}
-              <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-3 keepsake-lift text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl">⚖️</span>
-                  <span className="px-2 py-0.5 rounded-full bg-[#2E7A60] text-white text-[8px] font-mono font-bold uppercase">AI JUDGE</span>
-                </div>
-                <h4 className="font-display italic font-bold text-base text-[var(--text)]">Couples Debate</h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Argue your case — an AI judge evaluates both arguments and crowns a playful winner.
-                </p>
-                <Link href="/vibe-judge" className="inline-block text-xs font-mono font-bold text-[#2E7A60] hover:underline pt-1">
-                  Start debate ▷
-                </Link>
-              </div>
-
-            </div>
-          </div>
-
         </section>
 
         {/* ── TODAY'S STORY PREVIEW (Pairfect Original Feed) ── */}
@@ -717,7 +1092,7 @@ export default function LandingContent() {
           </div>
         </section>
 
-        {/* ── THE MEMORY WALL (Pairfect 3D Perspective Grid) ── */}
+        {/* ── THE MEMORY WALL ── */}
         <section aria-label="The Memory Wall" className="max-w-[1100px] mx-auto px-6 py-20 space-y-12">
           <motion.div
             variants={fadeUp}
@@ -871,7 +1246,7 @@ export default function LandingContent() {
               {[
                 {
                   q: "What games and activities can we play on Pairfect?",
-                  a: "Fifteen realtime activities are live: Know Me Quiz, Riddle Night, IQ Duel, Wax-Sealed Love Letters, Online Photobooth, Couples Debate, Movie Night, Gratitude Jar, Spotify Mixtape, and Stitched Memory Stories."
+                  a: "Fifteen realtime activities are live: Know Me Quiz, Online Photobooth, Love Match, Our Future, Arcade, Couples Debate, Draw Together, Couples Court, Snap Hunt, Fashion Show, The Lab, Honest Cards, Create a Date, and Movie Night."
                 },
                 {
                   q: "Is Pairfect free to use?",
