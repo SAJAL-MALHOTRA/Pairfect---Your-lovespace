@@ -5,16 +5,17 @@ import Link from "next/link";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
-  Camera, HelpCircle, Heart, Sun, Gamepad2, MessageSquare, PenTool,
-  Scale, Search, Shirt, FlaskConical, BookOpen, Calendar, ArrowRight,
-  Sparkles, Flame, Users
+  Camera, HelpCircle, Heart, Brain, MessageSquare,
+  Scale, Tv, Gift, Mail, Timer, Music, BookOpen,
+  Sparkles, ArrowRight, Check
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-interface ExperienceCardItem {
+interface RealExperienceItem {
   id: string;
   title: string;
-  badge?: "MOST PLAYED" | "NEW" | "ALWAYS FREE";
+  badge?: string;
+  badgeType?: "most-played" | "new" | "ai" | "free" | "coop" | "ritual";
   desc: string;
   href: string;
   icon: any;
@@ -23,22 +24,13 @@ interface ExperienceCardItem {
   accentBorder: string;
 }
 
-const EXPERIENCES: ExperienceCardItem[] = [
-  {
-    id: "know-me-quiz",
-    title: "Know Me Quiz",
-    badge: "MOST PLAYED",
-    desc: "Lock in privately, reveal together, score your compatibility — 17 packs from cute to spicy.",
-    href: "/quiz",
-    icon: HelpCircle,
-    iconBg: "bg-pink-50",
-    iconColor: "text-pink-600",
-    accentBorder: "hover:border-pink-300",
-  },
+/* ─── ONLY 100% Real, Functional, Tested Pairfect Experiences ─── */
+const REAL_EXPERIENCES: RealExperienceItem[] = [
   {
     id: "love-match",
     title: "Love Match",
     badge: "NEW",
+    badgeType: "new",
     desc: "Answer the same questions at the same instant — then discover just how in sync you really are.",
     href: "/play/love-match",
     icon: Heart,
@@ -47,22 +39,25 @@ const EXPERIENCES: ExperienceCardItem[] = [
     accentBorder: "hover:border-purple-300",
   },
   {
-    id: "our-future",
-    title: "Our Future",
-    badge: "NEW",
-    desc: "Design your future together — home, travel, money, tiny humans — then turn it into a vision board + plan.",
-    href: "/stories",
-    icon: Sun,
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    accentBorder: "hover:border-amber-300",
+    id: "know-me-quiz",
+    title: "Know Me Quiz",
+    badge: "★ MOST PLAYED",
+    badgeType: "most-played",
+    desc: "Lock in your answers privately, reveal them together, and see how well you really know each other — 14 question packs.",
+    href: "/quiz",
+    icon: HelpCircle,
+    iconBg: "bg-pink-50",
+    iconColor: "text-pink-600",
+    accentBorder: "hover:border-pink-300",
   },
   {
-    id: "arcade",
-    title: "Arcade",
-    desc: "Your face on cartoon legs in ten tiny games — flappy, tetris duel, whack-a-partner.",
+    id: "iq-duel",
+    title: "IQ Duel",
+    badge: "VERSUS",
+    badgeType: "free",
+    desc: "A fast-paced brain challenge for two. Test memory, speed, and logic in quick 1-on-1 rounds.",
     href: "/iq-duel",
-    icon: Gamepad2,
+    icon: Brain,
     iconBg: "bg-blue-50",
     iconColor: "text-blue-600",
     accentBorder: "hover:border-blue-300",
@@ -70,84 +65,98 @@ const EXPERIENCES: ExperienceCardItem[] = [
   {
     id: "couples-debate",
     title: "Couples Debate",
-    desc: "Argue it out on camera — an AI judge scores every round and crowns a winner.",
+    badge: "AI JUDGE",
+    badgeType: "ai",
+    desc: "Pick a playful topic, plead your case on camera or text, and let the AI judge deliver a fair verdict.",
     href: "/vibe-judge",
-    icon: MessageSquare,
+    icon: Scale,
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
     accentBorder: "hover:border-emerald-300",
   },
   {
-    id: "draw-together",
-    title: "Draw Together",
-    desc: "Same prompt, two canvases — watch each other's strokes appear live.",
-    href: "/quiz",
-    icon: PenTool,
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-600",
-    accentBorder: "hover:border-rose-300",
+    id: "riddle-night",
+    title: "Riddle Night",
+    badge: "CO-OP",
+    badgeType: "coop",
+    desc: "Team up against the clock. Crack mind-bending logic puzzles and team riddles together.",
+    href: "/riddle",
+    icon: HelpCircle,
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+    accentBorder: "hover:border-amber-300",
   },
   {
-    id: "couples-court",
-    title: "Couples Court",
-    desc: "Plead your case, snap photo evidence — the AI judge delivers a verdict.",
-    href: "/vibe-judge",
-    icon: Scale,
+    id: "watch-together",
+    title: "Watch Together",
+    badge: "REALTIME",
+    badgeType: "free",
+    desc: "Synchronize YouTube videos in real-time with live floating emoji reactions and cinema tab sharing.",
+    href: "/watch",
+    icon: Tv,
     iconBg: "bg-indigo-50",
     iconColor: "text-indigo-600",
     accentBorder: "hover:border-indigo-300",
   },
   {
-    id: "snap-hunt",
-    title: "Snap Hunt",
-    desc: "Race your homes to match a loose clue — cleverest find takes the round.",
-    href: "/moments",
-    icon: Search,
-    iconBg: "bg-cyan-50",
-    iconColor: "text-cyan-600",
-    accentBorder: "hover:border-cyan-300",
+    id: "gratitude-jar",
+    title: "Gratitude Jar",
+    badge: "DAILY RITUAL",
+    badgeType: "ritual",
+    desc: "Drop folded handwritten notes into a shared jar. Open and read them together on rainy days.",
+    href: "/gratitude-jar",
+    icon: Gift,
+    iconBg: "bg-rose-50",
+    iconColor: "text-rose-600",
+    accentBorder: "hover:border-rose-300",
   },
   {
-    id: "fashion-show",
-    title: "Fashion Show",
-    desc: "Style the same brief with a twist — an AI stylist crowns best dressed.",
-    href: "/photo-booth",
-    icon: Shirt,
-    iconBg: "bg-pink-50",
-    iconColor: "text-pink-500",
-    accentBorder: "hover:border-pink-300",
+    id: "love-letters",
+    title: "Love Letters",
+    badge: "ENCRYPTED",
+    badgeType: "ritual",
+    desc: "Write letters sealed with digital wax. Schedule them to unseal together on future anniversaries.",
+    href: "/love-letter",
+    icon: Mail,
+    iconBg: "bg-red-50",
+    iconColor: "text-[var(--burgundy)]",
+    accentBorder: "hover:border-[var(--burgundy)]/40",
   },
   {
-    id: "the-lab",
-    title: "The Lab",
-    badge: "NEW",
-    desc: "A study date with a scoreboard — real math & science, versus or co-op.",
-    href: "/iq-duel",
-    icon: FlaskConical,
+    id: "focus-session",
+    title: "Focus Session",
+    badge: "CO-OP",
+    badgeType: "coop",
+    desc: "Work or study side-by-side with synchronized Pomodoro timers and cozy ambient soundscapes.",
+    href: "/focus",
+    icon: Timer,
     iconBg: "bg-teal-50",
     iconColor: "text-teal-600",
     accentBorder: "hover:border-teal-300",
   },
   {
-    id: "honest-cards",
-    title: "Honest Cards",
-    badge: "NEW",
-    desc: "A deck of honest questions — you both answer privately, it opens at once.",
-    href: "/quiz",
+    id: "spotify-mixtape",
+    title: "Handmade Mixtape",
+    badge: "SPOTIFY",
+    badgeType: "free",
+    desc: "Design a physical vintage cassette tape with custom shells and stickers, and curate your shared soundtrack.",
+    href: "/mixtape",
+    icon: Music,
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-700",
+    accentBorder: "hover:border-emerald-300",
+  },
+  {
+    id: "stories-archive",
+    title: "Stories & Archive",
+    badge: "STORIES",
+    badgeType: "ritual",
+    desc: "Explore living relationship stories, community wisdom, and write your shared milestones.",
+    href: "/stories",
     icon: BookOpen,
     iconBg: "bg-violet-50",
     iconColor: "text-violet-600",
     accentBorder: "hover:border-violet-300",
-  },
-  {
-    id: "create-a-date",
-    title: "Create a Date",
-    desc: "Build a slideshow date that embeds any game — then play it together.",
-    href: "/calendar",
-    icon: Calendar,
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-600",
-    accentBorder: "hover:border-rose-300",
   },
 ];
 
@@ -231,10 +240,10 @@ export default function GamesHubPage() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════
-            3-COLUMN EXPERIENCE CARDS GRID (EXACT FROM REFERENCE)
+            3-COLUMN EXPERIENCE CARDS GRID (ALL REAL, WORKING EXPERIENCES)
             ══════════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {EXPERIENCES.map((exp, idx) => {
+          {REAL_EXPERIENCES.map((exp, idx) => {
             const Icon = exp.icon;
             return (
               <motion.div
@@ -256,18 +265,25 @@ export default function GamesHubPage() {
                     </div>
 
                     {/* Title + Pill Badge */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-[var(--burgundy)] transition-colors">
                         {exp.title}
                       </h3>
-                      {exp.badge === "MOST PLAYED" && (
-                        <span className="px-2 py-0.5 rounded-md bg-pink-50 text-pink-600 border border-pink-200 text-[8px] font-mono font-bold uppercase tracking-wider">
-                          ★ MOST PLAYED
-                        </span>
-                      )}
-                      {exp.badge === "NEW" && (
-                        <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
-                          NEW
+                      {exp.badge && (
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-mono font-bold uppercase tracking-wider border ${
+                          exp.badgeType === "most-played"
+                            ? "bg-pink-50 text-pink-600 border-pink-200"
+                            : exp.badgeType === "new"
+                            ? "bg-purple-50 text-purple-600 border-purple-200"
+                            : exp.badgeType === "ai"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : exp.badgeType === "coop"
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : exp.badgeType === "ritual"
+                            ? "bg-rose-50 text-[var(--burgundy)] border-rose-200"
+                            : "bg-blue-50 text-blue-600 border-blue-200"
+                        }`}>
+                          {exp.badge}
                         </span>
                       )}
                     </div>
