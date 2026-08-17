@@ -8,7 +8,7 @@ import {
   ArrowRight, Lock, Shield, Heart, Eye, Volume2, VolumeX, Sparkles, Tv, Camera,
   HelpCircle, Brain, Music, Film, Flame, Play, Check, ChevronRight, MessageSquare,
   BookOpen, Scale, PenTool, Search, Shirt, FlaskConical, Calendar, Gamepad2, Sun,
-  Smile, Share2, Layers, Compass, Gift
+  Smile, Share2, Layers, Compass, Gift, Mail, Timer
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
@@ -666,7 +666,7 @@ export default function LandingContent() {
               
               <div>
                 <Link
-                  href="/quiz"
+                  href="/play/love-match"
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#1E191D] hover:bg-[#32282F] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md hover:translate-y-[-1px]"
                   onMouseEnter={() => playTactileSound("tap")}
                 >
@@ -678,7 +678,7 @@ export default function LandingContent() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════
-            SECTION: ALL GAMES & ACTIVITIES (NEW - Exact from User Image 2)
+            SECTION: ALL GAMES & ACTIVITIES (100% Real, Working Pairfect Experiences)
             ══════════════════════════════════════════════════════════ */}
         <section id="all-activities" aria-label="All Games and Activities Directory" className="max-w-[1180px] mx-auto px-6 py-20 space-y-10">
           
@@ -725,10 +725,33 @@ export default function LandingContent() {
             </Link>
           </motion.div>
 
-          {/* ── 12-Card Catalog Grid (3-Column Layout from Image 2) ── */}
+          {/* ── Real Experience Cards Grid (All 100% Genuine, Working Pairfect Features) ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             
-            {/* Card 1: Know Me Quiz */}
+            {/* Card 1: Love Match */}
+            <Link
+              href="/play/love-match"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-purple-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                  <Heart className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-purple-600 transition-colors">
+                    Love Match
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Answer the same questions at the same instant — then discover just how in sync you really are.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 2: Know Me Quiz */}
             <Link
               href="/quiz"
               className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-[var(--burgundy)]/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
@@ -746,191 +769,198 @@ export default function LandingContent() {
                   </span>
                 </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Lock in privately, reveal together, score your compatibility — 17 packs from cute to spicy.
+                  Lock in privately, reveal together, score your compatibility — 14 question packs from cute to spicy.
                 </p>
               </div>
             </Link>
 
-            {/* Card 2: Love Match */}
+            {/* Card 3: IQ Duel */}
             <Link
-              href="/play"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-purple-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
-            >
-              <div className="space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
-                  <Heart className="w-5 h-5" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-purple-600 transition-colors">
-                    Love Match
-                  </h4>
-                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
-                    NEW
-                  </span>
-                </div>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Take the same personality test at the same instant — 16 types, Big Five, the stars — and get your match score.
-                </p>
-              </div>
-            </Link>
-
-            {/* Card 3: Our Future */}
-            <Link
-              href="/stories"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-amber-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
-            >
-              <div className="space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-                  <Sun className="w-5 h-5" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-amber-600 transition-colors">
-                    Our Future
-                  </h4>
-                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
-                    NEW
-                  </span>
-                </div>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Design your future together — home, travel, money, tiny humans — then turn it into a scrapbook vision board + plan.
-                </p>
-              </div>
-            </Link>
-
-            {/* Card 4: Arcade */}
-            <Link
-              href="/play"
+              href="/iq-duel"
               className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-blue-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-                  <Gamepad2 className="w-5 h-5" />
+                  <Brain className="w-5 h-5" />
                 </div>
-                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-blue-600 transition-colors">
-                  Arcade
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-blue-600 transition-colors">
+                    IQ Duel
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    VERSUS
+                  </span>
+                </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Your face on cartoon legs in ten tiny games — flappy, tetris duel, whack-a-partner.
+                  A fast-paced brain challenge for two. Test memory, speed, and logic in quick 1-on-1 rounds.
                 </p>
               </div>
             </Link>
 
-            {/* Card 5: Couples Debate */}
+            {/* Card 4: Couples Debate */}
             <Link
               href="/vibe-judge"
               className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-emerald-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                  <MessageSquare className="w-5 h-5" />
+                  <Scale className="w-5 h-5" />
                 </div>
-                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-emerald-600 transition-colors">
-                  Couples Debate
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-emerald-600 transition-colors">
+                    Couples Debate
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    AI JUDGE
+                  </span>
+                </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Argue it out on camera — an AI judge scores every round and crowns a winner.
+                  Pick a playful topic, plead your case on camera or text, and let the AI judge deliver a fair verdict.
                 </p>
               </div>
             </Link>
 
-            {/* Card 6: Draw Together */}
+            {/* Card 5: Riddle Night */}
             <Link
-              href="/play"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-pink-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              href="/riddle"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-amber-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600">
-                  <PenTool className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                  <HelpCircle className="w-5 h-5" />
                 </div>
-                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-pink-600 transition-colors">
-                  Draw Together
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-amber-600 transition-colors">
+                    Riddle Night
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    CO-OP
+                  </span>
+                </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Same prompt, two canvases — watch each other&apos;s strokes appear live.
+                  Team up against the clock. Crack mind-bending logic puzzles and team riddles together.
                 </p>
               </div>
             </Link>
 
-            {/* Card 7: Couples Court */}
+            {/* Card 6: Watch Together */}
             <Link
-              href="/vibe-judge"
+              href="/watch"
               className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-indigo-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                  <Scale className="w-5 h-5" />
+                  <Tv className="w-5 h-5" />
                 </div>
-                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-indigo-600 transition-colors">
-                  Couples Court
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-indigo-600 transition-colors">
+                    Watch Together
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    REALTIME
+                  </span>
+                </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Plead your case, snap photo evidence — the AI judge delivers a verdict.
+                  Synchronize YouTube videos in real-time with live floating emoji reactions and cinema tab sharing.
                 </p>
               </div>
             </Link>
 
-            {/* Card 8: Snap Hunt */}
+            {/* Card 7: Gratitude Jar */}
             <Link
-              href="/moments"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-cyan-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
-            >
-              <div className="space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600">
-                  <Search className="w-5 h-5" />
-                </div>
-                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-cyan-600 transition-colors">
-                  Snap Hunt
-                </h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Race your homes to match a loose clue — cleverest find takes the round.
-                </p>
-              </div>
-            </Link>
-
-            {/* Card 9: Fashion Show */}
-            <Link
-              href="/play"
+              href="/gratitude-jar"
               className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-rose-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
-                  <Shirt className="w-5 h-5" />
+                  <Gift className="w-5 h-5" />
                 </div>
-                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-rose-600 transition-colors">
-                  Fashion Show
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-rose-600 transition-colors">
+                    Gratitude Jar
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-rose-50 text-[var(--burgundy)] border border-rose-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    DAILY RITUAL
+                  </span>
+                </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Style the same brief with a twist — an AI stylist crowns best dressed.
+                  Drop folded handwritten notes into a shared jar. Open and read them together on rainy days.
                 </p>
               </div>
             </Link>
 
-            {/* Card 10: The Lab */}
+            {/* Card 8: Love Letters */}
             <Link
-              href="/iq-duel"
+              href="/love-letter"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-[var(--burgundy)]/40 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-[var(--burgundy)]">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-[var(--burgundy)] transition-colors">
+                    Love Letters
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-rose-50 text-[var(--burgundy)] border border-rose-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    ENCRYPTED
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Write letters sealed with digital wax. Schedule them to unseal together on future anniversaries.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 9: Focus Session */}
+            <Link
+              href="/focus"
               className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-teal-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
-                  <FlaskConical className="w-5 h-5" />
+                  <Timer className="w-5 h-5" />
                 </div>
                 <div className="flex items-center gap-2">
                   <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-teal-600 transition-colors">
-                    The Lab
+                    Focus Session
                   </h4>
-                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
-                    NEW
+                  <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    CO-OP
                   </span>
                 </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  A study date with a scoreboard — real math &amp; science, versus or co-op.
+                  Work or study side-by-side with synchronized Pomodoro timers and cozy ambient soundscapes.
                 </p>
               </div>
             </Link>
 
-            {/* Card 11: Honest Cards */}
+            {/* Card 10: Handmade Mixtape */}
             <Link
-              href="/quiz"
+              href="/mixtape"
+              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-emerald-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+            >
+              <div className="space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
+                  <Music className="w-5 h-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-emerald-700 transition-colors">
+                    Handmade Mixtape
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    SPOTIFY
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Design a physical vintage cassette tape with custom shells and stickers, and curate your shared soundtrack.
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 11: Stories & Archive */}
+            <Link
+              href="/stories"
               className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-violet-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
@@ -939,32 +969,14 @@ export default function LandingContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-violet-600 transition-colors">
-                    Honest Cards
+                    Stories &amp; Archive
                   </h4>
-                  <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
-                    NEW
+                  <span className="px-2 py-0.5 rounded-md bg-violet-50 text-violet-600 border border-violet-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                    STORIES
                   </span>
                 </div>
                 <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  A deck of honest questions — you both answer privately, it opens at once.
-                </p>
-              </div>
-            </Link>
-
-            {/* Card 12: Create a Date */}
-            <Link
-              href="/calendar"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-pink-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
-            >
-              <div className="space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600">
-                  <Heart className="w-5 h-5" />
-                </div>
-                <h4 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-pink-600 transition-colors">
-                  Create a Date
-                </h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Build a slideshow date that embeds any game — then play it together.
+                  Explore living relationship stories, community wisdom, and write your shared milestones.
                 </p>
               </div>
             </Link>
