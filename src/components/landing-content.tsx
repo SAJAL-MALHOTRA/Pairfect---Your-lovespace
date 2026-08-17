@@ -1258,7 +1258,7 @@ export default function LandingContent() {
               {[
                 {
                   q: "What games and activities can we play on Pairfect?",
-                  a: "Fifteen realtime activities are live: Know Me Quiz, Online Photobooth, Love Match, Our Future, Arcade, Couples Debate, Draw Together, Couples Court, Snap Hunt, Fashion Show, The Lab, Honest Cards, Create a Date, and Movie Night."
+                  a: "Eleven realtime connection rituals and games are live: Love Match, Online Photobooth, Know Me Quiz, IQ Duel, Couples Debate, Riddle Night, Watch Together, Gratitude Jar, Wax-Sealed Letters, Focus Session, and Handmade Spotify Mixtapes."
                 },
                 {
                   q: "Is Pairfect free to use?",
