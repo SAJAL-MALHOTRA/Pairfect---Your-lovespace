@@ -712,7 +712,7 @@ export default function LandingContent() {
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-[var(--text-soft)] leading-relaxed max-w-2xl">
-                  The realtime 인생네컷 booth for two — a shared countdown fires the shot on both screens at once, so every frame holds both of you.
+                  The realtime 4-frame photo booth for two — a shared countdown fires the shot on both screens at once, so every frame holds both of you.
                 </p>
               </div>
             </div>
