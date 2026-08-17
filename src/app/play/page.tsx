@@ -1,308 +1,289 @@
 "use client";
 
-import { useState } from "react";
-import Navigation from "@/components/navigation";
+import React, { useState } from "react";
 import Link from "next/link";
+import Navigation from "@/components/navigation";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
-  HelpCircle,
-  Brain,
-  Gamepad2,
-  Scale,
-  Tv,
-  Timer,
-  Gift,
-  Sparkles,
-  Camera,
-  Heart,
-  Flame,
-  ArrowRight,
-  Bookmark,
-  Users,
+  Camera, HelpCircle, Heart, Sun, Gamepad2, MessageSquare, PenTool,
+  Scale, Search, Shirt, FlaskConical, BookOpen, Calendar, ArrowRight,
+  Sparkles, Flame, Users
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { PlayfulMoments } from "@/components/cozy-illustrations";
+import { motion } from "framer-motion";
 
-interface GameItem {
+interface ExperienceCardItem {
   id: string;
-  href: string;
   title: string;
+  badge?: "MOST PLAYED" | "NEW" | "ALWAYS FREE";
   desc: string;
-  category: "bonding" | "ai" | "competitive" | "coop";
-  badge?: string;
-  badgeType?: "most-played" | "new" | "ai" | "free";
+  href: string;
   icon: any;
-  playersInfo: string;
-  accent: string;
+  iconBg: string;
+  iconColor: string;
+  accentBorder: string;
 }
 
-const GAMES: GameItem[] = [
+const EXPERIENCES: ExperienceCardItem[] = [
   {
-    id: "quiz",
-    href: "/quiz",
+    id: "know-me-quiz",
     title: "Know Me Quiz",
-    desc: "Lock in privately, reveal together, score your compatibility — 17 packs from cute to spicy.",
-    category: "bonding",
     badge: "MOST PLAYED",
-    badgeType: "most-played",
+    desc: "Lock in privately, reveal together, score your compatibility — 17 packs from cute to spicy.",
+    href: "/quiz",
     icon: HelpCircle,
-    playersInfo: "2 Players · 17 Packs",
-    accent: "var(--burgundy)",
+    iconBg: "bg-pink-50",
+    iconColor: "text-pink-600",
+    accentBorder: "hover:border-pink-300",
   },
   {
-    id: "vibe-judge",
-    href: "/vibe-judge",
-    title: "Between the Lines",
-    desc: "Argue your case or present evidence — an AI judge evaluates both arguments and crowns a fair winner.",
-    category: "ai",
-    badge: "AI POWERED",
-    badgeType: "ai",
-    icon: Scale,
-    playersInfo: "2 Players · AI Judge",
-    accent: "#2E7A60",
-  },
-  {
-    id: "gratitude-jar",
-    href: "/gratitude-jar",
-    title: "Gratitude Jar",
-    desc: "A living collection of handwritten appreciation notes to surprise your partner every day.",
-    category: "bonding",
-    badge: "DAILY RITUAL",
-    badgeType: "new",
-    icon: Gift,
-    playersInfo: "2 Players · Daily",
-    accent: "#9E4B38",
-  },
-  {
-    id: "riddle",
-    href: "/riddle",
-    title: "Riddle Night",
-    desc: "Crack mind-bending riddles together. Team up to decipher clues before time runs out.",
-    category: "coop",
-    badge: "CO-OP",
-    badgeType: "new",
-    icon: Brain,
-    playersInfo: "Co-op · Unlimited",
-    accent: "#6B4F8A",
-  },
-  {
-    id: "iq-duel",
-    href: "/iq-duel",
-    title: "IQ Duel",
-    desc: "A friendly intelligence challenge. Test memory, speed, and logic in quick 1-on-1 rounds.",
-    category: "competitive",
-    badge: "VERSUS",
-    badgeType: "most-played",
-    icon: Gamepad2,
-    playersInfo: "1-on-1 · 5 Min",
-    accent: "#2E6E9E",
-  },
-  {
-    id: "watch",
-    href: "/watch",
-    title: "Watch Together",
-    desc: "Sync and watch YouTube videos in real-time with synchronized playback and live reactions.",
-    category: "bonding",
-    badge: "REALTIME",
-    badgeType: "free",
-    icon: Tv,
-    playersInfo: "Live Sync · Free",
-    accent: "#8B5A3A",
-  },
-  {
-    id: "focus",
-    href: "/focus",
-    title: "Focus Session",
-    desc: "Work or study side-by-side with synchronized Pomodoro timers and cozy ambient audio.",
-    category: "coop",
-    badge: "PRODUCTIVITY",
-    badgeType: "free",
-    icon: Timer,
-    playersInfo: "Shared Timer · Ambient",
-    accent: "#5A6E2E",
-  },
-  {
-    id: "stories",
-    href: "/stories",
-    title: "Stories & Explore",
-    desc: "Explore living relationship stories, community wisdom, and write your shared chapters.",
-    category: "bonding",
-    badge: "STORIES",
-    badgeType: "new",
-    icon: Bookmark,
-    playersInfo: "Living Archive · Explore",
-    accent: "#A24B68",
-  },
-  {
-    id: "photo-booth",
-    href: "/photo-booth",
-    title: "Online Photo Booth",
-    desc: "Take 4-frame photo strips, apply vintage filters & stickers, and save your keepsakes.",
-    category: "bonding",
-    badge: "FREE",
-    badgeType: "free",
-    icon: Camera,
-    playersInfo: "Photo Strip · Vintage",
-    accent: "var(--burgundy)",
-  },
-  {
-    id: "love-letter",
-    href: "/love-letter",
-    title: "Love Letter Studio",
-    desc: "Compose sealed wax-stamped love letters with GIPHY stickers, romantic prompts, and surprise delivery.",
-    category: "bonding",
-    badge: "ROMANTIC",
-    badgeType: "most-played",
+    id: "love-match",
+    title: "Love Match",
+    badge: "NEW",
+    desc: "Answer the same questions at the same instant — then discover just how in sync you really are.",
+    href: "/play/love-match",
     icon: Heart,
-    playersInfo: "Sealed · Wax Stamp",
-    accent: "var(--burgundy)",
+    iconBg: "bg-purple-50",
+    iconColor: "text-purple-600",
+    accentBorder: "hover:border-purple-300",
+  },
+  {
+    id: "our-future",
+    title: "Our Future",
+    badge: "NEW",
+    desc: "Design your future together — home, travel, money, tiny humans — then turn it into a vision board + plan.",
+    href: "/stories",
+    icon: Sun,
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+    accentBorder: "hover:border-amber-300",
+  },
+  {
+    id: "arcade",
+    title: "Arcade",
+    desc: "Your face on cartoon legs in ten tiny games — flappy, tetris duel, whack-a-partner.",
+    href: "/iq-duel",
+    icon: Gamepad2,
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-600",
+    accentBorder: "hover:border-blue-300",
+  },
+  {
+    id: "couples-debate",
+    title: "Couples Debate",
+    desc: "Argue it out on camera — an AI judge scores every round and crowns a winner.",
+    href: "/vibe-judge",
+    icon: MessageSquare,
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    accentBorder: "hover:border-emerald-300",
+  },
+  {
+    id: "draw-together",
+    title: "Draw Together",
+    desc: "Same prompt, two canvases — watch each other's strokes appear live.",
+    href: "/quiz",
+    icon: PenTool,
+    iconBg: "bg-rose-50",
+    iconColor: "text-rose-600",
+    accentBorder: "hover:border-rose-300",
+  },
+  {
+    id: "couples-court",
+    title: "Couples Court",
+    desc: "Plead your case, snap photo evidence — the AI judge delivers a verdict.",
+    href: "/vibe-judge",
+    icon: Scale,
+    iconBg: "bg-indigo-50",
+    iconColor: "text-indigo-600",
+    accentBorder: "hover:border-indigo-300",
+  },
+  {
+    id: "snap-hunt",
+    title: "Snap Hunt",
+    desc: "Race your homes to match a loose clue — cleverest find takes the round.",
+    href: "/moments",
+    icon: Search,
+    iconBg: "bg-cyan-50",
+    iconColor: "text-cyan-600",
+    accentBorder: "hover:border-cyan-300",
+  },
+  {
+    id: "fashion-show",
+    title: "Fashion Show",
+    desc: "Style the same brief with a twist — an AI stylist crowns best dressed.",
+    href: "/photo-booth",
+    icon: Shirt,
+    iconBg: "bg-pink-50",
+    iconColor: "text-pink-500",
+    accentBorder: "hover:border-pink-300",
+  },
+  {
+    id: "the-lab",
+    title: "The Lab",
+    badge: "NEW",
+    desc: "A study date with a scoreboard — real math & science, versus or co-op.",
+    href: "/iq-duel",
+    icon: FlaskConical,
+    iconBg: "bg-teal-50",
+    iconColor: "text-teal-600",
+    accentBorder: "hover:border-teal-300",
+  },
+  {
+    id: "honest-cards",
+    title: "Honest Cards",
+    badge: "NEW",
+    desc: "A deck of honest questions — you both answer privately, it opens at once.",
+    href: "/quiz",
+    icon: BookOpen,
+    iconBg: "bg-violet-50",
+    iconColor: "text-violet-600",
+    accentBorder: "hover:border-violet-300",
+  },
+  {
+    id: "create-a-date",
+    title: "Create a Date",
+    desc: "Build a slideshow date that embeds any game — then play it together.",
+    href: "/calendar",
+    icon: Calendar,
+    iconBg: "bg-rose-50",
+    iconColor: "text-rose-600",
+    accentBorder: "hover:border-rose-300",
   },
 ];
 
-const CATEGORIES = [
-  { id: "all", label: "All Activities", icon: Sparkles },
-  { id: "bonding", label: "💖 Bonding", icon: Heart },
-  { id: "ai", label: "🤖 AI Powered", icon: Scale },
-  { id: "competitive", label: "⚡ Competitive", icon: Flame },
-  { id: "coop", label: "🤝 Co-op", icon: Users },
-];
+export default function GamesHubPage() {
+  const { user, partner, profile } = useAuth();
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-export default function PlayLobbyPage() {
-  const [activeTab, setActiveTab] = useState<string>("all");
-
-  const filteredGames = GAMES.filter((game) => {
-    if (activeTab === "all") return true;
-    return game.category === activeTab;
-  });
+  const partnerName = partner?.display_name || "Partner";
 
   return (
-    <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] transition-colors paper-grain">
       <Navigation />
 
-      <main className="max-w-6xl mx-auto px-6 py-16 pb-36 pt-24 space-y-10">
+      <main className="flex-1 max-w-[1180px] w-full mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-8">
         
-        {/* ─── HERO HEADER ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-[var(--border)]"
-        >
-          <div className="text-center md:text-left space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--rose)]/15 border border-[var(--rose)]/30 text-[var(--burgundy)] text-[10px] font-mono uppercase tracking-widest font-semibold">
-              <Sparkles className="w-3 h-3" /> Connection Rituals & Games
-            </div>
-            <h1 className="font-heading font-bold text-4xl sm:text-5xl text-[var(--text)] leading-tight">
-              Our Playroom
+        {/* ── HEADER / INTRO BANNER ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
+              PAIRFECT PLAYROOM
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)]">
+              Things we can do <span className="text-[var(--burgundy)]">together.</span>
             </h1>
-            <p className="font-handwriting text-lg text-[var(--rose)] italic">
-              Activities, quizzes, and games designed to bring us closer every day.
-            </p>
           </div>
 
-          <div className="flex-shrink-0">
-            <PlayfulMoments className="w-36 h-36 rounded-2xl shadow-sm border border-[var(--border)]" />
+          <div className="flex items-center gap-3">
+            <div className="px-3.5 py-1.5 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] flex items-center gap-2 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-mono font-bold text-[var(--text)]">
+                Playing with {partnerName}
+              </span>
+            </div>
           </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════
+            FEATURED EXPERIENCE CARD (TOP HORIZONTAL - EXACT FROM REF)
+            ══════════════════════════════════════════════════════════ */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="p-6 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6 paper-grain"
+        >
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
+              <Camera className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-sans font-bold text-[var(--text)]">
+                  Online Photobooth
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-mono font-bold uppercase tracking-wider">
+                  ALWAYS FREE
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-[var(--text-soft)] leading-relaxed max-w-2xl">
+                The realtime 인생네컷 booth for two — a shared countdown fires the shot on both screens at once, so every frame holds both of you.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/photo-booth"
+            className="shrink-0 text-xs font-mono font-bold text-[var(--text)] hover:text-[var(--burgundy)] inline-flex items-center gap-1.5 group transition-colors px-4 py-2 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] hover:border-[var(--burgundy)]/40"
+          >
+            <span>Open the booth ▷</span>
+          </Link>
         </motion.div>
 
+        {/* ══════════════════════════════════════════════════════════
+            ALL GAMES & ACTIVITIES SECTION DIVIDER
+            ══════════════════════════════════════════════════════════ */}
+        <div className="flex items-center gap-4 pt-4">
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase whitespace-nowrap">
+            ALL GAMES &amp; ACTIVITIES
+          </span>
+          <div className="flex-1 h-[1px] bg-[var(--border)]" />
+        </div>
 
-
-        {/* ─── CATEGORY FILTER TABS ─── */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {CATEGORIES.map((tab) => {
-            const isActive = activeTab === tab.id;
+        {/* ══════════════════════════════════════════════════════════
+            3-COLUMN EXPERIENCE CARDS GRID (EXACT FROM REFERENCE)
+            ══════════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {EXPERIENCES.map((exp, idx) => {
+            const Icon = exp.icon;
             return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-full text-xs font-mono font-semibold transition-all cursor-pointer whitespace-nowrap border ${
-                  isActive
-                    ? "bg-[var(--burgundy)] text-white border-[var(--burgundy)] shadow-sm"
-                    : "bg-[var(--bg-secondary)] text-[var(--text-soft)] border-[var(--border)] hover:border-[var(--rose)] hover:text-[var(--text)]"
-                }`}
+              <motion.div
+                key={exp.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: idx * 0.03 }}
               >
-                {tab.label}
-              </button>
+                <Link
+                  href={exp.href}
+                  onMouseEnter={() => setHoveredCard(exp.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  className={`p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs transition-all flex flex-col justify-between text-left space-y-4 h-full min-h-[170px] group ${exp.accentBorder} hover:shadow-md hover:translate-y-[-2px]`}
+                >
+                  <div className="space-y-3">
+                    {/* Category-Specific Icon Container */}
+                    <div className={`w-9 h-9 rounded-xl ${exp.iconBg} border border-[var(--border)] flex items-center justify-center ${exp.iconColor} transition-transform group-hover:scale-110 duration-200 shadow-xs`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+
+                    {/* Title + Pill Badge */}
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-sans font-bold text-base text-[var(--text)] group-hover:text-[var(--burgundy)] transition-colors">
+                        {exp.title}
+                      </h3>
+                      {exp.badge === "MOST PLAYED" && (
+                        <span className="px-2 py-0.5 rounded-md bg-pink-50 text-pink-600 border border-pink-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                          ★ MOST PLAYED
+                        </span>
+                      )}
+                      {exp.badge === "NEW" && (
+                        <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-200 text-[8px] font-mono font-bold uppercase tracking-wider">
+                          NEW
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Short Emotional Description */}
+                    <p className="text-xs text-[var(--text-soft)] leading-relaxed font-sans">
+                      {exp.desc}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
             );
           })}
         </div>
-
-        {/* ─── 3-COLUMN RICH GAMES GRID ─── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {filteredGames.map((game, i) => {
-              const Icon = game.icon;
-              return (
-                <motion.div
-                  key={game.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: i * 0.05 }}
-                >
-                  <Link href={game.href} className="block group h-full">
-                    <div
-                      className="p-6 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] paper-grain border border-[var(--border)] flex flex-col justify-between h-full shadow-sm transition-all duration-300 group-hover:translate-y-[-3px] group-hover:shadow-md group-hover:border-[var(--rose)]/50 relative overflow-hidden"
-                    >
-                      {/* Top Bar: Icon + Badge */}
-                      <div className="flex items-center justify-between gap-3 mb-4">
-                        <div
-                          className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105"
-                          style={{
-                            background: `${game.accent}15`,
-                            border: `1px solid ${game.accent}30`,
-                          }}
-                        >
-                          <Icon className="w-6 h-6" style={{ color: game.accent }} strokeWidth={1.9} />
-                        </div>
-
-                        {game.badge && (
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider ${
-                              game.badgeType === "most-played"
-                                ? "bg-[var(--rose)]/20 text-[var(--burgundy)] border border-[var(--rose)]/40"
-                                : game.badgeType === "ai"
-                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
-                                : "bg-[var(--border)] text-[var(--text-soft)]"
-                            }`}
-                          >
-                            {game.badge}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Content Area */}
-                      <div className="space-y-2 flex-1">
-                        <h3 className="font-heading font-bold text-xl text-[var(--text)] group-hover:text-[var(--burgundy)] transition-colors leading-tight">
-                          {game.title}
-                        </h3>
-                        <p className="text-xs font-sans text-[var(--text-soft)] leading-relaxed line-clamp-3">
-                          {game.desc}
-                        </p>
-                      </div>
-
-                      {/* Card Footer */}
-                      <div className="pt-4 mt-5 border-t border-[var(--border)] flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
-                        <span>{game.playersInfo}</span>
-                        <span className="text-[var(--burgundy)] font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                          Play <ArrowRight className="w-3 h-3" />
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </AnimatePresence>
 
       </main>
     </div>
   );
 }
-

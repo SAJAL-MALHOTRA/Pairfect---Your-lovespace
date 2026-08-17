@@ -71,14 +71,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserData = async (currentUser: User) => {
     try {
       // 1. Fetch user profile
-      const { data: profileData, error: profileErr } = await supabase
+      let { data: profileData } = await supabase
         .from("users")
         .select("*")
         .eq("id", currentUser.id)
-        .single();
+        .maybeSingle();
 
-      if (profileErr) throw profileErr;
-      setProfile(profileData);
+      if (!profileData) {
+        // Auto-create initial profile row if missing
+        const fallbackName =
+          currentUser.user_metadata?.display_name ||
+          currentUser.email?.split("@")[0] ||
+          "Partner";
+        const { data: createdProfile } = await supabase
+          .from("users")
+          .upsert({
+            id: currentUser.id,
+            display_name: fallbackName,
+          })
+          .select("*")
+          .single();
+        profileData = createdProfile;
+      }
+      setProfile(profileData || null);
 
       // 2. Fetch active pair first; if none, check for pending pair
       const { data: activePairs } = await supabase
@@ -106,7 +121,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (pairData) {
         setPair(pairData);
 
-
         // 3. If pair is active, fetch partner details
         const partnerId =
           pairData.user_a_id === currentUser.id
@@ -118,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .from("users")
             .select("*")
             .eq("id", partnerId)
-            .single();
+            .maybeSingle();
 
           setPartner(partnerData || null);
         } else {
@@ -216,25 +230,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user]);
 
-  // Redirect users on onboarding checks
+  // Redirect users on authentication & onboarding state checks
   useEffect(() => {
     if (!loading && user) {
-
       const isPendingOnboarding = !pair || pair.status !== "active";
       const isOnboardingRoute = pathname.startsWith("/onboarding");
+      const isRootOrAuthRoute =
+        pathname === "/" ||
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/signup");
       const isProtectedRoute =
         pathname.startsWith("/dashboard") ||
         pathname.startsWith("/checkin") ||
         pathname.startsWith("/history") ||
         pathname.startsWith("/recap") ||
-        pathname.startsWith("/moments");
+        pathname.startsWith("/moments") ||
+        pathname.startsWith("/love-letter") ||
+        pathname.startsWith("/gratitude-jar") ||
+        pathname.startsWith("/stories") ||
+        pathname.startsWith("/watch") ||
+        pathname.startsWith("/play") ||
+        pathname.startsWith("/profile");
       const isSettingsRoute = pathname.startsWith("/settings");
 
-      if (isPendingOnboarding && isProtectedRoute) {
+      // 1. If authenticated user is on landing page or auth routes, route them into app
+      if (isRootOrAuthRoute) {
+        if (isPendingOnboarding) {
+          router.push("/onboarding");
+        } else {
+          router.push("/dashboard");
+        }
+      }
+      // 2. If user hasn't finished pairing, prevent accessing protected dashboard routes
+      else if (isPendingOnboarding && isProtectedRoute) {
         router.push("/onboarding");
-      } else if (isPendingOnboarding && isSettingsRoute && !profile) {
-        router.push("/onboarding");
-      } else if (!isPendingOnboarding && isOnboardingRoute) {
+      }
+      // 3. If user has active pair, prevent staying on onboarding
+      else if (!isPendingOnboarding && isOnboardingRoute) {
         router.push("/dashboard");
       }
     }
