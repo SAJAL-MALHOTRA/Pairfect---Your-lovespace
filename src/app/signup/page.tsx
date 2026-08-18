@@ -266,7 +266,7 @@ function SignupFormContent() {
                       value={betaCodeInput}
                       onChange={(e) => setBetaCodeInput(e.target.value.toUpperCase())}
                       className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] font-mono text-sm font-bold uppercase tracking-widest placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
-                      placeholder="e.g. PAIRFECT2026"
+                      placeholder="ENTER INVITE CODE"
                     />
                   </div>
                 </div>
