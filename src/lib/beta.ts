@@ -5,8 +5,11 @@
 
 export function isBetaModeEnabled(): boolean {
   const envVal = process.env.NEXT_PUBLIC_BETA_MODE;
-  if (!envVal) return false;
-  return envVal === "true" || envVal === "1" || envVal === "yes";
+  // Beta mode is active by default. Only disabled if explicitly set to "false", "0", or "no".
+  if (envVal === "false" || envVal === "0" || envVal === "no" || envVal === "disabled") {
+    return false;
+  }
+  return true;
 }
 
 export function getApprovedBetaCodes(): string[] {
