@@ -12,7 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 // ── Layout Definitions ──────────────────────────────────────────────────────
-type LayoutType = "strip_3" | "strip_4" | "journal" | "polaroid_grid" | "film_roll" | "anniversary_card";
+type LayoutType = "strip_4" | "strip_3" | "polaroid_grid" | "anniversary_card" | "journal" | "film_roll";
 
 interface LayoutConfig {
   key: LayoutType;
@@ -22,12 +22,12 @@ interface LayoutConfig {
 }
 
 const LAYOUTS: LayoutConfig[] = [
-  { key: "strip_3",          label: "Classic Strip (3 Photos)", count: 3, description: "Traditional vertical photo booth strip" },
-  { key: "strip_4",          label: "Classic Strip (4 Photos)", count: 4, description: "Extended vertical memory strip" },
-  { key: "journal",          label: "Journal Layout",           count: 2, description: "Side-by-side photos with story margin" },
-  { key: "polaroid_grid",    label: "Polaroid Grid",            count: 4, description: "2x2 vintage polaroid quad" },
-  { key: "film_roll",        label: "Film Roll",                count: 3, description: "Classic 35mm film reel frames" },
+  { key: "strip_4",          label: "Classic 4-Cut Strip",      count: 4, description: "Iconic 4-photo vertical photobooth strip" },
+  { key: "strip_3",          label: "Classic 3-Cut Strip",      count: 3, description: "Traditional 3-photo vertical memory strip" },
+  { key: "polaroid_grid",    label: "2x2 Polaroid Grid",        count: 4, description: "2x2 vintage polaroid quad keepsake" },
   { key: "anniversary_card", label: "Anniversary Card",         count: 3, description: "1 featured centerpiece photo + 2 side snaps" },
+  { key: "journal",          label: "Journal Memory",           count: 2, description: "Side-by-side photos with story notes margin" },
+  { key: "film_roll",        label: "35mm Film Roll",           count: 3, description: "Vintage 35mm film reel frames with sprockets" },
 ];
 
 // ── CSS Filter Definitions ──────────────────────────────────────────────────
@@ -98,107 +98,120 @@ const PAPER_TEXTURES: Record<PaperTexture, { label: string; style: React.CSSProp
 };
 
 // ── Curated Sticker Definitions ─────────────────────────────────────────────
-type StickerType = "flower" | "heart" | "ribbon" | "seal" | "coffee" | "star" | "sparkle" | "bow" | "film_tape" | "polaroid_tape";
+const STICKER_PALETTE = [
+  { id: "heart_sparkle", icon: "💖", label: "Sparkle Heart" },
+  { id: "red_heart",      icon: "❤️", label: "Love Heart" },
+  { id: "rose",           icon: "🌹", label: "Red Rose" },
+  { id: "wax_seal",       icon: "💌", label: "Love Letter" },
+  { id: "sparkles",       icon: "✨", label: "Sparkles" },
+  { id: "cherry_blossom", icon: "🌸", label: "Blossom" },
+  { id: "camera",         icon: "📷", label: "Camera" },
+  { id: "star",           icon: "⭐", label: "Star" },
+  { id: "ribbon",         icon: "🎀", label: "Ribbon" },
+  { id: "rings",          icon: "💍", label: "Rings" },
+  { id: "two_hearts",     icon: "💕", label: "Two Hearts" },
+  { id: "kiss",           icon: "💋", label: "Kiss" },
+];
 
-interface StickerItem {
+interface PlacedSticker {
   id: string;
-  type: StickerType;
+  type: string;
   icon: string;
-  label: string;
-  x: number; // percentage
-  y: number; // percentage
+  x: number; // percentage of container width
+  y: number; // percentage of container height
   rotation: number;
   scale: number;
 }
 
-const STICKER_PALETTE: { type: StickerType; icon: string; label: string }[] = [
-  { type: "flower",        icon: "🌸", label: "Pressed Flowers" },
-  { type: "heart",         icon: "💖", label: "Tiny Hearts" },
-  { type: "ribbon",        icon: "🎀", label: "Ribbon" },
-  { type: "seal",          icon: "📜", label: "Wax Seal" },
-  { type: "coffee",        icon: "☕", label: "Coffee Stain" },
-  { type: "star",          icon: "⭐", label: "Stars" },
-  { type: "sparkle",       icon: "✨", label: "Sparkles" },
-  { type: "bow",           icon: "🎀", label: "Bow" },
-  { type: "film_tape",     icon: "🎞️", label: "Film Tape" },
-  { type: "polaroid_tape", icon: "🏷️", label: "Polaroid Tape" },
-];
+// ── Canvas Center-Crop (object-fit: cover) Helper ───────────────────────────
+function drawImageCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+) {
+  const imgW = img.naturalWidth || img.width || 640;
+  const imgH = img.naturalHeight || img.height || 480;
+  const imgRatio = imgW / imgH;
+  const targetRatio = w / h;
+  let sx = 0, sy = 0, sWidth = imgW, sHeight = imgH;
 
-// ── Synthesize Shutter Sound using Web Audio API ─────────────────────────────
-function playShutterSound() {
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+  if (imgRatio > targetRatio) {
+    sWidth = imgH * targetRatio;
+    sx = (imgW - sWidth) / 2;
+  } else {
+    sHeight = imgW / targetRatio;
+    sy = (imgH - sHeight) / 2;
+  }
 
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.08);
-
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 0.08);
-  } catch {}
+  ctx.drawImage(img, sx, sy, sWidth, sHeight, x, y, w, h);
 }
 
-// ── Main Page Component ─────────────────────────────────────────────────────
 export default function PhotoBoothPage() {
   const { pair } = useAuth();
   const supabase = createClient();
 
-  // Stepper State: 1 | 2 | 3 | 4
-  const [step, setStep] = useState<number>(1);
+  // ── Step Navigation (1: Layout, 2: Capture, 3: Decorate, 4: Export) ─────────
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
-  // Step 1: Layout Selection
+  // Step 1: Layout & Styling Config
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>("strip_4");
+  const [selectedFilter, setSelectedFilter] = useState<FilterKey>("warm");
+  const [frameColor, setFrameColor] = useState<FrameColor>("cream");
+  const [paperTexture, setPaperTexture] = useState<PaperTexture>("journal");
 
   // Step 2: Camera & Capture State
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
+  const [cameraAvailable, setCameraAvailable] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [isMirrored, setIsMirrored] = useState<boolean>(true);
-  const [flashEnabled, setFlashEnabled] = useState<boolean>(true);
-  const [selectedFilter, setSelectedFilter] = useState<FilterKey>("none");
+  const [isMirrored, setIsMirrored] = useState(true);
   const [countdownSec, setCountdownSec] = useState<number>(3);
+  const [flashEnabled, setFlashEnabled] = useState(true);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
+  const [screenFlash, setScreenFlash] = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
-  const [isCapturing, setIsCapturing] = useState<boolean>(false);
-  const [screenFlash, setScreenFlash] = useState<boolean>(false);
+  const [videoIsReady, setVideoIsReady] = useState(false);
 
-  // Step 3: Decorate State
-  const [frameColor, setFrameColor] = useState<FrameColor>("cream");
-  const [paperTexture, setPaperTexture] = useState<PaperTexture>("plain");
-  const [showDateStamp, setShowDateStamp] = useState<boolean>(true);
-  const [showTimeStamp, setShowTimeStamp] = useState<boolean>(false);
-  const [locationText, setLocationText] = useState<string>("");
-  const [captionText, setCaptionText] = useState<string>("");
-  const [placedStickers, setPlacedStickers] = useState<StickerItem[]>([]);
+  // Step 3: Decoration State
+  const [showDateStamp, setShowDateStamp] = useState(true);
+  const [showTimeStamp, setShowTimeStamp] = useState(false);
+  const [locationText, setLocationText] = useState("");
+  const [captionText, setCaptionText] = useState("");
+  const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
   const [activeStickerId, setActiveStickerId] = useState<string | null>(null);
 
-  // Step 4: Save & Export State
-  const [savingScrapbook, setSavingScrapbook] = useState<boolean>(false);
-  const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  // Step 4: Export & Scrapbook State
+  const [savingScrapbook, setSavingScrapbook] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Refs
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const stripPreviewRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const stripPreviewRef = useRef<HTMLDivElement | null>(null);
 
-  const currentLayoutConfig = LAYOUTS.find(l => l.key === selectedLayout) || LAYOUTS[1];
-  const currentFilterConfig = FILTERS.find(f => f.key === selectedFilter) || FILTERS[0];
+  const currentLayoutConfig = LAYOUTS.find(l => l.key === selectedLayout) || LAYOUTS[0];
+  const currentFilterConfig = FILTERS.find(f => f.key === selectedFilter) || FILTERS[1];
 
-  // Nav show/hide effect
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("navigation-hide"));
-    return () => {
-      window.dispatchEvent(new CustomEvent("navigation-show"));
-    };
+  // Play shutter sound on capture
+  const playShutterSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.12);
+    } catch {
+      // AudioContext unavailable
+    }
   }, []);
 
   // ── Camera Initialization & Cleanup ──────────────────────────────────────
@@ -229,6 +242,7 @@ export default function PhotoBoothPage() {
       stream.getTracks().forEach(t => t.stop());
       setStream(null);
     }
+    setVideoIsReady(false);
   }, [stream]);
 
   useEffect(() => {
@@ -250,33 +264,42 @@ export default function PhotoBoothPage() {
   // ── Capture Single Frame from Video or Fallback Canvas ───────────────────
   const capturePhotoFrame = useCallback((): string => {
     const canvas = document.createElement("canvas");
-    canvas.width = 640;
-    canvas.height = 480;
+    canvas.width = 1280;
+    canvas.height = 960;
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
-      // Mirroring transform if needed
-      if (isMirrored) {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      }
+      const vid = videoRef.current;
+      const isVideoPlaying = vid && vid.readyState >= 2 && vid.videoWidth > 0 && cameraAvailable;
 
-      if (videoRef.current && cameraAvailable) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      if (isVideoPlaying) {
+        ctx.save();
+        if (isMirrored) {
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+        }
+        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
       } else {
-        // Fallback camera canvas drawing (simulated warm photobooth snap)
-        ctx.fillStyle = "#F5EDD8";
+        // Fallback drawing if camera is unavailable — ALWAYS upright & centered!
+        ctx.fillStyle = "#FAF5EB";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "#FFD9E3";
+        ctx.lineWidth = 12;
+        ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+
         ctx.fillStyle = "#E8527D";
-        ctx.font = "bold 32px Cormorant Garamond";
+        ctx.font = "bold 52px Georgia, serif";
         ctx.textAlign = "center";
-        ctx.fillText("Pairfect Memory Snap ♡", canvas.width / 2, canvas.height / 2 - 20);
-        ctx.fillStyle = "#6B564F";
-        ctx.font = "18px Inter";
-        ctx.fillText(new Date().toLocaleDateString(), canvas.width / 2, canvas.height / 2 + 20);
+        ctx.textBaseline = "middle";
+        ctx.fillText("Pairfect Memory Snap ♡", canvas.width / 2, canvas.height / 2 - 30);
+
+        ctx.fillStyle = "#7A4B5D";
+        ctx.font = "28px sans-serif";
+        ctx.fillText(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), canvas.width / 2, canvas.height / 2 + 40);
       }
     }
-    return canvas.toDataURL("image/jpeg", 0.92);
+    return canvas.toDataURL("image/jpeg", 0.95);
   }, [isMirrored, cameraAvailable]);
 
   // ── Execute Photo Capture Sequence ──────────────────────────────────────
@@ -314,14 +337,14 @@ export default function PhotoBoothPage() {
       currentPhotos.push(snapData);
       setCapturedPhotos([...currentPhotos]);
 
-      // Small pause between multiple photos
+      // Small pause between multiple photos so user can change poses
       if (p < neededCount - 1) {
         await new Promise(r => setTimeout(r, 1200));
       }
     }
 
     setIsCapturing(false);
-  }, [isCapturing, currentLayoutConfig, capturedPhotos, countdownSec, flashEnabled, capturePhotoFrame]);
+  }, [isCapturing, currentLayoutConfig, capturedPhotos, countdownSec, flashEnabled, capturePhotoFrame, playShutterSound]);
 
   // ── Manual File Upload Fallback ─────────────────────────────────────────
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -333,31 +356,28 @@ export default function PhotoBoothPage() {
       reader.onload = (ev) => {
         if (ev.target?.result) {
           list.push(ev.target.result as string);
-          setCapturedPhotos(prev => [...prev, ev.target!.result as string].slice(0, currentLayoutConfig.count));
+          if (list.length === files.length) {
+            setCapturedPhotos(prev => [...prev, ...list].slice(0, currentLayoutConfig.count));
+          }
         }
       };
       reader.readAsDataURL(file);
     });
   };
 
-  // ── Sticker Helpers ──────────────────────────────────────────────────────
-  const addSticker = (type: StickerType, icon: string, label: string) => {
-    const newSticker: StickerItem = {
-      id: "st-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5),
+  // ── Sticker Drag & Placement Helpers ─────────────────────────────────────
+  const addSticker = (type: string, icon: string) => {
+    const newSticker: PlacedSticker = {
+      id: `${type}-${Date.now()}`,
       type,
       icon,
-      label,
-      x: 35 + Math.random() * 30,
-      y: 20 + Math.random() * 50,
-      rotation: Math.round((Math.random() - 0.5) * 30),
+      x: 35 + (placedStickers.length * 6) % 30,
+      y: 35 + (placedStickers.length * 8) % 30,
+      rotation: (Math.random() - 0.5) * 30,
       scale: 1,
     };
     setPlacedStickers(prev => [...prev, newSticker]);
     setActiveStickerId(newSticker.id);
-  };
-
-  const updateSticker = (id: string, updates: Partial<StickerItem>) => {
-    setPlacedStickers(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
   };
 
   const removeSticker = (id: string) => {
@@ -365,24 +385,26 @@ export default function PhotoBoothPage() {
     if (activeStickerId === id) setActiveStickerId(null);
   };
 
-  // ── Preload image safely as Data URL / HTMLImageElement ─────────────────
+  const updateSticker = (id: string, updates: Partial<PlacedSticker>) => {
+    setPlacedStickers(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  // Helper to load async images
   const loadImageAsync = useCallback((src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
-
       img.onload = () => resolve(img);
       img.onerror = () => {
-        // Fallback canvas image if load fails
         const fallbackCanvas = document.createElement("canvas");
         fallbackCanvas.width = 640;
         fallbackCanvas.height = 480;
         const fCtx = fallbackCanvas.getContext("2d");
         if (fCtx) {
-          fCtx.fillStyle = "#F5EDD8";
+          fCtx.fillStyle = "#FAF5EB";
           fCtx.fillRect(0, 0, 640, 480);
           fCtx.fillStyle = "#E8527D";
-          fCtx.font = "bold 28px sans-serif";
+          fCtx.font = "bold 32px Georgia, serif";
           fCtx.textAlign = "center";
           fCtx.fillText("Pairfect Photo Snap ♡", 320, 240);
         }
@@ -392,7 +414,6 @@ export default function PhotoBoothPage() {
       };
 
       if (src.startsWith("http://") || src.startsWith("https://")) {
-        // Fetch as blob to convert to Data URL, bypassing cross-origin canvas taints completely
         fetch(src, { mode: "cors" })
           .then(r => r.blob())
           .then(b => {
@@ -412,26 +433,55 @@ export default function PhotoBoothPage() {
     });
   }, []);
 
-  // ── Async Canvas Exporter for PNG/PDF Download (300 DPI High-Res) ──────────────
+  // ── High-Res Canvas Exporter for PNG/PDF Download (300 DPI) ──────────────
   const renderStripToCanvas = useCallback(async (): Promise<HTMLCanvasElement> => {
     const canvas = document.createElement("canvas");
-    const width = 1200; // 300 DPI high-res output
     const count = currentLayoutConfig.count;
     const padding = 60;
-    const gap = 36;
-    const slotWidth = width - padding * 2;
-    const slotHeight = Math.floor(slotWidth * (3 / 4)); // 4:3 camera photo frame ratio
+    const gap = 32;
 
     const dateText = showDateStamp ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const timeText = showTimeStamp ? new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
     const stampCombined = [dateText, timeText, locationText].filter(Boolean).join(" · ");
 
     const topHeaderHeight = stampCombined ? 160 : 120;
-    const topOffset = topHeaderHeight;
-    const bottomFooterHeight = captionText ? 140 : 100;
-    
-    const height = topHeaderHeight + (count * slotHeight) + ((count - 1) * gap) + bottomFooterHeight;
-    const availableHeight = height - topHeaderHeight - bottomFooterHeight;
+    const bottomFooterHeight = captionText ? 150 : 110;
+
+    // Calculate dimensions based on layout geometry
+    let width = 800;
+    let height = 2400;
+
+    if (selectedLayout === "strip_4") {
+      width = 800;
+      const slotW = width - padding * 2;
+      const slotH = Math.floor(slotW * (3 / 4)); // 4:3 ratio
+      height = topHeaderHeight + (4 * slotH) + (3 * gap) + bottomFooterHeight;
+    } else if (selectedLayout === "strip_3") {
+      width = 800;
+      const slotW = width - padding * 2;
+      const slotH = Math.floor(slotW * (3 / 4));
+      height = topHeaderHeight + (3 * slotH) + (2 * gap) + bottomFooterHeight;
+    } else if (selectedLayout === "polaroid_grid") {
+      width = 1200;
+      const gridW = (width - padding * 2 - gap) / 2;
+      const gridH = gridW; // Square polaroids
+      height = topHeaderHeight + (2 * gridH) + gap + bottomFooterHeight;
+    } else if (selectedLayout === "anniversary_card") {
+      width = 1200;
+      const cardH = 860;
+      height = topHeaderHeight + cardH + bottomFooterHeight;
+    } else if (selectedLayout === "journal") {
+      width = 1200;
+      const slotW = (width - padding * 2 - gap) / 2;
+      const slotH = Math.floor(slotW * (3 / 4));
+      height = topHeaderHeight + slotH + 280 + bottomFooterHeight;
+    } else if (selectedLayout === "film_roll") {
+      width = 800;
+      const slotW = width - padding * 2 - 80;
+      const slotH = Math.floor(slotW * (3 / 4));
+      height = topHeaderHeight + (3 * slotH) + (2 * gap) + bottomFooterHeight;
+    }
+
     canvas.width = width;
     canvas.height = height;
 
@@ -446,22 +496,27 @@ export default function PhotoBoothPage() {
 
     // Frame border
     ctx.strokeStyle = fStyle.border;
-    ctx.lineWidth = 12;
-    ctx.strokeRect(6, 6, width - 12, height - 12);
+    ctx.lineWidth = 14;
+    ctx.strokeRect(7, 7, width - 14, height - 14);
 
     // Header title
     ctx.fillStyle = fStyle.text;
-    ctx.font = "italic bold 44px Cormorant Garamond, serif";
+    ctx.font = "italic bold 44px Georgia, serif";
     ctx.textAlign = "center";
     ctx.fillText("Pairfect Photo Booth ♡", width / 2, 70);
 
     if (stampCombined) {
-      ctx.font = "28px Caveat, cursive";
+      ctx.font = "26px Caveat, cursive";
       ctx.fillText(stampCombined, width / 2, 115);
     }
 
-    // Preload ALL images asynchronously as Data URLs
-    const loadedImages = await Promise.all(capturedPhotos.map(src => loadImageAsync(src)));
+    // Ensure we have loaded images for all slots
+    const photosToRender = [...capturedPhotos];
+    while (photosToRender.length < count) {
+      photosToRender.push(photosToRender[0] || capturePhotoFrame());
+    }
+
+    const loadedImages = await Promise.all(photosToRender.map(src => loadImageAsync(src)));
 
     // Save context for filter application
     ctx.save();
@@ -469,65 +524,112 @@ export default function PhotoBoothPage() {
       ctx.filter = currentFilterConfig.css;
     }
 
+    // ── Draw Layout Elements with drawImageCover ───────────────────────────
     if (selectedLayout === "strip_3" || selectedLayout === "strip_4") {
-      loadedImages.forEach((img, idx) => {
-        const y = topHeaderHeight + idx * (slotHeight + gap);
+      const slotW = width - padding * 2;
+      const slotH = Math.floor(slotW * (3 / 4));
 
-        // Photo white border box
+      loadedImages.slice(0, count).forEach((img, idx) => {
+        const y = topHeaderHeight + idx * (slotH + gap);
+
+        // Photo white polaroid border
         ctx.save();
         ctx.filter = "none";
         ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(padding - 10, y - 10, slotWidth + 20, slotHeight + 20);
+        ctx.fillRect(padding - 8, y - 8, slotW + 16, slotH + 16);
         ctx.strokeStyle = "rgba(0,0,0,0.08)";
         ctx.lineWidth = 2;
-        ctx.strokeRect(padding - 10, y - 10, slotWidth + 20, slotHeight + 20);
+        ctx.strokeRect(padding - 8, y - 8, slotW + 16, slotH + 16);
         ctx.restore();
 
-        // Draw photo with filter applied
-        ctx.drawImage(img, padding, y, slotWidth, slotHeight);
+        // Draw photo cropped with cover
+        drawImageCover(ctx, img, padding, y, slotW, slotH);
       });
     } else if (selectedLayout === "polaroid_grid") {
-      const gridW = (width - padding * 2 - 30) / 2;
-      const gridH = (availableHeight - 30) / 2;
+      const gridW = (width - padding * 2 - gap) / 2;
+      const gridH = gridW;
 
       loadedImages.slice(0, 4).forEach((img, idx) => {
         const col = idx % 2;
         const row = Math.floor(idx / 2);
-        const x = padding + col * (gridW + 30);
-        const y = topOffset + row * (gridH + 30);
+        const x = padding + col * (gridW + gap);
+        const y = topHeaderHeight + row * (gridH + gap);
 
         ctx.save();
         ctx.filter = "none";
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(x - 8, y - 8, gridW + 16, gridH + 16);
+        ctx.strokeStyle = "rgba(0,0,0,0.08)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 8, y - 8, gridW + 16, gridH + 16);
         ctx.restore();
 
-        ctx.drawImage(img, x, y, gridW, gridH);
+        drawImageCover(ctx, img, x, y, gridW, gridH);
+      });
+    } else if (selectedLayout === "anniversary_card") {
+      const totalW = width - padding * 2;
+      const mainW = Math.floor(totalW * 0.58);
+      const sideW = totalW - mainW - gap;
+      const totalH = 860;
+      const sideH = (totalH - gap) / 2;
+
+      // 1. Centerpiece Hero Photo (Left)
+      if (loadedImages[0]) {
+        ctx.save();
+        ctx.filter = "none";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(padding - 8, topHeaderHeight - 8, mainW + 16, totalH + 16);
+        ctx.strokeStyle = "rgba(0,0,0,0.08)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(padding - 8, topHeaderHeight - 8, mainW + 16, totalH + 16);
+        ctx.restore();
+
+        drawImageCover(ctx, loadedImages[0], padding, topHeaderHeight, mainW, totalH);
+      }
+
+      // 2. Stacked Side Snaps (Right)
+      loadedImages.slice(1, 3).forEach((img, idx) => {
+        const x = padding + mainW + gap;
+        const y = topHeaderHeight + idx * (sideH + gap);
+
+        ctx.save();
+        ctx.filter = "none";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x - 8, y - 8, sideW + 16, sideH + 16);
+        ctx.strokeStyle = "rgba(0,0,0,0.08)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 8, y - 8, sideW + 16, sideH + 16);
+        ctx.restore();
+
+        drawImageCover(ctx, img, x, y, sideW, sideH);
       });
     } else if (selectedLayout === "journal") {
-      const slotW = (width - padding * 2 - 30) / 2;
-      const slotH = slotW * 0.75;
+      const slotW = (width - padding * 2 - gap) / 2;
+      const slotH = Math.floor(slotW * (3 / 4));
 
       loadedImages.slice(0, 2).forEach((img, idx) => {
-        const x = padding + idx * (slotW + 30);
-        const y = topOffset + 20;
+        const x = padding + idx * (slotW + gap);
+        const y = topHeaderHeight + 10;
 
         ctx.save();
         ctx.filter = "none";
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(x - 8, y - 8, slotW + 16, slotH + 16);
+        ctx.strokeStyle = "rgba(0,0,0,0.08)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 8, y - 8, slotW + 16, slotH + 16);
         ctx.restore();
 
-        ctx.drawImage(img, x, y, slotW, slotH);
+        drawImageCover(ctx, img, x, y, slotW, slotH);
       });
 
-      // Journal notes area lines
+      // Journal notes lines
       ctx.save();
       ctx.filter = "none";
-      ctx.strokeStyle = "rgba(142, 43, 69, 0.2)";
+      ctx.strokeStyle = "rgba(142, 43, 69, 0.25)";
       ctx.lineWidth = 2;
-      const lineStartY = topOffset + slotH + 80;
-      for (let l = lineStartY; l < height - 120; l += 50) {
+      const lineStartY = topHeaderHeight + slotH + 60;
+      for (let l = lineStartY; l < height - bottomFooterHeight - 20; l += 45) {
         ctx.beginPath();
         ctx.moveTo(padding, l);
         ctx.lineTo(width - padding, l);
@@ -535,55 +637,27 @@ export default function PhotoBoothPage() {
       }
       ctx.restore();
     } else if (selectedLayout === "film_roll") {
-      // Dark film roll background
+      // Film reel container
+      const slotW = width - padding * 2 - 80;
+      const slotH = Math.floor(slotW * (3 / 4));
+      const filmH = (3 * slotH) + (2 * gap) + 40;
+
       ctx.save();
       ctx.filter = "none";
       ctx.fillStyle = "#1A1410";
-      ctx.fillRect(padding - 20, topOffset - 20, width - (padding - 20) * 2, availableHeight + 40);
+      ctx.fillRect(padding - 20, topHeaderHeight - 20, width - (padding - 20) * 2, filmH);
 
       // Sprocket holes
       ctx.fillStyle = "#FAF5EB";
-      for (let yH = topOffset; yH < topOffset + availableHeight; yH += 60) {
-        ctx.fillRect(padding - 10, yH, 16, 26);
-        ctx.fillRect(width - padding - 6, yH, 16, 26);
+      for (let yH = topHeaderHeight - 10; yH < topHeaderHeight + filmH - 20; yH += 50) {
+        ctx.fillRect(padding - 12, yH, 16, 24);
+        ctx.fillRect(width - padding - 4, yH, 16, 24);
       }
       ctx.restore();
 
-      const slotHeight = (availableHeight - (count - 1) * 30) / count;
-      const slotWidth = width - padding * 2 - 80;
-
-      loadedImages.forEach((img, idx) => {
-        const y = topOffset + idx * (slotHeight + 30);
-        ctx.drawImage(img, padding + 40, y, slotWidth, slotHeight);
-      });
-    } else if (selectedLayout === "anniversary_card") {
-      // 1 main hero photo + 2 side photos
-      const mainW = (width - padding * 2) * 0.58;
-      const mainH = availableHeight;
-      const sideW = (width - padding * 2) * 0.38;
-      const sideH = (availableHeight - 30) / 2;
-
-      if (loadedImages[0]) {
-        ctx.save();
-        ctx.filter = "none";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(padding - 8, topOffset - 8, mainW + 16, mainH + 16);
-        ctx.restore();
-
-        ctx.drawImage(loadedImages[0], padding, topOffset, mainW, mainH);
-      }
-
-      loadedImages.slice(1, 3).forEach((img, idx) => {
-        const y = topOffset + idx * (sideH + 30);
-        const x = padding + mainW + 30;
-
-        ctx.save();
-        ctx.filter = "none";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(x - 8, y - 8, sideW + 16, sideH + 16);
-        ctx.restore();
-
-        ctx.drawImage(img, x, y, sideW, sideH);
+      loadedImages.slice(0, 3).forEach((img, idx) => {
+        const y = topHeaderHeight + idx * (slotH + gap);
+        drawImageCover(ctx, img, padding + 40, y, slotW, slotH);
       });
     }
 
@@ -594,10 +668,10 @@ export default function PhotoBoothPage() {
       ctx.fillStyle = fStyle.text;
       ctx.font = "italic 38px EB Garamond, serif";
       ctx.textAlign = "center";
-      ctx.fillText(`“${captionText}”`, width / 2, height - 60);
+      ctx.fillText(`“${captionText}”`, width / 2, height - 50);
     }
 
-    // Draw Stickers on top of canvas
+    // Draw Stickers
     placedStickers.forEach((st) => {
       ctx.save();
       const posX = (st.x / 100) * width;
@@ -607,7 +681,7 @@ export default function PhotoBoothPage() {
       ctx.rotate((st.rotation * Math.PI) / 180);
       ctx.scale(st.scale, st.scale);
 
-      ctx.font = "52px serif";
+      ctx.font = "56px serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(st.icon, 0, 0);
@@ -616,9 +690,7 @@ export default function PhotoBoothPage() {
     });
 
     return canvas;
-  }, [frameColor, paperTexture, selectedLayout, currentLayoutConfig, capturedPhotos, showDateStamp, showTimeStamp, locationText, captionText, placedStickers, currentFilterConfig, loadImageAsync]);
-
-  const [isExporting, setIsExporting] = useState(false);
+  }, [frameColor, selectedLayout, currentLayoutConfig, capturedPhotos, showDateStamp, showTimeStamp, locationText, captionText, placedStickers, currentFilterConfig, loadImageAsync, capturePhotoFrame]);
 
   // ── Download Handlers ────────────────────────────────────────────────────
   const downloadPNG = async () => {
@@ -714,11 +786,8 @@ export default function PhotoBoothPage() {
   const fStyle = FRAME_COLORS[frameColor] || FRAME_COLORS.cream;
   const pTexture = PAPER_TEXTURES[paperTexture] || PAPER_TEXTURES.plain;
 
-  // ════════════════════════════════════════════════════════════════════════
-  // RENDER
-  // ════════════════════════════════════════════════════════════════════════
   return (
-    <div className="relative min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="relative min-h-screen bg-[var(--bg)] text-[var(--text)] paper-grain">
       <Navigation />
 
       {/* Screen White Flash Animation */}
@@ -731,128 +800,90 @@ export default function PhotoBoothPage() {
         )}
       </AnimatePresence>
 
-      <main className="max-w-4xl mx-auto px-4 py-16 pb-36">
+      <main className="max-w-4xl mx-auto px-4 py-12 pb-36">
 
         {/* ─── HEADER ─── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-2 mb-8"
         >
-          <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">Pairfect Keepsakes</p>
-          <h1 className="font-heading font-bold text-4xl text-[var(--text)]">Photo Booth</h1>
-          <p className="font-quote italic text-sm text-[var(--text-soft)]">
-            Take your own 4-frame photo strip, customize it, and save to memories.
+          <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--paper-mid)] border border-[var(--border)] text-[var(--burgundy)] text-[10px] font-mono font-bold uppercase tracking-wider">
+            <Sparkles className="w-3 h-3" />
+            <span>Always Free</span>
+          </div>
+          <h1 className="font-display italic font-bold text-4xl text-[var(--text)]">Online Photobooth</h1>
+          <p className="font-sans text-xs sm:text-sm text-[var(--text-soft)] max-w-md mx-auto leading-relaxed">
+            A realtime 4-frame photo booth for two — snap, customize vintage frames & stickers, and export high-res strips.
           </p>
         </motion.div>
 
         {/* ─── STEPPER BAR ─── */}
         <div className="flex items-center justify-center mb-10">
-          <div className="flex items-center gap-2 sm:gap-4 p-1.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] shadow-xs">
+          <div className="flex items-center gap-2 sm:gap-4 p-1.5 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs">
             {[
-              { num: 1, label: "Choose Layout" },
+              { num: 1, label: "Layout" },
               { num: 2, label: "Capture" },
               { num: 3, label: "Decorate" },
-              { num: 4, label: "Save" },
-            ].map((s, idx) => {
-              const isActive = step === s.num;
-              const isDone = step > s.num;
+              { num: 4, label: "Export" },
+            ].map((s) => {
+              const isCurrent = step === s.num;
+              const isCompleted = step > s.num;
               return (
-                <React.Fragment key={s.num}>
-                  <button
-                    onClick={() => { if (step > s.num || (s.num === 2 && capturedPhotos.length > 0)) setStep(s.num); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                      isActive
-                        ? "bg-[var(--burgundy)] text-white font-bold shadow-xs"
-                        : isDone
-                        ? "bg-[var(--rose)]/20 text-[var(--burgundy)] font-medium cursor-pointer"
-                        : "text-[var(--text-soft)] opacity-60 cursor-not-allowed"
-                    }`}
-                  >
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] border border-current">
-                      {isDone ? "✓" : s.num}
-                    </span>
-                    <span className="font-mono hidden sm:inline">{s.label}</span>
-                  </button>
-                  {idx < 3 && <div className="w-4 sm:w-8 h-0.5 bg-[var(--border)]" />}
-                </React.Fragment>
+                <button
+                  key={s.num}
+                  onClick={() => { if (step > s.num || (s.num === 2 && capturedPhotos.length > 0)) setStep(s.num as any); }}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-mono transition-all cursor-pointer ${
+                    isCurrent
+                      ? "bg-[var(--burgundy)] text-white font-bold shadow-xs"
+                      : isCompleted
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium"
+                      : "text-[var(--text-soft)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-[10px]">
+                    {isCompleted ? "✓" : s.num}
+                  </span>
+                  <span>{s.label}</span>
+                </button>
               );
             })}
           </div>
         </div>
 
         {/* ════════════════════════════════════════════════════════════════════
-            STEP 1: CHOOSE LAYOUT
+            STEP 1: SELECT LAYOUT
             ════════════════════════════════════════════════════════════════════ */}
         {step === 1 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <div className="text-center space-y-1">
-              <h2 className="font-heading font-bold text-2xl text-[var(--text)]">Select Your Photo Strip Layout</h2>
-              <p className="font-quote italic text-xs text-[var(--text-soft)]">Choose the arrangement for your keepsake</p>
+              <h2 className="text-xl font-display italic font-bold text-[var(--text)]">Choose Your Strip Format</h2>
+              <p className="text-xs text-[var(--text-soft)] font-mono uppercase tracking-wider">Select the style of your keepsake</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {LAYOUTS.map((layout) => {
                 const isSelected = selectedLayout === layout.key;
                 return (
                   <motion.button
                     key={layout.key}
-                    whileHover={{ y: -4, scale: 1.02 }}
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedLayout(layout.key)}
-                    className={`p-5 rounded-[var(--radius-card)] border flex flex-col justify-between text-left transition-all cursor-pointer shadow-xs ${
+                    className={`p-5 rounded-2xl border text-left flex flex-col justify-between space-y-4 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[var(--paper-warm)] border-2 border-[var(--burgundy)] shadow-md"
-                        : "bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--rose)]"
+                        ? "bg-[var(--paper-mid)] border-[var(--burgundy)] ring-2 ring-[var(--burgundy)]/20 shadow-md"
+                        : "bg-[var(--paper-warm)] border-[var(--border)] hover:border-[var(--burgundy)]/40 shadow-xs"
                     }`}
                   >
-                    <div className="space-y-2 mb-4">
-                      {/* Layout Icon Placeholder Box */}
-                      <div className="w-full h-32 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center p-3">
-                        {layout.key === "strip_3" && (
-                          <div className="flex flex-col gap-1.5 w-12">
-                            {[1, 2, 3].map(i => <div key={i} className="h-6 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />)}
-                          </div>
-                        )}
-                        {layout.key === "strip_4" && (
-                          <div className="flex flex-col gap-1 w-12">
-                            {[1, 2, 3, 4].map(i => <div key={i} className="h-5 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />)}
-                          </div>
-                        )}
-                        {layout.key === "journal" && (
-                          <div className="grid grid-cols-2 gap-2 w-28">
-                            <div className="h-16 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />
-                            <div className="h-16 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />
-                          </div>
-                        )}
-                        {layout.key === "polaroid_grid" && (
-                          <div className="grid grid-cols-2 gap-1.5 w-20">
-                            {[1, 2, 3, 4].map(i => <div key={i} className="h-9 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />)}
-                          </div>
-                        )}
-                        {layout.key === "film_roll" && (
-                          <div className="flex items-center gap-1.5 w-28">
-                            {[1, 2, 3].map(i => <div key={i} className="w-8 h-14 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />)}
-                          </div>
-                        )}
-                        {layout.key === "anniversary_card" && (
-                          <div className="flex items-center gap-1.5 w-28">
-                            <div className="w-14 h-16 rounded bg-[var(--burgundy)]/20 border border-[var(--burgundy)]/30" />
-                            <div className="flex flex-col gap-1">
-                              <div className="w-8 h-7 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />
-                              <div className="w-8 h-7 rounded bg-[var(--rose)]/30 border border-[var(--burgundy)]/20" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-heading font-bold text-base text-[var(--text)]">{layout.label}</h3>
+                        <h3 className="font-sans font-bold text-sm text-[var(--text)]">{layout.label}</h3>
                         {isSelected && <span className="text-xs text-[var(--burgundy)] font-bold">Selected ✓</span>}
                       </div>
                       <p className="text-xs text-[var(--text-soft)] font-sans">{layout.description}</p>
                     </div>
 
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)]">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--burgundy)]">
                       {layout.count} Photo Snaps
                     </span>
                   </motion.button>
@@ -863,9 +894,9 @@ export default function PhotoBoothPage() {
             <div className="flex justify-end pt-4">
               <button
                 onClick={() => setStep(2)}
-                className="btn-primary py-3 px-8 text-sm inline-flex items-center gap-2"
+                className="btn-journal py-3 px-8 text-xs font-mono font-bold inline-flex items-center gap-2 cursor-pointer shadow-md"
               >
-                Continue to Camera →
+                <span>Continue to Camera ▷</span>
               </button>
             </div>
           </motion.div>
@@ -879,18 +910,18 @@ export default function PhotoBoothPage() {
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="flex items-center gap-1 text-xs font-sans text-[var(--text-soft)] hover:text-[var(--text)]"
+                className="flex items-center gap-1 text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" /> Change Layout
               </button>
 
-              <span className="text-[10px] font-mono text-[var(--burgundy)] font-bold">
+              <span className="text-xs font-mono text-[var(--burgundy)] font-bold">
                 Photo {capturedPhotos.length} of {currentLayoutConfig.count}
               </span>
             </div>
 
             {/* Main Camera Viewfinder Card */}
-            <div className="p-6 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-md space-y-6">
+            <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-md space-y-6">
 
               {/* Viewfinder Video Stream Container */}
               <div className="relative mx-auto max-w-md aspect-4/3 rounded-2xl bg-black overflow-hidden border-2 border-[var(--border)] shadow-inner flex items-center justify-center">
@@ -900,6 +931,7 @@ export default function PhotoBoothPage() {
                     autoPlay
                     playsInline
                     muted
+                    onLoadedMetadata={() => setVideoIsReady(true)}
                     style={{
                       transform: isMirrored ? "scaleX(-1)" : "none",
                       filter: currentFilterConfig.css,
@@ -909,13 +941,13 @@ export default function PhotoBoothPage() {
                 ) : (
                   <div className="p-6 text-center space-y-3">
                     <Camera className="w-10 h-10 text-[var(--rose)] mx-auto opacity-70" />
-                    <p className="font-heading text-lg text-[var(--bg)]">Camera Unavailable</p>
+                    <p className="font-display italic text-lg text-white">Camera Unavailable</p>
                     <p className="text-xs text-[var(--text-soft)] font-sans">
-                      {cameraError || "Your browser camera stream couldn't be loaded."}
+                      {cameraError || "Your camera stream is loading or permission is needed."}
                     </p>
                     <button
                       onClick={() => startCamera()}
-                      className="btn-primary py-2 px-5 text-xs mx-auto inline-flex items-center gap-1.5"
+                      className="btn-journal py-2 px-5 text-xs mx-auto inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <Camera className="w-3.5 h-3.5" /> Retry Camera Stream
                     </button>
@@ -933,7 +965,7 @@ export default function PhotoBoothPage() {
                       transition={{ type: "spring", stiffness: 400, damping: 25 }}
                       className="absolute inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-30"
                     >
-                      <span className="font-heading font-bold text-7xl text-white drop-shadow-md">
+                      <span className="font-display font-bold text-7xl text-white drop-shadow-md">
                         {countdownNumber === 0 ? "♡" : countdownNumber}
                       </span>
                     </motion.div>
@@ -953,10 +985,10 @@ export default function PhotoBoothPage() {
                       <button
                         key={f.key}
                         onClick={() => setSelectedFilter(f.key)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all cursor-pointer shrink-0 ${
                           isSel
                             ? "bg-[var(--burgundy)] text-white font-bold shadow-xs"
-                            : "bg-[var(--bg-secondary)] text-[var(--text-soft)] hover:text-[var(--text)]"
+                            : "bg-[var(--paper-mid)] text-[var(--text-soft)] hover:text-[var(--text)] border border-[var(--border)]"
                         }`}
                       >
                         {f.label}
@@ -966,29 +998,35 @@ export default function PhotoBoothPage() {
                 </div>
               </div>
 
-              {/* Camera Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <button
-                  onClick={() => setIsMirrored(!isMirrored)}
-                  className={`btn-secondary py-2 px-3 text-xs ${isMirrored ? "border-[var(--burgundy)] text-[var(--burgundy)]" : ""}`}
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Mirror
-                </button>
+              {/* Viewfinder Controls (Mirror, Timer, Flash, Retake) */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[var(--border)]">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsMirrored(!isMirrored)}
+                    className={`p-2 rounded-xl text-xs font-mono flex items-center gap-1 border transition-colors cursor-pointer ${
+                      isMirrored ? "bg-[var(--paper-mid)] border-[var(--burgundy)] text-[var(--burgundy)] font-bold" : "border-[var(--border)] text-[var(--text-soft)]"
+                    }`}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Mirror: {isMirrored ? "ON" : "OFF"}
+                  </button>
 
-                <button
-                  onClick={() => setFlashEnabled(!flashEnabled)}
-                  className={`btn-secondary py-2 px-3 text-xs ${flashEnabled ? "border-[var(--burgundy)] text-[var(--burgundy)]" : ""}`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" /> Flash: {flashEnabled ? "ON" : "OFF"}
-                </button>
+                  <button
+                    onClick={() => setFlashEnabled(!flashEnabled)}
+                    className={`p-2 rounded-xl text-xs font-mono flex items-center gap-1 border transition-colors cursor-pointer ${
+                      flashEnabled ? "bg-[var(--paper-mid)] border-[var(--burgundy)] text-[var(--burgundy)] font-bold" : "border-[var(--border)] text-[var(--text-soft)]"
+                    }`}
+                  >
+                    ⚡ Flash: {flashEnabled ? "ON" : "OFF"}
+                  </button>
+                </div>
 
-                {/* Countdown Timer Selector */}
-                <div className="flex items-center gap-1 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-1">
-                  {[3, 5, 10].map(s => (
+                {/* Countdown Duration Toggle */}
+                <div className="flex items-center gap-1 bg-[var(--paper-mid)] p-1 rounded-xl border border-[var(--border)]">
+                  {[3, 5, 10].map((s) => (
                     <button
                       key={s}
                       onClick={() => setCountdownSec(s)}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-mono ${countdownSec === s ? "bg-[var(--burgundy)] text-white font-bold" : "text-[var(--text-soft)]"}`}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-mono cursor-pointer transition-colors ${countdownSec === s ? "bg-[var(--burgundy)] text-white font-bold" : "text-[var(--text-soft)]"}`}
                     >
                       {s}s
                     </button>
@@ -998,9 +1036,9 @@ export default function PhotoBoothPage() {
                 {capturedPhotos.length > 0 && (
                   <button
                     onClick={() => setCapturedPhotos([])}
-                    className="btn-secondary py-2 px-3 text-xs text-red-500 hover:text-red-700"
+                    className="p-2 rounded-xl border border-red-200 text-xs font-mono text-red-600 hover:bg-red-50 flex items-center gap-1 cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" /> Retake
+                    <Trash2 className="w-3.5 h-3.5" /> Clear Snaps
                   </button>
                 )}
               </div>
@@ -1010,12 +1048,12 @@ export default function PhotoBoothPage() {
                 <button
                   disabled={isCapturing}
                   onClick={triggerCaptureSequence}
-                  className="btn-primary py-3.5 px-10 text-base rounded-full shadow-lg"
+                  className="btn-journal py-4 px-10 text-sm font-mono font-bold rounded-full shadow-lg cursor-pointer hover:shadow-xl transition-all"
                 >
                   {isCapturing ? (
-                    <><Loader2 className="w-5 h-5 animate-spin" /> Capturing…</>
+                    <><Loader2 className="w-5 h-5 animate-spin" /> Capturing Frame…</>
                   ) : (
-                    <><Camera className="w-5 h-5" /> Start Photo Snap</>
+                    <><Camera className="w-5 h-5" /> Start Photo Snap ({currentLayoutConfig.count} Shots)</>
                   )}
                 </button>
               </div>
@@ -1024,31 +1062,29 @@ export default function PhotoBoothPage() {
 
             {/* Captured Photos Thumbnail Strip Preview */}
             {capturedPhotos.length > 0 && (
-              <div className="p-4 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] space-y-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+              <div className="p-5 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-4">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--text-soft)]">
                   Captured Snaps ({capturedPhotos.length} / {currentLayoutConfig.count})
                 </p>
                 <div className="flex items-center gap-3 overflow-x-auto pb-1">
                   {capturedPhotos.map((imgSrc, idx) => (
-                    <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[var(--border)] flex-shrink-0 shadow-xs">
+                    <div key={idx} className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-[var(--border)] flex-shrink-0 shadow-xs">
                       <img src={imgSrc} alt="" style={{ filter: currentFilterConfig.css }} className="w-full h-full object-cover" />
-                      <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-bold flex items-center justify-center">
+                      <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-[var(--burgundy)] text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
                         {idx + 1}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                {capturedPhotos.length >= currentLayoutConfig.count && (
-                  <div className="text-center pt-2">
-                    <button
-                      onClick={() => setStep(3)}
-                      className="btn-primary py-2.5 px-6 text-sm"
-                    >
-                      Proceed to Decorate →
-                    </button>
-                  </div>
-                )}
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => setStep(3)}
+                    className="btn-journal py-3 px-8 text-xs font-mono font-bold cursor-pointer shadow-md"
+                  >
+                    Proceed to Decorate ▷
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1056,22 +1092,22 @@ export default function PhotoBoothPage() {
         )}
 
         {/* ════════════════════════════════════════════════════════════════════
-            STEP 3: DECORATE (TWO-COLUMN EDITOR)
+            STEP 3: DECORATE (LIVE STRIP PREVIEW & CUSTOMIZER)
             ════════════════════════════════════════════════════════════════════ */}
         {step === 3 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep(2)}
-                className="flex items-center gap-1 text-xs font-sans text-[var(--text-soft)] hover:text-[var(--text)]"
+                className="flex items-center gap-1 text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Camera
               </button>
               <button
                 onClick={() => setStep(4)}
-                className="btn-primary py-2 px-6 text-xs"
+                className="btn-journal py-2 px-6 text-xs font-mono font-bold cursor-pointer shadow-sm"
               >
-                Done Decorating →
+                Done Decorating ▷
               </button>
             </div>
 
@@ -1088,11 +1124,11 @@ export default function PhotoBoothPage() {
                     color: fStyle.text,
                     ...pTexture.style,
                   }}
-                  className="relative w-full max-w-sm p-6 rounded-[var(--radius-card)] border-2 shadow-xl space-y-4 select-none overflow-hidden transition-all duration-300"
+                  className="relative w-full max-w-sm p-6 rounded-3xl border-4 shadow-xl space-y-4 select-none overflow-hidden transition-all duration-300"
                 >
                   {/* Photo Strip Header Title */}
                   <div className="text-center space-y-1">
-                    <p className="font-heading font-bold text-2xl tracking-tight">Pairfect Photo Booth ♡</p>
+                    <p className="font-display italic font-bold text-2xl tracking-tight">Pairfect Photo Booth ♡</p>
 
                     {(showDateStamp || showTimeStamp || locationText) && (
                       <p className="font-handwriting text-xs text-[var(--ink-mid)]">
@@ -1105,20 +1141,64 @@ export default function PhotoBoothPage() {
                     )}
                   </div>
 
-                  {/* Captured Photos Grid/Strip */}
-                  <div className="space-y-3">
-                    {capturedPhotos.map((src, idx) => (
-                      <div key={idx} className="relative rounded-xl overflow-hidden bg-white p-1.5 shadow-xs border border-black/10">
+                  {/* Captured Photos Rendering Matching Layout Geometry */}
+                  {selectedLayout === "anniversary_card" ? (
+                    <div className="grid grid-cols-12 gap-2.5">
+                      <div className="col-span-7 rounded-xl overflow-hidden bg-white p-1.5 shadow-xs border border-black/10">
                         <img
-                          src={src}
+                          src={capturedPhotos[0] || capturePhotoFrame()}
                           alt=""
-                          crossOrigin="anonymous"
                           style={{ filter: currentFilterConfig.css }}
-                          className="w-full aspect-4/3 object-cover rounded-lg"
+                          className="w-full h-full aspect-3/4 object-cover rounded-lg"
                         />
                       </div>
-                    ))}
-                  </div>
+                      <div className="col-span-5 flex flex-col gap-2.5">
+                        <div className="rounded-xl overflow-hidden bg-white p-1.5 shadow-xs border border-black/10">
+                          <img
+                            src={capturedPhotos[1] || capturedPhotos[0] || capturePhotoFrame()}
+                            alt=""
+                            style={{ filter: currentFilterConfig.css }}
+                            className="w-full aspect-4/3 object-cover rounded-lg"
+                          />
+                        </div>
+                        <div className="rounded-xl overflow-hidden bg-white p-1.5 shadow-xs border border-black/10">
+                          <img
+                            src={capturedPhotos[2] || capturedPhotos[0] || capturePhotoFrame()}
+                            alt=""
+                            style={{ filter: currentFilterConfig.css }}
+                            className="w-full aspect-4/3 object-cover rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : selectedLayout === "polaroid_grid" ? (
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {(capturedPhotos.length >= 4 ? capturedPhotos.slice(0, 4) : [0, 1, 2, 3].map(i => capturedPhotos[i] || capturedPhotos[0] || capturePhotoFrame())).map((src, idx) => (
+                        <div key={idx} className="rounded-xl overflow-hidden bg-white p-1.5 shadow-xs border border-black/10">
+                          <img
+                            src={src}
+                            alt=""
+                            style={{ filter: currentFilterConfig.css }}
+                            className="w-full aspect-square object-cover rounded-lg"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(capturedPhotos.length >= currentLayoutConfig.count ? capturedPhotos.slice(0, currentLayoutConfig.count) : Array.from({ length: currentLayoutConfig.count }).map((_, i) => capturedPhotos[i] || capturedPhotos[0] || capturePhotoFrame())).map((src, idx) => (
+                        <div key={idx} className="relative rounded-xl overflow-hidden bg-white p-1.5 shadow-xs border border-black/10">
+                          <img
+                            src={src}
+                            alt=""
+                            crossOrigin="anonymous"
+                            style={{ filter: currentFilterConfig.css }}
+                            className="w-full aspect-4/3 object-cover rounded-lg"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Caption Footer */}
                   {captionText && (
@@ -1150,11 +1230,11 @@ export default function PhotoBoothPage() {
               </div>
 
               {/* ── RIGHT COLUMN: CUSTOMIZATION CONTROLS PANEL ── */}
-              <div className="md:col-span-6 space-y-6 p-6 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-sm">
+              <div className="md:col-span-6 space-y-6 p-6 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-sm">
 
                 {/* 1. Frame Color */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block">Frame Color</label>
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--text-soft)] block">Frame Color</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(Object.keys(FRAME_COLORS) as FrameColor[]).map((colKey) => {
                       const col = FRAME_COLORS[colKey];
@@ -1178,118 +1258,96 @@ export default function PhotoBoothPage() {
 
                 {/* 2. Paper Texture */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block">Paper Texture</label>
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--text-soft)] block">Paper Texture</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(Object.keys(PAPER_TEXTURES) as PaperTexture[]).map((texKey) => {
+                      const tex = PAPER_TEXTURES[texKey];
                       const isSel = paperTexture === texKey;
                       return (
                         <button
                           key={texKey}
                           onClick={() => setPaperTexture(texKey)}
                           className={`p-2 rounded-xl border text-xs font-mono transition-all cursor-pointer ${
-                            isSel ? "bg-[var(--burgundy)] text-white font-bold" : "bg-[var(--bg-secondary)] text-[var(--text-soft)] border-[var(--border)]"
+                            isSel ? "border-[var(--burgundy)] bg-[var(--paper-mid)] font-bold text-[var(--burgundy)]" : "border-[var(--border)] text-[var(--text-soft)] bg-[var(--bg)]"
                           }`}
                         >
-                          {PAPER_TEXTURES[texKey].label}
+                          {tex.label}
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* 3. Stamps & Text Inputs */}
-                <div className="space-y-3 pt-2 border-t border-[var(--border)]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-sans text-[var(--text)]">Date Stamp</span>
-                    <button
-                      onClick={() => setShowDateStamp(!showDateStamp)}
-                      className={`w-9 h-5 rounded-full p-0.5 transition-colors ${showDateStamp ? "bg-[var(--burgundy)]" : "bg-[var(--border)]"}`}
-                    >
-                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showDateStamp ? "translate-x-4" : ""}`} />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-sans text-[var(--text)]">Time Stamp</span>
-                    <button
-                      onClick={() => setShowTimeStamp(!showTimeStamp)}
-                      className={`w-9 h-5 rounded-full p-0.5 transition-colors ${showTimeStamp ? "bg-[var(--burgundy)]" : "bg-[var(--border)]"}`}
-                    >
-                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showTimeStamp ? "translate-x-4" : ""}`} />
-                    </button>
-                  </div>
-
-                  <input
-                    type="text"
-                    placeholder="Location (e.g. Paris, Living Room)"
-                    value={locationText}
-                    onChange={(e) => setLocationText(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)]"
-                  />
-
-                  <input
-                    type="text"
-                    placeholder="Caption (e.g. Silly faces & sweet smiles ♡)"
-                    value={captionText}
-                    onChange={(e) => setCaptionText(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs font-sans text-[var(--text)]"
-                  />
-                </div>
-
-                {/* 4. Stickers Palette */}
-                <div className="space-y-2 pt-2 border-t border-[var(--border)]">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block">
-                    Curated Stickers (Tap to place)
-                  </label>
-                  <div className="grid grid-cols-5 gap-2">
+                {/* 3. Decal Stickers Palette */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--text-soft)] block">Add Stickers (Drag to place)</label>
+                  <div className="flex flex-wrap gap-2 p-3 rounded-2xl bg-[var(--bg)] border border-[var(--border)]">
                     {STICKER_PALETTE.map((st) => (
                       <button
-                        key={st.type}
-                        onClick={() => addSticker(st.type, st.icon, st.label)}
-                        className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col items-center hover:scale-105 transition-transform cursor-pointer"
+                        key={st.id}
+                        onClick={() => addSticker(st.id, st.icon)}
+                        className="text-2xl p-2 rounded-xl hover:bg-[var(--paper-mid)] active:scale-90 transition-transform cursor-pointer"
                         title={st.label}
                       >
-                        <span className="text-xl">{st.icon}</span>
-                        <span className="text-[8px] font-mono text-[var(--text-soft)] truncate max-w-full">{st.label}</span>
+                        {st.icon}
                       </button>
                     ))}
                   </div>
 
-                  {/* Active Sticker Control Toolbar */}
-                  {activeStickerId && (
-                    <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-between text-xs">
-                      <span className="text-[10px] font-mono text-[var(--burgundy)] font-bold">Sticker Selected</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            const current = placedStickers.find(s => s.id === activeStickerId);
-                            if (current) updateSticker(activeStickerId, { rotation: current.rotation + 15 });
-                          }}
-                          className="p-1 rounded bg-[var(--bg-secondary)] text-[var(--text)]"
-                          title="Rotate"
-                        >
-                          <RotateCw className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const current = placedStickers.find(s => s.id === activeStickerId);
-                            if (current) updateSticker(activeStickerId, { scale: Math.min(2, current.scale + 0.2) });
-                          }}
-                          className="p-1 rounded bg-[var(--bg-secondary)] text-[var(--text)]"
-                          title="Scale Up"
-                        >
-                          <ZoomIn className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => removeSticker(activeStickerId)}
-                          className="p-1 rounded bg-red-100 text-red-600"
-                          title="Delete Sticker"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                  {placedStickers.length > 0 && (
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[10px] font-mono text-[var(--text-soft)]">{placedStickers.length} stickers placed</span>
+                      <button
+                        onClick={() => setPlacedStickers([])}
+                        className="text-[10px] font-mono text-red-500 hover:underline cursor-pointer"
+                      >
+                        Remove All Stickers
+                      </button>
                     </div>
                   )}
+                </div>
+
+                {/* 4. Timestamp & Location Toggles */}
+                <div className="space-y-3 pt-2 border-t border-[var(--border)]">
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--text-soft)] block">Stamp Details</label>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => setShowDateStamp(!showDateStamp)}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono cursor-pointer transition-colors ${
+                        showDateStamp ? "bg-[var(--paper-mid)] border-[var(--burgundy)] text-[var(--burgundy)] font-bold" : "border-[var(--border)] text-[var(--text-soft)]"
+                      }`}
+                    >
+                      📅 Date: {showDateStamp ? "ON" : "OFF"}
+                    </button>
+
+                    <button
+                      onClick={() => setShowTimeStamp(!showTimeStamp)}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono cursor-pointer transition-colors ${
+                        showTimeStamp ? "bg-[var(--paper-mid)] border-[var(--burgundy)] text-[var(--burgundy)] font-bold" : "border-[var(--border)] text-[var(--text-soft)]"
+                      }`}
+                    >
+                      ⏰ Time: {showTimeStamp ? "ON" : "OFF"}
+                    </button>
+                  </div>
+
+                  {/* Location & Caption Inputs */}
+                  <div className="space-y-2 pt-2">
+                    <input
+                      type="text"
+                      placeholder="Add location (e.g. Paris, Living Room, Beach)"
+                      value={locationText}
+                      onChange={(e) => setLocationText(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--bg)] outline-none text-[var(--text)] focus:border-[var(--burgundy)]"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Add romantic caption or quote..."
+                      value={captionText}
+                      onChange={(e) => setCaptionText(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--bg)] outline-none text-[var(--text)] focus:border-[var(--burgundy)]"
+                    />
+                  </div>
                 </div>
 
               </div>
@@ -1299,53 +1357,74 @@ export default function PhotoBoothPage() {
         )}
 
         {/* ════════════════════════════════════════════════════════════════════
-            STEP 4: SAVE & PRIVACY & SCRAPBOOK
+            STEP 4: EXPORT & SAVE KEEPSAKE
             ════════════════════════════════════════════════════════════════════ */}
         {step === 4 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-xl mx-auto">
-            <div className="text-center space-y-1">
-              <h2 className="font-heading font-bold text-3xl text-[var(--text)]">Your Photo Strip Keepsake</h2>
-              <p className="font-quote italic text-sm text-[var(--text-soft)]">Ready to download and keep in your memory collection ♡</p>
-            </div>
-
-            {/* Privacy Card */}
-            <div className="p-4 rounded-[var(--radius-card)] bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs space-y-2 text-center">
-              <p className="font-heading font-bold text-base text-[var(--burgundy)]">♡ A little reminder</p>
-              <p className="text-xs text-[var(--text-soft)] font-sans leading-relaxed">
-                Your photo strip is never uploaded to Pairfect. For your privacy, everything stays on your device. Once you leave this page, the strip can&apos;t be recovered. Be sure to download it first.
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-xs">
+                ✨
+              </div>
+              <h2 className="font-display italic font-bold text-3xl text-[var(--text)]">Your Photo Strip is Ready!</h2>
+              <p className="text-xs text-[var(--text-soft)] font-mono uppercase tracking-wider">
+                Download high-res memory or save to your shared scrapbook
               </p>
             </div>
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Export Actions Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
               <button
                 disabled={isExporting}
                 onClick={downloadPNG}
-                className="btn-primary py-3.5 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] hover:border-[var(--burgundy)] shadow-sm text-center space-y-2 cursor-pointer transition-all hover:scale-102"
               >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Download PNG
+                <Download className="w-6 h-6 text-[var(--burgundy)] mx-auto" />
+                <h3 className="font-sans font-bold text-sm text-[var(--text)]">Download PNG</h3>
+                <p className="text-[11px] text-[var(--text-soft)] font-mono">300 DPI high-res image</p>
               </button>
 
               <button
                 disabled={isExporting}
                 onClick={downloadPDF}
-                className="btn-secondary py-3.5 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] hover:border-[var(--burgundy)] shadow-sm text-center space-y-2 cursor-pointer transition-all hover:scale-102"
               >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} Download PDF
+                <FileText className="w-6 h-6 text-[var(--burgundy)] mx-auto" />
+                <h3 className="font-sans font-bold text-sm text-[var(--text)]">Print / PDF</h3>
+                <p className="text-[11px] text-[var(--text-soft)] font-mono">Ready to print strip</p>
               </button>
 
+              <button
+                disabled={savingScrapbook || !pair}
+                onClick={saveToScrapbook}
+                className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] hover:border-[var(--burgundy)] shadow-sm text-center space-y-2 cursor-pointer transition-all hover:scale-102"
+              >
+                <Heart className="w-6 h-6 text-[var(--burgundy)] mx-auto" />
+                <h3 className="font-sans font-bold text-sm text-[var(--text)]">Save to Scrapbook</h3>
+                <p className="text-[11px] text-[var(--text-soft)] font-mono">
+                  {pair ? "Add to shared memories" : "Connect partner to save"}
+                </p>
+              </button>
+            </div>
+
+            {savedSuccess && (
+              <div className="max-w-md mx-auto p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs text-center font-medium animate-fade-in flex items-center justify-center gap-2">
+                <Check className="w-4 h-4" />
+                <span>Saved successfully to your shared couple memories!</span>
+              </div>
+            )}
+
+            <div className="text-center pt-4">
               <button
                 onClick={() => {
                   setCapturedPhotos([]);
                   setPlacedStickers([]);
                   setStep(1);
                 }}
-                className="btn-secondary sm:col-span-2 py-3 text-xs inline-flex items-center justify-center gap-2"
+                className="btn-journal-ghost py-3 px-8 text-xs font-mono font-bold cursor-pointer"
               >
-                <RefreshCw className="w-4 h-4" /> Create Another Strip
+                Take Another Photo Strip ▷
               </button>
             </div>
-
           </motion.div>
         )}
 
