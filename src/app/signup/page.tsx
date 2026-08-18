@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Heart, Lock, Mail, User, AlertCircle, Check, KeyRound, Sparkles, ArrowRight, Loader2, Send } from "lucide-react";
 import { OtpInput } from "@/components/otp-input";
 import { isBetaModeEnabled, isValidBetaCode, isEmailWhitelisted } from "@/lib/beta";
+import { trackSignUp, trackWaitlistJoin } from "@/lib/analytics";
 
 function SignupFormContent() {
   const router = useRouter();
@@ -84,6 +85,7 @@ function SignupFormContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: waitlistEmail }),
       });
+      trackWaitlistJoin();
       setWaitlistSubmitted(true);
     } catch (err) {
       setWaitlistSubmitted(true);
@@ -122,6 +124,7 @@ function SignupFormContent() {
       if (signupError) {
         throw signupError;
       } else {
+        trackSignUp("email", true);
         if (data.user && !data.session) {
           // Email confirmation is enabled
           setVerificationEmail(cleanEmail);

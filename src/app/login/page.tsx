@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Lock, Mail, AlertCircle, Check, Loader2 } from "lucide-react";
 import { OtpInput } from "@/components/otp-input";
+import { trackLogin } from "@/lib/analytics";
 
 function LoginFormContent() {
   const router = useRouter();
@@ -72,6 +73,7 @@ function LoginFormContent() {
         }
         setLoading(false);
       } else {
+        trackLogin("email");
         router.push("/dashboard");
       }
     } catch (err: any) {
@@ -83,6 +85,7 @@ function LoginFormContent() {
   const signInWithGoogle = async () => {
     setError(null);
     setLoading(true);
+    trackLogin("google");
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
