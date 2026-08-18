@@ -4,6 +4,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import AmbientHearts from "@/components/ambient-hearts";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const inter = Inter({
@@ -70,6 +71,7 @@ export default function RootLayout({
             <NotificationProvider>{children}</NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
