@@ -4,7 +4,8 @@ import React, { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Heart, Lock, Mail, User, AlertCircle, Check, KeyRound, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Heart, Lock, Mail, User, AlertCircle, Check, KeyRound, Sparkles, ArrowRight, Loader2, Send } from "lucide-react";
 import { OtpInput } from "@/components/otp-input";
 import { isBetaModeEnabled, isValidBetaCode, isEmailWhitelisted } from "@/lib/beta";
 
@@ -67,7 +68,7 @@ function SignupFormContent() {
     if (isValidBetaCode(betaCodeInput)) {
       setIsBetaUnlocked(true);
     } else {
-      setBetaError("Invalid invite code. Please check for typos or join our waitlist below.");
+      setBetaError("Invalid invite code. Check your code or join our early access waitlist below.");
     }
   };
 
@@ -212,44 +213,58 @@ function SignupFormContent() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden bg-[var(--bg)] text-[var(--text)] paper-grain">
+    <div className="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden bg-[var(--bg)] text-[var(--text)] paper-grain selection:bg-[var(--burgundy)] selection:text-white">
       
+      {/* ── AMBIENT WARMTH GLOW ── */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 animate-fade-in opacity-40"
+        style={{
+          background: "radial-gradient(50rem 30rem at 50% 10%, var(--rose) 0%, transparent 60%)",
+        }}
+      />
+
       {/* ── HEADER ── */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 space-y-1">
-        <Link href="/" className="inline-flex items-center gap-1.5 justify-center mb-2">
-          <span className="font-display italic text-3xl font-black text-[var(--text)]">pairfect</span>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 space-y-2 px-4">
+        <Link href="/" className="inline-flex items-center gap-2 justify-center group transition-transform hover:scale-105">
+          <Image src="/logo-book.png" alt="Pairfect" width={32} height={32} className="rounded-lg shadow-xs" priority />
+          <span className="font-display italic text-3xl font-black tracking-tight text-[var(--text)]">pairfect</span>
           <span className="w-2.5 h-2.5 rounded-full bg-[#FF8DA1] inline-block shadow-xs" />
         </Link>
-        <h2 className="font-display italic text-2xl sm:text-3xl font-bold text-[var(--text)]">
+        <h1 className="font-display italic text-3xl sm:text-4xl font-bold text-[var(--text)] leading-tight">
           {betaEnabled && !isBetaUnlocked ? "Private Beta Access" : "Create Your Space"}
-        </h2>
-        <p className="text-xs text-[var(--text-soft)] font-mono max-w-xs mx-auto uppercase tracking-wider">
-          {betaEnabled && !isBetaUnlocked ? "Invitation Only Testing" : "Start your private journal for two"}
+        </h1>
+        <p className="text-xs text-[var(--text-soft)] font-mono uppercase tracking-[0.2em]">
+          {betaEnabled && !isBetaUnlocked ? "INVITATION ONLY TESTING" : "START YOUR PRIVATE JOURNAL FOR TWO"}
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
-        <div className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-white p-7 sm:p-9 shadow-md paper-grain">
-          {/* Top accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-[var(--burgundy)]" />
+      {/* ── CARD CONTAINER ── */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
+        <div className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--paper-warm)] p-7 sm:p-9 shadow-xl paper-grain backdrop-blur-md">
+          {/* Top Rose-Burgundy Accent Bar */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[var(--rose)] via-[var(--burgundy)] to-[var(--rose)]" />
 
           {/* ══════════════════════════════════════════════════════════
               CASE 1: BETA GATE LOCKED SCREEN (Requires Beta Code)
               ══════════════════════════════════════════════════════════ */}
           {betaEnabled && !isBetaUnlocked ? (
             <div className="space-y-6 animate-fade-in">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center mx-auto text-xl shadow-xs">
-                🔒
-              </div>
-
-              <div className="text-center space-y-1.5">
-                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-600 text-[9px] font-mono font-bold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Early Access</span>
+              {/* Wax Seal Medallion */}
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 rounded-2xl bg-[var(--paper-mid)] border border-[var(--border)] text-[var(--burgundy)] flex items-center justify-center mx-auto shadow-inner transform transition-transform hover:scale-105">
+                  <Lock className="w-7 h-7 stroke-[2.2]" />
                 </div>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Pairfect is currently open exclusively to invited beta tester couples. Enter your invite code below to unlock your space.
-                </p>
+
+                <div className="space-y-1.5 max-w-sm mx-auto">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--paper-mid)] border border-[var(--border)] text-[var(--burgundy)] text-[10px] font-mono font-bold uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Exclusive Tester Access</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-soft)] leading-relaxed pt-1">
+                    Pairfect is currently in private testing for invited couples. Enter your invite code below to unlock registration.
+                  </p>
+                </div>
               </div>
 
               {/* Beta Code Entry Form */}
@@ -258,8 +273,8 @@ function SignupFormContent() {
                   <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
                     Beta Invite Code
                   </label>
-                  <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                    <KeyRound className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+                  <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
+                    <KeyRound className="h-4 w-4 text-[var(--burgundy)] shrink-0" />
                     <input
                       type="text"
                       required
@@ -267,69 +282,75 @@ function SignupFormContent() {
                       onChange={(e) => setBetaCodeInput(e.target.value.toUpperCase())}
                       className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] font-mono text-sm font-bold uppercase tracking-widest placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
                       placeholder="ENTER INVITE CODE"
+                      autoFocus
                     />
                   </div>
                 </div>
 
                 {betaError && (
-                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{betaError}</span>
+                  <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 animate-fade-in">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{betaError}</span>
                   </div>
                 )}
 
                 <button
                   type="submit"
-                  className="w-full btn-journal py-3 text-xs font-mono font-bold justify-center shadow-sm"
+                  className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center shadow-md cursor-pointer hover:shadow-lg transition-all"
                 >
                   <span>Unlock Signup ▷</span>
                 </button>
               </form>
 
-              {/* Waitlist Section */}
-              <div className="pt-5 border-t border-[var(--border)] space-y-3 text-center">
-                <p className="text-[11px] font-bold text-[var(--text)]">
-                  Don&apos;t have an invite code?
-                </p>
+              {/* Early Access Waitlist Box */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[var(--paper-mid)] border border-[var(--border)] space-y-3">
+                <div className="flex items-center gap-2 text-[var(--text)] font-sans font-bold text-xs">
+                  <Mail className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                  <span>Don&apos;t have an invite code?</span>
+                </div>
 
                 {waitlistSubmitted ? (
-                  <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-center gap-2">
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs flex items-center justify-center gap-2">
                     <Check className="w-4 h-4 shrink-0" />
                     <span className="font-medium">You&apos;re on the waitlist! We&apos;ll send your code soon.</span>
                   </div>
                 ) : (
-                  <form onSubmit={handleJoinWaitlist} className="space-y-2">
-                    <div className="flex gap-2">
+                  <form onSubmit={handleJoinWaitlist} className="space-y-2.5">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="email"
                         required
                         value={waitlistEmail}
                         onChange={(e) => setWaitlistEmail(e.target.value)}
                         placeholder="your-email@example.com"
-                        className="flex-1 px-3 py-2 text-xs rounded-xl border border-[var(--border)] bg-[var(--bg)] outline-none text-[var(--text)] focus:border-[var(--burgundy)]"
+                        className="flex-1 px-3.5 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--bg)] outline-none text-[var(--text)] placeholder:text-[var(--text-soft)]/50 focus:border-[var(--burgundy)] transition-all"
                       />
                       <button
                         type="submit"
                         disabled={waitlistLoading}
-                        className="px-3.5 py-2 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] text-[10px] font-mono font-bold uppercase tracking-wider hover:border-[var(--burgundy)] transition-colors shrink-0"
+                        className="px-4 py-2.5 rounded-xl bg-[var(--burgundy)] text-white text-[10px] font-mono font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all shrink-0 cursor-pointer shadow-xs"
                       >
                         {waitlistLoading ? "..." : "Join Waitlist"}
                       </button>
                     </div>
                     <p className="text-[10px] font-mono text-[var(--text-soft)]">
-                      We roll out new beta invites weekly.
+                      We roll out new beta tester invites weekly.
                     </p>
                   </form>
                 )}
               </div>
 
-              <div className="text-center pt-2">
-                <Link
-                  href="/login"
-                  className="text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] transition-colors"
-                >
-                  Already approved? <span className="font-bold text-[var(--burgundy)] underline">Log in</span>
-                </Link>
+              {/* Already have an account link */}
+              <div className="text-center pt-2 border-t border-[var(--border)]">
+                <p className="text-xs text-[var(--text-soft)] font-mono">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="font-bold text-[var(--burgundy)] hover:underline transition-colors ml-1"
+                  >
+                    Log in
+                  </Link>
+                </p>
               </div>
             </div>
           ) : needsVerification ? (
@@ -337,11 +358,11 @@ function SignupFormContent() {
                CASE 2: OTP EMAIL CONFIRMATION SCREEN
                ══════════════════════════════════════════════════════════ */
             <form onSubmit={handleVerifyOtp} className="space-y-6 text-center py-4 animate-fade-in">
-              <div className="mx-auto flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600">
-                <Lock className="w-6 h-6" />
+              <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--paper-mid)] border border-[var(--border)] text-[var(--burgundy)] shadow-inner">
+                <Lock className="w-7 h-7" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-xl font-bold tracking-tight text-[var(--text)]">Confirm your email</h3>
+                <h3 className="text-2xl font-display italic font-bold tracking-tight text-[var(--text)]">Confirm your email</h3>
                 <p className="text-xs text-[var(--text-soft)] max-w-xs mx-auto leading-relaxed">
                   Enter the 6-digit verification code sent to <span className="font-bold text-[var(--text)]">{verificationEmail}</span>
                 </p>
@@ -350,14 +371,14 @@ function SignupFormContent() {
               <OtpInput value={otp} onChange={setOtp} disabled={loading} />
 
               {error && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-center justify-center gap-2">
+                <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center justify-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {resendStatus && (
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-center gap-2">
+                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs flex items-center justify-center gap-2">
                   <Check className="w-4 h-4 shrink-0" />
                   <span>{resendStatus}</span>
                 </div>
@@ -367,7 +388,7 @@ function SignupFormContent() {
                 <button
                   type="submit"
                   disabled={loading || otp.join("").length < 6}
-                  className="w-full btn-journal py-3 text-xs font-mono font-bold justify-center"
+                  className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center shadow-md cursor-pointer"
                 >
                   {loading ? "Verifying..." : "Verify Code ▷"}
                 </button>
@@ -376,7 +397,7 @@ function SignupFormContent() {
                   type="button"
                   disabled={loading || cooldown > 0}
                   onClick={handleResendEmail}
-                  className="w-full text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] py-1.5"
+                  className="w-full text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] py-1.5 transition-colors"
                 >
                   {cooldown > 0 ? `Resend Code in ${cooldown}s` : "Resend Code"}
                 </button>
@@ -389,13 +410,13 @@ function SignupFormContent() {
             <>
               {/* Beta Unlocked Badge */}
               {betaEnabled && isBetaUnlocked && (
-                <div className="mb-5 p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-mono flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 font-bold">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="mb-5 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-[11px] font-mono flex items-center justify-between shadow-xs">
+                  <span className="flex items-center gap-2 font-bold">
+                    <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Beta Access Granted</span>
                   </span>
                   {betaCodeInput && (
-                    <span className="px-2 py-0.5 rounded bg-emerald-100/80 font-bold uppercase text-[9px]">
+                    <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/20 font-bold uppercase text-[9px]">
                       {betaCodeInput}
                     </span>
                   )}
@@ -403,9 +424,9 @@ function SignupFormContent() {
               )}
 
               {error && (
-                <div className="mb-5 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-start gap-2">
+                <div className="mb-5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 animate-fade-in">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                  <span className="leading-relaxed">{error}</span>
                 </div>
               )}
 
@@ -414,8 +435,8 @@ function SignupFormContent() {
                   <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                     What should your partner call you?
                   </label>
-                  <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                    <User className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+                  <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
+                    <User className="h-4 w-4 text-[var(--text-soft)]/70 shrink-0" />
                     <input
                       type="text"
                       required
@@ -431,8 +452,8 @@ function SignupFormContent() {
                   <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                     Email Address
                   </label>
-                  <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                    <Mail className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+                  <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
+                    <Mail className="h-4 w-4 text-[var(--text-soft)]/70 shrink-0" />
                     <input
                       type="email"
                       required
@@ -448,8 +469,8 @@ function SignupFormContent() {
                   <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                     Password
                   </label>
-                  <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                    <Lock className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+                  <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
+                    <Lock className="h-4 w-4 text-[var(--text-soft)]/70 shrink-0" />
                     <input
                       type="password"
                       required
@@ -466,19 +487,19 @@ function SignupFormContent() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center shadow-sm"
+                    className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center shadow-md cursor-pointer hover:shadow-lg transition-all"
                   >
                     <span>{loading ? "Creating space..." : "Create Account ▷"}</span>
                   </button>
                 </div>
               </form>
 
-              <div className="relative my-5">
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                   <div className="w-full border-t border-[var(--border)]" />
                 </div>
                 <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-mono">
-                  <span className="bg-white px-3 text-[var(--text-soft)]">Or continue with</span>
+                  <span className="bg-[var(--paper-warm)] px-3 text-[var(--text-soft)]">Or continue with</span>
                 </div>
               </div>
 
@@ -486,7 +507,7 @@ function SignupFormContent() {
                 type="button"
                 disabled={loading}
                 onClick={signInWithGoogle}
-                className="w-full btn-journal-ghost py-3 text-xs font-mono font-bold justify-center"
+                className="w-full btn-journal-ghost py-3.5 text-xs font-mono font-bold justify-center cursor-pointer hover:bg-[var(--paper-mid)] transition-all"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -502,7 +523,7 @@ function SignupFormContent() {
                   Already have an account?{" "}
                   <Link
                     href="/login"
-                    className="font-bold text-[var(--burgundy)] hover:underline transition-colors"
+                    className="font-bold text-[var(--burgundy)] hover:underline transition-colors ml-1"
                   >
                     Sign in
                   </Link>

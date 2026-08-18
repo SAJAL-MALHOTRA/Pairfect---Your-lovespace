@@ -143,37 +143,48 @@ function LoginFormContent() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden bg-[var(--bg)] text-[var(--text)] paper-grain">
+    <div className="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden bg-[var(--bg)] text-[var(--text)] paper-grain selection:bg-[var(--burgundy)] selection:text-white">
       
+      {/* ── AMBIENT WARMTH GLOW ── */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 animate-fade-in opacity-40"
+        style={{
+          background: "radial-gradient(50rem 30rem at 50% 10%, var(--rose) 0%, transparent 60%)",
+        }}
+      />
+
       {/* ── HEADER ── */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 space-y-1">
-        <Link href="/" className="inline-flex items-center gap-1.5 justify-center mb-2">
-          <span className="font-display italic text-3xl font-black text-[var(--text)]">pairfect</span>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 space-y-2 px-4">
+        <Link href="/" className="inline-flex items-center gap-2 justify-center group transition-transform hover:scale-105">
+          <Image src="/logo-book.png" alt="Pairfect" width={32} height={32} className="rounded-lg shadow-xs" priority />
+          <span className="font-display italic text-3xl font-black tracking-tight text-[var(--text)]">pairfect</span>
           <span className="w-2.5 h-2.5 rounded-full bg-[#FF8DA1] inline-block shadow-xs" />
         </Link>
-        <h2 className="font-display italic text-2xl sm:text-3xl font-bold text-[var(--text)]">
+        <h1 className="font-display italic text-3xl sm:text-4xl font-bold text-[var(--text)] leading-tight">
           Welcome to Pairfect
-        </h2>
-        <p className="text-xs text-[var(--text-soft)] font-mono max-w-xs mx-auto uppercase tracking-wider">
-          A private room for the two of you
+        </h1>
+        <p className="text-xs text-[var(--text-soft)] font-mono uppercase tracking-[0.2em]">
+          A PRIVATE ROOM FOR THE TWO OF YOU
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
-        <div className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-white p-7 sm:p-9 shadow-md paper-grain">
-          {/* 2px top brand accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-[var(--burgundy)]" />
+      {/* ── CARD CONTAINER ── */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
+        <div className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--paper-warm)] p-7 sm:p-9 shadow-xl paper-grain backdrop-blur-md">
+          {/* Top Rose-Burgundy Accent Bar */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[var(--rose)] via-[var(--burgundy)] to-[var(--rose)]" />
 
           {error && (
-            <div className="mb-5 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-start gap-2.5 animate-fade-in">
+            <div className="mb-5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 animate-fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span className="leading-relaxed">{error}</span>
             </div>
           )}
 
           {emailUnconfirmed && (
-            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-2xl border border-rose-200 bg-rose-50/50 text-[var(--text)] text-sm space-y-4 animate-fade-in">
-              <div className="flex items-start space-x-2 text-rose-600">
+            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 text-[var(--text)] text-sm space-y-4 animate-fade-in">
+              <div className="flex items-start space-x-2 text-rose-600 dark:text-rose-400">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono">Verify Your Email</p>
@@ -188,7 +199,7 @@ function LoginFormContent() {
               <button
                 type="submit"
                 disabled={loading || otp.join("").length < 6}
-                className="w-full btn-journal py-2.5 text-xs font-mono font-bold justify-center"
+                className="w-full btn-journal py-3 text-xs font-mono font-bold justify-center shadow-sm cursor-pointer"
               >
                 {loading ? "Verifying..." : "Verify Code ▷"}
               </button>
@@ -197,7 +208,7 @@ function LoginFormContent() {
                 type="button"
                 disabled={loading || cooldown > 0}
                 onClick={handleResendEmail}
-                className="w-full text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] py-1"
+                className="w-full text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] py-1 transition-colors"
               >
                 {cooldown > 0 ? `Resend Code in ${cooldown}s` : "Resend Code"}
               </button>
@@ -205,7 +216,7 @@ function LoginFormContent() {
           )}
 
           {resendStatus && (
-            <div className="mb-5 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
+            <div className="mb-5 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
               <Check className="w-4 h-4 shrink-0" />
               <span>{resendStatus}</span>
             </div>
@@ -216,14 +227,14 @@ function LoginFormContent() {
               <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                 Email Address
               </label>
-              <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                <Mail className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+              <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
+                <Mail className="h-4 w-4 text-[var(--text-soft)]/70 shrink-0" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
+                  className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 focus:outline-none focus:ring-0"
                   placeholder="name@example.com"
                 />
               </div>
@@ -233,14 +244,14 @@ function LoginFormContent() {
               <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                 Password
               </label>
-              <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                <Lock className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+              <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
+                <Lock className="h-4 w-4 text-[var(--text-soft)]/70 shrink-0" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
+                  className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/45 focus:outline-none focus:ring-0"
                   placeholder="••••••••"
                 />
               </div>
@@ -250,19 +261,19 @@ function LoginFormContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center shadow-sm"
+                className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center shadow-md cursor-pointer hover:shadow-lg transition-all"
               >
                 <span>{loading ? "Signing in..." : "Sign In ▷"}</span>
               </button>
             </div>
           </form>
 
-          <div className="relative my-5">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
               <div className="w-full border-t border-[var(--border)]" />
             </div>
             <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-mono">
-              <span className="bg-white px-3 text-[var(--text-soft)]">Or continue with</span>
+              <span className="bg-[var(--paper-warm)] px-3 text-[var(--text-soft)]">Or continue with</span>
             </div>
           </div>
 
@@ -270,7 +281,7 @@ function LoginFormContent() {
             type="button"
             disabled={loading}
             onClick={signInWithGoogle}
-            className="w-full btn-journal-ghost py-3 text-xs font-mono font-bold justify-center"
+            className="w-full btn-journal-ghost py-3.5 text-xs font-mono font-bold justify-center cursor-pointer hover:bg-[var(--paper-mid)] transition-all"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -286,7 +297,7 @@ function LoginFormContent() {
               Don&apos;t have an account yet?{" "}
               <Link
                 href="/signup"
-                className="font-bold text-[var(--burgundy)] hover:underline transition-colors"
+                className="font-bold text-[var(--burgundy)] hover:underline transition-colors ml-1"
               >
                 Sign up instead
               </Link>
