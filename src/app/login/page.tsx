@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Lock, Mail, AlertCircle, Check } from "lucide-react";
+import { Lock, Mail, AlertCircle, Check, Loader2 } from "lucide-react";
 import { OtpInput } from "@/components/otp-input";
 
-export default function LoginPage() {
+function LoginFormContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -17,17 +21,14 @@ export default function LoginPage() {
   const [cooldown, setCooldown] = useState(0);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
 
-  // Debug logging for mount and loading changes
+  // Read any error passed via query parameter (e.g. from OAuth failure)
   useEffect(() => {
-    console.log("[LoginPage] Mounted");
-  }, []);
-
-  useEffect(() => {
-    console.log("[LoginPage] loading state changed:", loading);
-  }, [loading]);
+    const queryError = searchParams.get("error");
+    if (queryError) {
+      setError(queryError);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -42,25 +43,40 @@ export default function LoginPage() {
     setError(null);
     setEmailUnconfirmed(false);
 
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const cleanEmail = email.trim().toLowerCase();
 
-    if (loginError) {
-      const isUnconfirmed = 
-        loginError.message.toLowerCase().includes("confirm") || 
-        loginError.message.toLowerCase().includes("verified") ||
-        loginError.message.toLowerCase().includes("verification");
-      
-      if (isUnconfirmed) {
-        setEmailUnconfirmed(true);
+    try {
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (loginError) {
+        const isUnconfirmed =
+          loginError.message.toLowerCase().includes("confirm") ||
+          loginError.message.toLowerCase().includes("verified") ||
+          loginError.message.toLowerCase().includes("verification");
+
+        const isRateLimit =
+          loginError.status === 429 ||
+          loginError.message.toLowerCase().includes("rate limit") ||
+          loginError.message.toLowerCase().includes("too many requests") ||
+          loginError.message.toLowerCase().includes("throttle");
+
+        if (isUnconfirmed) {
+          setEmailUnconfirmed(true);
+        } else if (isRateLimit) {
+          setError("Too many login attempts. Please wait a moment before trying again, or use Google Sign-In.");
+        } else {
+          setError(loginError.message || "Invalid email or password.");
+        }
+        setLoading(false);
       } else {
-        setError(loginError.message);
+        router.push("/dashboard");
       }
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred. Please try again.");
       setLoading(false);
-    } else {
-      router.push("/dashboard");
     }
   };
 
@@ -80,17 +96,18 @@ export default function LoginPage() {
   };
 
   const handleResendEmail = async () => {
-    if (cooldown > 0 || !email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (cooldown > 0 || !cleanEmail) return;
     setError(null);
     setResendStatus(null);
     setLoading(true);
     try {
       const { error: resendErr } = await supabase.auth.resend({
         type: "signup",
-        email: email.trim(),
+        email: cleanEmail,
       });
       if (resendErr) throw resendErr;
-      setResendStatus("Verification code resent! Check your inbox.");
+      setResendStatus("Verification code sent! Check your inbox.");
       setCooldown(60);
     } catch (err: any) {
       console.error("Resend error:", err);
@@ -103,21 +120,19 @@ export default function LoginPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const enteredCode = otp.join("");
-    console.log("[LoginPage] handleVerifyOtp called with token:", enteredCode);
-    if (enteredCode.length < 6 || !email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (enteredCode.length < 6 || !cleanEmail) return;
     setLoading(true);
     setError(null);
     try {
-      console.log("[LoginPage] calling supabase.auth.verifyOtp with email:", email.trim(), "and token:", enteredCode);
-      const { data, error: verifyErr } = await supabase.auth.verifyOtp({
-        email: email.trim(),
+      const { error: verifyErr } = await supabase.auth.verifyOtp({
+        email: cleanEmail,
         token: enteredCode,
         type: "signup",
       });
 
       if (verifyErr) throw verifyErr;
 
-      // Successfully verified - redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
       console.error("Verification error on login:", err);
@@ -128,45 +143,37 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden">
-      {/* soft ambient warmth */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 animate-fade-in"
-        style={{
-          background:
-            "radial-gradient(60rem 40rem at 15% -10%, var(--glass-border) 0%, transparent 55%)",
-        }}
-      />
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
-        <div className="flex justify-center mb-4">
-          <Image src="/logo-book.png" alt="Pairfect" width={72} height={72} className="rounded-2xl shadow-md" priority />
-        </div>
-        <h2 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">
+    <div className="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden bg-[var(--bg)] text-[var(--text)] paper-grain">
+      
+      {/* ── HEADER ── */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 space-y-1">
+        <Link href="/" className="inline-flex items-center gap-1.5 justify-center mb-2">
+          <span className="font-display italic text-3xl font-black text-[var(--text)]">pairfect</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FF8DA1] inline-block shadow-xs" />
+        </Link>
+        <h2 className="font-display italic text-2xl sm:text-3xl font-bold text-[var(--text)]">
           Welcome to Pairfect
         </h2>
-        <p className="mt-2 text-xs text-[var(--ink-mid)] font-mono max-w-xs mx-auto uppercase tracking-wider">
-          A private room for the two of you.
+        <p className="text-xs text-[var(--text-soft)] font-mono max-w-xs mx-auto uppercase tracking-wider">
+          A private room for the two of you
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
-        <div className="relative overflow-hidden rounded-3xl border border-[var(--border-mid)] bg-[var(--card-bg)] p-8 shadow-sm paper-grain">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
+        <div className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-white p-7 sm:p-9 shadow-md paper-grain">
           {/* 2px top brand accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-[var(--seal-red)]" />
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-[var(--burgundy)]" />
 
           {error && (
-            <div className="mb-6 p-4 rounded-button bg-[var(--bg-secondary)]/40 border border-[var(--border)] flex items-start space-x-2 text-[var(--burgundy)] text-sm">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>{error}</span>
+            <div className="mb-5 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-start gap-2.5 animate-fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">{error}</span>
             </div>
           )}
 
           {emailUnconfirmed && (
-            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-button border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 text-[var(--text)] text-sm space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-red-500" />
-              <div className="flex items-start space-x-2 text-red-500">
+            <form onSubmit={handleVerifyOtp} className="mb-6 p-4 rounded-2xl border border-rose-200 bg-rose-50/50 text-[var(--text)] text-sm space-y-4 animate-fade-in">
+              <div className="flex items-start space-x-2 text-rose-600">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono">Verify Your Email</p>
@@ -181,16 +188,16 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading || otp.join("").length < 6}
-                className="w-full btn-primary py-2.5 text-xs"
+                className="w-full btn-journal py-2.5 text-xs font-mono font-bold justify-center"
               >
-                {loading ? "Verifying..." : "Verify Code"}
+                {loading ? "Verifying..." : "Verify Code ▷"}
               </button>
 
               <button
                 type="button"
                 disabled={loading || cooldown > 0}
                 onClick={handleResendEmail}
-                className="w-full btn-tertiary py-2 text-xs font-bold uppercase tracking-wider"
+                className="w-full text-xs font-mono text-[var(--text-soft)] hover:text-[var(--text)] py-1"
               >
                 {cooldown > 0 ? `Resend Code in ${cooldown}s` : "Resend Code"}
               </button>
@@ -198,68 +205,64 @@ export default function LoginPage() {
           )}
 
           {resendStatus && (
-            <div className="mb-6 p-4 rounded-button border border-green-500/20 bg-green-500/5 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-sm flex items-center gap-2">
-              <Check className="w-4.5 h-4.5 flex-shrink-0" />
+            <div className="mb-5 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
+              <Check className="w-4 h-4 shrink-0" />
               <span>{resendStatus}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                 Email Address
               </label>
-              <div className="relative rounded-button shadow-sm">
-                <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                  <Mail className="h-5 w-5 text-[var(--text-soft)]/60 shrink-0" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
-                    placeholder="name@example.com"
-                  />
-                </div>
+              <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
+                <Mail className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
+                  placeholder="name@example.com"
+                />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-2">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                 Password
               </label>
-              <div className="relative rounded-button shadow-sm">
-                <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-button bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
-                  <Lock className="h-5 w-5 text-[var(--text-soft)]/60 shrink-0" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
-                    placeholder="••••••••"
-                  />
-                </div>
+              <div className="input-warm flex items-center gap-3 px-3.5 py-3 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:ring-1 focus-within:ring-[var(--burgundy)]">
+                <Lock className="h-4 w-4 text-[var(--text-soft)]/60 shrink-0" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-transparent border-none outline-none p-0 text-[var(--text)] text-sm placeholder:text-[var(--text-soft)]/40 focus:outline-none focus:ring-0"
+                  placeholder="••••••••"
+                />
               </div>
             </div>
 
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary"
+                className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center shadow-sm"
               >
-                {loading ? "Signing in..." : "Sign In"}
+                <span>{loading ? "Signing in..." : "Sign In ▷"}</span>
               </button>
             </div>
           </form>
 
-          <div className="relative my-6">
+          <div className="relative my-5">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
               <div className="w-full border-t border-[var(--border)]" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-wider font-mono">
-              <span className="bg-[var(--bg-secondary)] px-3 text-[var(--text-soft)]">Or continue with</span>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-mono">
+              <span className="bg-white px-3 text-[var(--text-soft)]">Or continue with</span>
             </div>
           </div>
 
@@ -267,7 +270,7 @@ export default function LoginPage() {
             type="button"
             disabled={loading}
             onClick={signInWithGoogle}
-            className="w-full btn-secondary text-sm"
+            className="w-full btn-journal-ghost py-3 text-xs font-mono font-bold justify-center"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -278,9 +281,9 @@ export default function LoginPage() {
             <span>Continue with Google</span>
           </button>
 
-          <div className="mt-8 text-center border-t border-[var(--border)] pt-6">
-            <p className="text-sm text-[var(--text-soft)]">
-              Don't have an account yet?{" "}
+          <div className="mt-6 text-center border-t border-[var(--border)] pt-5">
+            <p className="text-xs text-[var(--text-soft)] font-mono">
+              Don&apos;t have an account yet?{" "}
               <Link
                 href="/signup"
                 className="font-bold text-[var(--burgundy)] hover:underline transition-colors"
@@ -292,5 +295,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--burgundy)]" />
+        </div>
+      }
+    >
+      <LoginFormContent />
+    </Suspense>
   );
 }
