@@ -203,6 +203,9 @@ function SignupFormContent() {
   const signInWithGoogle = async () => {
     setError(null);
     setLoading(true);
+    if (betaCodeInput) {
+      document.cookie = `pairfect_beta_code=${encodeURIComponent(betaCodeInput)}; path=/; max-age=600; SameSite=Lax`;
+    }
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
