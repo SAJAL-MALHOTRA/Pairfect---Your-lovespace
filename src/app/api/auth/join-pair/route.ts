@@ -1,22 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-// Initialize Supabase Admin client using Service Role key to bypass client RLS for pair joining
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL configuration for admin operations");
-  }
-
-  return createClient(url, serviceKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
@@ -27,25 +11,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Please enter an invite code." }, { status: 400 });
     }
 
-    // Get auth token from request header
-    const authHeader = req.headers.get("Authorization");
-    const adminSupabase = getAdminClient();
+    // Route handlers are public endpoints, so derive identity exclusively from
+    // the authenticated Supabase session rather than from request data.
+    const sessionSupabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await sessionSupabase.auth.getUser();
 
-    let userId: string | null = null;
-
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user } } = await adminSupabase.auth.getUser(token);
-      userId = user?.id || null;
-    }
-
-    if (!userId && body.userId) {
-      userId = body.userId;
-    }
-
-    if (!userId) {
+    if (authError || !user) {
       return NextResponse.json({ success: false, error: "Unauthorized. Please log in." }, { status: 401 });
     }
+
+    const userId = user.id;
+    const adminSupabase = createAdminClient();
 
     // 1. Find pending pair by invite code using Admin client
     const { data: targetPair, error: fetchErr } = await adminSupabase

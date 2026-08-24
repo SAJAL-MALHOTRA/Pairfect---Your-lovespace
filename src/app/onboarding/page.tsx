@@ -118,23 +118,56 @@ export default function OnboardingPage() {
     setMode("choice");
   };
 
+function generateSecureInviteCode(length = 6): string {
+  const charset = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const randomValues = new Uint8Array(length);
+  if (typeof window !== "undefined" && window.crypto) {
+    window.crypto.getRandomValues(randomValues);
+  } else {
+    for (let i = 0; i < length; i++) {
+      randomValues[i] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += charset[randomValues[i] % charset.length];
+  }
+  return code;
+}
+
   const handleCreatePair = async () => {
     setLoading(true);
     setError(null);
     try {
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      
-      const { data, error: insertError } = await supabase
-        .from("pairs")
-        .insert({
-          user_a_id: user!.id,
-          invite_code: code,
-          status: "pending",
-        })
-        .select()
-        .single();
+      let code = "";
+      let inserted = false;
+      let lastError: any = null;
 
-      if (insertError) throw insertError;
+      // Retry up to 3 times in case of rare code collision
+      for (let attempt = 0; attempt < 3 && !inserted; attempt++) {
+        code = generateSecureInviteCode(6);
+
+        const { error: insertError } = await supabase
+          .from("pairs")
+          .insert({
+            user_a_id: user!.id,
+            invite_code: code,
+            status: "pending",
+          })
+          .select()
+          .single();
+
+        if (!insertError) {
+          inserted = true;
+          break;
+        }
+        lastError = insertError;
+      }
+
+      if (!inserted) {
+        throw lastError || new Error("Failed to create pair invite code. Please try again.");
+      }
 
       setInviteCode(code);
       setMode("create");
@@ -154,15 +187,12 @@ export default function OnboardingPage() {
     setError(null);
     try {
       const cleanedCode = inputCode.trim().toUpperCase();
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const res = await fetch("/api/auth/join-pair", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
         },
-        body: JSON.stringify({ code: cleanedCode, userId: user.id }),
+        body: JSON.stringify({ code: cleanedCode }),
       });
 
       const data = await res.json();

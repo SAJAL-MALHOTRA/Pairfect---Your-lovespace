@@ -3,10 +3,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
-    // Optional secret verification for cron security
+    // This endpoint permanently deletes storage objects and records, so it must
+    // never be reachable unless a cron secret has been configured.
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret) {
+      console.error("Cron cleanup invoked without CRON_SECRET configured.");
+      return NextResponse.json({ error: "Cron cleanup is not configured" }, { status: 503 });
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized cron trigger" }, { status: 401 });
     }
 
@@ -76,9 +82,4 @@ export async function POST(request: Request) {
     console.error("Cron cleanup error:", err);
     return NextResponse.json({ error: err.message || "Failed to execute media cleanup" }, { status: 500 });
   }
-}
-
-// Allow GET requests for simple testing/pinging
-export async function GET(request: Request) {
-  return POST(request);
 }

@@ -97,8 +97,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Both arguments must be submitted to judge" }, { status: 400 });
     }
 
-    const { data: userA } = await supabase.from("profiles").select("display_name").eq("id", pair.user_a_id).single();
-    const { data: userB } = await supabase.from("profiles").select("display_name").eq("id", pair.user_b_id).single();
+    const { data: userA } = await supabase.from("users").select("display_name").eq("id", pair.user_a_id).single();
+    const { data: userB } = await supabase.from("users").select("display_name").eq("id", pair.user_b_id).single();
 
     const nameA = userA?.display_name || "Partner A";
     const nameB = userB?.display_name || "Partner B";
