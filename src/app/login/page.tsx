@@ -227,12 +227,13 @@ function LoginFormContent() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
+              <label htmlFor="email" className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                 Email Address
               </label>
               <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
                 <Mail className="h-4 w-4 text-[var(--text-soft)]/70 shrink-0" />
                 <input
+                  id="email"
                   type="email"
                   required
                   value={email}
@@ -244,12 +245,13 @@ function LoginFormContent() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
+              <label htmlFor="password" className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-soft)] mb-1.5">
                 Password
               </label>
               <div className="flex items-center gap-3 px-4 py-3.5 border border-[var(--border)] rounded-2xl bg-[var(--bg)] focus-within:border-[var(--burgundy)] focus-within:ring-2 focus-within:ring-[var(--burgundy)]/20 transition-all shadow-inner">
                 <Lock className="h-4 w-4 text-[var(--text-soft)]/70 shrink-0" />
                 <input
+                  id="password"
                   type="password"
                   required
                   value={password}

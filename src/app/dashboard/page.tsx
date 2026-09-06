@@ -314,50 +314,47 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!pair || loading) return;
+    let cancelled = false;
+
     (async () => {
       try {
-        const [letRes, momRes, gratRes, recentLet, recentMom, recentGrat, mixRes, recentMix] = await Promise.all([
-          supabase.from("love_letters").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
-          supabase.from("shared_moments").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
-          supabase.from("gratitude_entries").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
-          supabase.from("love_letters").select("id, sender_id, sent_at, content").eq("pair_id", pair.id).order("sent_at", { ascending: false }).limit(2),
-          supabase.from("shared_moments").select("id, title, photo_url, moment_date, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
-          supabase.from("gratitude_entries").select("id, sender_id, content, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(2),
-          supabase.from("mixtapes").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
-          supabase.from("mixtapes").select("id, title, cover_theme, created_at").eq("pair_id", pair.id).order("created_at", { ascending: false }).limit(1),
-        ]);
+        const res = await fetch("/api/dashboard-summary");
+        if (!res.ok) throw new Error("Failed to fetch dashboard summary");
+        const data = await res.json();
+        if (cancelled) return;
 
-        if (letRes.count !== null) setLettersCount(letRes.count);
-        if (momRes.count !== null) setMomentsCount(momRes.count);
-        if (gratRes.count !== null) setGratitudeCount(gratRes.count);
+        if (data.counts) {
+          setLettersCount(data.counts.letters || 0);
+          setMomentsCount(data.counts.moments || 0);
+          setGratitudeCount(data.counts.gratitude || 0);
+          setMixtapeCount(data.counts.mixtapes || 0);
+        }
 
-        if (recentLet.data && recentLet.data.length > 0) setLatestLetter(recentLet.data[0]);
-        if (recentMom.data && recentMom.data.length > 0) setLatestMoment(recentMom.data[0]);
-        if (recentGrat.data && recentGrat.data.length > 0) setLatestGratitude(recentGrat.data[0]);
-        if (mixRes.count !== null) setMixtapeCount(mixRes.count);
-        if (recentMix.data && recentMix.data.length > 0) setLatestMixtape(recentMix.data[0]);
+        if (data.recentLetters && data.recentLetters.length > 0) {
+          setLatestLetter(data.recentLetters[0]);
+        }
+        if (data.recentMoments && data.recentMoments.length > 0) {
+          setLatestMoment(data.recentMoments[0]);
+        }
+        if (data.recentGratitude && data.recentGratitude.length > 0) {
+          setLatestGratitude(data.recentGratitude[0]);
+        }
+        if (data.latestMixtape) {
+          setLatestMixtape(data.latestMixtape);
+        }
 
-        // Calculate partner's latest feeling
-        const { data: partnerMood } = await supabase
-          .from("mood_logs")
-          .select("mood")
-          .eq("pair_id", pair.id)
-          .eq("user_id", partner?.id || "")
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (partnerMood && partnerMood.length > 0) {
-          setPartnerFeeling(`feeling ${partnerMood[0].mood}`);
+        if (data.partnerMood) {
+          setPartnerFeeling(`feeling ${data.partnerMood}`);
         } else {
           setPartnerFeeling("feeling peaceful");
         }
 
-        // Assemble recent activities
+        // Assemble recent activities from summary
         const activities: RecentActivityItem[] = [];
         const partnerName = partner?.display_name || "Partner";
 
-        if (recentLet.data) {
-          recentLet.data.forEach((l: any) => {
+        if (data.recentLetters) {
+          data.recentLetters.forEach((l: any) => {
             const isMe = l.sender_id === user?.id;
             const t = l.sent_at ? new Date(l.sent_at).getTime() : 0;
             activities.push({
@@ -370,8 +367,8 @@ export default function DashboardPage() {
           });
         }
 
-        if (recentMom.data) {
-          recentMom.data.forEach((m: any) => {
+        if (data.recentMoments) {
+          data.recentMoments.forEach((m: any) => {
             const t = m.created_at ? new Date(m.created_at).getTime() : 0;
             activities.push({
               id: m.id,
@@ -383,9 +380,9 @@ export default function DashboardPage() {
           });
         }
 
-        if (recentGrat.data) {
-          recentGrat.data.forEach((g: any) => {
-            const isMe = g.sender_id === user?.id;
+        if (data.recentGratitude) {
+          data.recentGratitude.forEach((g: any) => {
+            const isMe = g.user_id === user?.id;
             const t = g.created_at ? new Date(g.created_at).getTime() : 0;
             activities.push({
               id: g.id,
@@ -424,14 +421,17 @@ export default function DashboardPage() {
         } else {
           setAnniversaryNotSet(true);
         }
-
       } catch (e) {
-        console.error(e);
+        console.error("Dashboard summary fetch failed:", e);
       } finally {
-        setFetching(false);
+        if (!cancelled) setFetching(false);
       }
     })();
-  }, [pair, partner, loading]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pair?.id, loading]);
 
   if (loading || fetching) {
     return (
@@ -551,9 +551,9 @@ export default function DashboardPage() {
                 top: blob.top,
                 width: `${blob.size}px`,
                 height: `${blob.size}px`,
-                background: blob.color,
-                filter: "blur(110px)",
-                opacity: 0.55,
+                background: `radial-gradient(circle, ${blob.color} 0%, transparent 70%)`,
+                opacity: 0.6,
+                willChange: "transform",
               }}
               animate={blobAnim}
               transition={{
@@ -596,10 +596,7 @@ export default function DashboardPage() {
                 top: p.top,
                 width: `${p.size}px`,
                 height: `${p.size}px`,
-                // Soft glow bloom + Gaussian blur combined to avoid Tailwind config dependencies
-                filter: p.blur > 0
-                  ? `blur(${p.blur}px) drop-shadow(0 4px 12px rgba(255, 220, 230, ${p.glow * 0.7}))`
-                  : `drop-shadow(0 4px 12px rgba(255, 220, 230, ${p.glow * 0.7}))`,
+                willChange: "transform, opacity",
                 zIndex: p.size > 50 ? 2 : 1,
               }}
               {...animationProps}

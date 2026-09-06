@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Heart, Sparkles, Copy, Check, LogOut, ArrowRight, Loader2, Link2 } from "lucide-react";
+import { Heart, Sparkles, Copy, Check, LogOut, ArrowRight, Loader2, Link2, Info } from "lucide-react";
+import { isValidBetaCode } from "@/lib/beta";
 
 export default function OnboardingPage() {
   const { user, profile, pair, signOut, refreshSession } = useAuth();
@@ -187,6 +188,13 @@ function generateSecureInviteCode(length = 6): string {
     setError(null);
     try {
       const cleanedCode = inputCode.trim().toUpperCase();
+
+      if (isValidBetaCode(cleanedCode)) {
+        setError("PAIRFECT2026 is your app Beta Access code, not your partner's invite code! To link with your partner: one of you clicks 'Create a new pair' to get a 6-character code (e.g. A1B2C3), and the other enters that code here.");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/auth/join-pair", {
         method: "POST",
         headers: {
@@ -370,9 +378,12 @@ function generateSecureInviteCode(length = 6): string {
           {mode === "join" && (
             <form onSubmit={handleJoinPair} className="space-y-6 my-auto">
               <div>
-                <label className="block text-xs font-mono uppercase font-bold text-[var(--text-soft)] mb-2">
-                  Enter Invite Code
+                <label className="block text-xs font-mono uppercase font-bold text-[var(--text-soft)] mb-1">
+                  Enter Partner&apos;s 6-Letter Code
                 </label>
+                <p className="text-[11px] text-[var(--text-soft)] mb-3 leading-relaxed">
+                  Enter the unique 6-character code from your partner&apos;s screen (e.g. <span className="font-mono font-bold text-[var(--burgundy)]">A1B2C3</span>).
+                </p>
                 <input
                   type="text"
                   required
@@ -385,11 +396,22 @@ function generateSecureInviteCode(length = 6): string {
 
               <button
                 type="submit"
-                disabled={loading || !inputCode}
-                className="w-full btn-primary py-3 text-xs font-mono uppercase font-bold tracking-widest"
+                disabled={loading || !inputCode.trim()}
+                className="w-full btn-primary py-3 text-xs font-mono uppercase font-bold tracking-widest cursor-pointer"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                <span>Link Accounts</span>
+                <span>Link with Partner</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setMode("create");
+                }}
+                className="w-full text-center text-xs font-mono font-semibold text-[var(--burgundy)] hover:underline transition-colors mt-2 block cursor-pointer"
+              >
+                Don&apos;t have a partner code yet? Create a new pair instead →
               </button>
 
               <button

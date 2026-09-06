@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
 
 # next.js
 /.next/
@@ -44,3 +46,8 @@ next-env.d.ts
 # Local env vars
 .env.local
 .env*.local
+
+# Scratch and test dumps
+/videos-test
+/public/originals_backup
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useRouter, usePathname } from "next/navigation";
@@ -68,7 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const inFlightFetchRef = useRef<string | null>(null);
+  const loadedUserRef = useRef<string | null>(null);
+
   const fetchUserData = async (currentUser: User) => {
+    // Deduplicate in-flight fetch for the exact same user ID
+    if (inFlightFetchRef.current === currentUser.id) return;
+    inFlightFetchRef.current = currentUser.id;
+
     try {
       // 1. Fetch user profile
       let { data: profileData } = await supabase
@@ -78,7 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (!profileData) {
-        // Auto-create initial profile row if missing
         const fallbackName =
           currentUser.user_metadata?.display_name ||
           currentUser.email?.split("@")[0] ||
@@ -93,7 +99,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
         profileData = createdProfile;
       }
-      setProfile(profileData || null);
 
       // 2. Fetch active pair first; if none, check for pending pair
       const { data: activePairs } = await supabase
@@ -118,34 +123,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         pairData = pendingPairs && pendingPairs.length > 0 ? pendingPairs[0] : null;
       }
 
+      let partnerData = null;
       if (pairData) {
-        setPair(pairData);
-
-        // 3. If pair is active, fetch partner details
         const partnerId =
           pairData.user_a_id === currentUser.id
             ? pairData.user_b_id
             : pairData.user_a_id;
 
         if (partnerId) {
-          const { data: partnerData } = await supabase
+          const { data: pData } = await supabase
             .from("users")
             .select("*")
             .eq("id", partnerId)
             .maybeSingle();
-
-          setPartner(partnerData || null);
-        } else {
-          setPartner(null);
+          partnerData = pData || null;
         }
-      } else {
-        setPair(null);
-        setPartner(null);
       }
+
+      // Batch all updates together
+      setProfile(profileData || null);
+      setPair(pairData);
+      setPartner(partnerData);
+      loadedUserRef.current = currentUser.id;
     } catch (err) {
       console.error("Error loading user profile or pair details:", err);
       setPair(null);
       setPartner(null);
+    } finally {
+      inFlightFetchRef.current = null;
     }
   };
 
@@ -162,6 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(null);
         setPair(null);
         setPartner(null);
+        loadedUserRef.current = null;
       }
     } finally {
       setLoading(false);
@@ -169,20 +175,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Initial fetch with spinner
+    // Initial fetch
     refreshSession(true);
 
-    // Subscribe to auth changes
+    // Subscribe to auth changes (prevent duplicate fetch on initial mount)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: any, session: any) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
         if (currentUser) {
-          await fetchUserData(currentUser);
+          if (loadedUserRef.current !== currentUser.id) {
+            await fetchUserData(currentUser);
+          }
         } else {
           setProfile(null);
           setPair(null);
           setPartner(null);
+          loadedUserRef.current = null;
         }
         setLoading(false);
       }

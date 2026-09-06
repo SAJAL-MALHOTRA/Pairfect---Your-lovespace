@@ -66,9 +66,8 @@ export default function AmbientHearts() {
             left: h.left,
             top: `${h.startY}vh`,
             width: `${h.size}px`,
-            height: `${h.size}px`,
-            filter: `blur(${h.blur}px)`,
             opacity: h.opacity,
+            willChange: "transform, opacity",
             animation: `drift-heart-up ${h.duration}s linear ${h.delay}s infinite, heart-breathe ${h.duration * 0.6}s ease-in-out ${h.delay}s infinite`,
           }}
         >

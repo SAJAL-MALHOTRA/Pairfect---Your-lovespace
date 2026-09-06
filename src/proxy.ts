@@ -34,10 +34,6 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const path = request.nextUrl.pathname;
 
   const isProtectedRoute =
@@ -56,6 +52,15 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/profile");
 
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
+
+  // Fast-exit for public pages without incurring an external auth network roundtrip
+  if (!isProtectedRoute && !isAuthRoute) {
+    return supabaseResponse;
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user && isProtectedRoute) {
     return NextResponse.redirect(new URL("/login", request.url));

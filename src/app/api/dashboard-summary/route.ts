@@ -1,147 +1,118 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { decrypt } from "@/lib/encryption";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (authErr || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const pairId = searchParams.get("pairId");
+    // Resolve user's active pair
+    const { data: pair, error: pairErr } = await supabase
+      .from("pairs")
+      .select("id, user_a_id, user_b_id, status")
+      .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
+      .eq("status", "active")
+      .maybeSingle();
 
-    if (!pairId) {
-      return NextResponse.json({ error: "Pair ID is required" }, { status: 400 });
+    if (pairErr || !pair) {
+      return NextResponse.json(
+        {
+          counts: { letters: 0, moments: 0, gratitude: 0, mixtapes: 0 },
+          recentLetters: [],
+          recentMoments: [],
+          recentGratitude: [],
+          latestMixtape: null,
+          partnerMood: null,
+        },
+        {
+          headers: {
+            "Cache-Control": "private, max-age=15, stale-while-revalidate=30",
+          },
+        }
+      );
     }
 
-    // Run queries in parallel to fetch latest activity logs and active sessions
+    const partnerId = pair.user_a_id === user.id ? pair.user_b_id : pair.user_a_id;
+
+    // Fetch all summary metrics concurrently on server
     const [
-      loveLetterRes,
-      photoboothRes,
-      gratitudeRes,
-      quizHistoryRes,
-      riddleSessionRes,
-      disputeVerdictRes,
-      activeRiddleRes,
-      activeDisputeRes
+      letCountRes,
+      momCountRes,
+      gratCountRes,
+      mixCountRes,
+      recentLetRes,
+      recentMomRes,
+      recentGratRes,
+      latestMixRes,
+      partnerMoodRes,
     ] = await Promise.all([
-      // 1. Last love letter
+      supabase.from("love_letters").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
+      supabase.from("shared_moments").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
+      supabase.from("gratitude_entries").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
+      supabase.from("mixtapes").select("id", { count: "exact", head: true }).eq("pair_id", pair.id),
       supabase
         .from("love_letters")
-        .select("*")
-        .eq("pair_id", pairId)
+        .select("id, sender_id, sent_at, content")
+        .eq("pair_id", pair.id)
         .order("sent_at", { ascending: false })
-        .limit(1),
-
-      // 2. Last photobooth session
+        .limit(2),
       supabase
-        .from("photobooth_strips")
-        .select("*, photobooth_sessions!inner(pair_id)")
-        .eq("photobooth_sessions.pair_id", pairId)
+        .from("shared_moments")
+        .select("id, title, photo_url, moment_date, created_at")
+        .eq("pair_id", pair.id)
         .order("created_at", { ascending: false })
-        .limit(1),
-
-      // 3. Last gratitude entry
+        .limit(2),
       supabase
         .from("gratitude_entries")
-        .select("*")
-        .eq("pair_id", pairId)
+        .select("id, user_id, content, created_at")
+        .eq("pair_id", pair.id)
+        .order("created_at", { ascending: false })
+        .limit(2),
+      supabase
+        .from("mixtapes")
+        .select("id, title, cover_theme, created_at")
+        .eq("pair_id", pair.id)
         .order("created_at", { ascending: false })
         .limit(1),
-
-      // 4. Last quiz history
-      supabase
-        .from("quiz_history")
-        .select("*")
-        .eq("pair_id", pairId)
-        .order("completed_at", { ascending: false })
-        .limit(1),
-
-      // 5. Last completed riddle session
-      supabase
-        .from("riddle_sessions")
-        .select("*, riddles(*)")
-        .eq("pair_id", pairId)
-        .eq("status", "revealed")
-        .order("started_at", { ascending: false })
-        .limit(1),
-
-      // 6. Last dispute verdict
-      supabase
-        .from("dispute_verdicts")
-        .select("*, vibe_disputes!inner(pair_id)")
-        .eq("vibe_disputes.pair_id", pairId)
-        .order("created_at", { ascending: false })
-        .limit(1),
-
-      // 7. Active riddle session (for Continue Together)
-      supabase
-        .from("riddle_sessions")
-        .select("*, riddles(*)")
-        .eq("pair_id", pairId)
-        .eq("status", "active")
-        .order("started_at", { ascending: false })
-        .limit(1),
-
-      // 8. Active dispute session (for Continue Together)
-      supabase
-        .from("vibe_disputes")
-        .select("*")
-        .eq("pair_id", pairId)
-        .neq("status", "judged")
-        .order("created_at", { ascending: false })
-        .limit(1)
+      partnerId
+        ? supabase
+            .from("mood_logs")
+            .select("mood, created_at")
+            .eq("pair_id", pair.id)
+            .eq("user_id", partnerId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    // Decrypt the last love letter if it exists
-    let lastLoveLetter = loveLetterRes.data?.[0] || null;
-    if (lastLoveLetter) {
-      let decryptedContent = lastLoveLetter.content;
-      if (typeof lastLoveLetter.content === "string") {
-        try {
-          const decryptedStr = decrypt(lastLoveLetter.content);
-          if (typeof decryptedStr === "string" && (decryptedStr.startsWith("[") || decryptedStr.startsWith("{"))) {
-            decryptedContent = JSON.parse(decryptedStr);
-          } else {
-            decryptedContent = [{ type: "text", value: "A handwritten letter for you ♡" }];
-          }
-        } catch (e) {
-          console.error("Failed to decrypt summary letter content:", e);
-          decryptedContent = [{ type: "text", value: "A handwritten letter for you ♡" }];
-        }
+    return NextResponse.json(
+      {
+        counts: {
+          letters: letCountRes.count || 0,
+          moments: momCountRes.count || 0,
+          gratitude: gratCountRes.count || 0,
+          mixtapes: mixCountRes.count || 0,
+        },
+        recentLetters: recentLetRes.data || [],
+        recentMoments: recentMomRes.data || [],
+        recentGratitude: recentGratRes.data || [],
+        latestMixtape: latestMixRes.data && latestMixRes.data.length > 0 ? latestMixRes.data[0] : null,
+        partnerMood: partnerMoodRes.data && partnerMoodRes.data.length > 0 ? partnerMoodRes.data[0].mood : null,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+        },
       }
-      lastLoveLetter = { ...lastLoveLetter, content: decryptedContent };
-    }
-
-    // Decrypt the last gratitude entry if it exists
-    let lastGratitude = gratitudeRes.data?.[0] || null;
-    if (lastGratitude && typeof lastGratitude.content === "string") {
-      try {
-        const res = decrypt(lastGratitude.content);
-        const cleanContent = (typeof res === "string" && res.startsWith("enc:")) ? "A note of gratitude shared with love ♡" : res;
-        lastGratitude = { ...lastGratitude, content: cleanContent };
-      } catch (e) {
-        console.error("Failed to decrypt summary gratitude content:", e);
-        lastGratitude = { ...lastGratitude, content: "A note of gratitude shared with love ♡" };
-      }
-    }
-
-    return NextResponse.json({
-      lastLoveLetter,
-      lastPhotobooth: photoboothRes.data?.[0] || null,
-      lastGratitude,
-      lastQuizHistory: quizHistoryRes.data?.[0] || null,
-      lastCompletedRiddle: riddleSessionRes.data?.[0] || null,
-      lastDisputeVerdict: disputeVerdictRes.data?.[0] || null,
-      activeRiddle: activeRiddleRes.data?.[0] || null,
-      activeDispute: activeDisputeRes.data?.[0] || null
-    });
+    );
   } catch (err: any) {
-    console.error("GET dashboard-summary error:", err);
-    return NextResponse.json({ error: err.message || "Failed to load summary details" }, { status: 500 });
+    console.error("[Dashboard Summary Error]:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

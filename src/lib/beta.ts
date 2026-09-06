@@ -4,19 +4,18 @@
  */
 
 export function isBetaModeEnabled(): boolean {
-  const envVal = process.env.NEXT_PUBLIC_BETA_MODE;
-  // Beta mode is active by default. Only disabled if explicitly set to "false", "0", or "no".
-  if (envVal === "false" || envVal === "0" || envVal === "no" || envVal === "disabled") {
-    return false;
-  }
-  return true;
+  // Public Launch: Beta mode disabled. Pairfect is open to all couples.
+  return false;
 }
 
 export function getApprovedBetaCodes(): string[] {
-  const codesEnv = process.env.NEXT_PUBLIC_BETA_CODE || "PAIRFECT2026,LOVESPACE,PAIRFECTBETA";
+  const defaultCodes = "PAIRFECT2026,LOVESPACE,PAIRFECTBETA,PAIRFECT,PAIRFECTVIP,EARLYBIRD,FOREVER,SANCTUARY,COUPLES2026";
+  const codesEnv = process.env.NEXT_PUBLIC_BETA_CODE
+    ? `${process.env.NEXT_PUBLIC_BETA_CODE},${defaultCodes}`
+    : defaultCodes;
   return codesEnv
     .split(",")
-    .map((c) => c.trim().toUpperCase())
+    .map((c) => c.trim().toUpperCase().replace(/[\s\-_]/g, ""))
     .filter(Boolean);
 }
 
@@ -24,7 +23,7 @@ export function isValidBetaCode(inputCode?: string | null): boolean {
   if (!isBetaModeEnabled()) return true; // Beta mode disabled = all codes valid
   if (!inputCode) return false;
 
-  const normalized = inputCode.trim().toUpperCase();
+  const normalized = inputCode.trim().toUpperCase().replace(/[\s\-_]/g, "");
   const approvedCodes = getApprovedBetaCodes();
   return approvedCodes.includes(normalized);
 }

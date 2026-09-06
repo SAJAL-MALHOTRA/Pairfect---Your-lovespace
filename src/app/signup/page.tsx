@@ -41,16 +41,24 @@ function SignupFormContent() {
   const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Check URL beta code on mount
+  // Check URL or saved beta code on mount
   useEffect(() => {
     if (!betaEnabled) {
       setIsBetaUnlocked(true);
       return;
     }
 
-    if (urlBetaCode && isValidBetaCode(urlBetaCode)) {
+    const savedCode = typeof window !== "undefined" ? localStorage.getItem("pairfect_beta_code") : null;
+    const codeToTest = urlBetaCode || savedCode || "";
+
+    if (codeToTest && isValidBetaCode(codeToTest)) {
+      const clean = codeToTest.trim().toUpperCase();
       setIsBetaUnlocked(true);
-      setBetaCodeInput(urlBetaCode);
+      setBetaCodeInput(clean);
+      try {
+        localStorage.setItem("pairfect_beta_code", clean);
+        document.cookie = `pairfect_beta_code=${encodeURIComponent(clean)}; path=/; max-age=1800; SameSite=Lax; Secure`;
+      } catch (e) {}
     }
   }, [betaEnabled, urlBetaCode]);
 
@@ -66,8 +74,14 @@ function SignupFormContent() {
     e.preventDefault();
     setBetaError(null);
 
-    if (isValidBetaCode(betaCodeInput)) {
+    const clean = betaCodeInput.trim().toUpperCase();
+    if (isValidBetaCode(clean)) {
       setIsBetaUnlocked(true);
+      setBetaCodeInput(clean);
+      try {
+        localStorage.setItem("pairfect_beta_code", clean);
+        document.cookie = `pairfect_beta_code=${encodeURIComponent(clean)}; path=/; max-age=1800; SameSite=Lax; Secure`;
+      } catch (e) {}
     } else {
       setBetaError("Invalid invite code. Check your code or join our early access waitlist below.");
     }
@@ -204,7 +218,11 @@ function SignupFormContent() {
     setError(null);
     setLoading(true);
     if (betaCodeInput) {
-      document.cookie = `pairfect_beta_code=${encodeURIComponent(betaCodeInput)}; path=/; max-age=600; SameSite=Lax`;
+      const clean = betaCodeInput.trim().toUpperCase();
+      document.cookie = `pairfect_beta_code=${encodeURIComponent(clean)}; path=/; max-age=1800; SameSite=Lax; Secure`;
+      try {
+        localStorage.setItem("pairfect_beta_code", clean);
+      } catch (e) {}
     }
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",

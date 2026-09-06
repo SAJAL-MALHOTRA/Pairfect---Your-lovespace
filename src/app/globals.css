@@ -3,8 +3,8 @@
 @theme {
   --font-sans: var(--font-sans), sans-serif;
   --font-display: var(--font-display), serif;
-  --font-heading: var(--font-heading), serif;
-  --font-quote: var(--font-quote), serif;
+  --font-heading: var(--font-heading, var(--font-display)), serif;
+  --font-quote: var(--font-quote, var(--font-display)), serif;
   --font-handwriting: var(--font-handwriting), cursive;
 
   --color-background: var(--background);

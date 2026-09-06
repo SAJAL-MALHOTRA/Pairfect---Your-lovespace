@@ -10,6 +10,9 @@ import {
   RotateCw, ZoomIn, ZoomOut, Move
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import BoothLanding from "@/components/booth/booth-landing";
+import SharedBoothSession from "@/components/booth/shared-booth-session";
+import { BoothSession, PerspectiveMode } from "@/lib/booth/types";
 
 // ── Layout Definitions ──────────────────────────────────────────────────────
 type LayoutType = "strip_4" | "strip_3" | "polaroid_grid" | "anniversary_card" | "journal" | "film_roll";
@@ -150,8 +153,163 @@ function drawImageCover(
 }
 
 export default function PhotoBoothPage() {
-  const { pair } = useAuth();
+  const { user, profile, pair, partner } = useAuth();
   const supabase = createClient();
+
+  // ── Booth Mode ("landing" | "shared" | "solo" | "keepsake") ─────────
+  const [boothMode, setBoothMode] = useState<"landing" | "shared" | "solo" | "keepsake">("landing");
+  const [activeSessionData, setActiveSessionData] = useState<{ id: string; session: BoothSession; isHost: boolean } | null>(null);
+  const [isStartingShared, setIsStartingShared] = useState(false);
+  const [isJoiningShared, setIsJoiningShared] = useState(false);
+  const [sharedError, setSharedError] = useState<string | null>(null);
+
+  const handleStartSharedBooth = async ({ layoutStyle, perspective, totalShots, customPrompt }: {
+    layoutStyle: string;
+    perspective: PerspectiveMode;
+    totalShots: number;
+    customPrompt?: string;
+  }) => {
+    setIsStartingShared(true);
+    setSharedError(null);
+    try {
+      const res = await fetch("/api/booth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          layoutStyle,
+          perspective,
+          totalShots,
+          customPrompt,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.session) {
+        throw new Error(data.error || "Failed to create booth session");
+      }
+      setSelectedLayout(layoutStyle as LayoutType);
+      setActiveSessionData({
+        id: data.session.id,
+        session: data.session,
+        isHost: true,
+      });
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("pairfect_booth_session", data.session.id);
+        window.history.replaceState(null, "", `?session=${data.session.id}`);
+      }
+      setBoothMode("shared");
+    } catch (err: any) {
+      setSharedError(err.message || "Failed to start shared booth");
+    } finally {
+      setIsStartingShared(false);
+    }
+  };
+
+  const handleJoinSharedBooth = async (code: string) => {
+    setIsJoiningShared(true);
+    setSharedError(null);
+    try {
+      const res = await fetch("/api/booth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "join",
+          code,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.session) {
+        throw new Error(data.error || "Failed to join booth");
+      }
+      if (data.session.layout_style) {
+        setSelectedLayout(data.session.layout_style as LayoutType);
+      }
+      setActiveSessionData({
+        id: data.session.id,
+        session: data.session,
+        isHost: data.isHost ?? false,
+      });
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("pairfect_booth_session", data.session.id);
+        window.history.replaceState(null, "", `?session=${data.session.id}`);
+      }
+      setBoothMode("shared");
+    } catch (err: any) {
+      setSharedError(err.message || "Failed to join booth");
+    } finally {
+      setIsJoiningShared(false);
+    }
+  };
+
+  const handleFinishSharedSession = (finalFrames: string[], layout: string) => {
+    setCapturedPhotos(finalFrames);
+    if (layout) {
+      setSelectedLayout(layout as LayoutType);
+    }
+    setStep(3);
+    setBoothMode("keepsake");
+  };
+
+  const handleExitSharedBooth = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("pairfect_booth_session");
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    setActiveSessionData(null);
+    setBoothMode("landing");
+  };
+
+  // ── Auto-Rehydrate Active Session on Tab Refresh ─────────
+  useEffect(() => {
+    if (typeof window === "undefined" || !user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const sessionParam =
+      params.get("session") ||
+      params.get("code") ||
+      sessionStorage.getItem("pairfect_booth_session");
+
+    if (!sessionParam) return;
+
+    const queryKey = sessionParam.length === 4 ? `code=${sessionParam.toUpperCase()}` : `id=${sessionParam}`;
+
+    fetch(`/api/booth?${queryKey}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.session) {
+          const sess = data.session;
+          if (sess.status !== "EXPIRED") {
+            const isHost = sess.host_user_id === user.id;
+            setActiveSessionData({
+              id: sess.id,
+              session: sess,
+              isHost,
+            });
+
+            if (sess.layout_style) {
+              setSelectedLayout(sess.layout_style as LayoutType);
+            }
+
+            if (data.shots && data.shots.length > 0) {
+              setCapturedPhotos(data.shots.map((s: any) => s.image_url));
+            }
+
+            if (sess.status === "FINISHED") {
+              setStep(3);
+              setBoothMode("keepsake");
+            } else {
+              setBoothMode("shared");
+            }
+
+            sessionStorage.setItem("pairfect_booth_session", sess.id);
+            window.history.replaceState(null, "", `?session=${sess.id}`);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("[PhotoBooth] Rehydration error:", err);
+      });
+  }, [user]);
 
   // ── Step Navigation (1: Layout, 2: Capture, 3: Decorate, 4: Export) ─────────
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -800,7 +958,48 @@ export default function PhotoBoothPage() {
         )}
       </AnimatePresence>
 
-      <main className="max-w-4xl mx-auto px-4 py-12 pb-36">
+      {/* ─── VIRTUAL BOOTH LOBBY / LANDING ─── */}
+      {boothMode === "landing" && (
+        <main className="max-w-5xl mx-auto px-4 py-12 pb-36">
+          <BoothLanding
+            onStartSharedBooth={handleStartSharedBooth}
+            onJoinSharedBooth={handleJoinSharedBooth}
+            onStartSoloBooth={() => {
+              setBoothMode("solo");
+              setStep(1);
+            }}
+            isStarting={isStartingShared}
+            isJoining={isJoiningShared}
+            error={sharedError}
+            partnerName={partner?.display_name}
+          />
+        </main>
+      )}
+
+      {/* ─── SHARED SYNCHRONIZED BOOTH SESSION ─── */}
+      {boothMode === "shared" && activeSessionData && (
+        <main className="max-w-5xl mx-auto px-4 py-12 pb-36">
+          <SharedBoothSession
+            sessionId={activeSessionData.id}
+            initialSession={activeSessionData.session}
+            isHost={activeSessionData.isHost}
+            onFinishSession={handleFinishSharedSession}
+            onExit={handleExitSharedBooth}
+          />
+        </main>
+      )}
+
+      {/* ─── CLASSIC SOLO BOOTH & KEEPSAKE CUSTOMIZER (STEPS 1-4) ─── */}
+      {(boothMode === "solo" || boothMode === "keepsake") && (
+        <main className="max-w-4xl mx-auto px-4 py-12 pb-36">
+          <div className="mb-4">
+            <button
+              onClick={() => setBoothMode("landing")}
+              className="text-xs font-mono font-bold text-[var(--burgundy)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+            >
+              ← Virtual Shared Booth Lobby
+            </button>
+          </div>
 
         {/* ─── HEADER ─── */}
         <motion.div
@@ -1428,7 +1627,8 @@ export default function PhotoBoothPage() {
           </motion.div>
         )}
 
-      </main>
+        </main>
+      )}
     </div>
   );
 }

@@ -1,0 +1,31 @@
+<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+  <voice name="en-US-AvaNeural">
+    <prosody rate="-12%">
+      Your relationship has a thousand little moments.
+      <break time="1500ms" />
+      The conversations you had.
+      <break time="1000ms" />
+      The things you never want to forget.
+      <break time="1000ms" />
+      The games you played just to make each other laugh.
+      <break time="1800ms" />
+      Pairfect brings them all into one private space — just for the two of you.
+      <break time="1600ms" />
+      Ask something deeper.
+      <break time="1200ms" />
+      Leave them a letter.
+      <break time="1200ms" />
+      Challenge each other.
+      <break time="1200ms" />
+      Keep the moments that became your story.
+      <break time="2000ms" />
+      Because your relationship isn't just something you live.
+      <break time="1500ms" />
+      It's something worth keeping.
+      <break time="2200ms" />
+      Pairfect.
+      <break time="800ms" />
+      Conversations that connect.
+    </prosody>
+  </voice>
+</speak>
