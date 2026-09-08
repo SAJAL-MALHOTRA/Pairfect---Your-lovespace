@@ -1,7 +1,36 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchCashfreeOrder } from "@/lib/cashfree";
+
+async function resolveUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (token) {
+      try {
+        const admin = createAdminClient();
+        const {
+          data: { user },
+          error,
+        } = await admin.auth.getUser(token);
+        if (!error && user) return user;
+      } catch (err) {
+        console.warn("[order-status] Bearer token verification failed:", err);
+      }
+    }
+  }
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user || null;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: Request) {
   try {
@@ -16,13 +45,9 @@ export async function GET(request: Request) {
     }
 
     // 1. Authenticate user
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await resolveUser(request);
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized. Please sign in to view order status." },
         { status: 401 }

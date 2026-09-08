@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlan } from "@/lib/plans";
@@ -38,16 +38,41 @@ function isRateLimited(userId: string): boolean {
   return false;
 }
 
-export async function POST(request: Request) {
+async function resolveUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (token) {
+      try {
+        const admin = createAdminClient();
+        const {
+          data: { user },
+          error,
+        } = await admin.auth.getUser(token);
+        if (!error && user) return user;
+      } catch (err) {
+        console.warn("[create-order] Bearer token verification failed:", err);
+      }
+    }
+  }
+
   try {
-    // 1. Authenticate user server-side — never trust client-passed user ID
     const supabase = await createClient();
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser();
+    return user || null;
+  } catch {
+    return null;
+  }
+}
 
-    if (authError || !user) {
+export async function POST(request: Request) {
+  try {
+    // 1. Authenticate user server-side (supports both Bearer token and Supabase session cookie)
+    const user = await resolveUser(request);
+
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized. You must be signed in to create an order." },
         { status: 401 }

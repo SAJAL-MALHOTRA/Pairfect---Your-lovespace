@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { load } from "@cashfreepayments/cashfree-js";
+import { createClient } from "@/lib/supabase/client";
 import { Loader2, ShieldCheck, ArrowRight } from "lucide-react";
 
 interface CashfreeCheckoutButtonProps {
@@ -37,12 +38,24 @@ export function CashfreeCheckoutButton({
     setError(null);
 
     try {
+      // Fetch active session from Supabase browser client
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       // 1. Call server endpoint to create order and get payment_session_id
       const res = await fetch("/api/create-order", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           plan_id: planId,
           phone: phone || undefined,

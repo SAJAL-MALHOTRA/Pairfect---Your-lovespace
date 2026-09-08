@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import {
   CheckCircle2,
   XCircle,
@@ -47,9 +48,21 @@ function PaymentStatusContent() {
     setErrorMessage(null);
 
     try {
+      // Pass Bearer token if session exists
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       // Call server-side verification route — never trust the client query param alone
       const res = await fetch(
-        `/api/cashfree/order-status?order_id=${encodeURIComponent(orderId)}`
+        `/api/cashfree/order-status?order_id=${encodeURIComponent(orderId)}`,
+        { headers }
       );
       const json = await res.json().catch(() => null);
 
