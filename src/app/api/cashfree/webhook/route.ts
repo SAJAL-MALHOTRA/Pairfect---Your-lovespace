@@ -1,9 +1,16 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyCashfreeWebhookSignature } from "@/lib/cashfree";
 
 // 5-minute replay window tolerance
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
+export async function GET() {
+  return NextResponse.json({
+    status: "active",
+    message: "Cashfree webhook receiver is online and awaiting POST notifications.",
+  });
+}
 
 export async function POST(request: Request) {
   try {
