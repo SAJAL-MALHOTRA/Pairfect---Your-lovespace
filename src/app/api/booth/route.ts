@@ -25,6 +25,11 @@ function generateBoothCode(length = 4): string {
 
 export async function GET(req: Request) {
   try {
+    const user = await resolveUser(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code")?.trim().toUpperCase();
     const sessionId = searchParams.get("id")?.trim();
@@ -51,6 +56,36 @@ export async function GET(req: Request) {
 
     if (!session) {
       return NextResponse.json({ error: "Booth session not found" }, { status: 404 });
+    }
+
+    const isParticipant =
+      session.host_user_id === user.id ||
+      session.guest_user_id === user.id;
+
+    // Allow lookup of waiting codes for joining
+    const isJoining = Boolean(code && session.guest_user_id === null && session.status === "WAITING");
+
+    if (!isParticipant && !isJoining) {
+      return NextResponse.json(
+        { error: "Forbidden: You are not authorized to view this session" },
+        { status: 403 }
+      );
+    }
+
+    // If joining by code, return safe minimal preview without private photos
+    if (!isParticipant && isJoining) {
+      return NextResponse.json({
+        session: {
+          id: session.id,
+          booth_code: session.booth_code,
+          status: session.status,
+          host_user_id: session.host_user_id,
+          total_shots: session.total_shots,
+          layout_style: session.layout_style,
+          perspective: session.perspective,
+        },
+        shots: [],
+      });
     }
 
     // Also fetch any shots taken for this session

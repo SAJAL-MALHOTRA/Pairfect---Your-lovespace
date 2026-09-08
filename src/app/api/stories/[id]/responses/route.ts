@@ -9,6 +9,17 @@ export async function GET(
     const { id: storyId } = await params;
     const supabase = await createClient();
 
+    // 1. Verify caller has permission to view the parent story
+    const { data: story } = await supabase
+      .from("love_stories")
+      .select("id")
+      .eq("id", storyId)
+      .maybeSingle();
+
+    if (!story) {
+      return NextResponse.json({ error: "Story not found or unauthorized" }, { status: 404 });
+    }
+
     const { data: responses, error } = await supabase
       .from("story_responses")
       .select("*")
@@ -42,6 +53,17 @@ export async function POST(
 
     if (!content || !content.trim()) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
+    }
+
+    // Verify caller has permission to access the parent story
+    const { data: story } = await supabase
+      .from("love_stories")
+      .select("id")
+      .eq("id", storyId)
+      .maybeSingle();
+
+    if (!story) {
+      return NextResponse.json({ error: "Story not found or unauthorized" }, { status: 404 });
     }
 
     const authorDisplay = isAnonymous ? "Anonymous Reader" : (user.user_metadata?.display_name || "Pairfect Reader");

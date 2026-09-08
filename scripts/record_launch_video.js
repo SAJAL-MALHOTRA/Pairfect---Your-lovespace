@@ -4,9 +4,21 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
 
-const url = 'https://vhykmhfrptyjkagwetku.supabase.co';
-const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWttaGZycHR5amthZ3dldGt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mjc1MjksImV4cCI6MjA5OTUwMzUyOX0.jn9tgjKXwq6Mn4VFIxvwlQ1xWu4JXRi_syC6oZVSLKc';
-const serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWttaGZycHR5amthZ3dldGt1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzkyNzUyOSwiZXhwIjoyMDk5NTAzNTI5fQ.lUUfG5r_eqItnQ7ATQTs82PN4EoKRZ8CQ1z_hXEw_y4';
+try {
+  const envPath = path.resolve(__dirname, '../.env.local');
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const [k, ...rest] = trimmed.split('=');
+      process.env[k.trim()] = rest.join('=').trim();
+    }
+  }
+} catch {}
+
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vhykmhfrptyjkagwetku.supabase.co';
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const admin = createClient(url, serviceKey);
 

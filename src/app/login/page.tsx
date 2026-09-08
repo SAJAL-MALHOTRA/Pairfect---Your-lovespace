@@ -74,7 +74,15 @@ function LoginFormContent() {
         setLoading(false);
       } else {
         trackLogin("email");
-        router.push("/dashboard");
+        const redirectParam = searchParams.get("redirect");
+        const safeRedirect =
+          redirectParam &&
+          redirectParam.startsWith("/") &&
+          !redirectParam.startsWith("//") &&
+          !redirectParam.includes("://")
+            ? redirectParam
+            : "/dashboard";
+        router.push(safeRedirect);
       }
     } catch (err: any) {
       setError(err?.message || "An unexpected error occurred. Please try again.");
@@ -86,10 +94,23 @@ function LoginFormContent() {
     setError(null);
     setLoading(true);
     trackLogin("google");
+    const redirectParam = searchParams.get("redirect");
+    const safeRedirect =
+      redirectParam &&
+      redirectParam.startsWith("/") &&
+      !redirectParam.startsWith("//") &&
+      !redirectParam.includes("://")
+        ? redirectParam
+        : "/dashboard";
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    if (safeRedirect !== "/dashboard") {
+      callbackUrl.searchParams.set("next", safeRedirect);
+    }
+
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
       },
     });
     if (oauthError) {

@@ -49,7 +49,17 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/play") ||
     path.startsWith("/match-game") ||
     path.startsWith("/settings") ||
-    path.startsWith("/profile");
+    path.startsWith("/profile") ||
+    path.startsWith("/photo-booth") ||
+    path.startsWith("/riddle") ||
+    path.startsWith("/iq-duel") ||
+    path.startsWith("/vibe-judge") ||
+    path.startsWith("/mixtape") ||
+    path.startsWith("/focus") ||
+    path.startsWith("/calendar") ||
+    path.startsWith("/onboarding") ||
+    path.startsWith("/quiz") ||
+    path.startsWith("/avatars");
 
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
 
@@ -63,7 +73,9 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const redirectUrl = new URL("/login", request.url);
+    redirectUrl.searchParams.set("redirect", path);
+    return NextResponse.redirect(redirectUrl);
   }
 
   if (user && isAuthRoute) {

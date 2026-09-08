@@ -1,15 +1,29 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-const supabaseUrl = "https://vhykmhfrptyjkagwetku.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWttaGZycHR5amthZ3dldGt1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzkyNzUyOSwiZXhwIjoyMDk5NTAzNTI5fQ.lUUfG5r_eqItnQ7ATQTs82PN4EoKRZ8CQ1z_hXEw_y4";
+import fs from 'fs';
+import path from 'path';
+
+try {
+  const envContent = fs.readFileSync('.env.local', 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const [k, ...rest] = trimmed.split('=');
+      process.env[k.trim()] = rest.join('=').trim();
+    }
+  }
+} catch {}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://vhykmhfrptyjkagwetku.supabase.co";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const candidateSecrets = [
+  process.env.APP_ENCRYPTION_KEY,
   "super_secret_key_32_bytes_long_12345",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWttaGZycHR5amthZ3dldGt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mjc1MjksImV4cCI6MjA5OTUwMzUyOX0.jn9tgjKXwq6Mn4VFIxvwlQ1xWu4JXRi_syC6oZVSLKc",
   "pairfect-secure-default-encryption-key-32-chars",
-];
+].filter(Boolean);
 
 function tryDecrypt(encryptedText, secret) {
   if (!encryptedText || !encryptedText.startsWith("enc:")) return null;
