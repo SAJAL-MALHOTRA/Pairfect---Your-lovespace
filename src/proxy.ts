@@ -79,7 +79,15 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const redirectParam = request.nextUrl.searchParams.get("redirect");
+    const safeRedirect =
+      redirectParam &&
+      redirectParam.startsWith("/") &&
+      !redirectParam.startsWith("//") &&
+      !redirectParam.includes("://")
+        ? redirectParam
+        : "/dashboard";
+    return NextResponse.redirect(new URL(safeRedirect, request.url));
   }
 
   return supabaseResponse;

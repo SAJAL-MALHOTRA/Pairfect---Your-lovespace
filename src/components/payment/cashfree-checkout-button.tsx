@@ -38,11 +38,22 @@ export function CashfreeCheckoutButton({
     setError(null);
 
     try {
-      // Fetch active session from Supabase browser client
+      // Fetch active session from Supabase browser client (refresh if needed)
       const supabase = createClient();
-      const {
+      let {
         data: { session },
       } = await supabase.auth.getSession();
+
+      if (!session) {
+        const { data: refreshed } = await supabase.auth.refreshSession().catch(() => ({ data: { session: null } }));
+        session = refreshed?.session || null;
+      }
+
+      if (!session) {
+        // User is genuinely not signed in
+        router.push(`/login?redirect=${encodeURIComponent("/checkout")}`);
+        return;
+      }
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -66,8 +77,9 @@ export function CashfreeCheckoutButton({
       const data = await res.json().catch(() => null);
 
       if (res.status === 401) {
-        // User not logged in, redirect to login
-        router.push(`/login?redirect=${encodeURIComponent("/checkout")}`);
+        setError(data?.error || "Your session may have expired. Please sign in again.");
+        onError?.(data?.error);
+        setLoading(false);
         return;
       }
 

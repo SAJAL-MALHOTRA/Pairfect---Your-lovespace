@@ -127,10 +127,16 @@ export async function POST(request: Request) {
     const randomSuffix = Math.random().toString(36).substring(2, 7);
     const orderId = `cf_${plan.id}_${timestamp}_${randomSuffix}`;
 
-    const baseUrl =
+    let baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL ||
       request.headers.get("origin") ||
-      "http://localhost:3000";
+      "https://www.pairfect.site";
+
+    const isProd =
+      (process.env.CASHFREE_ENV || "").toLowerCase() === "production";
+    if (isProd && (baseUrl.startsWith("http://") || baseUrl.includes("localhost"))) {
+      baseUrl = "https://www.pairfect.site";
+    }
 
     const returnUrl = `${baseUrl}/payment-status?order_id={order_id}`;
 
