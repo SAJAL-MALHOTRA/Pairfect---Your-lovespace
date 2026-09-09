@@ -1,13 +1,29 @@
 import { Cashfree, CFEnvironment } from "cashfree-pg";
 
-let cashfreeInstance: Cashfree | null = null;
+function cleanEnv(val: string | undefined): string {
+  if (!val) return "";
+  let clean = val.trim();
+  if (
+    (clean.startsWith('"') && clean.endsWith('"')) ||
+    (clean.startsWith("'") && clean.endsWith("'"))
+  ) {
+    clean = clean.slice(1, -1).trim();
+  }
+  return clean;
+}
 
 export function getResolvedCashfreeEnv(): {
   environment: CFEnvironment;
   mode: "production" | "sandbox";
 } {
-  const secretKey = process.env.CASHFREE_SECRET_KEY || "";
-  const explicitEnv = (process.env.CASHFREE_ENV || "").toLowerCase().trim();
+  const secretKey = cleanEnv(
+    process.env.CASHFREE_SECRET_KEY ||
+    process.env.CASHFREE_SECRET ||
+    process.env.CASHFREE_API_KEY
+  );
+  const explicitEnv = cleanEnv(
+    process.env.CASHFREE_ENV || process.env.NEXT_PUBLIC_CASHFREE_ENV
+  ).toLowerCase();
 
   // 1. If key is explicitly production (cfsk_ma_pr_ or contains _pr_), always use production
   if (secretKey.startsWith("cfsk_ma_pr_") || secretKey.includes("_pr_")) {
@@ -28,24 +44,25 @@ export function getResolvedCashfreeEnv(): {
 }
 
 export function getCashfreeClient(): Cashfree {
-  if (cashfreeInstance) {
-    return cashfreeInstance;
-  }
-
-  const appId = process.env.CASHFREE_APP_ID || "";
-  const secretKey = process.env.CASHFREE_SECRET_KEY || "";
+  const appId = cleanEnv(
+    process.env.CASHFREE_APP_ID ||
+    process.env.NEXT_PUBLIC_CASHFREE_APP_ID ||
+    process.env.CASHFREE_CLIENT_ID
+  );
+  const secretKey = cleanEnv(
+    process.env.CASHFREE_SECRET_KEY ||
+    process.env.CASHFREE_SECRET ||
+    process.env.CASHFREE_API_KEY
+  );
   const { environment, mode } = getResolvedCashfreeEnv();
 
   if (!appId || !secretKey) {
     console.warn(
-      "[Cashfree Warning] CASHFREE_APP_ID or CASHFREE_SECRET_KEY is not set. Cashfree API calls will fail."
+      "[Cashfree Warning] CASHFREE_APP_ID or CASHFREE_SECRET_KEY is not detected in server environment."
     );
-  } else {
-    console.log(`[Cashfree Client] Initialized in ${mode.toUpperCase()} mode (CFEnvironment.${mode === "production" ? "PRODUCTION" : "SANDBOX"})`);
   }
 
-  cashfreeInstance = new Cashfree(environment, appId, secretKey);
-  return cashfreeInstance;
+  return new Cashfree(environment, appId, secretKey);
 }
 
 export interface CreateOrderParams {

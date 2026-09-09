@@ -4,6 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlan } from "@/lib/plans";
 import { createCashfreeOrder, getResolvedCashfreeEnv } from "@/lib/cashfree";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 // Sliding-window rate limiter per user (matching waitlist pattern in src/app/api/beta/waitlist/route.ts)
 const rateLimitMap = new Map<string, number[]>();
 const WINDOW_MS = 60 * 1000; // 1 minute
@@ -139,6 +142,30 @@ export async function POST(request: Request) {
     }
 
     const returnUrl = `${baseUrl}/payment-status?order_id={order_id}`;
+
+    // 5b. Pre-flight check: ensure credentials exist in process.env
+    const rawAppId =
+      process.env.CASHFREE_APP_ID ||
+      process.env.NEXT_PUBLIC_CASHFREE_APP_ID ||
+      process.env.CASHFREE_CLIENT_ID;
+    const rawSecretKey =
+      process.env.CASHFREE_SECRET_KEY ||
+      process.env.CASHFREE_SECRET ||
+      process.env.CASHFREE_API_KEY;
+
+    if (!rawAppId?.trim() || !rawSecretKey?.trim()) {
+      console.error("[create-order] Missing Cashfree credentials in runtime:", {
+        hasAppId: !!rawAppId?.trim(),
+        hasSecretKey: !!rawSecretKey?.trim(),
+      });
+      return NextResponse.json(
+        {
+          error:
+            "Cashfree credentials missing in server runtime. Please ensure CASHFREE_APP_ID and CASHFREE_SECRET_KEY are assigned to 'Production' in Vercel and redeploy.",
+        },
+        { status: 500 }
+      );
+    }
 
     // 6. Call Cashfree PGCreateOrder via Node SDK
     const cashfreeOrder = await createCashfreeOrder({
