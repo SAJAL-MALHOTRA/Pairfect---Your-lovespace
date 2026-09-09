@@ -84,7 +84,8 @@ export async function proxy(request: NextRequest) {
       redirectParam &&
       redirectParam.startsWith("/") &&
       !redirectParam.startsWith("//") &&
-      !redirectParam.includes("://")
+      !redirectParam.includes("://") &&
+      !redirectParam.includes("\\")
         ? redirectParam
         : "/dashboard";
     return NextResponse.redirect(new URL(safeRedirect, request.url));

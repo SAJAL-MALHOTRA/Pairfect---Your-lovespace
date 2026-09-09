@@ -267,7 +267,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (isPendingOnboarding) {
           router.push("/onboarding");
         } else {
-          router.push("/dashboard");
+          let safeRedirect = "/dashboard";
+          if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const redirectParam = params.get("redirect");
+            if (
+              redirectParam &&
+              redirectParam.startsWith("/") &&
+              !redirectParam.startsWith("//") &&
+              !redirectParam.includes("://") &&
+              !redirectParam.includes("\\")
+            ) {
+              safeRedirect = redirectParam;
+            }
+          }
+          router.push(safeRedirect);
         }
       }
       // 2. If user hasn't finished pairing, prevent accessing protected dashboard routes

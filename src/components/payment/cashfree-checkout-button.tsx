@@ -161,7 +161,15 @@ export function CashfreeCheckoutButton({
 
       console.log("[Cashfree Checkout Step 8] cashfree.checkout() call resolved:", checkoutResult);
 
-      onSuccess?.(data.order_id);
+      if (checkoutResult?.error) {
+        console.warn("[Cashfree Checkout Modal Dismissed/Error]:", checkoutResult.error);
+        const errorMsg = checkoutResult.error.message || "Payment cancelled or dismissed.";
+        setError(errorMsg);
+        onError?.(errorMsg);
+      } else {
+        onSuccess?.(data.order_id);
+      }
+      setLoading(false);
     } catch (err: any) {
       console.error("[Cashfree Checkout Exception]:", err);
       const msg =
