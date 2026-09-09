@@ -131,13 +131,14 @@ export function CashfreeCheckoutButton({
         return;
       }
 
-      // Step 3: Initialize Cashfree Web SDK
-      const envMode =
+      // Step 3: Initialize Cashfree Web SDK (strictly synced with server order environment)
+      const envMode: "production" | "sandbox" =
+        data?.cf_mode === "production" ||
         process.env.NEXT_PUBLIC_CASHFREE_ENV === "production"
           ? "production"
           : "sandbox";
 
-      console.log("[Cashfree Checkout Step 6] Loading Cashfree SDK with mode:", envMode);
+      console.log("[Cashfree Checkout Step 6] Loading Cashfree SDK with mode:", envMode, "(server mode:", data?.cf_mode, ")");
 
       const cashfree = await load({
         mode: envMode,

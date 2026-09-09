@@ -1,6 +1,31 @@
-﻿import { Cashfree, CFEnvironment } from "cashfree-pg";
+import { Cashfree, CFEnvironment } from "cashfree-pg";
 
 let cashfreeInstance: Cashfree | null = null;
+
+export function getResolvedCashfreeEnv(): {
+  environment: CFEnvironment;
+  mode: "production" | "sandbox";
+} {
+  const secretKey = process.env.CASHFREE_SECRET_KEY || "";
+  const explicitEnv = (process.env.CASHFREE_ENV || "").toLowerCase().trim();
+
+  // 1. If key is explicitly production (cfsk_ma_pr_ or contains _pr_), always use production
+  if (secretKey.startsWith("cfsk_ma_pr_") || secretKey.includes("_pr_")) {
+    return { environment: CFEnvironment.PRODUCTION, mode: "production" };
+  }
+
+  // 2. If key is explicitly sandbox (cfsk_ma_test_ or contains _test_), always use sandbox
+  if (secretKey.startsWith("cfsk_ma_test_") || secretKey.includes("_test_")) {
+    return { environment: CFEnvironment.SANDBOX, mode: "sandbox" };
+  }
+
+  // 3. Fallback to explicit env var or sandbox default
+  if (explicitEnv === "production") {
+    return { environment: CFEnvironment.PRODUCTION, mode: "production" };
+  }
+
+  return { environment: CFEnvironment.SANDBOX, mode: "sandbox" };
+}
 
 export function getCashfreeClient(): Cashfree {
   if (cashfreeInstance) {
@@ -9,18 +34,17 @@ export function getCashfreeClient(): Cashfree {
 
   const appId = process.env.CASHFREE_APP_ID || "";
   const secretKey = process.env.CASHFREE_SECRET_KEY || "";
-  const env = (process.env.CASHFREE_ENV || "sandbox").toLowerCase();
-
-  const cfEnvironment =
-    env === "production" ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX;
+  const { environment, mode } = getResolvedCashfreeEnv();
 
   if (!appId || !secretKey) {
     console.warn(
       "[Cashfree Warning] CASHFREE_APP_ID or CASHFREE_SECRET_KEY is not set. Cashfree API calls will fail."
     );
+  } else {
+    console.log(`[Cashfree Client] Initialized in ${mode.toUpperCase()} mode (CFEnvironment.${mode === "production" ? "PRODUCTION" : "SANDBOX"})`);
   }
 
-  cashfreeInstance = new Cashfree(cfEnvironment, appId, secretKey);
+  cashfreeInstance = new Cashfree(environment, appId, secretKey);
   return cashfreeInstance;
 }
 

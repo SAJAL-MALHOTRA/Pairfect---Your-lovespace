@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlan } from "@/lib/plans";
-import { createCashfreeOrder } from "@/lib/cashfree";
+import { createCashfreeOrder, getResolvedCashfreeEnv } from "@/lib/cashfree";
 
 // Sliding-window rate limiter per user (matching waitlist pattern in src/app/api/beta/waitlist/route.ts)
 const rateLimitMap = new Map<string, number[]>();
@@ -184,6 +184,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const { mode: cfMode } = getResolvedCashfreeEnv();
+
     return NextResponse.json({
       success: true,
       order_id: orderId,
@@ -191,6 +193,7 @@ export async function POST(request: Request) {
       amount: plan.amount,
       currency: plan.currency,
       plan_name: plan.name,
+      cf_mode: cfMode,
     });
   } catch (err: any) {
     console.error("[Cashfree create-order error]:", err);
