@@ -51,3 +51,6 @@ next-env.d.ts
 /videos-test
 /public/originals_backup
 
+
+*.docx
+
