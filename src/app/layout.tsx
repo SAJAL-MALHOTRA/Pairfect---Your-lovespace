@@ -52,6 +52,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="light"
+      style={{ colorScheme: "light" }}
       className={`${inter.variable} ${playfair.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[var(--bg)] text-[var(--text)]">

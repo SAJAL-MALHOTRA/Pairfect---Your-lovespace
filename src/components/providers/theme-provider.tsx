@@ -1,44 +1,39 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
 
-type Theme = "light" | "dark";
+type Theme = "light";
 
-const ThemeContext = createContext<{
+interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
-} | null>(null);
+}
+
+const ThemeContext = createContext<ThemeContextType>({
+  theme: "light",
+  toggleTheme: () => {},
+});
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
-
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme;
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const resolved = saved || (systemDark ? "dark" : "light");
-    setTheme(resolved);
-    document.documentElement.classList.toggle("dark", resolved === "dark");
+    // Purge any stored dark theme preference and guarantee light mode
+    try {
+      localStorage.removeItem("theme");
+    } catch {
+      // ignore in environments with restricted storage
+    }
+    document.documentElement.classList.remove("dark");
+    document.documentElement.style.colorScheme = "light";
   }, []);
 
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("theme", next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-  };
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: "light", toggleTheme: () => {} }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
-  if (!context) {
-    // Return a safe fallback during SSR/rendering trace if context isn't fully initialized
-    return { theme: "light" as Theme, toggleTheme: () => {} };
-  }
-  return context;
+  return context || { theme: "light", toggleTheme: () => {} };
 }
