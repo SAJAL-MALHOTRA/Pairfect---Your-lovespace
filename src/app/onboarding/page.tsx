@@ -5,7 +5,6 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Heart, Sparkles, Copy, Check, LogOut, ArrowRight, Loader2, Link2, Info } from "lucide-react";
-import { isValidBetaCode } from "@/lib/beta";
 
 export default function OnboardingPage() {
   const { user, profile, pair, signOut, refreshSession } = useAuth();
@@ -189,8 +188,8 @@ function generateSecureInviteCode(length = 6): string {
     try {
       const cleanedCode = inputCode.trim().toUpperCase();
 
-      if (isValidBetaCode(cleanedCode)) {
-        setError("PAIRFECT2026 is your app Beta Access code, not your partner's invite code! To link with your partner: one of you clicks 'Create a new pair' to get a 6-character code (e.g. A1B2C3), and the other enters that code here.");
+      if (cleanedCode === "PAIRFECT2026") {
+        setError("PAIRFECT2026 was the early access beta code. Please enter the 6-character invite code from your partner's screen (e.g. 6VAFPR).");
         setLoading(false);
         return;
       }

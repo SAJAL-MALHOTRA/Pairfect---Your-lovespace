@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { isValidBetaCode } from "@/lib/beta";
 
 export async function POST(req: Request) {
   try {
@@ -40,10 +39,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Database error checking invite code." }, { status: 500 });
     }
 
-    if (isValidBetaCode(code)) {
+    if (code === "PAIRFECT2026") {
       return NextResponse.json({
         success: false,
-        error: `${code} is your app Beta Access Code, not your partner's invite code! One partner must click "Create a new pair" to generate a 6-character code (e.g. A1B2C3), and the other partner enters that code here.`,
+        error: `${code} was the early access beta code, not your partner's invite code! One partner must click "Create a new pair" to generate a 6-character code (e.g. 6VAFPR), and the other partner enters that code here.`,
       }, { status: 400 });
     }
 

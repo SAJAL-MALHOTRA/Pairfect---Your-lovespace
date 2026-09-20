@@ -19,13 +19,20 @@ export function getApprovedBetaCodes(): string[] {
     .filter(Boolean);
 }
 
-export function isValidBetaCode(inputCode?: string | null): boolean {
-  if (!isBetaModeEnabled()) return true; // Beta mode disabled = all codes valid
+/**
+ * Checks if a string specifically matches one of the known Beta Access Codes
+ * (e.g. PAIRFECT2026, LOVESPACE, etc.), regardless of whether Beta mode is currently enabled.
+ */
+export function isKnownBetaCode(inputCode?: string | null): boolean {
   if (!inputCode) return false;
-
   const normalized = inputCode.trim().toUpperCase().replace(/[\s\-_]/g, "");
   const approvedCodes = getApprovedBetaCodes();
   return approvedCodes.includes(normalized);
+}
+
+export function isValidBetaCode(inputCode?: string | null): boolean {
+  if (!isBetaModeEnabled()) return true; // Beta mode disabled = all codes valid
+  return isKnownBetaCode(inputCode);
 }
 
 export function isEmailWhitelisted(email?: string | null): boolean {
