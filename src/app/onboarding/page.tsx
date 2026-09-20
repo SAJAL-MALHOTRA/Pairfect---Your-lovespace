@@ -387,9 +387,13 @@ function generateSecureInviteCode(length = 6): string {
                 <input
                   type="text"
                   required
+                  maxLength={6}
                   placeholder="E.G. A1B2C3"
                   value={inputCode}
-                  onChange={(e) => setInputCode(e.target.value)}
+                  onChange={(e) => {
+                    setInputCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+                    if (error) setError(null);
+                  }}
                   className="block w-full text-center uppercase tracking-widest font-mono text-2xl py-4 border border-[var(--border)] rounded-2xl bg-[var(--paper-warm)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30 text-[var(--text)]"
                 />
               </div>
