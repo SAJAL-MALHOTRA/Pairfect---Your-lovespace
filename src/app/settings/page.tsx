@@ -524,7 +524,7 @@ export default function SettingsPage() {
         {/* Footer */}
         <div className="text-center pt-4">
           <p className="text-[9px] font-mono text-[#C4B8A8] dark:text-[#5A5045]">
-            Pairfect v{APP_VERSION} · <a href="mailto:support@pairfect.site" className="hover:text-[#8A7B6E] transition-colors">support@pairfect.site</a>
+            Pairfect v{APP_VERSION} · <a href="mailto:pairfect.site@yahoo.com" className="hover:text-[#8A7B6E] transition-colors">pairfect.site@yahoo.com</a>
           </p>
         </div>
       </main>

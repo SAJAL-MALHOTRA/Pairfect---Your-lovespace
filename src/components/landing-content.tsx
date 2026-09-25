@@ -1370,7 +1370,7 @@ export default function LandingContent() {
             <Link href="/terms" className="hover:text-[var(--text)] transition-colors">
               Terms of Service
             </Link>
-            <a href="mailto:support@pairfect.app" className="hover:text-[var(--text)] transition-colors">
+            <a href="mailto:pairfect.site@yahoo.com" className="hover:text-[var(--text)] transition-colors">
               Contact
             </a>
           </div>

@@ -239,7 +239,7 @@ export default function PrivacyPolicyPage() {
               If you have any questions, privacy concerns, or requests regarding your personal data, please contact our privacy team:
             </p>
             <div className="p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border-warm)] font-mono text-xs text-[var(--ink-dark)] space-y-1">
-              <p><strong>Email:</strong> support@pairfect.app</p>
+              <p><strong>Email:</strong> pairfect.site@yahoo.com</p>
               <p><strong>Subject:</strong> Privacy Inquiry</p>
             </div>
           </section>
