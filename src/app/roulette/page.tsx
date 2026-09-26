@@ -89,8 +89,8 @@ const PRESETS: WheelPreset[] = [
       { label: "Disney", fullTitle: "Childhood Disney favorite", emoji: "🏰" },
       { label: "True Crime", fullTitle: "Gripping true crime documentary", emoji: "🔍" },
       { label: "Sitcom", fullTitle: "Binge 4 comfort sitcom episodes", emoji: "🛋️" },
-      { label: "Sci-Fi", fullTitle: "Mind-bending sci-fi journey", emoji: "🪐" },
-      { label: "Indie Film", fullTitle: "Critically acclaimed indie gem", emoji: "🎬" },
+      { label: "Sci-Fi", fullTitle: "Mind-bending sci-fi movie", emoji: "🪐" },
+      { label: "Indie Film", fullTitle: "Critically acclaimed indie film", emoji: "🎬" },
     ],
   },
   {
@@ -106,7 +106,7 @@ const PRESETS: WheelPreset[] = [
       { label: "Trash Run", fullTitle: "Take out all the trash bins", emoji: "🗑️" },
       { label: "10 Compliments", fullTitle: "Shower partner with 10 sweet compliments", emoji: "💖" },
       { label: "Cook Meal", fullTitle: "Cook breakfast in bed tomorrow", emoji: "🍳" },
-      { label: "Be DJ", fullTitle: "Curate this evening's soundscape", emoji: "🎵" },
+      { label: "Be DJ", fullTitle: "Pick tonight's playlist", emoji: "🎵" },
     ],
   },
   {
@@ -208,7 +208,10 @@ export default function RoulettePage() {
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const [winner, setWinner] = useState<RouletteOption | null>(null);
+  const [winningIndex, setWinningIndex] = useState<number | null>(null);
+  const [confettiBurst, setConfettiBurst] = useState(false);
   const [savedToVault, setSavedToVault] = useState(false);
+  const [vetoUsed, setVetoUsed] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [partnerOnline, setPartnerOnline] = useState(false);
 
@@ -241,7 +244,7 @@ export default function RoulettePage() {
       })
       .on("broadcast", { event: "spin-wheel" }, (payload: any) => {
         if (payload?.payload?.targetRotation !== undefined) {
-          executeSpin(payload.payload.targetRotation, payload.payload.winner);
+          executeSpin(payload.payload.targetRotation, payload.payload.winner, payload.payload.winningIndex);
         }
       })
       .subscribe(async (status: any) => {
@@ -266,7 +269,9 @@ export default function RoulettePage() {
     setItems(preset.items);
     setIsCustomMode(false);
     setWinner(null);
+    setWinningIndex(null);
     setSavedToVault(false);
+    setVetoUsed(false);
   };
 
   // Add custom item
@@ -282,6 +287,7 @@ export default function RoulettePage() {
     setCustomInput("");
     setIsCustomMode(true);
     setWinner(null);
+    setWinningIndex(null);
   };
 
   // Remove item
@@ -290,6 +296,7 @@ export default function RoulettePage() {
     setItems(items.filter((_, i) => i !== idx));
     setIsCustomMode(true);
     setWinner(null);
+    setWinningIndex(null);
   };
 
   // Reset to default preset
@@ -298,64 +305,81 @@ export default function RoulettePage() {
     setItems(activePreset.items);
     setIsCustomMode(false);
     setWinner(null);
+    setWinningIndex(null);
   };
 
-  // Execute wheel spin with physical sound ticks and final winner decree
-  const executeSpin = (targetRotation: number, winningOption: RouletteOption) => {
+  // Execute wheel spin with realistic decelerating audio clicks and celebratory victory fanfare
+  const executeSpin = (targetRotation: number, winningOption: RouletteOption, winIdx?: number) => {
     setIsSpinning(true);
     setWinner(null);
+    setWinningIndex(null);
     setSavedToVault(false);
+    setConfettiBurst(false);
     setRotation(targetRotation);
 
+    // Dynamic decelerating audio click scheduler (follows cubic deceleration curve)
     if (soundEnabled && audioCtxRef.current) {
       if (audioCtxRef.current.state === "suspended") {
         audioCtxRef.current.resume();
       }
-      let count = 0;
-      const interval = setInterval(() => {
-        count++;
+      const startTime = Date.now();
+      const totalDuration = 4500;
+
+      const scheduleTick = () => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= totalDuration) return;
+
         playClick(audioCtxRef.current);
-        if (count >= 32) clearInterval(interval);
-      }, 95 + count * 6);
+
+        const progress = elapsed / totalDuration;
+        // Exponential deceleration: starts crisp at 30ms, ramps to 340ms at tail end
+        const nextDelay = 30 + Math.pow(progress, 2.6) * 320;
+        setTimeout(scheduleTick, nextDelay);
+      };
+
+      scheduleTick();
     }
 
     setTimeout(() => {
       setIsSpinning(false);
       setWinner(winningOption);
+      if (winIdx !== undefined) setWinningIndex(winIdx);
+      setConfettiBurst(true);
       if (soundEnabled) playFanfare(audioCtxRef.current);
+      setTimeout(() => setConfettiBurst(false), 3800);
     }, 4500);
   };
 
-  // Spin calculation (100% physically deterministic: pointer at 12 o'clock always matches winner)
+  // Deterministic spin calculation: winning index aligns under top pointer (12 o'clock) every time
   const handleSpinClick = () => {
     if (isSpinning || items.length === 0) return;
 
     const sliceAngle = 360 / items.length;
-    // Extra full spins (5-7 full rotations)
+    // Extra full spins (5-7 full rotations) for dramatic tension
     const extraFullRotations = (5 + Math.floor(Math.random() * 3)) * 360;
     // Choose random winning index
     const winningIdx = Math.floor(Math.random() * items.length);
     const chosenOption = items[winningIdx];
 
-    // To place winningIdx under top pointer (12 o'clock / 0 deg in our SVG orientation):
-    // In our SVG layout, slice 0 center is at 0 degrees (top pointer).
-    // So slice i center is at i * sliceAngle.
-    // To rotate slice i to the top, we rotate by (360 - i * sliceAngle).
-    const alignmentOffset = (360 - (winningIdx * sliceAngle)) % 360;
-    // Add subtle jitter inside the wedge so it doesn't always land at dead center
-    const jitter = (Math.random() - 0.5) * (sliceAngle * 0.6);
-    const nextRotation = rotation + extraFullRotations + alignmentOffset + jitter;
+    // In SVG layout, slice i center is at i * sliceAngle.
+    // For slice i to end up at 0 deg (12 o'clock), the wheel's orientation modulo 360 must be (360 - i * sliceAngle) % 360.
+    const targetNormalized = (360 - ((winningIdx * sliceAngle) % 360)) % 360;
+    const currentNormalized = ((rotation % 360) + 360) % 360;
+    const delta = (targetNormalized - currentNormalized + 360) % 360;
+    // Subtle jitter inside the wedge (±20% of slice width) so it feels natural, never landing outside winning wedge
+    const jitter = (Math.random() - 0.5) * (sliceAngle * 0.4);
+    const nextRotation = rotation + extraFullRotations + delta + jitter;
 
     // Broadcast to partner if paired
     if (pair?.id) {
       supabase.channel(`roulette:${pair.id}`).send({
         type: "broadcast",
         event: "spin-wheel",
-        payload: { targetRotation: nextRotation, winner: chosenOption },
+        payload: { targetRotation: nextRotation, winner: chosenOption, winningIndex: winningIdx },
       });
     }
 
-    executeSpin(nextRotation, chosenOption);
+    executeSpin(nextRotation, chosenOption, winningIdx);
   };
 
   // Save to Memory Vault
@@ -452,10 +476,30 @@ export default function RoulettePage() {
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-4xl">
           
           {/* LEFT: Physical Astrolabe Wheel Card */}
-          <div className="lg:col-span-7 flex flex-col items-center justify-center p-6 sm:p-8 rounded-[32px] bg-[#FAF7F2] border border-[#EAD8CD] shadow-xl relative paper-grain">
+          <div className="lg:col-span-7 flex flex-col items-center justify-center p-6 sm:p-8 rounded-[32px] bg-[#FAF7F2] border border-[#EAD8CD] shadow-xl relative paper-grain overflow-hidden">
             
-            {/* Elegant Brass Pointer Needle at 12 o'clock */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none drop-shadow-md">
+            {/* Dynamic Brass Pointer Needle with Mechanical Tick Physics */}
+            <motion.div
+              className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none drop-shadow-md"
+              animate={
+                isSpinning
+                  ? {
+                      rotate: [0, -14, 7, -12, 8, -5, 0],
+                      transition: {
+                        repeat: Infinity,
+                        duration: 0.14,
+                        ease: "easeInOut",
+                      },
+                    }
+                  : winner
+                  ? {
+                      rotate: [14, -5, 0],
+                      transition: { type: "spring", stiffness: 450, damping: 15 },
+                    }
+                  : { rotate: 0 }
+              }
+              style={{ transformOrigin: "14px 4px" }}
+            >
               <svg width="28" height="34" viewBox="0 0 28 34" fill="none">
                 <path
                   d="M14 34L2 10C-1 5 2 0 8 0H20C26 0 29 5 26 10L14 34Z"
@@ -472,12 +516,87 @@ export default function RoulettePage() {
                   </linearGradient>
                 </defs>
               </svg>
-            </div>
+            </motion.div>
 
-            {/* SVG Interactive Wheel */}
-            <div className="relative w-[320px] h-[320px] sm:w-[350px] sm:h-[350px] flex items-center justify-center mt-3">
+            {/* Wheel Stage with Balanced 360° Depth & Static Bezel (Shadow never rotates or skews!) */}
+            <div className="relative w-[320px] h-[320px] sm:w-[355px] sm:h-[355px] flex items-center justify-center mt-3">
+              {/* Concentric Ambient Shadow — anchored 360° around the wheel */}
               <div
-                className="w-full h-full rounded-full shadow-2xl transition-transform ease-out"
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  boxShadow:
+                    "0 0 0 1px rgba(180, 140, 120, 0.22), 0 10px 32px -4px rgba(139, 92, 73, 0.16), 0 2px 8px rgba(139, 92, 73, 0.08), inset 0 2px 6px rgba(255, 255, 255, 0.8)",
+                }}
+              />
+
+              {/* Outer Static Antique Brass Rim Casing */}
+              <div
+                className="absolute -inset-2.5 rounded-full pointer-events-none"
+                style={{
+                  border: "2px solid rgba(212, 175, 55, 0.35)",
+                  boxShadow: "inset 0 1px 3px rgba(255, 255, 255, 0.9), 0 4px 16px rgba(139, 92, 73, 0.08)",
+                }}
+              />
+
+              {/* Dynamic Motion Energy Aura while spinning */}
+              {isSpinning && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.98, 1.02, 0.98] }}
+                  transition={{ repeat: Infinity, duration: 0.9, ease: "easeInOut" }}
+                  className="absolute -inset-3.5 rounded-full pointer-events-none"
+                  style={{
+                    background: "radial-gradient(circle, rgba(232, 82, 125, 0.16) 40%, transparent 72%)",
+                  }}
+                />
+              )}
+
+              {/* Celebratory Particle Burst on Win */}
+              <AnimatePresence>
+                {confettiBurst && (
+                  <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center overflow-visible">
+                    {Array.from({ length: 24 }).map((_, i) => {
+                      const angle = (i / 24) * 360;
+                      const rad = (angle * Math.PI) / 180;
+                      const dist = 110 + (i % 3) * 35;
+                      const dx = dist * Math.cos(rad);
+                      const dy = dist * Math.sin(rad);
+                      const icons = ["♥", "✦", "★", "💖", "✨", "🌸"];
+                      const icon = icons[i % icons.length];
+                      const colors = ["#FF6B95", "#E8527D", "#E0A948", "#F9D976", "#B82B54"];
+                      const color = colors[i % colors.length];
+
+                      return (
+                        <motion.div
+                          key={`burst-${i}`}
+                          initial={{ x: 0, y: 0, scale: 0.2, opacity: 1, rotate: 0 }}
+                          animate={{
+                            x: dx,
+                            y: dy + 20,
+                            scale: [0.2, 1.3, 0.8],
+                            opacity: [1, 1, 0],
+                            rotate: Math.random() * 360,
+                          }}
+                          transition={{
+                            duration: 1.8 + (i % 4) * 0.3,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                          className="absolute font-bold select-none"
+                          style={{ color, fontSize: i % 2 === 0 ? "18px" : "13px" }}
+                        >
+                          {icon}
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </AnimatePresence>
+
+              {/* The Rotating Wheel Disc (Clean, strictly NO rotating box-shadows!) */}
+              <div
+                className="w-full h-full rounded-full transition-transform ease-out will-change-transform cursor-pointer select-none"
+                onClick={!isSpinning ? handleSpinClick : undefined}
+                title={!isSpinning ? "Click or tap to spin the wheel!" : undefined}
                 style={{
                   transform: `rotate(${rotation}deg)`,
                   transitionDuration: isSpinning ? "4500ms" : "0ms",
@@ -506,12 +625,10 @@ export default function RoulettePage() {
 
                   {/* Wheel Wedges */}
                   {items.map((item, idx) => {
-                    // In our coordinates, slice 0 starts at -sliceAngle/2 so its center is 0 deg (12 o'clock pointer)
                     const mid = idx * sliceAngle;
                     const startAngle = mid - sliceAngle / 2;
                     const endAngle = mid + sliceAngle / 2;
 
-                    // Convert polar to cartesian (0 deg = 12 o'clock, so -90 in standard trig)
                     const radStart = ((startAngle - 90) * Math.PI) / 180;
                     const radEnd = ((endAngle - 90) * Math.PI) / 180;
 
@@ -522,30 +639,41 @@ export default function RoulettePage() {
 
                     const pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`;
                     const theme = PALETTE[idx % PALETTE.length];
+                    const isWinnerSlice = !isSpinning && winner && winningIndex === idx;
 
                     // Smart Spoke Typography: Text is NEVER upside down!
-                    // If the angle falls on the lower half (90 to 270 degrees), we flip it 180 so it reads naturally
+                    // Slices on bottom half (90° to 270° inclusive) flip 180° with swapped radial offsets so emoji is always near rim
                     const normalizedMid = (mid % 360 + 360) % 360;
-                    const isFlipped = normalizedMid > 90 && normalizedMid < 270;
+                    const isFlipped = normalizedMid >= 90 && normalizedMid <= 270;
 
                     return (
                       <g key={idx}>
                         {/* Wedge fill */}
                         <path
                           d={pathData}
-                          fill={theme.fill}
-                          stroke="#E0CDBC"
-                          strokeWidth="1.5"
+                          fill={isWinnerSlice ? "#FFE8F0" : theme.fill}
+                          stroke={isWinnerSlice ? "#E8527D" : "#E0CDBC"}
+                          strokeWidth={isWinnerSlice ? "3" : "1.5"}
                         />
+
+                        {/* Winner wedge highlight halo */}
+                        {isWinnerSlice && (
+                          <path
+                            d={pathData}
+                            fill="rgba(232, 82, 125, 0.12)"
+                            stroke="#FF6B95"
+                            strokeWidth="3.5"
+                            className="animate-pulse"
+                          />
+                        )}
 
                         {/* Wedge spoke group rotated to slice mid angle */}
                         <g transform={`rotate(${mid}, ${cx}, ${cy})`}>
-                          {/* Inner label + emoji positioned along the spoke */}
                           <g transform={`translate(${cx}, ${cy - r * 0.62})`}>
                             <g transform={isFlipped ? "rotate(180)" : "rotate(0)"}>
                               <text
                                 x="0"
-                                y="-10"
+                                y={isFlipped ? "10" : "-10"}
                                 textAnchor="middle"
                                 fontSize="16"
                                 dominantBaseline="central"
@@ -554,11 +682,11 @@ export default function RoulettePage() {
                               </text>
                               <text
                                 x="0"
-                                y="10"
+                                y={isFlipped ? "-8" : "10"}
                                 textAnchor="middle"
-                                fill={theme.text}
+                                fill={isWinnerSlice ? "#B82B54" : theme.text}
                                 fontSize="12"
-                                fontWeight="700"
+                                fontWeight={isWinnerSlice ? "900" : "700"}
                                 fontFamily="sans-serif"
                                 letterSpacing="0.02em"
                                 dominantBaseline="central"
@@ -572,26 +700,57 @@ export default function RoulettePage() {
                     );
                   })}
 
+                  {/* Outer Perimeter Brass Rivets / Pegs */}
+                  {items.map((_, pIdx) => {
+                    const pAngle = pIdx * sliceAngle - sliceAngle / 2;
+                    const pRad = ((pAngle - 90) * Math.PI) / 180;
+                    const pegDistance = cx - 5.5;
+                    const px = cx + pegDistance * Math.cos(pRad);
+                    const py = cy + pegDistance * Math.sin(pRad);
+                    return (
+                      <g key={`peg-${pIdx}`}>
+                        <circle cx={px} cy={py} r="3" fill="#D4AF37" stroke="#7A4E2D" strokeWidth="1" />
+                        <circle cx={px - 0.7} cy={py - 0.7} r="1" fill="#FFF9E6" />
+                      </g>
+                    );
+                  })}
+
                   {/* Golden Center Brass Collar */}
                   <circle cx={cx} cy={cy} r="46" fill="#EBD5C2" stroke="#BFA28E" strokeWidth="2" />
                 </svg>
               </div>
 
-              {/* Central Wax Seal SPIN Button */}
-              <button
-                type="button"
-                onClick={handleSpinClick}
-                disabled={isSpinning}
-                className="absolute z-20 w-22 h-22 rounded-full bg-gradient-to-br from-[#FF6B95] via-[#E8527D] to-[#B82B54] text-white shadow-2xl flex flex-col items-center justify-center border-4 border-[#FAF7F2] cursor-pointer hover:scale-105 active:scale-95 transition-all disabled:opacity-85 group"
-                style={{
-                  boxShadow: "0 8px 24px rgba(232, 82, 125, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.4)",
-                }}
-              >
-                <span className="font-heading font-black text-xs tracking-widest uppercase text-white/95">
-                  {isSpinning ? "SPINNING" : "SPIN"}
-                </span>
-                <Heart className="w-4 h-4 fill-white text-white mt-0.5 group-hover:scale-115 transition-transform" />
-              </button>
+              {/* Central Wax Seal SPIN Button with Idle Glow Ring & Tactile Press */}
+              <div className="absolute z-20 flex items-center justify-center">
+                {/* Idle pulse ring when ready to spin */}
+                {!isSpinning && (
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.45, 0, 0.45] }}
+                    transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+                    className="absolute w-24 h-24 rounded-full bg-rose-400/30 pointer-events-none"
+                  />
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleSpinClick}
+                  disabled={isSpinning}
+                  className="relative w-22 h-22 rounded-full bg-gradient-to-br from-[#FF6B95] via-[#E8527D] to-[#B82B54] text-white flex flex-col items-center justify-center border-4 border-[#FAF7F2] cursor-pointer hover:scale-105 active:scale-95 transition-all disabled:opacity-90 group select-none shadow-lg"
+                  style={{
+                    boxShadow:
+                      "0 0 0 3px rgba(250, 247, 242, 0.9), 0 8px 24px rgba(232, 82, 125, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4)",
+                  }}
+                >
+                  <span className="font-heading font-black text-xs tracking-widest uppercase text-white/95">
+                    {isSpinning ? "SPINNING" : "SPIN"}
+                  </span>
+                  <Heart
+                    className={`w-4 h-4 fill-white text-white mt-0.5 transition-transform ${
+                      isSpinning ? "animate-spin" : "group-hover:scale-120"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
 
             {/* Bottom Bar: Option count + Sound Toggle */}
@@ -641,15 +800,29 @@ export default function RoulettePage() {
                     "No arguing. The wheel has spoken. ♡"
                   </p>
 
-                  <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-2.5">
-                    <button
-                      onClick={handleSpinClick}
-                      disabled={isSpinning}
-                      className="btn-journal-ghost w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Spin Again</span>
-                    </button>
+                  <div className="pt-3 flex flex-col gap-2.5">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                      <button
+                        onClick={handleSpinClick}
+                        disabled={isSpinning}
+                        className="btn-journal-ghost w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Spin Again</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setVetoUsed(true);
+                          handleSpinClick();
+                        }}
+                        disabled={isSpinning || vetoUsed}
+                        className="btn-journal-ghost w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-40"
+                        title={vetoUsed ? "Veto already used for this session" : "Playful couple rule: 1 free veto per night!"}
+                      >
+                        <span>{vetoUsed ? "Veto Used ♡" : "Use Veto (1x) 🚫"}</span>
+                      </button>
+                    </div>
 
                     {pair && (
                       <button

@@ -311,26 +311,26 @@ export default function Navigation() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -100, opacity: 0 }}
             transition={{ type: "spring", stiffness: 350, damping: 35 }}
-            className="hidden md:block fixed left-4 top-24 z-50 max-h-[calc(100vh-104px)] overflow-y-auto no-scrollbar"
+            className="hidden md:block fixed left-4 top-20 bottom-3 my-auto z-50 h-fit max-h-[calc(100vh-88px)] overflow-y-auto no-scrollbar"
             aria-label="Main Navigation"
           >
             {/* Sidebar Capsule */}
             <div
-              className="relative flex flex-col items-center py-4 px-2.5 rounded-[999px] select-none"
+              className="relative flex flex-col items-center py-3 px-2 rounded-[999px] select-none"
               style={{
-                width: "84px",
+                width: "76px",
                 background: "linear-gradient(180deg, #FFF2F5 0%, #FFF8FA 100%)",
                 border: "2px solid rgba(255, 255, 255, 0.95)",
                 boxShadow: "0 12px 32px rgba(232, 82, 125, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.9)",
               }}
             >
               {/* Subtle top heart accent on capsule */}
-              <div className="absolute top-2 right-3 text-[#FF7597] text-[10px] animate-pulse pointer-events-none select-none">
+              <div className="absolute top-2 right-2 text-[#FF7597] text-[9px] animate-pulse pointer-events-none select-none">
                 ♥
               </div>
 
               {/* Navigation Items Stack */}
-              <div className="flex flex-col items-center gap-2 relative z-10 w-full">
+              <div className="flex flex-col items-center gap-1.5 relative z-10 w-full">
                 {SIDEBAR_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const isActive =
@@ -355,35 +355,35 @@ export default function Navigation() {
                         {isActive ? (
                           <motion.div
                             layoutId="active-glowing-orb"
-                            className="relative flex items-center justify-center w-13 h-13 rounded-full mb-1"
+                            className="relative flex items-center justify-center w-11 h-11 rounded-full mb-0.5"
                             transition={{ type: "spring", stiffness: 400, damping: 32 }}
                             style={{
                               background: "linear-gradient(135deg, #FF6B95 0%, #E8527D 100%)",
-                              boxShadow: "0 8px 24px rgba(232, 82, 125, 0.42), inset 0 2px 3px rgba(255, 255, 255, 0.4)",
+                              boxShadow: "0 6px 20px rgba(232, 82, 125, 0.42), inset 0 2px 3px rgba(255, 255, 255, 0.4)",
                             }}
                           >
                             {/* Tiny top heart on active orb */}
-                            <span className="absolute -top-1 right-1 text-[9px] text-[#FFB3C6]">♥</span>
-                            <Icon className="w-5 h-5 text-white stroke-[2]" />
+                            <span className="absolute -top-1 right-1 text-[8px] text-[#FFB3C6]">♥</span>
+                            <Icon className="w-4.5 h-4.5 text-white stroke-[2]" />
                           </motion.div>
                         ) : (
                           <div
-                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${
+                            className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 ${
                               isHovered ? "bg-white/80 scale-105 shadow-xs" : ""
                             }`}
                           >
                             <Icon
                               strokeWidth={1.75}
-                              className={`w-5 h-5 transition-colors duration-200 ${
+                              className={`w-4.5 h-4.5 transition-colors duration-200 ${
                                 isHovered ? "text-[#E8527D]" : "text-[#7A4B5D]"
                               }`}
                             />
                           </div>
                         )}
 
-                        {/* Label below icon (as in reference image) */}
+                        {/* Label below icon */}
                         <span
-                          className={`text-[9px] font-mono font-bold tracking-wider uppercase transition-colors duration-150 ${
+                          className={`text-[8.5px] font-mono font-bold tracking-wider uppercase transition-colors duration-150 ${
                             isActive
                               ? "text-[#E8527D] font-black"
                               : isHovered
