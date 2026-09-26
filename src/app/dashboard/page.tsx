@@ -12,6 +12,7 @@ import PushOptInBanner from "@/components/push-opt-in-banner";
 import MeanwhileCard from "@/components/meanwhile-card";
 import CitySelectorModal from "@/components/city-selector-modal";
 import MemoryResurfacingCard from "@/components/memory-resurfacing-card";
+import JournalCard from "@/components/journal-card";
 
 export const moodDetails = {
   joyful:   { label: "Joyful",   emoji: "😊", color: "text-yellow-600  bg-yellow-50  dark:bg-yellow-950/20  border-yellow-100 dark:border-yellow-900/25" },
@@ -910,6 +911,11 @@ export default function DashboardPage() {
 
         {/* ─── ON THIS DAY — MEMORY RESURFACING ─── */}
         <MemoryResurfacingCard pairId={pair?.id} />
+
+        {/* ─── DAILY DUAL-LOCK JOURNAL ─── */}
+        <div className="w-full pt-8">
+          <JournalCard />
+        </div>
 
         {/* ─── 3. NARRATIVE KEEPSAKE CARDS (Material Identity) ─── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">

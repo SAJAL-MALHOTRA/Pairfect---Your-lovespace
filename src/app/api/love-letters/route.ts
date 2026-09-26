@@ -75,10 +75,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { pairId, recipientName, senderName, content, envelopeStyle } = await request.json();
+    const { pairId, recipientName, senderName, content, envelopeStyle, unseal_at } = await request.json();
 
     if (!pairId || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (unseal_at) {
+      const unsealDate = new Date(unseal_at);
+      if (isNaN(unsealDate.getTime()) || unsealDate <= new Date()) {
+        return NextResponse.json({ error: "Invalid unseal date" }, { status: 400 });
+      }
     }
 
     // Encrypt the JSON structure of content blocks
@@ -93,7 +100,8 @@ export async function POST(request: Request) {
         recipient_name: recipientName,
         sender_name: senderName,
         content: ciphertext, // Saved as encrypted JSONB string
-        envelope_style: envelopeStyle
+        envelope_style: envelopeStyle,
+        unseal_at: unseal_at || null
       })
       .select()
       .single();

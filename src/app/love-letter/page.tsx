@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
-import { Loader2, ArrowLeft, BookOpen, Plus, Smile, Search, X, Mail, Gift } from "lucide-react";
+import { Loader2, ArrowLeft, BookOpen, Plus, Smile, Search, X, Mail, Gift, Lock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { WritingLetters } from "@/components/cozy-illustrations";
@@ -232,6 +232,8 @@ export default function LoveLetterPage() {
   const [searchQ, setSearchQ]         = useState("");
   const [stickers, setStickers]       = useState<any[]>([]);
   const [searching, setSearching]     = useState(false);
+  const [scheduleUnseal, setScheduleUnseal] = useState(false);
+  const [unsealDate, setUnsealDate]   = useState<string>("");
 
   // ── Read state ──
   const [readPhase, setReadPhase]     = useState<"sealed" | "shattering" | "unsealing" | "open">("sealed");
@@ -307,7 +309,7 @@ export default function LoveLetterPage() {
       const r = await fetch("/api/love-letters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pairId: pair.id, recipientName: toName.trim(), senderName: fromName.trim() || "Me", content: clean, envelopeStyle: style }),
+        body: JSON.stringify({ pairId: pair.id, recipientName: toName.trim(), senderName: fromName.trim() || "Me", content: clean, envelopeStyle: style, unseal_at: scheduleUnseal && unsealDate ? new Date(unsealDate).toISOString() : null }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
@@ -327,6 +329,7 @@ export default function LoveLetterPage() {
       await supabase.rpc("record_pair_activity", { p_pair_id: pair.id });
 
       setBlocks([{ type: "text", value: "" }]); setToName(""); setFromName(""); setStyle("classic");
+      setScheduleUnseal(false); setUnsealDate("");
       setIsWriting(false); setStep(1);
       fetchLetters();
       if (pair) localStorage.removeItem(`pairfect-letter-draft-${pair.id}`);
@@ -445,28 +448,36 @@ export default function LoveLetterPage() {
               </motion.div>
 
               <div className="space-y-3">
-              {unread.map((l, i) => (
-                <motion.button key={l.id} onClick={() => handleUnseal(l)} className="w-full text-left"
+              {unread.map((l, i) => {
+                const isLocked = l.unseal_at && new Date(l.unseal_at) > new Date();
+                return (
+                <motion.button key={l.id} onClick={() => !isLocked && handleUnseal(l)} className={`w-full text-left ${isLocked ? 'opacity-80' : ''}`}
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-                  whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}
+                  whileHover={!isLocked ? { y: -2 } : {}} whileTap={!isLocked ? { scale: 0.98 } : {}}
                 >
                   <div className="relative material-cotton rounded-2xl px-6 py-5" style={{ boxShadow: "0 4px 20px rgba(128,32,48,0.1), 0 1px 4px rgba(60,40,20,0.06)" }}>
+                    {!isLocked && (
                     <motion.div className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[var(--seal-red)] flex items-center justify-center"
                       animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-white/80" />
                     </motion.div>
+                    )}
                     <div className="flex items-center gap-4 pr-8">
                       <div className="w-10 h-10 rounded-xl bg-[var(--paper-mid)] border border-[var(--border-warm)] flex items-center justify-center flex-shrink-0">
-                        <Gift className="w-4 h-4 text-[var(--seal-red)]" />
+                        {isLocked ? <Lock className="w-4 h-4 text-[var(--ink-mid)]" /> : <Gift className="w-4 h-4 text-[var(--seal-red)]" />}
                       </div>
                       <div>
                         <p className="font-heading italic font-bold text-base text-[var(--ink-dark)]">From {l.sender_name}</p>
-                        <p className="text-[9px] font-mono text-[var(--ink-light)] mt-0.5">{format(parseISO(l.sent_at), "MMMM d, yyyy")} · Sealed</p>
+                        {isLocked ? (
+                          <p className="text-[9px] font-mono mt-0.5 text-[var(--seal-red)]">Unseals on {format(parseISO(l.unseal_at), "MMMM d, yyyy")}</p>
+                        ) : (
+                          <p className="text-[9px] font-mono text-[var(--ink-light)] mt-0.5">{format(parseISO(l.sent_at), "MMMM d, yyyy")} · Sealed</p>
+                        )}
                       </div>
                     </div>
                   </div>
                 </motion.button>
-              ))}
+              )})}
 
               {unread.length > 0 && read.length > 0 && (
                 <div className="flex items-center gap-3 py-3">
@@ -625,6 +636,21 @@ export default function LoveLetterPage() {
                         style={{ fontFamily: "var(--font-handwriting),cursive" }} />
                     </div>
                   ))}
+                  <div className="pt-2 border-t border-[var(--border-warm)]/50">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={scheduleUnseal} onChange={e => setScheduleUnseal(e.target.checked)} className="rounded border-[var(--border-mid)] text-[var(--seal-red)] focus:ring-[var(--seal-red)] w-4 h-4" />
+                      <span className="text-xs font-medium text-[var(--ink-dark)]">🔒 Schedule future unseal?</span>
+                    </label>
+                    <p className="text-[10px] text-[var(--ink-light)] mt-1 ml-6">Perfect for anniversaries, birthdays, or just-because days.</p>
+                    {scheduleUnseal && (
+                      <div className="mt-3 ml-6">
+                        <input type="date" value={unsealDate} onChange={e => setUnsealDate(e.target.value)} 
+                          min={format(new Date(Date.now() + 86400000), "yyyy-MM-dd")}
+                          max={format(new Date(Date.now() + 10 * 365 * 86400000), "yyyy-MM-dd")}
+                          className="input-warm w-full text-xs" />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-3 justify-center">
                   <button onClick={() => setStep(2)} className="btn-secondary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer">← Back</button>
