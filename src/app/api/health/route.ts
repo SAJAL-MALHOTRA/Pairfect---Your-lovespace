@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { findEnvVar } from "@/lib/cashfree";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   const timestamp = new Date().toISOString();
@@ -14,15 +18,40 @@ export async function GET() {
       );
     }
 
+    const appId = findEnvVar([
+      "CASHFREE_APP_ID",
+      "NEXT_PUBLIC_CASHFREE_APP_ID",
+      "CASHFREE_CLIENT_ID",
+      "CF_APP_ID",
+      "CASHFREE_ID",
+      "APP_ID",
+    ]);
+    const secretKey = findEnvVar([
+      "CASHFREE_SECRET_KEY",
+      "CASHFREE_SECRET",
+      "CASHFREE_API_KEY",
+      "CF_SECRET_KEY",
+      "CF_SECRET",
+      "CASHFREE_KEY",
+    ]);
+
+    const candidateKeys = Object.keys(process.env).filter(
+      (k) =>
+        k.toUpperCase().includes("CASH") ||
+        k.toUpperCase().includes("FREE") ||
+        k.toUpperCase().includes("CF") ||
+        k.toUpperCase().includes("PAY")
+    );
+
     return NextResponse.json({
       status: "healthy",
       service: "pairfect-api",
-      version: "1.0.1",
-      commit: "d88b6eb",
+      version: "1.0.2",
       cashfree_configured: {
-        has_app_id: !!(process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID),
-        has_secret: !!(process.env.CASHFREE_SECRET_KEY || process.env.CASHFREE_SECRET),
+        has_app_id: !!appId,
+        has_secret: !!secretKey,
         env: process.env.CASHFREE_ENV || "not_set",
+        candidate_keys: candidateKeys,
       },
       timestamp,
     });

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlan } from "@/lib/plans";
-import { createCashfreeOrder, getResolvedCashfreeEnv } from "@/lib/cashfree";
+import { createCashfreeOrder, getResolvedCashfreeEnv, findEnvVar } from "@/lib/cashfree";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -143,31 +143,49 @@ export async function POST(request: Request) {
 
     const returnUrl = `${baseUrl}/payment-status?order_id={order_id}`;
 
-    // 5b. Pre-flight check: ensure credentials exist in process.env
-    const rawAppId =
-      process.env.CASHFREE_APP_ID ||
-      process.env.NEXT_PUBLIC_CASHFREE_APP_ID ||
-      process.env.CASHFREE_CLIENT_ID;
-    const rawSecretKey =
-      process.env.CASHFREE_SECRET_KEY ||
-      process.env.CASHFREE_SECRET ||
-      process.env.CASHFREE_API_KEY;
+    // 5b. Pre-flight check: ensure credentials exist in process.env (whitespace & case tolerant)
+    const rawAppId = findEnvVar([
+      "CASHFREE_APP_ID",
+      "NEXT_PUBLIC_CASHFREE_APP_ID",
+      "CASHFREE_CLIENT_ID",
+      "CF_APP_ID",
+      "CASHFREE_ID",
+      "APP_ID",
+    ]);
+    const rawSecretKey = findEnvVar([
+      "CASHFREE_SECRET_KEY",
+      "CASHFREE_SECRET",
+      "CASHFREE_API_KEY",
+      "CF_SECRET_KEY",
+      "CF_SECRET",
+      "CASHFREE_KEY",
+    ]);
 
-    const hasAppId = !!rawAppId?.trim();
-    const hasSecretKey = !!rawSecretKey?.trim();
+    const hasAppId = !!rawAppId.trim();
+    const hasSecretKey = !!rawSecretKey.trim();
 
     if (!hasAppId || !hasSecretKey) {
       const missingKeys = [];
       if (!hasAppId) missingKeys.push("CASHFREE_APP_ID");
       if (!hasSecretKey) missingKeys.push("CASHFREE_SECRET_KEY");
+      
+      const candidateKeys = Object.keys(process.env).filter(
+        (k) =>
+          k.toUpperCase().includes("CASH") ||
+          k.toUpperCase().includes("FREE") ||
+          k.toUpperCase().includes("CF") ||
+          k.toUpperCase().includes("PAY")
+      );
+
       console.error("[create-order] Missing Cashfree credentials in runtime:", {
         hasAppId,
         hasSecretKey,
         missing: missingKeys,
+        candidateKeys,
       });
       return NextResponse.json(
         {
-          error: `Cashfree credentials missing in Vercel runtime: [${missingKeys.join(", ")}]. Ensure they are checked for 'Production' and redeploy without build cache.`,
+          error: `Cashfree credentials missing in Vercel runtime: [${missingKeys.join(", ")}]. (Detected related keys: [${candidateKeys.join(", ")}]). Ensure they are added under 'Production' in Vercel and redeploy.`,
         },
         { status: 500 }
       );

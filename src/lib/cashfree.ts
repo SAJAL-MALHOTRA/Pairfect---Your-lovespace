@@ -12,18 +12,34 @@ function cleanEnv(val: string | undefined): string {
   return clean;
 }
 
+export function findEnvVar(possibleNames: string[]): string {
+  const normalizedTargets = possibleNames.map((n) => n.toUpperCase().trim());
+  for (const [key, val] of Object.entries(process.env)) {
+    if (normalizedTargets.includes(key.toUpperCase().trim()) && val) {
+      const cleaned = cleanEnv(val);
+      if (cleaned.length > 0) return cleaned;
+    }
+  }
+  return "";
+}
+
 export function getResolvedCashfreeEnv(): {
   environment: CFEnvironment;
   mode: "production" | "sandbox";
 } {
-  const secretKey = cleanEnv(
-    process.env.CASHFREE_SECRET_KEY ||
-    process.env.CASHFREE_SECRET ||
-    process.env.CASHFREE_API_KEY
-  );
-  const explicitEnv = cleanEnv(
-    process.env.CASHFREE_ENV || process.env.NEXT_PUBLIC_CASHFREE_ENV
-  ).toLowerCase();
+  const secretKey = findEnvVar([
+    "CASHFREE_SECRET_KEY",
+    "CASHFREE_SECRET",
+    "CASHFREE_API_KEY",
+    "CF_SECRET_KEY",
+    "CF_SECRET",
+    "CASHFREE_KEY",
+  ]);
+  const explicitEnv = findEnvVar([
+    "CASHFREE_ENV",
+    "NEXT_PUBLIC_CASHFREE_ENV",
+    "CF_ENV",
+  ]).toLowerCase();
 
   // 1. If key is explicitly production (cfsk_ma_pr_, cfsk_ma_prod_, or contains _pr_ / _prod_), always use production
   if (
@@ -49,16 +65,22 @@ export function getResolvedCashfreeEnv(): {
 }
 
 export function getCashfreeClient(): Cashfree {
-  const appId = cleanEnv(
-    process.env.CASHFREE_APP_ID ||
-    process.env.NEXT_PUBLIC_CASHFREE_APP_ID ||
-    process.env.CASHFREE_CLIENT_ID
-  );
-  const secretKey = cleanEnv(
-    process.env.CASHFREE_SECRET_KEY ||
-    process.env.CASHFREE_SECRET ||
-    process.env.CASHFREE_API_KEY
-  );
+  const appId = findEnvVar([
+    "CASHFREE_APP_ID",
+    "NEXT_PUBLIC_CASHFREE_APP_ID",
+    "CASHFREE_CLIENT_ID",
+    "CF_APP_ID",
+    "CASHFREE_ID",
+    "APP_ID",
+  ]);
+  const secretKey = findEnvVar([
+    "CASHFREE_SECRET_KEY",
+    "CASHFREE_SECRET",
+    "CASHFREE_API_KEY",
+    "CF_SECRET_KEY",
+    "CF_SECRET",
+    "CASHFREE_KEY",
+  ]);
   const { environment, mode } = getResolvedCashfreeEnv();
 
   if (!appId || !secretKey) {
