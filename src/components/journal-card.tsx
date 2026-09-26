@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Heart } from "lucide-react";
+import { Lock, Heart, BookOpen, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface Prompt {
@@ -82,14 +82,29 @@ export default function JournalCard() {
   };
 
   return (
-    <div className="rounded-[20px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-xl p-6 relative overflow-hidden paper-grain">
-      <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-        <Heart size={80} />
-      </div>
-      
-      <div className="flex items-center justify-between mb-6">
-        <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">Daily Journal</span>
-        <Link href="/journal" className="text-xs text-[var(--burgundy)] hover:underline font-medium">History →</Link>
+    <div className="rounded-[24px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-md p-6 sm:p-7 relative overflow-hidden paper-grain">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 relative z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center shrink-0 shadow-2xs">
+            <BookOpen className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase block">
+              Daily Dual-Lock Journal
+            </span>
+            <span className="text-[11px] font-sans text-[var(--burgundy)] font-medium">
+              Unseals together once both write
+            </span>
+          </div>
+        </div>
+
+        <Link
+          href="/journal"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 hover:bg-white text-[var(--burgundy)] hover:text-[#9B2E4B] border border-[var(--border)] text-xs font-mono font-semibold transition-all shadow-2xs hover:shadow-xs cursor-pointer group"
+        >
+          <span>Past Entries</span>
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
       {loading ? (
