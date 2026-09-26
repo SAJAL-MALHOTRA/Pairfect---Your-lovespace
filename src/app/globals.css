@@ -103,41 +103,40 @@
 
 /* ── Color tokens ── */
 :root {
-  /* Design Tokens — Bright Warm Cozy Pink Palette */
-  --bg:                 #FFF3F6;
-  --bg-secondary:       #FFE6ED;
-  --text:               #3D2432;
-  --text-soft:          #7A4B5D;
-  --burgundy:           #E8527D;
-  --rose:               #FFB3C6;
-  --border:             #FFD9E3;
-  --shadow:             rgba(232, 82, 125, 0.14);
+  /* Design Tokens — Timeless Warm Cream, Espresso, Burgundy & Blush Palette */
+  --bg:                 #F8F3EE;
+  --bg-secondary:       #F2EAE1;
+  --text:               #2C1E1A;
+  --text-soft:          #6E5D57;
+  --burgundy:           #8E2B45;
+  --rose:               #D38CA2;
+  --border:             #E8DFD5;
+  --shadow:             rgba(44, 30, 26, 0.08);
 
   --background:         var(--bg);
   --foreground:         var(--text);
-  --paper-warm:         #FFF8FA;
-  --paper-mid:          #FFEEF3;
-  --paper-deep:         #FFE0E9;
+  --paper-warm:         #FCF9F5;
+  --paper-mid:          #F5EFE6;
+  --paper-deep:         #EDE4D8;
   --ink-dark:           var(--text);
   --ink-mid:            var(--text-soft);
-  --ink-light:          #7A4B5D;
+  --ink-light:          #9E8C85;
   --seal-red:           var(--burgundy);
-  --seal-red-hover:     #D13D68;
-  --washi-warm:         rgba(232, 82, 125, 0.12);
-  --border-warm:        #FFD0DD;
+  --seal-red-hover:     #752238;
+  --washi-warm:         rgba(211, 140, 162, 0.2);
+  --border-warm:        #E4D8CB;
   --border-mid:         var(--border);
   --card-bg:            var(--bg-secondary);
 
   color-scheme: light;
-  --primary:            #E8527D;
+  --primary:            #8E2B45;
   --primary-foreground: #ffffff;
-  --muted:              #FFF6F8;
-  --muted-foreground:   #7A4B5D;
-  --border:             #FFD9E3;
+  --muted:              #F5EFE6;
+  --muted-foreground:   #6E5D57;
   --card:               #FFFFFF;
-  --card-foreground:    #3D2432;
-  --input:              #FFD9E3;
-  --ring:               #E8527D;
+  --card-foreground:    #2C1E1A;
+  --input:              #E8DFD5;
+  --ring:               #8E2B45;
 }
 
 /* ── Base ── */
@@ -233,12 +232,13 @@ body {
 }
 
 /* Lined notebook paper */
+/* Lined notebook paper */
 .paper-lined {
   background-color: var(--paper-warm);
   background-image: linear-gradient(
     transparent calc(32px - 1px),
-    rgba(232, 82, 125, 0.12) calc(32px - 1px),
-    rgba(232, 82, 125, 0.12) 32px,
+    rgba(180, 150, 130, 0.22) calc(32px - 1px),
+    rgba(180, 150, 130, 0.22) 32px,
     transparent 32px
   );
   background-size: 100% 32px;
@@ -247,12 +247,22 @@ body {
 /* Polaroid photo frame */
 .polaroid {
   background: #FFFFFF;
-  padding: 10px 10px 40px 10px;
+  padding: 10px 10px 42px 10px;
   box-shadow:
-    0 2px 4px rgba(232, 82, 125, 0.06),
-    0 8px 24px rgba(232, 82, 125, 0.1),
-    0 1px 0 rgba(255,255,255,0.8) inset;
-  border: 1px solid rgba(255, 217, 227, 0.6);
+    0 3px 8px rgba(44, 30, 26, 0.08),
+    0 12px 28px rgba(44, 30, 26, 0.06),
+    0 1px 0 rgba(255,255,255,0.9) inset;
+  border: 1px solid rgba(232, 223, 213, 0.9);
+}
+
+@keyframes camera-flash {
+  0%   { opacity: 0; }
+  25%  { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+.animate-camera-flash {
+  animation: camera-flash 0.45s ease-out forwards;
 }
 
 /* ── Buttons ── */
