@@ -17,7 +17,13 @@ export async function GET() {
     return NextResponse.json({
       status: "healthy",
       service: "pairfect-api",
-      version: "1.0.0",
+      version: "1.0.1",
+      commit: "d88b6eb",
+      cashfree_configured: {
+        has_app_id: !!(process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID),
+        has_secret: !!(process.env.CASHFREE_SECRET_KEY || process.env.CASHFREE_SECRET),
+        env: process.env.CASHFREE_ENV || "not_set",
+      },
       timestamp,
     });
   } catch (err: any) {

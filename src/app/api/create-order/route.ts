@@ -153,15 +153,21 @@ export async function POST(request: Request) {
       process.env.CASHFREE_SECRET ||
       process.env.CASHFREE_API_KEY;
 
-    if (!rawAppId?.trim() || !rawSecretKey?.trim()) {
+    const hasAppId = !!rawAppId?.trim();
+    const hasSecretKey = !!rawSecretKey?.trim();
+
+    if (!hasAppId || !hasSecretKey) {
+      const missingKeys = [];
+      if (!hasAppId) missingKeys.push("CASHFREE_APP_ID");
+      if (!hasSecretKey) missingKeys.push("CASHFREE_SECRET_KEY");
       console.error("[create-order] Missing Cashfree credentials in runtime:", {
-        hasAppId: !!rawAppId?.trim(),
-        hasSecretKey: !!rawSecretKey?.trim(),
+        hasAppId,
+        hasSecretKey,
+        missing: missingKeys,
       });
       return NextResponse.json(
         {
-          error:
-            "Cashfree credentials missing in server runtime. Please ensure CASHFREE_APP_ID and CASHFREE_SECRET_KEY are assigned to 'Production' in Vercel and redeploy.",
+          error: `Cashfree credentials missing in Vercel runtime: [${missingKeys.join(", ")}]. Ensure they are checked for 'Production' and redeploy without build cache.`,
         },
         { status: 500 }
       );
