@@ -14,35 +14,52 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check existing save
+    // Try story_saves first
     const { data: existing } = await supabase
-      .from("story_saved")
+      .from("story_saves")
       .select("id")
       .eq("user_id", user.id)
-      .eq("story_id", storyId)
-      .single();
+      .eq("explore_story_id", storyId)
+      .maybeSingle();
 
     let saved = false;
 
     if (existing) {
-      // Unsave
       await supabase
-        .from("story_saved")
+        .from("story_saves")
         .delete()
         .eq("id", existing.id);
       saved = false;
     } else {
-      // Save
-      await supabase
-        .from("story_saved")
+      const { error: insertErr } = await supabase
+        .from("story_saves")
         .insert({
           user_id: user.id,
-          story_id: storyId,
+          explore_story_id: storyId,
         });
-      saved = true;
+
+      if (!insertErr) {
+        saved = true;
+      } else {
+        // Fallback to legacy story_saved
+        const { data: legacyExisting } = await supabase
+          .from("story_saved")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("story_id", storyId)
+          .maybeSingle();
+
+        if (legacyExisting) {
+          await supabase.from("story_saved").delete().eq("id", legacyExisting.id);
+          saved = false;
+        } else {
+          await supabase.from("story_saved").insert({ user_id: user.id, story_id: storyId });
+          saved = true;
+        }
+      }
     }
 
-    return NextResponse.json({ success: true, saved });
+    return NextResponse.json({ success: true, saved, storyId });
   } catch (err: any) {
     console.error("POST /api/stories/[id]/save error:", err);
     return NextResponse.json({ success: true, saved: true });

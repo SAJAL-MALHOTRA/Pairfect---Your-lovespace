@@ -2,164 +2,261 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
-import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import {
-  Plus, X, Loader2, Heart, Trash2, BookOpen, Compass, Bookmark,
-  MessageCircle, Sparkles, ArrowRight, ShieldCheck, Check, Share2,
-  Lock, Eye, Tag, HelpCircle, UserCheck, Flame
+  Plus, X, Loader2, Bookmark, BookOpen, Compass, Search,
+  ShieldCheck, Check, ArrowRight, Flag, Calendar,
+  Sparkles, Image as ImageIcon, ChevronLeft, ChevronRight,
+  User, Users, HeartHandshake, Eye, CheckCircle2, AlertCircle,
+  HelpCircle, Trash2, Edit3, ShieldAlert
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   STORY_TOPICS,
   SEED_EXPLORE_STORIES,
+  WRITING_PROMPTS,
+  MOOD_TAGS,
+  MoodTag,
+  StoryChapter,
   ExploreStory,
-  calculateRelevanceScore
+  WritingPrompt,
 } from "@/lib/stories-data";
 
 export default function StoriesPage() {
   const { user, profile, pair, partner, loading } = useAuth();
-  const supabase = createClient();
 
-  // Active view world: 'our' (Our Stories) | 'explore' (Explore Network) | 'saved' (Saved Stories)
+  // Active view world: 'our' (Our Stories) | 'explore' (Explore) | 'saved' (Saved)
   const [activeWorld, setActiveWorld] = useState<"our" | "explore" | "saved">("our");
 
-  // Explore state
-  const [activeTopic, setActiveTopic] = useState<string>("all");
+  // ─── Our Stories State ───
+  const [chapters, setChapters] = useState<StoryChapter[]>([]);
+  const [fetchingChapters, setFetchingChapters] = useState(true);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+
+  // Editor form inputs
+  const [chapterTitle, setChapterTitle] = useState("");
+  const [chapterDate, setChapterDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [authorVoice, setAuthorVoice] = useState<"me" | "partner" | "joint">("me");
+  const [moodTag, setMoodTag] = useState<MoodTag>("milestone");
+  const [chapterBody, setChapterBody] = useState("");
+  const [hasWhatHelped, setHasWhatHelped] = useState(false);
+  const [whatHelped, setWhatHelped] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [newPhotoUrl, setNewPhotoUrl] = useState("");
+  const [savingChapter, setSavingChapter] = useState(false);
+
+  // Private-to-Public Pipeline Toggle & Review
+  const [isSharedToExplore, setIsSharedToExplore] = useState(false);
+  const [exploreSituationTags, setExploreSituationTags] = useState<string[]>(["communication"]);
+  const [exploreBodyAnonymized, setExploreBodyAnonymized] = useState("");
+  const [exploreWhatHelpedAnonymized, setExploreWhatHelpedAnonymized] = useState("");
+
+  // ─── Explore State ───
   const [exploreStories, setExploreStories] = useState<ExploreStory[]>(SEED_EXPLORE_STORIES);
+  const [activeTopic, setActiveTopic] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [fetchingExplore, setFetchingExplore] = useState(false);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
-  // Our Stories state
-  const [ourStories, setOurStories] = useState<any[]>([]);
-  const [savedStories, setSavedStories] = useState<any[]>([]);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [fetchingOur, setFetchingOur] = useState(true);
+  // Direct Submit to Explore
+  const [isDirectSubmitOpen, setIsDirectSubmitOpen] = useState(false);
+  const [directTitle, setDirectTitle] = useState("");
+  const [directBody, setDirectBody] = useState("");
+  const [directWhatHelped, setDirectWhatHelped] = useState("");
+  const [directTags, setDirectTags] = useState<string[]>(["communication"]);
+  const [directDuration, setDirectDuration] = useState("2 years together");
+  const [submittingDirect, setSubmittingDirect] = useState(false);
+  const [directSubmitNotice, setDirectSubmitNotice] = useState<string | null>(null);
 
-  // Story Reader Modal state
+  // Reader Modal State
   const [activeStory, setActiveStory] = useState<ExploreStory | null>(null);
-  const [reactions, setReactions] = useState<Record<string, boolean>>({});
-  const [similarDrawerOpen, setSimilarDrawerOpen] = useState(false);
-  const [similarStories, setSimilarStories] = useState<ExploreStory[]>([]);
-  const [responses, setResponses] = useState<any[]>([]);
-  const [newResponse, setNewResponse] = useState("");
-  const [responseSharedExp, setResponseSharedExp] = useState("");
-  const [submittingResponse, setSubmittingResponse] = useState(false);
 
-  // Writer Modal state
-  const [isWriterOpen, setIsWriterOpen] = useState(false);
-  const [writeFormat, setWriteFormat] = useState<"guided" | "freeform">("guided");
-  const [storyTitle, setStoryTitle] = useState("");
-  const [problemStatement, setProblemStatement] = useState("");
-  const [quoteExcerpt, setQuoteExcerpt] = useState("");
-  const [whatHappened, setWhatHappened] = useState("");
-  const [whatMadeDifficult, setWhatMadeDifficult] = useState("");
-  const [whatWeTried, setWhatWeTried] = useState("");
-  const [whereAreWeNow, setWhereAreWeNow] = useState("");
-  const [whatToTellOthers, setWhatToTellOthers] = useState("");
-  const [freeformContent, setFreeformContent] = useState("");
-  const [selectedTopics, setSelectedTopics] = useState<string[]>(["communication"]);
-  const [relationshipDuration, setRelationshipDuration] = useState("2 years together");
-  const [visibility, setVisibility] = useState<"private" | "community">("private");
-  const [isAnonymous, setIsAnonymous] = useState(true);
-  const [savingStory, setSavingStory] = useState(false);
+  // Saved & Helpful State
+  const [savedStories, setSavedStories] = useState<ExploreStory[]>([]);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [helpfulIds, setHelpfulIds] = useState<Set<string>>(new Set());
+  const [savedFilterTopic, setSavedFilterTopic] = useState<string>("all");
 
-  // 1. Fetch Our Stories & Saved Stories
-  const fetchOurStories = async () => {
+  // Report Modal State
+  const [reportingStory, setReportingStory] = useState<ExploreStory | null>(null);
+  const [reportReason, setReportReason] = useState("Identifying personal info");
+  const [reportDetails, setReportDetails] = useState("");
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportNotice, setReportNotice] = useState<string | null>(null);
+
+  // Moderation Queue State
+  const [isModOpen, setIsModOpen] = useState(false);
+  const [modPendingStories, setModPendingStories] = useState<any[]>([]);
+  const [modReports, setModReports] = useState<any[]>([]);
+  const [loadingMod, setLoadingMod] = useState(false);
+
+  // Chip scroll container ref for horizontal scrolling
+  const chipsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Partner display name resolution
+  const partnerName = partner?.display_name || (pair ? "Partner" : null);
+
+  // ─── 1. Data Fetching ───
+  const fetchOurChapters = async () => {
     try {
-      setFetchingOur(true);
+      setFetchingChapters(true);
       const res = await fetch("/api/stories");
       if (res.ok) {
         const data = await res.json();
-        setOurStories(data.stories || []);
+        setChapters(data.chapters || []);
         setSavedStories(data.savedStories || []);
         setSavedIds(new Set(data.savedIds || []));
+        setHelpfulIds(new Set(data.helpfulIds || []));
       }
     } catch (e) {
-      console.error("Failed to fetch our stories:", e);
+      console.error("Failed to fetch chapters:", e);
     } finally {
-      setFetchingOur(false);
+      setFetchingChapters(false);
     }
   };
 
-  // 2. Fetch Explore Stories by Topic
-  const fetchExploreStories = async (topicId: string = activeTopic) => {
+  const fetchExploreFeed = async (topic: string = activeTopic, q: string = searchQuery) => {
     try {
       setFetchingExplore(true);
-      const res = await fetch(`/api/stories/explore?topic=${topicId}`);
+      const params = new URLSearchParams();
+      if (topic && topic !== "all") params.append("topic", topic);
+      if (q.trim()) params.append("q", q.trim());
+
+      const res = await fetch(`/api/stories/explore?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setExploreStories(data.stories || SEED_EXPLORE_STORIES);
       }
     } catch (e) {
-      console.error("Failed to fetch explore stories:", e);
+      console.error("Failed to fetch explore feed:", e);
+      setExploreStories(SEED_EXPLORE_STORIES);
     } finally {
       setFetchingExplore(false);
     }
   };
 
   useEffect(() => {
-    fetchOurStories();
-    fetchExploreStories("all");
+    fetchOurChapters();
+    fetchExploreFeed("all", "");
   }, []);
 
+  // Debounced search on explore query
   useEffect(() => {
-    if (activeWorld === "explore") {
-      fetchExploreStories(activeTopic);
+    if (activeWorld !== "explore") return;
+    const timer = setTimeout(() => {
+      fetchExploreFeed(activeTopic, searchQuery);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchQuery, activeTopic, activeWorld]);
+
+  // ─── 2. Chapter Editor Handlers ───
+  const openNewChapterEditor = (prompt?: WritingPrompt) => {
+    setEditingChapterId(null);
+    if (prompt) {
+      setChapterTitle(prompt.title);
+      setMoodTag(prompt.defaultTag as MoodTag);
+      setChapterBody(`\n\nPrompt Guide:\n• ${prompt.starterQuestions}`);
+    } else {
+      setChapterTitle("");
+      setMoodTag("milestone");
+      setChapterBody("");
     }
-  }, [activeTopic, activeWorld]);
-
-  // 3. Open Story Reader
-  const openStoryReader = async (story: ExploreStory) => {
-    setActiveStory(story);
-    setSimilarDrawerOpen(false);
-
-    // Fetch story responses
-    try {
-      const res = await fetch(`/api/stories/${story.id}/responses`);
-      if (res.ok) {
-        const data = await res.json();
-        setResponses(data.responses || []);
-      }
-    } catch (e) {
-      setResponses([]);
-    }
-
-    // Prepare similar stories for "I'm going through this"
-    const similar = SEED_EXPLORE_STORIES.filter((s) => s.id !== story.id).sort(
-      (a, b) =>
-        calculateRelevanceScore(b, "all", story.id) - calculateRelevanceScore(a, "all", story.id)
-    );
-    setSimilarStories(similar.slice(0, 3));
+    setChapterDate(new Date().toISOString().split("T")[0]);
+    setAuthorVoice("me");
+    setHasWhatHelped(false);
+    setWhatHelped("");
+    setPhotos([]);
+    setIsSharedToExplore(false);
+    setExploreSituationTags(["communication"]);
+    setExploreBodyAnonymized("");
+    setExploreWhatHelpedAnonymized("");
+    setIsEditorOpen(true);
   };
 
-  // 4. Toggle Reaction
-  const handleToggleReaction = async (reactionType: string) => {
-    if (!activeStory) return;
+  const openEditChapter = (ch: StoryChapter) => {
+    setEditingChapterId(ch.id);
+    setChapterTitle(ch.title);
+    setChapterDate(ch.chapter_date || new Date().toISOString().split("T")[0]);
+    setAuthorVoice(ch.author_voice || "me");
+    setMoodTag(ch.mood_tag || "milestone");
+    setChapterBody(ch.body);
+    setHasWhatHelped(!!ch.what_helped);
+    setWhatHelped(ch.what_helped || "");
+    setPhotos(ch.photos || []);
+    setIsSharedToExplore(ch.is_shared_to_explore || false);
+    setExploreSituationTags(["communication"]);
+    setExploreBodyAnonymized(ch.body);
+    setExploreWhatHelpedAnonymized(ch.what_helped || "");
+    setIsEditorOpen(true);
+  };
 
-    setReactions((prev) => ({
-      ...prev,
-      [reactionType]: !prev[reactionType],
-    }));
+  // Auto-anonymize when toggle turned ON
+  const handleToggleShareToExplore = (checked: boolean) => {
+    setIsSharedToExplore(checked);
+    if (checked) {
+      let anonymized = chapterBody;
+      const myName = profile?.display_name || user?.user_metadata?.display_name;
+      if (myName) {
+        anonymized = anonymized.replace(new RegExp(myName, "gi"), "me");
+      }
+      if (partnerName) {
+        anonymized = anonymized.replace(new RegExp(partnerName, "gi"), "my partner");
+      }
+      setExploreBodyAnonymized(anonymized);
+      setExploreWhatHelpedAnonymized(whatHelped);
+    }
+  };
 
-    // Optimistically update counts on active story
-    if (reactionType === "helped_me") activeStory.helped_count += reactions[reactionType] ? -1 : 1;
-    if (reactionType === "going_through") activeStory.going_through_count += reactions[reactionType] ? -1 : 1;
-    if (reactionType === "relate") activeStory.relate_count += reactions[reactionType] ? -1 : 1;
-    if (reactionType === "perspective") activeStory.perspective_count += reactions[reactionType] ? -1 : 1;
+  const handleSaveChapter = async () => {
+    if (!chapterTitle.trim() || !chapterBody.trim() || savingChapter) return;
+    setSavingChapter(true);
 
     try {
-      await fetch(`/api/stories/${activeStory.id}/react`, {
+      const res = await fetch("/api/stories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reactionType }),
+        body: JSON.stringify({
+          id: editingChapterId,
+          title: chapterTitle.trim(),
+          body: chapterBody.trim(),
+          chapterDate,
+          moodTag,
+          authorVoice,
+          whatHelped: hasWhatHelped ? whatHelped.trim() : null,
+          photos,
+          isSharedToExplore,
+          exploreSituationTags,
+          exploreBodyAnonymized: isSharedToExplore ? exploreBodyAnonymized.trim() : null,
+          exploreWhatHelpedAnonymized: isSharedToExplore ? exploreWhatHelpedAnonymized.trim() : null,
+        }),
       });
+
+      if (res.ok) {
+        setIsEditorOpen(false);
+        fetchOurChapters();
+      }
     } catch (e) {
-      console.error("Failed to react:", e);
+      console.error("Failed to save chapter:", e);
+    } finally {
+      setSavingChapter(false);
     }
   };
 
-  // 5. Toggle Private Save / Bookmark
+  const handleDeleteChapter = async (chapterId: string) => {
+    if (!confirm("Are you sure you want to delete this chapter from your story?")) return;
+    try {
+      const res = await fetch(`/api/stories?id=${chapterId}`, { method: "DELETE" });
+      if (res.ok) {
+        setChapters((prev) => prev.filter((c) => c.id !== chapterId));
+      }
+    } catch (e) {
+      console.error("Failed to delete chapter:", e);
+    }
+  };
+
+  // ─── 3. Explore & Saved Handlers ───
   const handleToggleSave = async (storyId: string) => {
     const isSaved = savedIds.has(storyId);
     const newSaved = new Set(savedIds);
@@ -169,142 +266,208 @@ export default function StoriesPage() {
 
     try {
       await fetch(`/api/stories/${storyId}/save`, { method: "POST" });
-      fetchOurStories();
+      fetchOurChapters();
     } catch (e) {
-      console.error("Failed to save story:", e);
+      console.error("Failed to toggle bookmark:", e);
     }
   };
 
-  // 6. Post Response / Shared Experience
-  const handlePostResponse = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeStory || !newResponse.trim() || submittingResponse) return;
+  const handleToggleHelpful = async (storyId: string) => {
+    const isHelpful = helpfulIds.has(storyId);
+    const newHelpful = new Set(helpfulIds);
+    if (isHelpful) newHelpful.delete(storyId);
+    else newHelpful.add(storyId);
+    setHelpfulIds(newHelpful);
 
-    setSubmittingResponse(true);
     try {
-      const res = await fetch(`/api/stories/${activeStory.id}/responses`, {
+      await fetch(`/api/stories/${storyId}/helpful`, { method: "POST" });
+    } catch (e) {
+      console.error("Failed to toggle helpful mark:", e);
+    }
+  };
+
+  // Direct submit to explore
+  const handleDirectSubmit = async () => {
+    if (!directTitle.trim() || !directBody.trim() || submittingDirect) return;
+    setSubmittingDirect(true);
+    setDirectSubmitNotice(null);
+
+    try {
+      const res = await fetch("/api/stories/explore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: newResponse.trim(),
-          sharedExperience: responseSharedExp.trim() || null,
-          isAnonymous: true,
+          title: directTitle.trim(),
+          bodyAnonymized: directBody.trim(),
+          whatHelpedAnonymized: directWhatHelped.trim() || null,
+          situationTags: directTags,
+          relationshipDuration: directDuration,
         }),
       });
 
+      if (res.ok) {
+        setDirectSubmitNotice("Your experience was submitted to moderation review. It will appear in Explore once verified.");
+        setTimeout(() => {
+          setIsDirectSubmitOpen(false);
+          setDirectTitle("");
+          setDirectBody("");
+          setDirectWhatHelped("");
+          setDirectSubmitNotice(null);
+        }, 2200);
+      }
+    } catch (e) {
+      console.error("Failed to submit direct experience:", e);
+    } finally {
+      setSubmittingDirect(false);
+    }
+  };
+
+  // Report handler
+  const handleOpenReport = (story: ExploreStory) => {
+    setReportingStory(story);
+    setReportReason("Identifying personal info");
+    setReportDetails("");
+    setReportNotice(null);
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportingStory || submittingReport) return;
+    setSubmittingReport(true);
+
+    try {
+      const res = await fetch(`/api/stories/${reportingStory.id}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reason: reportReason,
+          details: reportDetails,
+        }),
+      });
+
+      if (res.ok) {
+        setReportNotice("Thank you. This story was flagged for moderation review.");
+        setTimeout(() => {
+          setReportingStory(null);
+          setReportNotice(null);
+        }, 1800);
+      }
+    } catch (e) {
+      console.error("Failed to submit report:", e);
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
+  // Moderation Queue Fetcher
+  const openModerationQueue = async () => {
+    setIsModOpen(true);
+    setLoadingMod(true);
+    try {
+      const res = await fetch("/api/stories/moderation");
       if (res.ok) {
         const data = await res.json();
-        setResponses((prev) => [...prev, data.response]);
-        setNewResponse("");
-        setResponseSharedExp("");
+        setModPendingStories(data.pendingStories || []);
+        setModReports(data.reports || []);
       }
     } catch (e) {
-      console.error("Failed to post response:", e);
+      console.error("Failed to fetch moderation queue:", e);
     } finally {
-      setSubmittingResponse(false);
+      setLoadingMod(false);
     }
   };
 
-  // 7. Save / Publish Story
-  const handleSaveStory = async (status: "published" | "draft") => {
-    if (!storyTitle.trim() || savingStory) return;
-    setSavingStory(true);
-
+  const handleModReviewStory = async (storyId: string, status: "live" | "rejected") => {
     try {
-      const res = await fetch("/api/stories", {
+      await fetch("/api/stories/moderation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: storyTitle,
-          problemStatement: writeFormat === "guided" ? problemStatement : null,
-          quoteExcerpt: writeFormat === "guided" ? quoteExcerpt : null,
-          whatHappened: writeFormat === "guided" ? whatHappened : null,
-          whatMadeDifficult: writeFormat === "guided" ? whatMadeDifficult : null,
-          whatWeTried: writeFormat === "guided" ? whatWeTried : null,
-          whereAreWeNow: writeFormat === "guided" ? whereAreWeNow : null,
-          whatToTellOthers: writeFormat === "guided" ? whatToTellOthers : null,
-          content: writeFormat === "freeform" ? freeformContent : problemStatement,
-          topicTags: selectedTopics,
-          relationshipDuration,
-          storyStatus: status,
-          visibility,
-          isAnonymous,
-        }),
+        body: JSON.stringify({ action: "review_story", storyId, status }),
       });
-
-      if (res.ok) {
-        setIsWriterOpen(false);
-        resetWriterForm();
-        fetchOurStories();
-        if (visibility === "community") fetchExploreStories(activeTopic);
-      }
+      setModPendingStories((prev) => prev.filter((s) => s.id !== storyId));
+      fetchExploreFeed();
     } catch (e) {
-      console.error("Failed to save story:", e);
-    } finally {
-      setSavingStory(false);
+      console.error("Failed to review story:", e);
     }
   };
 
-  const resetWriterForm = () => {
-    setStoryTitle("");
-    setProblemStatement("");
-    setQuoteExcerpt("");
-    setWhatHappened("");
-    setWhatMadeDifficult("");
-    setWhatWeTried("");
-    setWhereAreWeNow("");
-    setWhatToTellOthers("");
-    setFreeformContent("");
-    setSelectedTopics(["communication"]);
-    setVisibility("private");
-    setIsAnonymous(true);
+  const handleModReviewReport = async (reportId: string, status: "resolved" | "dismissed") => {
+    try {
+      await fetch("/api/stories/moderation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "review_report", reportId, status }),
+      });
+      setModReports((prev) => prev.filter((r) => r.id !== reportId));
+    } catch (e) {
+      console.error("Failed to review report:", e);
+    }
   };
 
-  const partnerName = partner?.display_name || "partner";
+  // Scroll chips helper
+  const scrollChips = (dir: "left" | "right") => {
+    if (chipsScrollRef.current) {
+      const scrollAmt = dir === "left" ? -200 : 200;
+      chipsScrollRef.current.scrollBy({ left: scrollAmt, behavior: "smooth" });
+    }
+  };
 
-  if (loading || fetchingOur) {
+  // Filter saved stories by topic
+  const filteredSavedStories = savedFilterTopic === "all"
+    ? savedStories
+    : savedStories.filter((s) => Array.isArray(s.situation_tags) && s.situation_tags.includes(savedFilterTopic));
+
+  // Loading Screen
+  if (loading || fetchingChapters) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center select-none">
+      <div className="min-h-screen bg-[#FFF5F7] flex items-center justify-center select-none">
         <Navigation />
-        <Loader2 className="w-5 h-5 text-[var(--burgundy)] animate-spin" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 text-[#E8527D] animate-spin" />
+          <p className="font-mono text-xs text-[#7A4B5D] uppercase tracking-wider">
+            Loading couple chapters...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen pb-36 select-none" style={{ backgroundColor: "var(--bg)" }}>
+    <div className="relative min-h-screen pb-36 text-[#3D2432] bg-[#FAF7F2] selection:bg-[#E8527D] selection:text-white">
       <Navigation />
 
-      <main className="max-w-4xl mx-auto px-6 pt-24 space-y-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 space-y-8">
         
-        {/* ─── TOP TWO WORLDS SWITCHER ─── */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+        {/* ─── TOP SECTION: WORLD NAVIGATION ─── */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-5 border-b border-[#FFD9E3]">
           <div>
-            <p className="typo-chapter">Living Relationship Archive</p>
-            <h1 className="typo-display text-3xl sm:text-4xl text-[var(--text)] mt-0.5">
-              Stories & Explore
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF0F4] border border-[#FFD9E3] text-[#802030] text-[10px] font-mono font-bold tracking-widest uppercase shadow-xs">
+              <Sparkles className="w-3 h-3 text-[#E8527D]" />
+              <span>Stories &amp; Experiences</span>
+            </div>
+            <h1 className="font-display italic font-bold text-3xl sm:text-4xl text-[#3D2432] mt-1 tracking-tight">
+              Stories &amp; Explore
             </h1>
           </div>
 
-          <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] shadow-xs">
+          <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/90 border border-[#FFD9E3] shadow-xs">
             <button
               onClick={() => setActiveWorld("our")}
               className={`px-4 py-2 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer ${
                 activeWorld === "our"
-                  ? "bg-[var(--burgundy)] text-white shadow-sm"
-                  : "text-[var(--text-soft)] hover:text-[var(--text)]"
+                  ? "bg-[#E8527D] text-white shadow-xs"
+                  : "text-[#7A4B5D] hover:text-[#3D2432]"
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Our Stories</span>
+              <span>Our Story</span>
             </button>
 
             <button
               onClick={() => setActiveWorld("explore")}
               className={`px-4 py-2 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer ${
                 activeWorld === "explore"
-                  ? "bg-[var(--burgundy)] text-white shadow-sm"
-                  : "text-[var(--text-soft)] hover:text-[var(--text)]"
+                  ? "bg-[#E8527D] text-white shadow-xs"
+                  : "text-[#7A4B5D] hover:text-[#3D2432]"
               }`}
             >
               <Compass className="w-3.5 h-3.5" />
@@ -315,8 +478,8 @@ export default function StoriesPage() {
               onClick={() => setActiveWorld("saved")}
               className={`px-4 py-2 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer ${
                 activeWorld === "saved"
-                  ? "bg-[var(--burgundy)] text-white shadow-sm"
-                  : "text-[var(--text-soft)] hover:text-[var(--text)]"
+                  ? "bg-[#E8527D] text-white shadow-xs"
+                  : "text-[#7A4B5D] hover:text-[#3D2432]"
               }`}
             >
               <Bookmark className="w-3.5 h-3.5" />
@@ -326,113 +489,222 @@ export default function StoriesPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
-            WORLD 1: OUR STORIES (Private Couple Archive)
+            TAB 1: OUR STORIES (Private Couple Journal)
            ═══════════════════════════════════════════════════════════════ */}
         {activeWorld === "our" && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             
-            {/* Our Story Header Banner */}
-            <div className="p-8 rounded-[28px] border border-[var(--border)] bg-[var(--bg-secondary)] shadow-crafted-hero paper-grain flex flex-col sm:flex-row items-center justify-between gap-6">
+            {/* Journal Header Banner */}
+            <div className="p-6 sm:p-8 rounded-[28px] border border-[#FFD9E3] bg-white/90 shadow-[0_8px_32px_rgba(232,82,125,0.06)] paper-grain relative flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="space-y-2 text-center sm:text-left">
-                <p className="typo-chapter text-[var(--burgundy)]">OUR STORY</p>
-                <h2 className="typo-display text-3xl text-[var(--text)]">
-                  Everything you've lived, written down.
+                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#E8527D]">
+                  {partnerName ? `You & ${partnerName}` : "Your Couple Space"}
+                </span>
+                <h2 className="font-display italic font-bold text-2xl sm:text-3xl text-[#3D2432]">
+                  Your Shared Chapter Journal
                 </h2>
-                <p className="font-sans text-xs text-[var(--text-soft)]">
-                  A quiet, private sanctuary for your chapters, milestones, and shared memory archive.
+                <p className="text-xs text-[#7A4B5D] max-w-xl leading-relaxed">
+                  Record moments, milestones, lessons, and turning points. Private to both of you, with the option to share an anonymous takeaway to Explore.
                 </p>
               </div>
 
               <button
-                onClick={() => setIsWriterOpen(true)}
-                className="btn-primary py-3 px-6 text-xs font-mono uppercase tracking-widest flex items-center gap-2 rounded-full shadow-md shrink-0 cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                onClick={() => openNewChapterEditor()}
+                className="btn-journal py-3 px-6 text-xs font-mono font-bold tracking-wider uppercase shrink-0 whitespace-nowrap shadow-sm hover:scale-[1.02] active:scale-98 transition-transform cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Write a Chapter</span>
+                <span>Write Chapter</span>
               </button>
             </div>
 
-            {/* Featured Story Collection Card */}
-            <div className="p-6 rounded-[24px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-crafted-card paper-grain space-y-4">
+            {/* Chapters Section */}
+            <div className="space-y-5">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[var(--burgundy)] font-bold">
-                  OUR FIRST YEAR · COLLECTION
-                </span>
-                <span className="text-[10px] font-mono text-[var(--text-soft)]">
-                  {ourStories.length} chapters · Updated recently
-                </span>
+                <div>
+                  <h3 className="font-display italic font-bold text-xl text-[#3D2432]">
+                    Our Chapters
+                  </h3>
+                  <p className="text-[10px] font-mono text-[#7A4B5D] uppercase tracking-wider mt-0.5">
+                    {partnerName
+                      ? `Private to you & ${partnerName}`
+                      : pair
+                      ? "Private to your couple space"
+                      : "Private couple journal"}
+                  </p>
+                </div>
+
+                {chapters.length > 0 && (
+                  <span className="text-xs font-mono text-[#7A4B5D] bg-white px-3 py-1 rounded-full border border-[#FFD9E3]">
+                    {chapters.length} {chapters.length === 1 ? "chapter" : "chapters"} recorded
+                  </span>
+                )}
               </div>
 
-              <div>
-                <h3 className="typo-display text-2xl text-[var(--text)]">
-                  "We didn't know what we were doing."
-                </h3>
-                <p className="font-sans text-xs text-[var(--text-soft)] mt-1.5 leading-relaxed">
-                  A story about our first year together, the fights, the stupid moments, and everything we learned along the way.
-                </p>
-              </div>
-            </div>
-
-            {/* Our Chapters List */}
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between">
-                <p className="typo-chapter">Our Chapters</p>
-                <span className="text-[10px] font-mono text-[var(--text-soft)]">
-                  Private to you & {partnerName}
-                </span>
-              </div>
-
-              {ourStories.length === 0 ? (
-                <div className="p-12 text-center rounded-[24px] border border-[var(--border)] bg-[var(--paper-warm)] space-y-4 paper-grain">
-                  <BookOpen className="w-10 h-10 text-[var(--burgundy)] opacity-40 mx-auto" />
-                  <div className="space-y-1">
-                    <p className="font-display italic text-xl text-[var(--text)]">Your book is empty.</p>
-                    <p className="text-xs text-[var(--text-soft)]">
-                      Write your first chapter — How you met, your first fight, or the conversation that changed everything.
+              {/* EMPTY STATE: Blank-page writing prompt starters */}
+              {chapters.length === 0 ? (
+                <div className="p-8 sm:p-10 rounded-[28px] border border-[#FFD9E3] bg-white/95 paper-grain relative space-y-6">
+                  <div className="text-center max-w-md mx-auto space-y-2">
+                    <div className="w-12 h-12 rounded-2xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#E8527D] flex items-center justify-center mx-auto shadow-xs">
+                      <BookOpen className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-display italic font-bold text-2xl text-[#3D2432]">
+                      Your first chapter is blank.
+                    </h4>
+                    <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                      Begin your story by choosing a memory prompt below, or write freely about whatever is on your mind.
                     </p>
                   </div>
-                  <button
-                    onClick={() => setIsWriterOpen(true)}
-                    className="btn-primary py-2.5 px-6 text-xs font-mono uppercase tracking-wider rounded-full"
-                  >
-                    + Write First Chapter
-                  </button>
+
+                  {/* Prompt Starters Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-2">
+                    {WRITING_PROMPTS.map((prompt) => (
+                      <div
+                        key={prompt.id}
+                        onClick={() => openNewChapterEditor(prompt)}
+                        className="p-4 rounded-2xl bg-[#FFF9FB] border border-[#FFD9E3] hover:border-[#E8527D] hover:bg-white hover:shadow-sm transition-all cursor-pointer space-y-2 group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{prompt.emoji}</span>
+                          <span className="font-display italic font-bold text-sm text-[#3D2432] group-hover:text-[#E8527D] transition-colors">
+                            {prompt.title}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#7A4B5D] leading-relaxed line-clamp-2">
+                          {prompt.tagline}
+                        </p>
+                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#E8527D] pt-1 flex items-center gap-1">
+                          <span>Start this prompt</span>
+                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => openNewChapterEditor()}
+                      className="btn-journal py-2.5 px-6 text-xs font-mono font-bold tracking-wider uppercase"
+                    >
+                      + Write Freely Without a Prompt
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {ourStories.map((story, idx) => (
-                    <div
-                      key={story.id}
-                      onClick={() => openStoryReader(story)}
-                      className="p-5 rounded-[20px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-xs hover:border-[var(--burgundy)]/40 transition-all cursor-pointer flex items-center justify-between group"
-                    >
-                      <div className="space-y-1 min-w-0 pr-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)]">
-                            Chapter {idx + 1}
-                          </span>
-                          {story.visibility === "community" && (
-                            <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)]">
-                              Shared to Explore
-                            </span>
-                          )}
-                        </div>
-                        <h4 className="font-heading font-bold text-lg text-[var(--text)] group-hover:text-[var(--burgundy)] transition-colors truncate">
-                          {story.title}
-                        </h4>
-                        <p className="text-xs text-[var(--text-soft)] line-clamp-1">
-                          {story.problem_statement || story.content}
-                        </p>
-                      </div>
+                /* TIMELINE VIEW of Chapters */
+                <div className="relative pl-6 sm:pl-8 ml-3 sm:ml-4 border-l-2 border-[#FFD9E3] space-y-8">
+                  {chapters.map((ch, idx) => {
+                    const tagInfo = MOOD_TAGS[ch.mood_tag] || MOOD_TAGS.milestone;
+                    const isMyVoice = ch.author_user_id === user?.id;
+                    const voiceLabel = ch.author_voice === "joint"
+                      ? "Joint Entry"
+                      : isMyVoice
+                      ? "Written by you"
+                      : `Written by ${partnerName || "Partner"}`;
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[10px] font-mono text-[var(--text-soft)] hidden sm:inline">
-                          {story.created_at ? format(new Date(story.created_at), "MMM d") : "Recent"}
-                        </span>
-                        <ArrowRight className="w-4 h-4 text-[var(--text-soft)] group-hover:text-[var(--burgundy)] group-hover:translate-x-1 transition-all" />
+                    return (
+                      <div key={ch.id} className="relative group">
+                        {/* Timeline Node Dot */}
+                        <div className="absolute -left-[31px] sm:-left-[39px] top-4 w-7 h-7 rounded-full bg-white border-2 border-[#E8527D] shadow-xs flex items-center justify-center text-xs">
+                          <span>{tagInfo.emoji}</span>
+                        </div>
+
+                        {/* Chapter Card */}
+                        <div className="p-5 sm:p-6 rounded-[24px] border border-[#FFD9E3] bg-white/95 hover:border-[#E8527D]/40 hover:shadow-[0_8px_24px_rgba(232,82,125,0.06)] transition-all paper-grain space-y-3.5">
+                          {/* Top Row: Date, Voice, Mood, Status */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#FFD9E3]/60 pb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono font-bold text-[#3D2432] flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-[#E8527D]" />
+                                <span>{ch.chapter_date ? format(parseISO(ch.chapter_date), "MMMM d, yyyy") : "Recent"}</span>
+                              </span>
+                              <span className="text-[#FFD9E3]">•</span>
+                              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3]/70 font-semibold">
+                                {voiceLabel}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="text-[9px] font-mono uppercase tracking-widest font-bold px-2 py-0.5 rounded-full"
+                                style={{ backgroundColor: tagInfo.bg, color: tagInfo.color }}
+                              >
+                                {tagInfo.label}
+                              </span>
+
+                              {ch.is_shared_to_explore && (
+                                <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
+                                  ch.explore_status === "live"
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                    : "bg-amber-50 text-amber-800 border-amber-200"
+                                }`}>
+                                  {ch.explore_status === "live" ? "Live in Explore" : "Explore: In Review"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Title & Body */}
+                          <div className="space-y-2">
+                            <h4 className="font-display italic font-bold text-xl text-[#3D2432]">
+                              {ch.title}
+                            </h4>
+                            <p className="text-xs text-[#3D2432] leading-relaxed whitespace-pre-line">
+                              {ch.body}
+                            </p>
+                          </div>
+
+                          {/* "What Helped Us" Takeaway Section if present */}
+                          {ch.what_helped && (
+                            <div className="p-3.5 rounded-xl bg-[#FFF9FB] border border-[#FFD9E3] space-y-1">
+                              <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-[#E8527D] block">
+                                What helped us:
+                              </span>
+                              <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                                {ch.what_helped}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Photos if present */}
+                          {ch.photos && ch.photos.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {ch.photos.map((url, pIdx) => (
+                                <img
+                                  key={pIdx}
+                                  src={url}
+                                  alt="Chapter attachment"
+                                  className="w-16 h-16 object-cover rounded-xl border border-[#FFD9E3]"
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Card Footer Actions */}
+                          <div className="flex items-center justify-between pt-2 border-t border-[#FFD9E3]/60 text-xs font-mono text-[#7A4B5D]">
+                            <span className="text-[10px]">
+                              Chapter #{chapters.length - idx}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => openEditChapter(ch)}
+                                className="hover:text-[#E8527D] flex items-center gap-1 cursor-pointer transition-colors"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteChapter(ch.id)}
+                                className="hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -441,38 +713,101 @@ export default function StoriesPage() {
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
-            WORLD 2: EXPLORE (Relationship Knowledge Library)
+            TAB 2: EXPLORE (Anonymous Community Knowledge)
            ═══════════════════════════════════════════════════════════════ */}
         {activeWorld === "explore" && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             
-            {/* Explore Banner */}
-            <div className="p-8 rounded-[28px] border border-[var(--border)] bg-[var(--bg-secondary)] shadow-crafted-hero paper-grain space-y-3 text-center sm:text-left">
-              <p className="typo-chapter text-[var(--burgundy)]">RELATIONSHIP KNOWLEDGE NETWORK</p>
-              <h2 className="typo-display text-3xl sm:text-4xl text-[var(--text)]">
-                Someone, somewhere, has probably been through it too.
-              </h2>
-              <p className="font-sans text-xs text-[var(--text-soft)] max-w-xl">
-                A living library of real experiences written by people who navigated them. Problem-focused, anonymous-first, with zero popularity traps.
-              </p>
-            </div>
-
-            {/* "What are you going through?" Topic Filter Pills */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="typo-chapter">What are you going through?</p>
-                <span className="text-[10px] font-mono text-[var(--text-soft)]">
-                  Filter by situation
+            {/* Explore Banner with Direct Submission CTA */}
+            <div className="p-6 sm:p-8 rounded-[28px] border border-[#FFD9E3] bg-white/90 shadow-[0_8px_32px_rgba(232,82,125,0.06)] paper-grain relative flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="space-y-2 text-center sm:text-left">
+                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#E8527D]">
+                  COMMUNITY KNOWLEDGE
                 </span>
+                <h2 className="font-display italic font-bold text-2xl sm:text-3xl text-[#3D2432]">
+                  Real Experiences from Other Couples
+                </h2>
+                <p className="text-xs text-[#7A4B5D] max-w-xl leading-relaxed">
+                  Problem-focused, anonymous-first experiences from couples who navigated the same hurdles. Zero popularity traps, likes, or comment feeds.
+                </p>
               </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+              <button
+                onClick={() => setIsDirectSubmitOpen(true)}
+                className="btn-journal py-3 px-6 text-xs font-mono font-bold tracking-wider uppercase shrink-0 whitespace-nowrap shadow-sm hover:scale-[1.02] active:scale-98 transition-transform cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Share Experience</span>
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-[#7A4B5D] absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search topics, hurdles, or solutions (e.g. 'long distance', 'money', 'chores')..."
+                className="w-full pl-11 pr-10 py-3 rounded-2xl bg-white border border-[#FFD9E3] text-sm text-[#3D2432] placeholder:text-[#B392A0] focus:outline-none focus:border-[#E8527D] focus:ring-2 focus:ring-[#E8527D]/20 transition-all shadow-2xs"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#7A4B5D] hover:text-[#3D2432] cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Non-Overflowing Topic Filter Chips with Fade & Scroll Buttons */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7A4B5D]">
+                  Situation Topic
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAllTopics((v) => !v)}
+                    className="text-[10px] font-mono font-bold text-[#E8527D] hover:underline cursor-pointer"
+                  >
+                    {showAllTopics ? "Single Row" : "Show All Topics (+)"}
+                  </button>
+                  <div className="hidden sm:flex items-center gap-1 text-[#7A4B5D]">
+                    <button
+                      onClick={() => scrollChips("left")}
+                      className="p-1 rounded-full hover:bg-white border border-transparent hover:border-[#FFD9E3] cursor-pointer"
+                      title="Scroll left"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => scrollChips("right")}
+                      className="p-1 rounded-full hover:bg-white border border-transparent hover:border-[#FFD9E3] cursor-pointer"
+                      title="Scroll right"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chips container (Scrollable single-row or Wrapped multi-row) */}
+              <div
+                ref={chipsScrollRef}
+                className={`transition-all py-1.5 px-1 no-scrollbar ${
+                  showAllTopics
+                    ? "flex flex-wrap gap-2"
+                    : "flex items-center gap-2 overflow-x-auto"
+                }`}
+              >
                 <button
                   onClick={() => setActiveTopic("all")}
-                  className={`px-4 py-2 rounded-full text-xs font-mono font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                     activeTopic === "all"
-                      ? "bg-[var(--burgundy)] text-white shadow-xs"
-                      : "bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
+                      ? "bg-[#E8527D] text-white shadow-xs"
+                      : "bg-white border border-[#FFD9E3] text-[#7A4B5D] hover:border-[#E8527D]/40 hover:text-[#3D2432]"
                   }`}
                 >
                   ✨ All Topics
@@ -482,10 +817,10 @@ export default function StoriesPage() {
                   <button
                     key={topic.id}
                     onClick={() => setActiveTopic(topic.id)}
-                    className={`px-4 py-2 rounded-full text-xs font-mono font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-medium whitespace-nowrap transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                       activeTopic === topic.id
-                        ? "bg-[var(--burgundy)] text-white shadow-xs"
-                        : "bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
+                        ? "bg-[#E8527D] text-white shadow-xs font-bold"
+                        : "bg-white border border-[#FFD9E3] text-[#7A4B5D] hover:border-[#E8527D]/40 hover:text-[#3D2432]"
                     }`}
                   >
                     <span>{topic.emoji}</span>
@@ -495,90 +830,118 @@ export default function StoriesPage() {
               </div>
             </div>
 
-            {/* Problem-First Story Cards Grid */}
-            <div className="space-y-5">
+            {/* Explore Feed Cards */}
+            <div className="space-y-4">
               {fetchingExplore ? (
                 <div className="p-12 text-center">
-                  <Loader2 className="w-5 h-5 text-[var(--burgundy)] animate-spin mx-auto" />
+                  <Loader2 className="w-6 h-6 text-[#E8527D] animate-spin mx-auto" />
                 </div>
               ) : exploreStories.length === 0 ? (
-                <div className="p-12 text-center rounded-[24px] border border-[var(--border)] bg-[var(--paper-warm)] italic text-xs text-[var(--text-soft)]">
-                  No stories found for this topic yet. Be the first to share an experience!
+                <div className="p-10 text-center rounded-[24px] border border-[#FFD9E3] bg-white/95 space-y-3">
+                  <p className="font-display italic text-lg text-[#3D2432]">
+                    No stories found matching your filter.
+                  </p>
+                  <p className="text-xs text-[#7A4B5D]">
+                    Try another topic keyword or share your couple's experience to help others.
+                  </p>
+                  <button
+                    onClick={() => { setActiveTopic("all"); setSearchQuery(""); }}
+                    className="btn-journal-ghost py-2 px-5 text-xs font-mono"
+                  >
+                    Reset Filters
+                  </button>
                 </div>
               ) : (
                 exploreStories.map((story) => {
-                  const mainTopic = STORY_TOPICS.find((t) => story.topic_tags?.includes(t.id)) || STORY_TOPICS[0];
                   const isSaved = savedIds.has(story.id);
+                  const isHelpful = helpfulIds.has(story.id);
+                  const mainTopic = STORY_TOPICS.find((t) => story.situation_tags?.includes(t.id)) || STORY_TOPICS[0];
 
                   return (
-                    <motion.div
+                    <div
                       key={story.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-6 sm:p-7 rounded-[24px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-crafted-card paper-grain space-y-4 transition-all hover:border-[var(--burgundy)]/30"
+                      className="p-6 rounded-[24px] border border-[#FFD9E3] bg-white/95 shadow-xs hover:border-[#E8527D]/40 hover:shadow-[0_6px_20px_rgba(232,82,125,0.05)] transition-all paper-grain space-y-4"
                     >
-                      {/* Topic Badge & Save Button */}
+                      {/* Card Header: Topic Badge + Actions (Save, Report) */}
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-[0.2em] px-3 py-1 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] font-bold">
-                          <span>{mainTopic.emoji}</span>
-                          <span>{mainTopic.label}</span>
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest px-3 py-1 rounded-full bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3] font-bold">
+                            <span>{mainTopic.emoji}</span>
+                            <span>{mainTopic.label}</span>
+                          </span>
+                          <span className="text-[10px] font-mono text-[#7A4B5D]">
+                            — {story.author_display || "Anonymous Couple"} · {story.relationship_duration}
+                          </span>
+                        </div>
 
-                        <button
-                          onClick={() => handleToggleSave(story.id)}
-                          className={`p-2 rounded-full border transition-all cursor-pointer ${
-                            isSaved
-                              ? "bg-[var(--burgundy)] text-white border-[var(--burgundy)] shadow-xs"
-                              : "bg-[var(--card)] border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--burgundy)]"
-                          }`}
-                          title={isSaved ? "Saved to your bookmarks" : "Save this story"}
-                        >
-                          <Bookmark className="w-3.5 h-3.5 fill-current" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleToggleSave(story.id)}
+                            className={`p-2 rounded-full border transition-all cursor-pointer ${
+                              isSaved
+                                ? "bg-[#E8527D] text-white border-[#E8527D] shadow-xs"
+                                : "bg-white border-[#FFD9E3] text-[#7A4B5D] hover:text-[#E8527D]"
+                            }`}
+                            title={isSaved ? "Saved to your bookmarks" : "Save this story"}
+                          >
+                            <Bookmark className="w-3.5 h-3.5 fill-current" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenReport(story)}
+                            className="p-2 rounded-full border border-transparent hover:border-[#FFD9E3] text-[#7A4B5D] hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Report or flag story"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Problem Statement & Quote */}
-                      <div className="space-y-2 cursor-pointer" onClick={() => openStoryReader(story)}>
-                        <h3 className="font-heading font-black text-2xl sm:text-3xl text-[var(--text)] leading-tight hover:text-[var(--burgundy)] transition-colors">
+                      {/* Title & Preview */}
+                      <div className="space-y-1.5 cursor-pointer" onClick={() => setActiveStory(story)}>
+                        <h4 className="font-display italic font-bold text-xl sm:text-2xl text-[#3D2432] hover:text-[#E8527D] transition-colors">
                           {story.title}
-                        </h3>
-                        <p className="font-quote italic text-sm text-[var(--text-soft)] line-clamp-2 leading-relaxed">
-                          "{story.quote_excerpt || story.problem_statement}"
+                        </h4>
+                        <p className="text-xs text-[#3D2432] leading-relaxed line-clamp-3">
+                          {story.body_anonymized}
                         </p>
                       </div>
 
-                      {/* "What Helped Us" Highlight Divider */}
-                      {story.what_we_tried && (
-                        <div className="p-3.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-1">
-                          <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                            What helped us:
-                          </p>
-                          <p className="text-xs font-sans text-[var(--text)] line-clamp-2">
-                            {story.what_we_tried}
+                      {/* "What Helped Us" prominent takeaway box */}
+                      {story.what_helped_anonymized && (
+                        <div className="p-3.5 rounded-xl bg-[#FFF9FB] border border-[#FFD9E3] space-y-1">
+                          <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-[#E8527D] block">
+                            What helped them:
+                          </span>
+                          <p className="text-xs text-[#7A4B5D] leading-relaxed line-clamp-2">
+                            {story.what_helped_anonymized}
                           </p>
                         </div>
                       )}
 
-                      {/* Bottom Footer: Meaningful Signals + Anonymous Author Tag + CTA */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-[var(--border)]">
-                        <div className="flex items-center gap-3 text-[10px] font-mono text-[var(--text-soft)]">
-                          <span className="flex items-center gap-1 text-[var(--burgundy)] font-semibold">
-                            <Heart className="w-3 h-3 fill-current" />
-                            <span>{story.helped_count.toLocaleString()} people found this helpful</span>
-                          </span>
-                          <span>·</span>
-                          <span>— {story.author_display}</span>
-                        </div>
+                      {/* Bottom Footer: Private Helpful Toggle + Full Reader Link */}
+                      <div className="flex items-center justify-between pt-2 border-t border-[#FFD9E3]/60">
+                        {/* ZERO POPULARITY TRAP: Private helpful signal only! No public likes counter */}
+                        <button
+                          onClick={() => handleToggleHelpful(story.id)}
+                          className={`text-xs font-mono flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                            isHelpful
+                              ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-bold"
+                              : "bg-white text-[#7A4B5D] border-[#FFD9E3] hover:border-[#E8527D]/40"
+                          }`}
+                        >
+                          <CheckCircle2 className={`w-3.5 h-3.5 ${isHelpful ? "text-emerald-600" : "text-stone-400"}`} />
+                          <span>{isHelpful ? "Marked as helpful (private)" : "Helpful to me"}</span>
+                        </button>
 
                         <button
-                          onClick={() => openStoryReader(story)}
-                          className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--burgundy)] hover:underline flex items-center gap-1 cursor-pointer"
+                          onClick={() => setActiveStory(story)}
+                          className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#E8527D] hover:underline flex items-center gap-1 cursor-pointer"
                         >
-                          <span>Read Story</span>
-                          <ArrowRight className="w-3 h-3" />
+                          <span>Read Full Story</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })
               )}
@@ -588,531 +951,918 @@ export default function StoriesPage() {
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
-            WORLD 3: SAVED STORIES (Private Bookmarks)
+            TAB 3: SAVED STORIES (Private Bookmarks)
            ═══════════════════════════════════════════════════════════════ */}
         {activeWorld === "saved" && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-            <div className="space-y-1">
-              <p className="typo-chapter">Private Bookmarks</p>
-              <h2 className="typo-display text-3xl text-[var(--text)]">
-                Stories you saved for reference.
-              </h2>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#FFD9E3] pb-4">
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#E8527D]">
+                  PRIVATE BOOKMARKS
+                </span>
+                <h2 className="font-display italic font-bold text-2xl text-[#3D2432]">
+                  Stories You Saved for Reference
+                </h2>
+              </div>
+
+              {savedStories.length > 0 && (
+                <span className="text-xs font-mono text-[#7A4B5D] bg-white px-3 py-1 rounded-full border border-[#FFD9E3]">
+                  {savedStories.length} bookmarked
+                </span>
+              )}
             </div>
 
             {savedStories.length === 0 ? (
-              <div className="p-12 text-center rounded-[24px] border border-[var(--border)] bg-[var(--paper-warm)] space-y-3 italic text-xs text-[var(--text-soft)]">
-                <Bookmark className="w-8 h-8 opacity-40 mx-auto text-[var(--burgundy)]" />
-                <p>You haven't saved any stories yet.</p>
-                <p className="not-italic font-mono text-[10px] text-[var(--burgundy)] uppercase font-bold cursor-pointer" onClick={() => setActiveWorld("explore")}>
-                  Browse Explore to find stories →
+              <div className="p-10 rounded-[28px] border border-[#FFD9E3] bg-white/95 text-center space-y-3">
+                <Bookmark className="w-10 h-10 text-[#E8527D] opacity-40 mx-auto" />
+                <h4 className="font-display italic font-bold text-xl text-[#3D2432]">
+                  No saved stories yet.
+                </h4>
+                <p className="text-xs text-[#7A4B5D] max-w-sm mx-auto">
+                  When browsing Explore, tap the bookmark icon on stories that offer advice you want to return to later.
                 </p>
+                <button
+                  onClick={() => setActiveWorld("explore")}
+                  className="btn-journal py-2 px-5 text-xs font-mono font-bold tracking-wider uppercase"
+                >
+                  Browse Explore Feed ▷
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
-                {savedStories.map((story) => (
-                  <div
-                    key={story.id}
-                    className="p-5 rounded-[20px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-xs flex items-center justify-between cursor-pointer"
-                    onClick={() => openStoryReader(story)}
-                  >
-                    <div className="space-y-1">
-                      <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)]">Saved Story</p>
-                      <h4 className="font-heading font-bold text-lg text-[var(--text)]">{story.title}</h4>
-                      <p className="text-xs text-[var(--text-soft)] line-clamp-1">{story.quote_excerpt || story.problem_statement}</p>
-                    </div>
-
+                {/* Topic filter for saved stories */}
+                {savedStories.length > 3 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleSave(story.id);
-                      }}
-                      className="p-2 rounded-full text-red-500 hover:bg-red-50"
-                      title="Remove bookmark"
+                      onClick={() => setSavedFilterTopic("all")}
+                      className={`px-3 py-1 rounded-full text-xs font-mono font-bold shrink-0 cursor-pointer ${
+                        savedFilterTopic === "all"
+                          ? "bg-[#E8527D] text-white"
+                          : "bg-white border border-[#FFD9E3] text-[#7A4B5D]"
+                      }`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      All ({savedStories.length})
                     </button>
+                    {STORY_TOPICS.map((top) => {
+                      const count = savedStories.filter((s) => s.situation_tags?.includes(top.id)).length;
+                      if (count === 0) return null;
+                      return (
+                        <button
+                          key={top.id}
+                          onClick={() => setSavedFilterTopic(top.id)}
+                          className={`px-3 py-1 rounded-full text-xs font-mono shrink-0 cursor-pointer flex items-center gap-1 ${
+                            savedFilterTopic === top.id
+                              ? "bg-[#E8527D] text-white font-bold"
+                              : "bg-white border border-[#FFD9E3] text-[#7A4B5D]"
+                          }`}
+                        >
+                          <span>{top.emoji}</span>
+                          <span>{top.label} ({count})</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                ))}
+                )}
+
+                {/* Saved Stories List */}
+                <div className="space-y-3">
+                  {filteredSavedStories.map((story) => (
+                    <div
+                      key={story.id}
+                      className="p-5 rounded-[20px] border border-[#FFD9E3] bg-white/95 shadow-xs flex items-start justify-between gap-4"
+                    >
+                      <div className="space-y-1.5 flex-1 cursor-pointer" onClick={() => setActiveStory(story)}>
+                        <h4 className="font-display italic font-bold text-lg text-[#3D2432] hover:text-[#E8527D] transition-colors">
+                          {story.title}
+                        </h4>
+                        <p className="text-xs text-[#7A4B5D] line-clamp-2">
+                          {story.body_anonymized}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => setActiveStory(story)}
+                          className="btn-journal-ghost py-1.5 px-3 text-[10px] font-mono uppercase tracking-wider"
+                        >
+                          Read
+                        </button>
+                        <button
+                          onClick={() => handleToggleSave(story.id)}
+                          className="p-2 rounded-full border border-[#FFD9E3] text-[#7A4B5D] hover:text-rose-600 cursor-pointer"
+                          title="Remove bookmark"
+                        >
+                          <Bookmark className="w-3.5 h-3.5 fill-current text-[#E8527D]" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
         )}
 
+        {/* ─── MODERATION QUEUE ACCESS BAR (Bottom) ─── */}
+        <div className="pt-6 border-t border-[#FFD9E3]/60 flex items-center justify-between text-xs font-mono text-[#7A4B5D]">
+          <span>Pairfect Stories &amp; Explore Network</span>
+          <button
+            onClick={openModerationQueue}
+            className="inline-flex items-center gap-1.5 hover:text-[#E8527D] transition-colors cursor-pointer"
+          >
+            <ShieldCheck className="w-4 h-4 text-[#E8527D]" />
+            <span>Moderation Queue</span>
+          </button>
+        </div>
+
       </main>
 
       {/* ═══════════════════════════════════════════════════════════════
-          JOURNAL-STYLE STORY READER DRAWER
+          MODAL 1: OUR STORIES CHAPTER EDITOR (With Pipeline Toggle)
          ═══════════════════════════════════════════════════════════════ */}
       <AnimatePresence>
-        {activeStory && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 select-none">
-            {/* Backdrop */}
+        {isEditorOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActiveStory(null)}
-              className="absolute inset-0 bg-black/45 backdrop-blur-xs"
-            />
-
-            {/* Journal Modal Window */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ type: "spring", stiffness: 380, damping: 28 }}
-              className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[32px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-2xl z-10 p-6 sm:p-10 space-y-8 paper-grain"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-white border border-[#FFD9E3] shadow-2xl p-6 sm:p-8 space-y-6 paper-grain relative"
             >
-              {/* Close Button */}
-              <button
-                onClick={() => setActiveStory(null)}
-                className="absolute top-6 right-6 w-9 h-9 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-soft)] hover:text-[var(--text)] flex items-center justify-center transition-all hover:scale-105"
-              >
-                <X className="w-4.5 h-4.5" />
-              </button>
-
-              {/* Journal Title Header */}
-              <div className="space-y-3 border-b border-[var(--border)] pb-6 pr-8">
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-mono uppercase tracking-[0.2em] px-3 py-1 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] font-bold">
-                    {activeStory.topic_tags?.[0]?.replace("_", " ").toUpperCase() || "RELATIONSHIP STORY"}
-                  </span>
-                  <span className="text-[10px] font-mono text-[var(--text-soft)]">
-                    {activeStory.relationship_duration}
-                  </span>
+              <div className="flex items-center justify-between border-b border-[#FFD9E3] pb-4">
+                <div>
+                  <h3 className="font-display italic font-bold text-2xl text-[#3D2432]">
+                    {editingChapterId ? "Edit Chapter" : "Write a New Chapter"}
+                  </h3>
+                  <p className="text-xs text-[#7A4B5D] mt-0.5">
+                    {partnerName ? `Recording a memory for you & ${partnerName}` : "Your private couple journal"}
+                  </p>
                 </div>
-
-                <h2 className="font-display italic text-3xl sm:text-4xl font-black text-[var(--text)] leading-tight">
-                  {activeStory.title}
-                </h2>
-
-                <p className="text-xs font-mono text-[var(--text-soft)]">
-                  — {activeStory.author_display}
-                </p>
-              </div>
-
-              {/* Teaser Quote */}
-              {activeStory.quote_excerpt && (
-                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border-l-4 border-[var(--burgundy)] font-quote italic text-base text-[var(--text)] leading-relaxed">
-                  "{activeStory.quote_excerpt}"
-                </div>
-              )}
-
-              {/* Guided Sections */}
-              <div className="space-y-6 text-sm font-sans text-[var(--text)] leading-relaxed">
-                {activeStory.what_happened && (
-                  <div className="space-y-1.5">
-                    <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                      WHAT HAPPENED
-                    </p>
-                    <p>{activeStory.what_happened}</p>
-                  </div>
-                )}
-
-                {activeStory.what_made_difficult && (
-                  <div className="space-y-1.5">
-                    <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                      WHAT MADE IT DIFFICULT
-                    </p>
-                    <p>{activeStory.what_made_difficult}</p>
-                  </div>
-                )}
-
-                {activeStory.what_we_tried && (
-                  <div className="space-y-1.5 p-4 rounded-2xl bg-[var(--paper-mid)] border border-[var(--border)]">
-                    <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                      WHAT WE TRIED
-                    </p>
-                    <p className="font-medium text-[var(--text)]">{activeStory.what_we_tried}</p>
-                  </div>
-                )}
-
-                {activeStory.where_are_we_now && (
-                  <div className="space-y-1.5">
-                    <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                      WHERE WE ARE NOW
-                    </p>
-                    <p>{activeStory.where_are_we_now}</p>
-                  </div>
-                )}
-
-                {activeStory.what_to_tell_others && (
-                  <div className="space-y-1.5 p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                    <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                      WHAT WE'D TELL SOMEONE GOING THROUGH THIS
-                    </p>
-                    <p className="font-quote italic text-base text-[var(--burgundy)]">
-                      "{activeStory.what_to_tell_others}"
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Interactive 5-Reaction Bar + Save */}
-              <div className="pt-6 border-t border-[var(--border)] space-y-4">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] text-center">
-                  Was this helpful to you?
-                </p>
-
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => handleToggleReaction("helped_me")}
-                    className={`px-3.5 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                      reactions.helped_me
-                        ? "bg-[var(--burgundy)] text-white shadow-xs"
-                        : "bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
-                    }`}
-                  >
-                    <span>♡ This helped me</span>
-                    <span className="text-[10px] opacity-75">({activeStory.helped_count})</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleToggleReaction("relate")}
-                    className={`px-3.5 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                      reactions.relate
-                        ? "bg-[var(--burgundy)] text-white shadow-xs"
-                        : "bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
-                    }`}
-                  >
-                    <span>🤝 I relate</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleToggleReaction("perspective")}
-                    className={`px-3.5 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                      reactions.perspective
-                        ? "bg-[var(--burgundy)] text-white shadow-xs"
-                        : "bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
-                    }`}
-                  >
-                    <span>💡 Gave perspective</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleToggleSave(activeStory.id)}
-                    className={`px-3.5 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                      savedIds.has(activeStory.id)
-                        ? "bg-[var(--burgundy)] text-white shadow-xs"
-                        : "bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
-                    }`}
-                  >
-                    <Bookmark className="w-3.5 h-3.5 fill-current" />
-                    <span>{savedIds.has(activeStory.id) ? "Saved" : "Save Story"}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* ─── "ARE YOU GOING THROUGH SOMETHING SIMILAR?" TRIGGER ─── */}
-              <div className="p-6 rounded-[24px] bg-[var(--bg-secondary)] border border-[var(--border)] text-center space-y-3">
-                <p className="font-heading font-bold text-lg text-[var(--text)]">
-                  Are you going through something similar?
-                </p>
-                <p className="text-xs text-[var(--text-soft)]">
-                  Tap below to surface stories from couples who have navigated this exact challenge.
-                </p>
-
                 <button
-                  onClick={() => {
-                    handleToggleReaction("going_through");
-                    setSimilarDrawerOpen(true);
-                  }}
-                  className="btn-primary py-3 px-8 text-xs font-mono uppercase tracking-widest rounded-full shadow-md cursor-pointer"
+                  onClick={() => setIsEditorOpen(false)}
+                  className="p-2 rounded-full border border-[#FFD9E3] text-[#7A4B5D] hover:text-[#3D2432] cursor-pointer"
                 >
-                  I'm Going Through This →
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Similar Stories Drawer */}
-              {similarDrawerOpen && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-3 pt-4 border-t border-[var(--border)]">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                    People who have been here before:
-                  </p>
-
-                  <div className="space-y-2">
-                    {similarStories.map((sim) => (
-                      <div
-                        key={sim.id}
-                        onClick={() => openStoryReader(sim)}
-                        className="p-4 rounded-2xl bg-[var(--paper-mid)] border border-[var(--border)] cursor-pointer hover:border-[var(--burgundy)]/40 transition-all text-left"
-                      >
-                        <h4 className="font-heading font-bold text-base text-[var(--text)]">{sim.title}</h4>
-                        <p className="text-xs text-[var(--text-soft)] line-clamp-1 mt-0.5">"{sim.quote_excerpt || sim.problem_statement}"</p>
-                        <span className="text-[9px] font-mono text-[var(--burgundy)] uppercase tracking-wider block mt-1">Read Story →</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Responses & Shared Experiences Section */}
-              <div className="pt-6 border-t border-[var(--border)] space-y-4">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                  Responses ({responses.length})
-                </p>
-
-                <div className="space-y-3">
-                  {responses.map((resp, idx) => (
-                    <div key={idx} className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-1.5 text-xs">
-                      <div className="flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
-                        <span className="font-bold text-[var(--text)]">{resp.author_display}</span>
-                        <span>{resp.created_at ? format(new Date(resp.created_at), "MMM d") : "Recently"}</span>
-                      </div>
-                      <p className="text-[var(--text)]">{resp.content}</p>
-                      {resp.shared_experience && (
-                        <div className="p-2.5 rounded-xl bg-[var(--paper-warm)] font-quote italic text-xs text-[var(--burgundy)]">
-                          "What helped us: {resp.shared_experience}"
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              <div className="space-y-4">
+                {/* Title */}
+                <div>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1.5">
+                    Chapter Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={chapterTitle}
+                    onChange={(e) => setChapterTitle(e.target.value)}
+                    placeholder="e.g. The Night We Rebuilt Trust, Our 1st Anniversary..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] focus:bg-white focus:border-[#E8527D] focus:ring-2 focus:ring-[#E8527D]/20 outline-none"
+                  />
                 </div>
 
-                {/* Submit Response Form */}
-                <form onSubmit={handlePostResponse} className="space-y-3 pt-2">
-                  <textarea
-                    value={newResponse}
-                    onChange={(e) => setNewResponse(e.target.value)}
-                    placeholder="Share your response or experience with this story..."
-                    className="input-warm text-xs min-h-[70px]"
-                  />
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-[var(--text-soft)]">
-                      Posted anonymously as Pairfect Reader
-                    </span>
-                    <button
-                      type="submit"
-                      disabled={!newResponse.trim() || submittingResponse}
-                      className="btn-secondary py-2 px-5 text-[10px] font-mono uppercase tracking-wider cursor-pointer disabled:opacity-40"
+                {/* Date & Voice Selector */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1.5">
+                      Chapter Date
+                    </label>
+                    <input
+                      type="date"
+                      value={chapterDate}
+                      onChange={(e) => setChapterDate(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] focus:bg-white focus:border-[#E8527D] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1.5">
+                      Whose Voice Is Speaking?
+                    </label>
+                    <select
+                      value={authorVoice}
+                      onChange={(e) => setAuthorVoice(e.target.value as any)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] focus:bg-white focus:border-[#E8527D] outline-none"
                     >
-                      {submittingResponse ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Post Response"}
+                      <option value="me">Written by me</option>
+                      <option value="partner">Written by {partnerName || "Partner"}</option>
+                      <option value="joint">Joint entry (both of us)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Mood Tag Selector */}
+                <div>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1.5">
+                    Mood / Tag
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {(Object.keys(MOOD_TAGS) as MoodTag[]).map((t) => {
+                      const tagObj = MOOD_TAGS[t];
+                      const isSel = moodTag === t;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setMoodTag(t)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer flex items-center gap-1.5 ${
+                            isSel
+                              ? "bg-[#E8527D] text-white shadow-xs font-bold"
+                              : "bg-[#FFF9FB] border border-[#FFD9E3] text-[#7A4B5D]"
+                          }`}
+                        >
+                          <span>{tagObj.emoji}</span>
+                          <span>{tagObj.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Chapter Body */}
+                <div>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1.5">
+                    Chapter Content *
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={chapterBody}
+                    onChange={(e) => setChapterBody(e.target.value)}
+                    placeholder="Write freely about what happened, what was unsaid, and what you learned together..."
+                    className="w-full px-4 py-3 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] focus:bg-white focus:border-[#E8527D] focus:ring-2 focus:ring-[#E8527D]/20 outline-none leading-relaxed"
+                  />
+                </div>
+
+                {/* "What Helped Us" Checkbox & Expandable Field */}
+                <div className="p-4 rounded-2xl bg-[#FFF9FB] border border-[#FFD9E3] space-y-3">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={hasWhatHelped}
+                      onChange={(e) => setHasWhatHelped(e.target.checked)}
+                      className="rounded border-[#FFD9E3] text-[#E8527D] focus:ring-[#E8527D] w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-[#3D2432]">
+                      Include a "What Helped Us" takeaway (if this describes overcoming something)
+                    </span>
+                  </label>
+
+                  {hasWhatHelped && (
+                    <div>
+                      <textarea
+                        rows={2}
+                        value={whatHelped}
+                        onChange={(e) => setWhatHelped(e.target.value)}
+                        placeholder="What specific rule, habit, boundary, or conversation helped you both resolve this?"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-[#FFD9E3] bg-white text-xs text-[#3D2432] focus:border-[#E8527D] outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Optional Photo Attachment */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider">
+                    Photos (Optional URLs)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={newPhotoUrl}
+                      onChange={(e) => setNewPhotoUrl(e.target.value)}
+                      placeholder="Paste image URL (https://...)"
+                      className="flex-1 px-3.5 py-2 rounded-xl border border-[#FFD9E3] text-xs bg-[#FFF9FB] focus:bg-white outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newPhotoUrl.trim()) {
+                          setPhotos((prev) => [...prev, newPhotoUrl.trim()]);
+                          setNewPhotoUrl("");
+                        }
+                      }}
+                      className="btn-journal-ghost py-2 px-3 text-xs"
+                    >
+                      + Add
                     </button>
                   </div>
-                </form>
+                  {photos.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {photos.map((url, i) => (
+                        <div key={i} className="relative group">
+                          <img src={url} alt="attached" className="w-14 h-14 object-cover rounded-xl border border-[#FFD9E3]" />
+                          <button
+                            type="button"
+                            onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                            className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ─── THE PIPELINE: Anonymize and Share to Explore Toggle ─── */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#FFF5F8] to-[#FFF9F5] border border-[#FFD9E3] space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isSharedToExplore}
+                        onChange={(e) => handleToggleShareToExplore(e.target.checked)}
+                        className="rounded border-[#FFD9E3] text-[#E8527D] focus:ring-[#E8527D] w-4 h-4 cursor-pointer mt-0.5"
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-[#3D2432] block">
+                          Share an anonymized version to Explore
+                        </span>
+                        <span className="text-[11px] text-[#7A4B5D] block mt-0.5">
+                          Help other couples navigating similar situations. Names and identifying markers are stripped.
+                        </span>
+                      </div>
+                    </label>
+
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-rose-100 text-[#802030] border border-rose-200 uppercase font-bold shrink-0">
+                      MODERATED
+                    </span>
+                  </div>
+
+                  {isSharedToExplore && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-3.5 pt-2 border-t border-[#FFD9E3]/70">
+                      <div>
+                        <label className="block text-[10px] font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                          Select Relevant Situation Topic Tags
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {STORY_TOPICS.map((top) => {
+                            const isSelected = exploreSituationTags.includes(top.id);
+                            return (
+                              <button
+                                key={top.id}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setExploreSituationTags((prev) => prev.filter((t) => t !== top.id));
+                                  } else {
+                                    setExploreSituationTags((prev) => [...prev, top.id]);
+                                  }
+                                }}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-mono transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-[#E8527D] text-white font-bold"
+                                    : "bg-white border border-[#FFD9E3] text-[#7A4B5D]"
+                                }`}
+                              >
+                                {top.emoji} {top.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                          Review Anonymized Text (Verify no private details remain)
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={exploreBodyAnonymized}
+                          onChange={(e) => setExploreBodyAnonymized(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#FFD9E3] bg-white text-xs text-[#3D2432] focus:border-[#E8527D] outline-none"
+                        />
+                      </div>
+
+                      {hasWhatHelped && (
+                        <div>
+                          <label className="block text-[10px] font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                            Anonymized "What Helped Us" Takeaway
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={exploreWhatHelpedAnonymized}
+                            onChange={(e) => setExploreWhatHelpedAnonymized(e.target.value)}
+                            className="w-full px-3.5 py-2 rounded-xl border border-[#FFD9E3] bg-white text-xs text-[#3D2432] focus:border-[#E8527D] outline-none"
+                          />
+                        </div>
+                      )}
+
+                      <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-[11px] flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>
+                          <strong>Moderation Queue:</strong> This story will be reviewed by moderation before appearing in Explore — never auto-published.
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
               </div>
 
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#FFD9E3]">
+                <button
+                  type="button"
+                  onClick={() => setIsEditorOpen(false)}
+                  className="btn-journal-ghost py-2.5 px-5 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveChapter}
+                  disabled={savingChapter || !chapterTitle.trim() || !chapterBody.trim()}
+                  className="btn-journal py-2.5 px-7 text-xs font-mono font-bold tracking-wider uppercase disabled:opacity-50"
+                >
+                  {savingChapter ? "Saving Chapter..." : editingChapterId ? "Update Chapter ▷" : "Save Chapter ▷"}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
       {/* ═══════════════════════════════════════════════════════════════
-          STORY CREATOR MODAL (Guided Framework vs Freeform)
+          MODAL 2: DIRECT SUBMISSION TO EXPLORE
          ═══════════════════════════════════════════════════════════════ */}
       <AnimatePresence>
-        {isWriterOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 select-none">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsWriterOpen(false)} className="absolute inset-0 bg-black/45 backdrop-blur-xs" />
-
+        {isDirectSubmitOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[32px] border border-[var(--border)] bg-[var(--paper-warm)] shadow-2xl z-10 p-6 sm:p-8 space-y-6 paper-grain"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-white border border-[#FFD9E3] shadow-2xl p-6 sm:p-8 space-y-5 paper-grain relative"
             >
-              <button onClick={() => setIsWriterOpen(false)} className="absolute top-6 right-6 w-9 h-9 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-soft)] flex items-center justify-center">
-                <X className="w-4.5 h-4.5" />
-              </button>
-
-              <div className="space-y-1 pr-8">
-                <p className="typo-chapter text-[var(--burgundy)]">STORY CREATOR</p>
-                <h2 className="typo-display text-2xl sm:text-3xl text-[var(--text)]">Tell your story</h2>
-              </div>
-
-              {/* Format Toggle: Guided vs Freeform */}
-              <div className="flex items-center gap-2 p-1.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] w-fit">
+              <div className="flex items-center justify-between border-b border-[#FFD9E3] pb-4">
+                <div>
+                  <h3 className="font-display italic font-bold text-2xl text-[#3D2432]">
+                    Share an Experience to Explore
+                  </h3>
+                  <p className="text-xs text-[#7A4B5D] mt-0.5">
+                    Anonymous, problem-focused advice for couples facing the same situation.
+                  </p>
+                </div>
                 <button
-                  type="button"
-                  onClick={() => setWriteFormat("guided")}
-                  className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
-                    writeFormat === "guided" ? "bg-[var(--burgundy)] text-white shadow-xs" : "text-[var(--text-soft)]"
-                  }`}
+                  onClick={() => setIsDirectSubmitOpen(false)}
+                  className="p-2 rounded-full border border-[#FFD9E3] text-[#7A4B5D] hover:text-[#3D2432] cursor-pointer"
                 >
-                  Guided Framework (5 Steps)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWriteFormat("freeform")}
-                  className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
-                    writeFormat === "freeform" ? "bg-[var(--burgundy)] text-white shadow-xs" : "text-[var(--text-soft)]"
-                  }`}
-                >
-                  Write Freely
+                  <X className="w-4 h-4" />
                 </button>
               </div>
+
+              {directSubmitNotice && (
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{directSubmitNotice}</span>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block mb-1">Story Title</label>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                    Situation Title *
+                  </label>
                   <input
                     type="text"
-                    value={storyTitle}
-                    onChange={(e) => setStoryTitle(e.target.value)}
-                    placeholder="e.g. We stopped talking."
-                    className="input-warm text-sm font-heading font-bold"
+                    value={directTitle}
+                    onChange={(e) => setDirectTitle(e.target.value)}
+                    placeholder="e.g. 8000 miles and the same Friday fight..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] outline-none"
                   />
                 </div>
 
-                {writeFormat === "guided" ? (
-                  <>
-                    <div>
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold block mb-1">1 — What happened?</label>
-                      <textarea
-                        value={whatHappened}
-                        onChange={(e) => setWhatHappened(e.target.value)}
-                        placeholder="Tell us what you were going through..."
-                        className="input-warm text-xs min-h-[70px]"
-                      />
-                    </div>
+                <div>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                    Relationship Duration / Type
+                  </label>
+                  <input
+                    type="text"
+                    value={directDuration}
+                    onChange={(e) => setDirectDuration(e.target.value)}
+                    placeholder="e.g. 3 years together, 18 months long distance..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] outline-none"
+                  />
+                </div>
 
-                    <div>
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold block mb-1">2 — What made it difficult?</label>
-                      <textarea
-                        value={whatMadeDifficult}
-                        onChange={(e) => setWhatMadeDifficult(e.target.value)}
-                        placeholder="What were you struggling with?"
-                        className="input-warm text-xs min-h-[70px]"
-                      />
-                    </div>
+                <div>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                    Select Situation Topic Tags
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {STORY_TOPICS.map((top) => {
+                      const isSelected = directTags.includes(top.id);
+                      return (
+                        <button
+                          key={top.id}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) setDirectTags((prev) => prev.filter((t) => t !== top.id));
+                            else setDirectTags((prev) => [...prev, top.id]);
+                          }}
+                          className={`px-2.5 py-1 rounded-full text-xs font-mono transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-[#E8527D] text-white font-bold"
+                              : "bg-white border border-[#FFD9E3] text-[#7A4B5D]"
+                          }`}
+                        >
+                          {top.emoji} {top.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold block mb-1">3 — What did you try?</label>
-                      <textarea
-                        value={whatWeTried}
-                        onChange={(e) => setWhatWeTried(e.target.value)}
-                        placeholder="What actually helped?"
-                        className="input-warm text-xs min-h-[70px]"
-                      />
-                    </div>
+                <div>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                    What Happened &amp; What Made It Difficult *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={directBody}
+                    onChange={(e) => setDirectBody(e.target.value)}
+                    placeholder="Describe the situation anonymously without names or identifying details..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] outline-none leading-relaxed"
+                  />
+                </div>
 
-                    <div>
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold block mb-1">4 — Where are you now?</label>
-                      <textarea
-                        value={whereAreWeNow}
-                        onChange={(e) => setWhereAreWeNow(e.target.value)}
-                        placeholder="Did things change?"
-                        className="input-warm text-xs min-h-[70px]"
-                      />
-                    </div>
+                <div>
+                  <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                    What Helped You Both Navigate or Settle It?
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={directWhatHelped}
+                    onChange={(e) => setDirectWhatHelped(e.target.value)}
+                    placeholder="What specific rule, agreement, habit, or boundary helped you turn the corner?"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-sm text-[#3D2432] outline-none leading-relaxed"
+                  />
+                </div>
 
-                    <div>
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold block mb-1">5 — What would you tell someone going through it?</label>
-                      <textarea
-                        value={whatToTellOthers}
-                        onChange={(e) => setWhatToTellOthers(e.target.value)}
-                        placeholder="Your advice to someone in the same place..."
-                        className="input-warm text-xs min-h-[70px]"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block mb-1">Story Body</label>
-                    <textarea
-                      value={freeformContent}
-                      onChange={(e) => setFreeformContent(e.target.value)}
-                      placeholder="Write your story freely..."
-                      className="input-warm text-xs min-h-[200px]"
-                    />
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-[11px] flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    <strong>Moderation Guarantee:</strong> Direct submissions are reviewed by human moderation to ensure anonymity before going live.
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#FFD9E3]">
+                <button
+                  type="button"
+                  onClick={() => setIsDirectSubmitOpen(false)}
+                  className="btn-journal-ghost py-2.5 px-5 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDirectSubmit}
+                  disabled={submittingDirect || !directTitle.trim() || !directBody.trim()}
+                  className="btn-journal py-2.5 px-6 text-xs font-mono font-bold tracking-wider uppercase disabled:opacity-50"
+                >
+                  {submittingDirect ? "Submitting..." : "Submit for Moderation ▷"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          MODAL 3: FULL STORY DETAIL READER
+         ═══════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {activeStory && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-white border border-[#FFD9E3] shadow-2xl p-6 sm:p-8 space-y-6 paper-grain relative"
+            >
+              <div className="flex items-start justify-between border-b border-[#FFD9E3] pb-4">
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-mono px-3 py-1 rounded-full bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3] font-bold uppercase tracking-wider">
+                      {activeStory.author_display || "Anonymous Couple"}
+                    </span>
+                    <span className="text-xs font-mono text-[#7A4B5D]">
+                      {activeStory.relationship_duration}
+                    </span>
+                  </div>
+                  <h3 className="font-display italic font-bold text-2xl sm:text-3xl text-[#3D2432] pt-1">
+                    {activeStory.title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setActiveStory(null)}
+                  className="p-2 rounded-full border border-[#FFD9E3] text-[#7A4B5D] hover:text-[#3D2432] cursor-pointer shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Story Body */}
+              <div className="space-y-4 text-sm text-[#3D2432] leading-relaxed">
+                <p className="whitespace-pre-line">
+                  {activeStory.body_anonymized}
+                </p>
+
+                {activeStory.what_helped_anonymized && (
+                  <div className="p-4 rounded-2xl bg-[#FFF9FB] border border-[#FFD9E3] space-y-2">
+                    <span className="text-xs font-mono font-bold text-[#E8527D] uppercase tracking-wider block">
+                      What Helped Us Through It:
+                    </span>
+                    <p className="text-xs text-[#3D2432] leading-relaxed">
+                      {activeStory.what_helped_anonymized}
+                    </p>
                   </div>
                 )}
+              </div>
 
-                {/* Topic Select */}
-                <div>
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)] block mb-1.5">Topic Tag</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {STORY_TOPICS.map((topic) => (
-                      <button
-                        key={topic.id}
-                        type="button"
-                        onClick={() => setSelectedTopics([topic.id])}
-                        className={`px-3 py-1 rounded-full text-[10px] font-mono font-medium transition-all cursor-pointer ${
-                          selectedTopics.includes(topic.id)
-                            ? "bg-[var(--burgundy)] text-white"
-                            : "bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-soft)]"
-                        }`}
-                      >
-                        {topic.label}
-                      </button>
-                    ))}
-                  </div>
+              {/* Reader Action Bar */}
+              <div className="flex items-center justify-between pt-4 border-t border-[#FFD9E3]">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleToggleHelpful(activeStory.id)}
+                    className={`text-xs font-mono px-4 py-2 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      helpfulIds.has(activeStory.id)
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-bold"
+                        : "bg-white text-[#7A4B5D] border-[#FFD9E3] hover:border-[#E8527D]/40"
+                    }`}
+                  >
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${helpfulIds.has(activeStory.id) ? "text-emerald-600" : "text-stone-400"}`} />
+                    <span>{helpfulIds.has(activeStory.id) ? "Marked helpful (private)" : "Helpful to me"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleToggleSave(activeStory.id)}
+                    className={`text-xs font-mono px-4 py-2 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      savedIds.has(activeStory.id)
+                        ? "bg-[#E8527D] text-white border-[#E8527D]"
+                        : "bg-white text-[#7A4B5D] border-[#FFD9E3] hover:border-[#E8527D]/40"
+                    }`}
+                  >
+                    <Bookmark className="w-3.5 h-3.5 fill-current" />
+                    <span>{savedIds.has(activeStory.id) ? "Saved" : "Save Story"}</span>
+                  </button>
                 </div>
 
-                {/* Privacy & Visibility Options */}
-                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-3">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
-                    PRIVACY & VISIBILITY
-                  </p>
+                <button
+                  onClick={() => handleOpenReport(activeStory)}
+                  className="text-xs font-mono text-[#7A4B5D] hover:text-rose-600 flex items-center gap-1 cursor-pointer"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  <span>Report</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold text-[var(--text)]">Destination</p>
-                      <p className="text-[10px] text-[var(--text-soft)]">
-                        {visibility === "private" ? "Keep private in Our Stories" : "Share with Explore community"}
+      {/* ═══════════════════════════════════════════════════════════════
+          MODAL 4: REPORT STORY MODAL
+         ═══════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {reportingStory && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="w-full max-w-md rounded-[28px] bg-white border border-[#FFD9E3] shadow-2xl p-6 space-y-4 paper-grain relative"
+            >
+              <div className="flex items-center justify-between border-b border-[#FFD9E3] pb-3">
+                <div className="flex items-center gap-2 text-[#802030]">
+                  <ShieldAlert className="w-5 h-5 text-rose-600" />
+                  <h4 className="font-display italic font-bold text-lg text-[#3D2432]">
+                    Report Story
+                  </h4>
+                </div>
+                <button
+                  onClick={() => setReportingStory(null)}
+                  className="p-1 rounded-full text-[#7A4B5D] hover:text-[#3D2432] cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {reportNotice ? (
+                <div className="p-3 rounded-xl bg-emerald-50 text-emerald-900 text-xs">
+                  {reportNotice}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                      Reason for Report
+                    </label>
+                    <select
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-xs text-[#3D2432] outline-none"
+                    >
+                      <option value="Identifying personal info">Contains identifying personal information</option>
+                      <option value="Inappropriate or offensive">Inappropriate, abusive, or offensive content</option>
+                      <option value="Spam or promotional">Spam or commercial advertising</option>
+                      <option value="Other">Other concern</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-[#7A4B5D] uppercase tracking-wider mb-1">
+                      Additional Details (Optional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={reportDetails}
+                      onChange={(e) => setReportDetails(e.target.value)}
+                      placeholder="Help our moderation team understand the context..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-xs text-[#3D2432] outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setReportingStory(null)}
+                      className="btn-journal-ghost py-2 px-4 text-xs font-mono"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmitReport}
+                      disabled={submittingReport}
+                      className="btn-journal py-2 px-5 text-xs font-mono font-bold uppercase tracking-wider"
+                    >
+                      {submittingReport ? "Submitting..." : "Submit Report"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          MODAL 5: MODERATION QUEUE (Admin View)
+         ═══════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {isModOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-[32px] bg-white border border-[#FFD9E3] shadow-2xl p-6 sm:p-8 space-y-6 paper-grain relative"
+            >
+              <div className="flex items-center justify-between border-b border-[#FFD9E3] pb-4">
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-6 h-6 text-[#E8527D]" />
+                  <div>
+                    <h3 className="font-display italic font-bold text-2xl text-[#3D2432]">
+                      Moderation Queue
+                    </h3>
+                    <p className="text-xs text-[#7A4B5D]">
+                      Review community submissions and reports before they become public.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsModOpen(false)}
+                  className="p-2 rounded-full border border-[#FFD9E3] text-[#7A4B5D] hover:text-[#3D2432] cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {loadingMod ? (
+                <div className="p-12 text-center">
+                  <Loader2 className="w-6 h-6 text-[#E8527D] animate-spin mx-auto" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Pending Stories Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-[#3D2432]">
+                        Submissions Waiting for Review ({modPendingStories.length})
+                      </h4>
+                    </div>
+
+                    {modPendingStories.length === 0 ? (
+                      <p className="text-xs text-[#7A4B5D] italic p-4 rounded-xl bg-[#FFF9FB] border border-[#FFD9E3]">
+                        No pending stories in review queue. All clear!
                       </p>
-                    </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {modPendingStories.map((story) => (
+                          <div
+                            key={story.id}
+                            className="p-4 rounded-2xl border border-[#FFD9E3] bg-[#FFF9FB] space-y-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <h5 className="font-display italic font-bold text-lg text-[#3D2432]">
+                                {story.title}
+                              </h5>
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                                Pending
+                              </span>
+                            </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setVisibility("private")}
-                        className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold cursor-pointer ${
-                          visibility === "private" ? "bg-[var(--burgundy)] text-white" : "bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)]"
-                        }`}
-                      >
-                        Private
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVisibility("community")}
-                        className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold cursor-pointer ${
-                          visibility === "community" ? "bg-[var(--burgundy)] text-white" : "bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)]"
-                        }`}
-                      >
-                        Explore (Public)
-                      </button>
-                    </div>
+                            <p className="text-xs text-[#3D2432] leading-relaxed">
+                              {story.body_anonymized}
+                            </p>
+
+                            {story.what_helped_anonymized && (
+                              <p className="text-xs text-[#7A4B5D] bg-white p-2.5 rounded-xl border border-[#FFD9E3]">
+                                <strong>What Helped:</strong> {story.what_helped_anonymized}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#FFD9E3]/60">
+                              <button
+                                onClick={() => handleModReviewStory(story.id, "rejected")}
+                                className="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-mono font-bold cursor-pointer"
+                              >
+                                Reject ✕
+                              </button>
+                              <button
+                                onClick={() => handleModReviewStory(story.id, "live")}
+                                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-mono font-bold cursor-pointer shadow-xs"
+                              >
+                                Approve &amp; Make Live ✓
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {visibility === "community" && (
-                    <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
-                      <span className="text-xs font-semibold text-[var(--text)]">Publish Anonymously</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsAnonymous(!isAnonymous)}
-                        className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold cursor-pointer ${
-                          isAnonymous ? "bg-emerald-600 text-white" : "bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        {isAnonymous ? "Anonymous ON" : "Profile Shown"}
-                      </button>
-                    </div>
-                  )}
+                  {/* Pending Reports Section */}
+                  <div className="space-y-3 pt-3 border-t border-[#FFD9E3]">
+                    <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-[#3D2432]">
+                      Reported Content Flags ({modReports.length})
+                    </h4>
+
+                    {modReports.length === 0 ? (
+                      <p className="text-xs text-[#7A4B5D] italic p-4 rounded-xl bg-[#FFF9FB] border border-[#FFD9E3]">
+                        No active reports filed.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {modReports.map((rep) => (
+                          <div
+                            key={rep.id}
+                            className="p-4 rounded-2xl border border-rose-200 bg-rose-50/50 space-y-2"
+                          >
+                            <div className="flex items-center justify-between text-xs font-mono">
+                              <span className="font-bold text-rose-800">
+                                Reason: {rep.reason}
+                              </span>
+                              <span className="text-stone-500">
+                                {rep.created_at ? format(new Date(rep.created_at), "MMM d, h:mm a") : ""}
+                              </span>
+                            </div>
+
+                            {rep.details && (
+                              <p className="text-xs text-[#3D2432] italic">
+                                "{rep.details}"
+                              </p>
+                            )}
+
+                            {rep.explore_stories && (
+                              <p className="text-xs text-stone-600 bg-white p-2.5 rounded-xl border border-rose-100">
+                                <strong>Reported Story:</strong> {rep.explore_stories.title}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                              <button
+                                onClick={() => handleModReviewReport(rep.id, "dismissed")}
+                                className="px-3 py-1 rounded-xl bg-white border border-stone-200 text-xs font-mono text-stone-700 cursor-pointer"
+                              >
+                                Dismiss Flag
+                              </button>
+                              <button
+                                onClick={() => handleModReviewReport(rep.id, "resolved")}
+                                className="px-3 py-1 rounded-xl bg-rose-600 text-white text-xs font-mono font-bold cursor-pointer"
+                              >
+                                Resolve &amp; Hide
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border)]">
-                <button
-                  type="button"
-                  onClick={() => handleSaveStory("draft")}
-                  disabled={savingStory || !storyTitle.trim()}
-                  className="btn-secondary py-2.5 px-5 text-xs font-mono uppercase tracking-wider cursor-pointer"
-                >
-                  Save Draft
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSaveStory("published")}
-                  disabled={savingStory || !storyTitle.trim()}
-                  className="btn-primary py-2.5 px-6 text-xs font-mono uppercase tracking-widest rounded-full cursor-pointer"
-                >
-                  {savingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Story"}
-                </button>
-              </div>
-
+              )}
             </motion.div>
           </div>
         )}

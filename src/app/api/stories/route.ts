@@ -10,56 +10,94 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const filter = searchParams.get("filter") || "all"; // 'all', 'drafts', 'saved'
-
-    // Fetch active pair
+    // 1. Fetch active pair for current user
     const { data: pair } = await supabase
       .from("pairs")
-      .select("id")
+      .select("id, user_a_id, user_b_id")
       .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
       .eq("status", "active")
-      .single();
+      .maybeSingle();
 
-    if (!pair) {
-      return NextResponse.json({ stories: [], savedStories: [] });
+    let chapters: any[] = [];
+    if (pair) {
+      // Attempt to fetch from new story_chapters table
+      const { data: dbChapters, error: chaptersErr } = await supabase
+        .from("story_chapters")
+        .select("*")
+        .eq("couple_id", pair.id)
+        .order("chapter_date", { ascending: false });
+
+      if (!chaptersErr && dbChapters) {
+        chapters = dbChapters;
+      } else {
+        // Fallback to legacy love_stories if story_chapters table is not yet applied
+        const { data: legacyStories } = await supabase
+          .from("love_stories")
+          .select("*")
+          .eq("pair_id", pair.id)
+          .order("created_at", { ascending: false });
+
+        chapters = (legacyStories || []).map((s: any) => ({
+          id: s.id,
+          couple_id: s.pair_id,
+          author_user_id: s.author_id,
+          author_voice: s.author_id === user.id ? "me" : "partner",
+          title: s.title,
+          body: s.problem_statement || s.content,
+          mood_tag: "milestone",
+          what_helped: s.what_we_tried,
+          photos: [],
+          chapter_date: s.created_at ? s.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+          is_shared_to_explore: s.visibility === "community",
+          explore_status: s.visibility === "community" ? "live" : null,
+          created_at: s.created_at,
+          updated_at: s.created_at,
+        }));
+      }
     }
 
-    // 1. Fetch private couple stories for this pair
-    let query = supabase
-      .from("love_stories")
-      .select("*")
-      .eq("pair_id", pair.id)
+    // 2. Fetch user's saved explore stories from story_saves
+    let savedStories: any[] = [];
+    let savedIds: string[] = [];
+
+    const { data: saves, error: savesErr } = await supabase
+      .from("story_saves")
+      .select("explore_story_id, explore_stories (*)")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (filter === "drafts") {
-      query = query.eq("story_status", "draft");
+    if (!savesErr && saves) {
+      savedIds = saves.map((s: any) => s.explore_story_id);
+      savedStories = saves.map((s: any) => s.explore_stories).filter(Boolean);
+    } else {
+      // Legacy fallback
+      const { data: legacySaved } = await supabase
+        .from("story_saved")
+        .select("story_id, love_stories (*)")
+        .eq("user_id", user.id);
+
+      if (legacySaved) {
+        savedIds = legacySaved.map((s: any) => s.story_id);
+        savedStories = legacySaved.map((s: any) => s.love_stories).filter(Boolean);
+      }
     }
 
-    const { data: stories, error: storiesErr } = await query;
-    if (storiesErr) throw storiesErr;
-
-    // 2. Fetch user's saved stories
-    const { data: savedEntries } = await supabase
-      .from("story_saved")
-      .select("story_id")
+    // 3. Fetch user's private helpful marks
+    let helpfulIds: string[] = [];
+    const { data: helpfulData } = await supabase
+      .from("story_helpful")
+      .select("explore_story_id")
       .eq("user_id", user.id);
 
-    const savedIds = (savedEntries || []).map((s: any) => s.story_id);
-    let savedStories: any[] = [];
-
-    if (savedIds.length > 0) {
-      const { data: savedData } = await supabase
-        .from("love_stories")
-        .select("*")
-        .in("id", savedIds);
-      savedStories = savedData || [];
+    if (helpfulData) {
+      helpfulIds = helpfulData.map((h: any) => h.explore_story_id);
     }
 
     return NextResponse.json({
-      stories: stories || [],
-      savedStories: savedStories || [],
+      chapters,
+      savedStories,
       savedIds,
+      helpfulIds,
     });
   } catch (err: any) {
     console.error("GET /api/stories error:", err);
@@ -80,90 +118,148 @@ export async function POST(request: Request) {
     const {
       id,
       title,
-      content,
-      problemStatement,
-      quoteExcerpt,
-      whatHappened,
-      whatMadeDifficult,
-      whatWeTried,
-      whereAreWeNow,
-      whatToTellOthers,
-      topicTags,
+      body: chapterBody,
+      chapterDate,
+      moodTag,
+      authorVoice,
+      whatHelped,
+      photos,
+      isSharedToExplore,
+      exploreSituationTags,
+      exploreBodyAnonymized,
+      exploreWhatHelpedAnonymized,
       relationshipDuration,
-      storyStatus, // 'draft' | 'published'
-      visibility, // 'private' | 'community'
-      isAnonymous,
-      coverImageUrl,
     } = body || {};
 
-    if (!title || (!content && !problemStatement)) {
-      return NextResponse.json({ error: "Title and content/problem statement are required" }, { status: 400 });
+    if (!title?.trim() || !chapterBody?.trim()) {
+      return NextResponse.json({ error: "Title and chapter body are required." }, { status: 400 });
     }
 
-    // Get active pair
+    // Fetch active pair
     const { data: pair } = await supabase
       .from("pairs")
-      .select("id")
+      .select("id, user_a_id, user_b_id")
       .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
       .eq("status", "active")
-      .single();
+      .maybeSingle();
 
     if (!pair) {
-      return NextResponse.json({ error: "No active pair relationship found" }, { status: 400 });
+      return NextResponse.json({ error: "No active couple pairing found." }, { status: 400 });
     }
 
-    // Author display text formatting
-    const authorDisplay = isAnonymous
-      ? `Anonymous Couple · ${relationshipDuration || "Couple"}`
-      : `Pairfect Couple · ${relationshipDuration || "Couple"}`;
+    const validVoice = ["me", "partner", "joint"].includes(authorVoice) ? authorVoice : "me";
+    const validMood = ["milestone", "fight", "funny", "turning_point", "habit", "intimacy"].includes(moodTag)
+      ? moodTag
+      : "milestone";
 
-    const storyPayload = {
-      pair_id: pair.id,
-      author_id: user.id,
+    // 1. Insert or update private story_chapters record
+    let chapter = null;
+    const chapterPayload = {
+      couple_id: pair.id,
+      author_user_id: user.id,
+      author_voice: validVoice,
       title: title.trim(),
-      content: content ? content.trim() : (problemStatement || title),
-      problem_statement: problemStatement ? problemStatement.trim() : null,
-      quote_excerpt: quoteExcerpt ? quoteExcerpt.trim() : null,
-      what_happened: whatHappened ? whatHappened.trim() : null,
-      what_made_difficult: whatMadeDifficult ? whatMadeDifficult.trim() : null,
-      what_we_tried: whatWeTried ? whatWeTried.trim() : null,
-      where_are_we_now: whereAreWeNow ? whereAreWeNow.trim() : null,
-      what_to_tell_others: whatToTellOthers ? whatToTellOthers.trim() : null,
-      topic_tags: Array.isArray(topicTags) ? topicTags : [],
-      relationship_duration: relationshipDuration || "2 years together",
-      story_status: storyStatus || "published",
-      visibility: visibility || "private",
-      is_anonymous: isAnonymous !== undefined ? isAnonymous : true,
-      author_display: authorDisplay,
-      cover_image_url: coverImageUrl || null,
+      body: chapterBody.trim(),
+      mood_tag: validMood,
+      what_helped: whatHelped ? whatHelped.trim() : null,
+      photos: Array.isArray(photos) ? photos : [],
+      chapter_date: chapterDate || new Date().toISOString().split("T")[0],
+      is_shared_to_explore: !!isSharedToExplore,
+      explore_status: isSharedToExplore ? "pending_review" : null,
+      updated_at: new Date().toISOString(),
     };
 
-    let resultData = null;
-
     if (id) {
-      // Update existing
       const { data: updated, error: updateErr } = await supabase
-        .from("love_stories")
-        .update(storyPayload)
+        .from("story_chapters")
+        .update(chapterPayload)
         .eq("id", id)
         .select()
         .single();
+
       if (updateErr) throw updateErr;
-      resultData = updated;
+      chapter = updated;
     } else {
-      // Insert new
-      const { data: inserted, error: insertErr } = await supabase
-        .from("love_stories")
-        .insert(storyPayload)
+      const { data: created, error: createErr } = await supabase
+        .from("story_chapters")
+        .insert({
+          ...chapterPayload,
+          created_at: new Date().toISOString(),
+        })
         .select()
         .single();
-      if (insertErr) throw insertErr;
-      resultData = inserted;
+
+      if (createErr) throw createErr;
+      chapter = created;
     }
 
-    return NextResponse.json({ success: true, story: resultData });
+    // 2. Private-to-Public Pipeline: If shared to Explore, package anonymized submission
+    let exploreStory = null;
+    if (isSharedToExplore && chapter) {
+      const anonymizedText = (exploreBodyAnonymized || chapterBody).trim();
+      const anonymizedTakeaway = (exploreWhatHelpedAnonymized || whatHelped || "").trim();
+      const tags = Array.isArray(exploreSituationTags) && exploreSituationTags.length > 0
+        ? exploreSituationTags
+        : ["communication"];
+
+      const { data: expCreated, error: expErr } = await supabase
+        .from("explore_stories")
+        .insert({
+          source_chapter_id: chapter.id,
+          author_user_id: user.id,
+          title: title.trim(),
+          situation_tags: tags,
+          body_anonymized: anonymizedText,
+          what_helped_anonymized: anonymizedTakeaway || null,
+          relationship_duration: relationshipDuration || "Couple",
+          status: "pending_review", // Always routed through moderation queue! Never auto-published.
+          helpful_count_private: 0,
+        })
+        .select()
+        .single();
+
+      if (!expErr) {
+        exploreStory = expCreated;
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      chapter,
+      exploreStory,
+    });
   } catch (err: any) {
     console.error("POST /api/stories error:", err);
-    return NextResponse.json({ error: err.message || "Failed to save story" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Failed to save chapter." }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+
+    if (authErr || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const chapterId = searchParams.get("id");
+
+    if (!chapterId) {
+      return NextResponse.json({ error: "Chapter ID is required" }, { status: 400 });
+    }
+
+    const { error: delErr } = await supabase
+      .from("story_chapters")
+      .delete()
+      .eq("id", chapterId);
+
+    if (delErr) throw delErr;
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("DELETE /api/stories error:", err);
+    return NextResponse.json({ error: err.message || "Failed to delete chapter" }, { status: 500 });
   }
 }
