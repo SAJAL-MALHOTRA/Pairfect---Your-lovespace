@@ -226,6 +226,7 @@ export async function POST(request: Request) {
         customer_phone: typeof phone === "string" ? phone : null,
         customer_email: user.email || null,
         raw_response: cashfreeOrder,
+        metadata: { plan_id: plan.id },
       });
     } catch (dbErr) {
       // Non-blocking log if DB table migration has not been applied yet

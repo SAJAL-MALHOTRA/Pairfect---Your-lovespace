@@ -36,6 +36,11 @@ interface Pair {
   paused_streak_value?: number;
   is_paused?: boolean;
   last_ping_at?: string | null;
+  subscription_tier?: "free" | "plus" | "forever" | string;
+  subscription_status?: "inactive" | "active" | "expired" | "cancelled" | string;
+  subscription_expires_at?: string | null;
+  subscription_order_id?: string | null;
+  subscription_updated_at?: string | null;
 }
 
 interface AuthContextType {

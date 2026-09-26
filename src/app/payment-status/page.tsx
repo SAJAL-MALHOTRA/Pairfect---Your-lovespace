@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
   CheckCircle2,
   XCircle,
@@ -29,6 +30,7 @@ interface OrderStatusResult {
 function PaymentStatusContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const orderId = searchParams.get("order_id");
 
   const [loading, setLoading] = useState(true);
@@ -88,6 +90,14 @@ function PaymentStatusContent() {
       }
 
       setData(json);
+      if (
+        json?.order_status?.toUpperCase() === "PAID" ||
+        json?.order_status?.toUpperCase() === "SUCCESS"
+      ) {
+        refreshSession(false).catch((e) =>
+          console.warn("[payment-status] Failed to refresh session:", e)
+        );
+      }
       setLoading(false);
     } catch (err: any) {
       console.error("[Payment Status Error]:", err);
@@ -193,7 +203,7 @@ function PaymentStatusContent() {
 
           <p className="text-sm text-neutral-400">
             {isPaid &&
-              "Your transaction was securely verified by Cashfree Gateway."}
+              "Your transaction was securely verified by Cashfree Gateway. Both you and your partner now have active Sanctuary access!"}
             {isFailed &&
               "The transaction was cancelled or failed by your bank/UPI provider."}
             {isPending &&

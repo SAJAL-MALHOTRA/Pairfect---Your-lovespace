@@ -7,9 +7,10 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import {
-  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight, MapPin, Trash2, Sparkles
+  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight, MapPin, Trash2, Sparkles, Heart, Crown, Calendar
 } from "lucide-react";
 import CitySelectorModal from "@/components/city-selector-modal";
+import { useSubscription } from "@/hooks/use-subscription";
 
 const APP_VERSION = "0.1.0";
 const DEFAULT_NOTIFICATION_SETTINGS = {
@@ -82,6 +83,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
 
 export default function SettingsPage() {
   const { user, profile, pair, partner, refreshSession, signOut, loading } = useAuth();
+  const { isPlus, tier, daysRemaining, expiresAt, isLifetime, isExpiringSoon } = useSubscription();
   const supabase = createClient();
   const router = useRouter();
 
@@ -382,21 +384,58 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        {/* Pairfect Membership & Billing */}
-        <Section title="Pairfect Membership & Billing">
-          <SettingsRow
-            label="Sanctuary Pass"
-            description="Unlock unmetered Photobooth, high-res keepsakes, and lifetime features."
-            right={
+        {/* Pairfect Membership & Sanctuary Pass */}
+        <Section title="Pairfect Membership & Sanctuary Pass">
+          <div className="py-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {isLifetime ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40">
+                    <Crown className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                    Forever Pass · Lifetime
+                  </span>
+                ) : isPlus ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                    <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    Pairfect Plus · Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
+                    Free Sanctuary
+                  </span>
+                )}
+                {isExpiringSoon && (
+                  <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/30">
+                    Expiring Soon
+                  </span>
+                )}
+              </div>
+
               <Link
                 href="/checkout"
                 className="btn-primary py-1.5 px-3.5 text-[11px] uppercase tracking-wider flex items-center gap-1.5 cursor-pointer rounded-xl bg-[var(--burgundy)] text-white hover:opacity-90 transition-opacity"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>View Plans</span>
+                <span>{isPlus ? "Extend / Upgrade" : "View Passes"}</span>
               </Link>
-            }
-          />
+            </div>
+
+            <div className="text-xs text-[var(--text-soft)] space-y-1">
+              <p>
+                {isLifetime
+                  ? "Both you and your partner have permanent lifetime access to all Pairfect rituals & features."
+                  : isPlus
+                  ? `${daysRemaining !== null ? `${daysRemaining} days remaining` : "Active pass"} · Unlocks all rituals for both partners.`
+                  : "Pay for one, unlocks for both. Get unlimited Photobooth, AI Vibe Judge, and cloud archives."}
+              </p>
+              {expiresAt && !isLifetime && (
+                <p className="text-[10px] font-mono text-[var(--text-soft)] flex items-center gap-1 pt-0.5">
+                  <Calendar className="w-3 h-3" />
+                  <span>Valid until {new Date(expiresAt).toLocaleDateString(undefined, { dateStyle: "long" })}</span>
+                </p>
+              )}
+            </div>
+          </div>
         </Section>
 
         {/* Your City (Meanwhile Proximity) */}

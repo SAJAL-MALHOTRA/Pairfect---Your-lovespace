@@ -1,415 +1,401 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { RazorpayCheckoutButton } from "@/components/payment/razorpay-checkout-button";
+import Link from "next/link";
 import { CashfreeCheckoutButton } from "@/components/payment/cashfree-checkout-button";
-import { RazorpayVerificationResponse } from "@/lib/razorpay";
+import { useAuth } from "@/components/providers/auth-provider";
+import { useSubscription } from "@/hooks/use-subscription";
+import { PAYMENT_PLANS, PaymentPlan } from "@/lib/plans";
 import {
+  Heart,
+  Sparkles,
+  Shield,
   CheckCircle2,
   AlertCircle,
   CreditCard,
-  Sparkles,
-  Heart,
-  Shield,
-  ArrowRight,
+  Camera,
+  Scale,
+  Vault,
+  Calendar,
+  Infinity,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
   RotateCcw,
+  Users,
 } from "lucide-react";
-
-interface PlanOption {
-  id: string;
-  name: string;
-  pricePaise: number;
-  displayPrice: string;
-  subtitle: string;
-  features: string[];
-  popular?: boolean;
-}
-
-const PLANS: PlanOption[] = [
-  {
-    id: "micro-test",
-    name: "Standard Test Payment",
-    pricePaise: 100, // ₹1 (100 paise)
-    displayPrice: "₹1",
-    subtitle: "Minimum allowable transaction (100 paise) for instant verification test.",
-    features: [
-      "Live Cashfree Checkout modal",
-      "Instant order creation via /api/create-order",
-      "Cryptographic webhook signature verification",
-      "Instant feedback & receipt on /payment-status",
-    ],
-  },
-  {
-    id: "pairfect-plus",
-    name: "Pairfect Plus (Monthly)",
-    pricePaise: 4900, // ₹49
-    displayPrice: "₹49",
-    subtitle: "Unlimited photobooth strips, soundscapes, and AI Vibe Judge access.",
-    popular: true,
-    features: [
-      "All features in Free",
-      "Synchronized Photobooth unmetered sessions",
-      "High-resolution film strip rendering",
-      "Priority AI Vibe Judge mediation",
-    ],
-  },
-  {
-    id: "pairfect-forever",
-    name: "Pairfect Forever (Lifetime)",
-    pricePaise: 19900, // ₹199
-    displayPrice: "₹199",
-    subtitle: "One-time payment for lifetime access to all current and future features.",
-    features: [
-      "Everything in Plus forever",
-      "Unlimited digital keepsake cloud storage",
-      "Exclusive couple themes & frames",
-      "Early beta access to new features",
-    ],
-  },
-];
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<PlanOption>(PLANS[0]);
-  const [customAmountRupees, setCustomAmountRupees] = useState<string>("10");
-  const [useCustomAmount, setUseCustomAmount] = useState<boolean>(false);
+  const { user, profile } = useAuth();
+  const { isPlus, tier, daysRemaining, isLifetime } = useSubscription();
 
-  // Prefill state (leaving phone empty avoids Razorpay 1-click saved methods lock-in)
-  const [prefillName, setPrefillName] = useState("Alex Smith");
-  const [prefillEmail, setPrefillEmail] = useState("alex@example.com");
-  const [prefillPhone, setPrefillPhone] = useState("");
+  // Primary public plans
+  const primaryPlans: PaymentPlan[] = [
+    PAYMENT_PLANS["plus-monthly"],
+    PAYMENT_PLANS["plus-annual"],
+    PAYMENT_PLANS["pairfect-forever"],
+  ];
 
-  // Verification result state
-  const [verificationResult, setVerificationResult] = useState<RazorpayVerificationResponse | null>(null);
+  // Micro-test diagnostic plan
+  const testPlan = PAYMENT_PLANS["micro-test"];
+
+  const [selectedPlan, setSelectedPlan] = useState<PaymentPlan>(
+    PAYMENT_PLANS["plus-annual"] || primaryPlans[1]
+  );
+  const [showDevTest, setShowDevTest] = useState(false);
+
+  // Customer contact info
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [lastError, setLastError] = useState<string | null>(null);
-  const [dismissedNotice, setDismissedNotice] = useState<boolean>(false);
 
-  // Check URL query parameters in case of redirect callback
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const status = params.get("status");
-      const orderId = params.get("order_id");
-      const paymentId = params.get("payment_id");
-      const message = params.get("message");
-
-      if (status === "success" && orderId && paymentId) {
-        setVerificationResult({
-          verified: true,
-          order_id: orderId,
-          payment_id: paymentId,
-          message: "Payment verified successfully via callback",
-        });
-      } else if (status === "error") {
-        setLastError(message || "Payment or verification failed");
-      }
+  // Prefill user details from auth session
+  useEffect(() => {
+    if (profile?.display_name && !customerName) {
+      setCustomerName(profile.display_name);
+    } else if (user?.user_metadata?.display_name && !customerName) {
+      setCustomerName(user.user_metadata.display_name);
     }
-  }, []);
 
-  const activeAmountPaise = useCustomAmount
-    ? Math.max(100, Math.round((parseFloat(customAmountRupees) || 1) * 100))
-    : selectedPlan.pricePaise;
-
-  const handleSuccess = (result: RazorpayVerificationResponse) => {
-    setVerificationResult(result);
-    setLastError(null);
-    setDismissedNotice(false);
-  };
+    if (user?.email && !customerEmail) {
+      setCustomerEmail(user.email);
+    }
+  }, [user, profile]);
 
   const handleError = (errorMsg: string) => {
     setLastError(errorMsg);
-    setDismissedNotice(false);
-  };
-
-  const handleDismiss = () => {
-    setDismissedNotice(true);
-  };
-
-  const handleReset = () => {
-    setVerificationResult(null);
-    setLastError(null);
-    setDismissedNotice(false);
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF7F2] text-stone-900 py-12 px-4 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
+        {/* Breadcrumb / Sanctuary Badge */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold tracking-wide uppercase">
-            <Heart className="w-3.5 h-3.5 fill-current" />
-            Cashfree Secure Checkout
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold tracking-wide uppercase shadow-xs">
+            <Heart className="w-3.5 h-3.5 fill-current text-rose-600" />
+            <span>Pay for One, Unlock for Both</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-stone-900">
-            Pairfect Sanctuary Membership
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-stone-900 font-display">
+            Pairfect Sanctuary Passes
           </h1>
-          <p className="max-w-2xl mx-auto text-sm sm:text-base text-stone-600">
-            Seamless payments powered by Cashfree Payments. Instant UPI, Cards, Netbanking & Wallets with bank-grade 256-bit encryption.
+
+          <p className="max-w-2xl mx-auto text-sm sm:text-base text-stone-600 leading-relaxed">
+            When either you or your partner activates a Sanctuary Pass, both of your accounts unlock immediately. No recurring auto-debit surprises — recharge only when you want.
           </p>
+
+          {/* Active Membership Banner if already Plus */}
+          {isPlus && (
+            <div className="mt-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-center gap-3 text-sm">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>
+                <strong>Your couple sanctuary is currently active</strong>
+                {isLifetime
+                  ? " (Forever Lifetime Pass)"
+                  : daysRemaining !== null
+                  ? ` (${daysRemaining} days remaining)`
+                  : ""}
+                . Renewing now will seamlessly extend your pass.
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Verification Success Banner */}
-        {verificationResult && (
-          <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-sm animate-in fade-in duration-300">
-            <div className="flex items-start gap-4">
-              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600 shrink-0">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-emerald-900">
-                    Payment Verified Successfully!
-                  </h3>
-                  <button
-                    onClick={handleReset}
-                    className="text-xs text-emerald-700 hover:text-emerald-900 inline-flex items-center gap-1 font-medium cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Reset
-                  </button>
-                </div>
-                <p className="text-sm text-emerald-700">
-                  The Razorpay signature was verified with HMAC-SHA256 on the backend server.
-                </p>
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono bg-white/80 p-3 rounded-lg border border-emerald-200">
-                  <div>
-                    <span className="text-stone-500 font-sans block">Order ID:</span>
-                    <span className="text-stone-900 font-semibold">{verificationResult.order_id}</span>
-                  </div>
-                  <div>
-                    <span className="text-stone-500 font-sans block">Payment ID:</span>
-                    <span className="text-stone-900 font-semibold">{verificationResult.payment_id}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error / Dismissal Banners */}
+        {/* Error Alert */}
         {lastError && (
-          <div className="p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 text-sm">
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 text-sm">
             <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <span className="font-semibold block">Payment Error:</span>
+              <span className="font-semibold block">Checkout Notice:</span>
               <span>{lastError}</span>
             </div>
           </div>
         )}
 
-        {dismissedNotice && !lastError && !verificationResult && (
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center gap-3 text-sm">
-            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>The Razorpay checkout modal was closed without completing the payment.</span>
-          </div>
-        )}
-
-        {/* Main Grid: Plan Selector & Checkout Box */}
+        {/* 3 Main Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PLANS.map((plan) => {
-            const isSelected = !useCustomAmount && selectedPlan.id === plan.id;
+          {primaryPlans.map((plan) => {
+            const isSelected = selectedPlan.id === plan.id;
             return (
               <div
                 key={plan.id}
                 onClick={() => {
                   setSelectedPlan(plan);
-                  setUseCustomAmount(false);
+                  setLastError(null);
                 }}
-                className={`relative cursor-pointer rounded-2xl p-6 transition-all border-2 flex flex-col justify-between ${
+                className={`relative cursor-pointer rounded-[24px] p-6 transition-all duration-200 border-2 flex flex-col justify-between ${
                   isSelected
-                    ? "border-rose-600 bg-white shadow-lg shadow-rose-100 ring-2 ring-rose-600/20"
-                    : "border-stone-200 bg-white hover:border-stone-300 hover:shadow"
+                    ? "border-rose-600 bg-white shadow-xl shadow-rose-900/10 ring-2 ring-rose-600/20"
+                    : "border-stone-200 bg-white hover:border-stone-300 hover:shadow-md"
                 }`}
               >
-                {plan.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow-sm">
-                    Most Popular
+                {/* Badge if present */}
+                {plan.badge && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[10px] font-bold uppercase tracking-wider py-1 px-3 rounded-full shadow-sm whitespace-nowrap">
+                    {plan.badge}
                   </span>
                 )}
-                <div className="space-y-3">
+
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-stone-900">{plan.name}</h3>
+                    <div>
+                      <h3 className="font-bold text-stone-900 text-base">{plan.name}</h3>
+                      <p className="text-[11px] text-stone-500">
+                        {plan.durationDays ? `${plan.durationDays} days access` : "Lifetime access"}
+                      </p>
+                    </div>
                     <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                         isSelected ? "border-rose-600 bg-rose-600" : "border-stone-300"
                       }`}
                     >
-                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold text-stone-900">{plan.displayPrice}</span>
-                    <span className="text-xs text-stone-500">
-                      ({plan.pricePaise} paise)
+
+                  <div className="flex items-baseline gap-1.5 pt-1">
+                    <span className="text-3xl sm:text-4xl font-black text-stone-900">
+                      ₹{plan.amount.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs text-stone-500 font-medium">
+                      {plan.durationDays === 30
+                        ? "/ 30 days"
+                        : plan.durationDays === 365
+                        ? " (~₹66/mo)"
+                        : " / one-time"}
                     </span>
                   </div>
-                  <p className="text-xs text-stone-600">{plan.subtitle}</p>
 
-                  <ul className="space-y-2 pt-2 border-t border-stone-100 text-xs text-stone-600">
-                    {plan.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="text-xs text-stone-600 leading-normal">{plan.subtitle}</p>
+
+                  <div className="pt-3 border-t border-stone-100 space-y-2.5">
+                    <div className="text-[11px] font-bold text-stone-700 uppercase tracking-wider">
+                      Included for both of you:
+                    </div>
+                    <ul className="space-y-2 text-xs text-stone-600">
+                      {plan.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Sparkles className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <div
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-center transition-all ${
+                      isSelected
+                        ? "bg-rose-600 text-white shadow-sm"
+                        : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+                    }`}
+                  >
+                    {isSelected ? "Selected Plan" : "Choose Plan"}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Custom Amount Toggle */}
-        <div className="p-6 rounded-2xl bg-white border border-stone-200 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="font-semibold text-stone-900 text-sm">
-                Custom Amount Testing
-              </h3>
-              <p className="text-xs text-stone-500">
-                Test with any custom amount (minimum ₹1 / 100 paise).
-              </p>
-            </div>
+        {/* Checkout Execution Panel */}
+        <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-stone-200 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-5 gap-3">
             <div className="flex items-center gap-3">
-              <label className="text-xs font-medium text-stone-700 flex items-center gap-2">
-                <span>Enter Amount (₹):</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={customAmountRupees}
-                  onChange={(e) => {
-                    setCustomAmountRupees(e.target.value);
-                    setUseCustomAmount(true);
-                  }}
-                  className="w-24 px-3 py-1.5 rounded-lg border border-stone-300 text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => setUseCustomAmount(true)}
-                className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
-                  useCustomAmount
-                    ? "bg-rose-600 text-white"
-                    : "bg-stone-100 text-stone-700 hover:bg-stone-200"
-                }`}
-              >
-                Use Custom
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Customer Prefill Configuration & Final Checkout CTA */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-white border border-stone-200 shadow-sm space-y-6">
-          <div className="flex items-center justify-between border-b border-stone-100 pb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-rose-50 text-rose-600">
+              <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600">
                 <CreditCard className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-bold text-stone-900">Checkout Details</h2>
+                <h2 className="font-bold text-stone-900 text-lg">Instant Payment & Activation</h2>
                 <p className="text-xs text-stone-500">
-                  Prefill information passed to the Cashfree checkout modal
+                  Secured by Cashfree PG with UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards & Netbanking.
                 </p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right">
               <span className="text-xs text-stone-500 block">Total Due</span>
-              <span className="text-2xl font-black text-rose-600">
-                ₹{(activeAmountPaise / 100).toLocaleString("en-IN")}
+              <span className="text-2xl sm:text-3xl font-black text-rose-600">
+                ₹{selectedPlan.amount.toLocaleString("en-IN")}
               </span>
             </div>
           </div>
 
+          {/* Contact Prefill Inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Name
+              <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                Your Name
               </label>
               <input
                 type="text"
-                value={prefillName}
-                onChange={(e) => setPrefillName(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-stone-50/50"
                 placeholder="Alex Smith"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Email
+              <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                Email Address
               </label>
               <input
                 type="email"
-                value={prefillEmail}
-                onChange={(e) => setPrefillEmail(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-stone-50/50"
                 placeholder="alex@example.com"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Phone (Optional)
+              <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                Phone Number (Optional)
               </label>
               <input
                 type="tel"
-                value={prefillPhone}
-                onChange={(e) => setPrefillPhone(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                placeholder="Leave blank to show all payment methods"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-stone-50/50"
+                placeholder="Leave blank for all UPI options"
               />
               <span className="text-[10px] text-stone-400 mt-1 block">
-                Leave blank to prevent 1-Click saved method lock-in.
+                Leave blank to prevent 1-click saved method lock-in.
               </span>
             </div>
           </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs text-stone-500">
-              <Shield className="w-4 h-4 text-emerald-600" />
-              <span>256-bit encrypted • Cashfree Gateway Enabled</span>
+          {/* Pay Button & Security Badges */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-stone-100">
+            <div className="flex items-center gap-3 text-xs text-stone-500">
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-emerald-600" />
+                <span>256-bit SSL Encrypted</span>
+              </div>
+              <span>•</span>
+              <div className="flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-rose-500" />
+                <span>Unlocks for Both Partners</span>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="w-full sm:w-auto">
               <CashfreeCheckoutButton
                 planId={selectedPlan.id}
                 planName={selectedPlan.name}
-                displayAmount={`₹${(selectedPlan.pricePaise / 100).toLocaleString("en-IN")}`}
-                phone={prefillPhone}
-                customerName={prefillName}
-                buttonText={`Pay ₹${(selectedPlan.pricePaise / 100).toLocaleString("en-IN")} with Cashfree`}
+                displayAmount={`₹${selectedPlan.amount.toLocaleString("en-IN")}`}
+                phone={customerPhone}
+                customerName={customerName}
+                buttonText={`Pay ₹${selectedPlan.amount.toLocaleString("en-IN")} via Cashfree`}
                 onSuccess={(orderId) => {
                   router.push(`/payment-status?order_id=${encodeURIComponent(orderId)}`);
                 }}
                 onError={(err) => {
                   handleError(err);
                 }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 active:scale-[0.99] transition-all shadow-md hover:shadow-lg cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 active:scale-[0.99] transition-all shadow-md hover:shadow-lg cursor-pointer text-sm"
               />
             </div>
           </div>
         </div>
 
-        {/* Integration Architecture Documentation Box */}
-        <div className="rounded-2xl bg-white p-6 border border-stone-200 text-xs text-stone-600 space-y-3">
-          <h4 className="font-bold text-stone-800 uppercase tracking-wider text-[11px]">
-            How Cashfree Payments Work
-          </h4>
-          <ol className="list-decimal pl-4 space-y-1.5 text-stone-600">
-            <li>
-              <strong>Order Creation:</strong> Frontend calls <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">POST /api/create-order</code> with the selected plan. The server resolves the price from the server catalog and calls Cashfree PG API (<code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">cf.PGCreateOrder</code>) to generate a secure <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">payment_session_id</code>.
-            </li>
-            <li>
-              <strong>Seamless Web Checkout:</strong> The <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">@cashfreepayments/cashfree-js</code> SDK opens the official Cashfree checkout modal supporting UPI (GPay, PhonePe, Paytm), Debit/Credit Cards, and Netbanking.
-            </li>
-            <li>
-              <strong>Automatic Verification:</strong> Upon completion, the return URL (<code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">/payment-status?order_id=...</code>) invokes <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">GET /api/cashfree/order-status</code>, which server-verifies the order directly with Cashfree's gateway.
-            </li>
-            <li>
-              <strong>Instant Webhook Sync:</strong> Real-time asynchronous payment updates are verified cryptographically via HMAC-SHA256 signatures on <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">POST /api/cashfree/webhook</code>.
-            </li>
-          </ol>
+        {/* Feature Highlights Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-stone-700 text-xs">
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
+            <div className="p-2 rounded-xl bg-pink-50 text-pink-700 w-fit">
+              <Camera className="w-4 h-4" />
+            </div>
+            <strong className="block font-bold text-stone-900 text-sm">Unlimited Photobooth</strong>
+            <p className="text-stone-500 leading-normal">
+              Capture synchronous photo strips with grain filters and custom couple frames.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
+            <div className="p-2 rounded-xl bg-amber-50 text-amber-700 w-fit">
+              <Scale className="w-4 h-4" />
+            </div>
+            <strong className="block font-bold text-stone-900 text-sm">AI Vibe Judge</strong>
+            <p className="text-stone-500 leading-normal">
+              Playful, objective mediation for relationship debates, habits, and gentle verdicts.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
+            <div className="p-2 rounded-xl bg-purple-50 text-purple-700 w-fit">
+              <Vault className="w-4 h-4" />
+            </div>
+            <strong className="block font-bold text-stone-900 text-sm">Lossless Cloud Vault</strong>
+            <p className="text-stone-500 leading-normal">
+              Permanent high-fidelity storage for love letters, moments, voice clips, and milestone memories.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-700 w-fit">
+              <Infinity className="w-4 h-4" />
+            </div>
+            <strong className="block font-bold text-stone-900 text-sm">No Auto-Debit Traps</strong>
+            <p className="text-stone-500 leading-normal">
+              Recharge with simple UPI passes when you need them. No surprise recurring charges ever.
+            </p>
+          </div>
+        </div>
+
+        {/* Developer Diagnostics / Micro-Test Drawer */}
+        <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden text-xs">
+          <button
+            onClick={() => setShowDevTest(!showDevTest)}
+            className="w-full p-4 flex items-center justify-between text-left text-stone-600 hover:bg-stone-50 cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-stone-400" />
+              <span className="font-semibold text-stone-700">Developer Verification Diagnostics</span>
+              <span className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full font-mono">
+                ₹1 gateway test
+              </span>
+            </div>
+            {showDevTest ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+
+          {showDevTest && (
+            <div className="p-5 border-t border-stone-100 bg-stone-50/60 space-y-3">
+              <p className="text-stone-600">
+                You can run a ₹1 live transaction to verify Cashfree UPI & card webhooks end-to-end.
+                <em> Note: By design, test transactions do not grant production Plus access unless test passes are enabled in configuration.</em>
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedPlan(testPlan);
+                    setLastError(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-colors cursor-pointer ${
+                    selectedPlan.id === "micro-test"
+                      ? "bg-rose-600 text-white"
+                      : "bg-white border border-stone-300 text-stone-700 hover:bg-stone-100"
+                  }`}
+                >
+                  Select ₹1 Test Plan
+                </button>
+                <span className="text-[11px] text-stone-500">
+                  Current Selected: <strong>{selectedPlan.name} (₹{selectedPlan.amount})</strong>
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Back Link */}
+        <div className="text-center pt-2">
+          <Link
+            href="/dashboard"
+            className="text-xs text-stone-500 hover:text-stone-800 underline underline-offset-4"
+          >
+            Return to Sanctuary Dashboard
+          </Link>
         </div>
       </div>
     </div>

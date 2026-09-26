@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchCashfreeOrder } from "@/lib/cashfree";
+import { grantPairSubscription } from "@/lib/subscription";
 
 async function resolveUser(req: Request) {
   const authHeader = req.headers.get("Authorization");
@@ -91,20 +92,38 @@ export async function GET(request: Request) {
     const orderStatus =
       cashfreeData?.order_status || paymentRecord?.status || "PENDING";
 
-    // 5. If Cashfree confirms PAID but our DB status hasn't synced yet, update DB
+    // 5. If Cashfree confirms PAID, ensure payments table is synced and trigger fallback grant if needed
     if (
       (orderStatus === "PAID" || orderStatus === "SUCCESS") &&
-      paymentRecord &&
-      paymentRecord.status !== "paid"
+      paymentRecord
     ) {
-      await admin
-        .from("payments")
-        .update({
-          status: "paid",
-          updated_at: new Date().toISOString(),
-          raw_response: cashfreeData || paymentRecord.raw_response,
-        })
-        .eq("order_id", orderId);
+      if (paymentRecord.status !== "paid") {
+        await admin
+          .from("payments")
+          .update({
+            status: "paid",
+            updated_at: new Date().toISOString(),
+            raw_response: cashfreeData || paymentRecord.raw_response,
+          })
+          .eq("order_id", orderId);
+      }
+
+      // Fallback idempotent subscription grant in case webhook was delayed
+      let planId: string | undefined = paymentRecord.metadata?.plan_id;
+      if (!planId) {
+        const orderIdParts = orderId.match(/^cf_([a-zA-Z0-9-]+)_\d+_/);
+        if (orderIdParts && orderIdParts[1]) {
+          planId = orderIdParts[1];
+        }
+      }
+
+      if (paymentRecord.user_id && planId && !paymentRecord.metadata?.subscription_granted) {
+        await grantPairSubscription({
+          userId: paymentRecord.user_id,
+          planId,
+          orderId,
+        });
+      }
     }
 
     return NextResponse.json({

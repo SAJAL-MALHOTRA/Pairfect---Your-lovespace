@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyCashfreeWebhookSignature } from "@/lib/cashfree";
+import { grantPairSubscription } from "@/lib/subscription";
 
 // 5-minute replay window tolerance
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
     // Check current status before acting — prevent re-triggering downstream side effects
     const { data: existingPayment } = await admin
       .from("payments")
-      .select("id, user_id, order_id, amount, status")
+      .select("id, user_id, order_id, amount, status, metadata")
       .eq("order_id", orderId)
       .maybeSingle();
 
@@ -161,7 +162,25 @@ export async function POST(request: Request) {
         );
       }
 
-      // (Downstream side-effects such as unlocking features or pair entitlements happen here, guaranteed once)
+      // Resolve plan ID from payment metadata or order ID convention
+      let planId: string | undefined = existingPayment?.metadata?.plan_id;
+      if (!planId) {
+        const orderIdParts = orderId.match(/^cf_([a-zA-Z0-9-]+)_\d+_/);
+        if (orderIdParts && orderIdParts[1]) {
+          planId = orderIdParts[1];
+        }
+      }
+
+      // Authoritative subscription grant to user's pair
+      if (existingPayment?.user_id && planId) {
+        const grantResult = await grantPairSubscription({
+          userId: existingPayment.user_id,
+          planId,
+          orderId,
+        });
+        console.log(`[Cashfree Webhook] Subscription grant outcome for order ${orderId}:`, grantResult);
+      }
+
       return NextResponse.json(
         { success: true, order_id: orderId, status: "paid" },
         { status: 200 }
