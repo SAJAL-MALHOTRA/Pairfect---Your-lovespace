@@ -19,9 +19,6 @@ import {
   Vault,
   Calendar,
   Infinity,
-  HelpCircle,
-  ChevronDown,
-  ChevronUp,
   RotateCcw,
   Users,
 } from "lucide-react";
@@ -42,9 +39,6 @@ function CheckoutContent() {
     PAYMENT_PLANS["pairfect-forever"],
   ].filter(Boolean);
 
-  // Micro-test diagnostic plan
-  const testPlan = PAYMENT_PLANS["micro-test"];
-
   const [selectedPlan, setSelectedPlan] = useState<PaymentPlan>(() => {
     if (planParam) {
       const p = getPlan(planParam);
@@ -52,8 +46,6 @@ function CheckoutContent() {
     }
     return PAYMENT_PLANS["plus-quarterly"] || PAYMENT_PLANS["plus-annual"] || primaryPlans[0];
   });
-
-  const [showDevTest, setShowDevTest] = useState(false);
 
   // Customer contact info
   const [customerName, setCustomerName] = useState("");
@@ -459,50 +451,6 @@ function CheckoutContent() {
               Recharge with simple UPI passes when you need them. No surprise recurring charges ever.
             </p>
           </div>
-        </div>
-
-        {/* Developer Diagnostics / Micro-Test Drawer */}
-        <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden text-xs">
-          <button
-            onClick={() => setShowDevTest(!showDevTest)}
-            className="w-full p-4 flex items-center justify-between text-left text-stone-600 hover:bg-stone-50 cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <HelpCircle className="w-4 h-4 text-stone-400" />
-              <span className="font-semibold text-stone-700">Developer Verification Diagnostics</span>
-              <span className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full font-mono">
-                ₹1 gateway test
-              </span>
-            </div>
-            {showDevTest ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-
-          {showDevTest && (
-            <div className="p-5 border-t border-stone-100 bg-stone-50/60 space-y-3">
-              <p className="text-stone-600">
-                You can run a ₹1 live transaction to verify Cashfree UPI &amp; card webhooks end-to-end.
-                <em> Note: By design, test transactions do not grant production Plus access unless test passes are enabled in configuration.</em>
-              </p>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    setSelectedPlan(testPlan);
-                    setLastError(null);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-colors cursor-pointer ${
-                    selectedPlan.id === "micro-test"
-                      ? "bg-rose-600 text-white"
-                      : "bg-white border border-stone-300 text-stone-700 hover:bg-stone-100"
-                  }`}
-                >
-                  Select ₹1 Test Plan
-                </button>
-                <span className="text-[11px] text-stone-500">
-                  Current Selected: <strong>{selectedPlan.name} (₹{selectedPlan.amount})</strong>
-                </span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Back Link */}
