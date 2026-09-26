@@ -7,7 +7,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import {
   Camera, HelpCircle, Heart, Brain, MessageSquare,
   Scale, Tv, Gift, Mail, Timer, Music, BookOpen,
-  Sparkles, ArrowRight, Check
+  Sparkles, ArrowRight, Check, Disc
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -37,6 +37,18 @@ const REAL_EXPERIENCES: RealExperienceItem[] = [
     iconBg: "bg-purple-50",
     iconColor: "text-purple-600",
     accentBorder: "hover:border-purple-300",
+  },
+  {
+    id: "roulette",
+    title: "Pairfect Roulette",
+    badge: "FATE DECIDES",
+    badgeType: "new",
+    desc: "Can't decide what to eat, watch, or do? Spin the wheel and let fate decide. No arguing allowed! ♡",
+    href: "/roulette",
+    icon: Disc,
+    iconBg: "bg-rose-50",
+    iconColor: "text-[var(--burgundy)]",
+    accentBorder: "hover:border-rose-300",
   },
   {
     id: "know-me-quiz",
