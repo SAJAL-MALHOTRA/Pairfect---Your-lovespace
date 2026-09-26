@@ -13,6 +13,8 @@ import MeanwhileCard from "@/components/meanwhile-card";
 import CitySelectorModal from "@/components/city-selector-modal";
 import MemoryResurfacingCard from "@/components/memory-resurfacing-card";
 import JournalCard from "@/components/journal-card";
+import { useSubscription } from "@/hooks/use-subscription";
+import PlusPaywallModal from "@/components/plus-paywall-modal";
 
 export const moodDetails = {
   joyful:   { label: "Joyful",   emoji: "😊", color: "text-yellow-600  bg-yellow-50  dark:bg-yellow-950/20  border-yellow-100 dark:border-yellow-900/25" },
@@ -277,6 +279,8 @@ interface RecentActivityItem {
 
 export default function DashboardPage() {
   const { user, profile, pair, partner, loading } = useAuth();
+  const { isPlus, isTrial, daysRemaining } = useSubscription();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [lettersCount, setLettersCount] = useState(0);
   const [momentsCount, setMomentsCount] = useState(0);
   const [gratitudeCount, setGratitudeCount] = useState(0);
@@ -729,6 +733,60 @@ export default function DashboardPage() {
       >
         <PushOptInBanner />
 
+        {/* ─── UPGRADE TO PAIRFECT PLUS BANNER (When !isPlus) ─── */}
+        {!isPlus && (
+          <div className="relative overflow-hidden rounded-[28px] border border-[#FFD9E3] bg-gradient-to-r from-[#FFF5F7] via-[#FFFDF9] to-[#FFF0F4] p-5 md:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-5 paper-grain">
+            <div className="flex items-center gap-4 text-center sm:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--burgundy)]/10 text-[var(--burgundy)] flex items-center justify-center shrink-0 shadow-xs">
+                <Sparkles className="w-6 h-6 text-[#E8527D]" />
+              </div>
+              <div>
+                <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#E8527D] bg-[#FFEBF0] px-2 py-0.5 rounded-full border border-[#FFD9E3]">
+                    Pairfect Plus
+                  </span>
+                  <span className="text-[10px] font-mono text-stone-500">
+                    7-Day Free Trial Available
+                  </span>
+                </div>
+                <h3 className="font-display font-black italic text-lg sm:text-xl text-[#2D1F2D]">
+                  Elevate your sanctuary for two
+                </h3>
+                <p className="text-xs text-[#6E5564] max-w-md mt-0.5 leading-relaxed">
+                  Unlock 10-year letter time capsules, all 14 spicy quiz decks, unlimited permanent vault archives, and Spotify mixtapes. One pass unlocks both partners.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setIsPaywallOpen(true)}
+                className="w-full sm:w-auto btn-journal py-2.5 px-5 text-xs font-mono font-bold flex items-center justify-center gap-2 shadow-sm hover:scale-[1.02] active:scale-98 transition-transform cursor-pointer"
+              >
+                <span>Unlock Plus ▷</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TRIAL STATUS BANNER (When isPlus && isTrial) ─── */}
+        {isPlus && isTrial && (
+          <div className="rounded-2xl border border-pink-200 bg-pink-50/70 p-3.5 px-5 flex items-center justify-between gap-3 text-xs text-[#2D1F2D]">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-[#E8527D] shrink-0" />
+              <span>
+                <strong>Pairfect Plus 7-Day Free Trial Active:</strong> You have {daysRemaining ?? 7} days left to explore all exclusive features together.
+              </span>
+            </div>
+            <Link
+              href="/checkout?plan=plus-quarterly"
+              className="text-[11px] font-mono font-bold text-[#E8527D] hover:underline shrink-0"
+            >
+              Keep Plus Permanent →
+            </Link>
+          </div>
+        )}
+
         {/* ─── MEANWHILE ♥ PROXIMITY HERO CENTERPIECE ─── */}
         <MeanwhileCard
           userProfile={profile}
@@ -1073,6 +1131,25 @@ export default function DashboardPage() {
             <span className="typo-chapter mt-2 inline-block">{ritual.label} →</span>
           </div>
         </Link>
+
+        {/* ─── FLOATING UPGRADE PILL (When !isPlus) ─── */}
+        {!isPlus && (
+          <button
+            type="button"
+            onClick={() => setIsPaywallOpen(true)}
+            className="fixed bottom-24 right-5 md:bottom-8 md:right-8 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[var(--burgundy)] to-[#E8527D] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer font-heading text-xs font-bold border border-white/20"
+            title="Unlock Pairfect Plus"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            <span>Upgrade to Pro ▷</span>
+          </button>
+        )}
+
+        {/* ─── PLUS PAYWALL MODAL ─── */}
+        <PlusPaywallModal
+          isOpen={isPaywallOpen}
+          onClose={() => setIsPaywallOpen(false)}
+        />
 
       </motion.main>
     </div>

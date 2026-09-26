@@ -9,6 +9,8 @@ import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { WritingLetters } from "@/components/cozy-illustrations";
 import { UnpairedPrompt } from "@/components/unpaired-prompt";
+import { useSubscription } from "@/hooks/use-subscription";
+import PlusPaywallModal from "@/components/plus-paywall-modal";
 
 // ── Giphy block ──────────────────────────────────────────────────────────────
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
@@ -214,11 +216,13 @@ const STYLES: Record<string, { name: string; bg: string; foldDark: boolean; seal
 // ── Main Component ─────────────────────────────────────────────────────────
 export default function LoveLetterPage() {
   const { user, pair, partner, loading } = useAuth();
+  const { isPlus } = useSubscription();
   const supabase = createClient();
 
   const [lettersList, setLettersList] = useState<any[]>([]);
   const [activeLetter, setActiveLetter]   = useState<any>(null);
   const [fetching, setFetching]           = useState(true);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
   // ── Compose state ──
   const [isWriting, setIsWriting]     = useState(false);
@@ -508,6 +512,13 @@ export default function LoveLetterPage() {
             </div>
           </div>
         )}
+
+        <PlusPaywallModal
+          isOpen={isPaywallOpen}
+          onClose={() => setIsPaywallOpen(false)}
+          featureTitle="10-Year Letter Time Capsules"
+          featureDescription="Seal a handwritten love letter that unlocks on your 1st, 5th, or 10th anniversary in the future."
+        />
         </main>
       </div>
     );
@@ -637,11 +648,32 @@ export default function LoveLetterPage() {
                     </div>
                   ))}
                   <div className="pt-2 border-t border-[var(--border-warm)]/50">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={scheduleUnseal} onChange={e => setScheduleUnseal(e.target.checked)} className="rounded border-[var(--border-mid)] text-[var(--seal-red)] focus:ring-[var(--seal-red)] w-4 h-4" />
-                      <span className="text-xs font-medium text-[var(--ink-dark)]">🔒 Schedule future unseal?</span>
-                    </label>
-                    <p className="text-[10px] text-[var(--ink-light)] mt-1 ml-6">Perfect for anniversaries, birthdays, or just-because days.</p>
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={scheduleUnseal}
+                          onChange={e => {
+                            if (!isPlus) {
+                              setIsPaywallOpen(true);
+                              return;
+                            }
+                            setScheduleUnseal(e.target.checked);
+                          }}
+                          className="rounded border-[var(--border-mid)] text-[var(--seal-red)] focus:ring-[var(--seal-red)] w-4 h-4 cursor-pointer"
+                        />
+                        <span className="text-xs font-medium text-[var(--ink-dark)] flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                          <span>Schedule future unseal date</span>
+                        </span>
+                      </label>
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#E8527D] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                        PLUS
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[var(--ink-light)] mt-1 ml-6">
+                      Seal a letter that unlocks on your 1st, 5th, or 10th anniversary in the future.
+                    </p>
                     {scheduleUnseal && (
                       <div className="mt-3 ml-6">
                         <input type="date" value={unsealDate} onChange={e => setUnsealDate(e.target.value)} 
@@ -705,6 +737,13 @@ export default function LoveLetterPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <PlusPaywallModal
+          isOpen={isPaywallOpen}
+          onClose={() => setIsPaywallOpen(false)}
+          featureTitle="10-Year Letter Time Capsules"
+          featureDescription="Seal a handwritten love letter that unlocks on your 1st, 5th, or 10th anniversary in the future."
+        />
       </div>
     );
   }

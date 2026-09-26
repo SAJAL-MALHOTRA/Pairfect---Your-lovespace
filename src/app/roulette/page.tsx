@@ -21,10 +21,12 @@ import {
   Utensils,
   Film,
   Flame,
-  MessageCircleHeart,
   CheckCircle2,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSubscription } from "@/hooks/use-subscription";
+import PlusPaywallModal from "@/components/plus-paywall-modal";
 
 // ── Preset Wheels ─────────────────────────────────────────────────────────────
 interface RouletteOption {
@@ -38,6 +40,7 @@ interface WheelPreset {
   name: string;
   icon: string;
   tagline: string;
+  isPlusOnly?: boolean;
   items: RouletteOption[];
 }
 
@@ -111,6 +114,7 @@ const PRESETS: WheelPreset[] = [
     name: "Chaos Mode",
     icon: "😈",
     tagline: "Playful, spicy challenges for tonight.",
+    isPlusOnly: true,
     items: [
       { label: "Phone Swap", fullTitle: "60-second phone swap (no panic!)", emoji: "📱" },
       { label: "1st Photo", fullTitle: "Recreate our very first photo", emoji: "📸" },
@@ -191,8 +195,10 @@ function playFanfare(audioCtx: AudioContext | null) {
 
 export default function RoulettePage() {
   const { user, pair, partner } = useAuth();
+  const { isPlus } = useSubscription();
   const supabase = createClient();
 
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [activePreset, setActivePreset] = useState<WheelPreset>(PRESETS[0]);
   const [items, setItems] = useState<RouletteOption[]>(PRESETS[0].items);
   const [customInput, setCustomInput] = useState("");
@@ -251,6 +257,10 @@ export default function RoulettePage() {
 
   // Select a preset
   const handleSelectPreset = (preset: WheelPreset) => {
+    if (preset.isPlusOnly && !isPlus) {
+      setIsPaywallOpen(true);
+      return;
+    }
     if (isSpinning) return;
     setActivePreset(preset);
     setItems(preset.items);
@@ -419,7 +429,7 @@ export default function RoulettePage() {
                   key={preset.id}
                   onClick={() => handleSelectPreset(preset)}
                   disabled={isSpinning}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     isActive
                       ? "bg-[#E8527D] text-white shadow-md shadow-pink-900/15 scale-105"
                       : "bg-white/85 hover:bg-white text-[#2D1F2D] border border-[#FFD9E3] hover:border-[#E8527D]/40"
@@ -427,6 +437,11 @@ export default function RoulettePage() {
                 >
                   <span className="text-sm">{preset.icon}</span>
                   <span>{preset.name}</span>
+                  {preset.isPlusOnly && !isPlus && (
+                    <span className="text-[9px] font-mono font-bold text-[#E8527D] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                      🔒 PLUS
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -743,6 +758,14 @@ export default function RoulettePage() {
           </div>
 
         </div>
+
+        {/* ─── PLUS PAYWALL MODAL ─── */}
+        <PlusPaywallModal
+          isOpen={isPaywallOpen}
+          onClose={() => setIsPaywallOpen(false)}
+          featureTitle="Chaos Mode Wheel"
+          featureDescription="Unlock spicy couple challenges, wild dares, and all playful rituals with Pairfect Plus."
+        />
 
       </main>
     </div>

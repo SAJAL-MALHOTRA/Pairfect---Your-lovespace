@@ -10,6 +10,8 @@ import {
   ArrowLeft, RefreshCw, Smile, Users, Heart, Star, Flame, Coffee, Compass, Utensils
 } from "lucide-react";
 import { UnpairedPrompt } from "@/components/unpaired-prompt";
+import { useSubscription } from "@/hooks/use-subscription";
+import PlusPaywallModal from "@/components/plus-paywall-modal";
 
 // The 14 Quiz Packs
 const quizPacks = [
@@ -46,6 +48,7 @@ const quizPacks = [
     title: "Spicy & Playful",
     emoji: "🔥",
     tag: "Hot",
+    isPlusOnly: true,
     description: "Playful prompts about desires, intimacy, and sparks.",
     questions: [
       "Where is the most adventurous place I'd want to kiss you?",
@@ -102,6 +105,7 @@ const quizPacks = [
     title: "Double Points",
     emoji: "🏆",
     tag: "High Stakes",
+    isPlusOnly: true,
     description: "High-stakes questions about secrets and quirks.",
     questions: [
       "What is a secret talent of mine that most people don't know?",
@@ -116,6 +120,7 @@ const quizPacks = [
     title: "Future Dreams",
     emoji: "🔮",
     tag: "New",
+    isPlusOnly: true,
     description: "House styles, children, and aging together.",
     questions: [
       "Where do I see us living in 10 years?",
@@ -186,6 +191,7 @@ const quizPacks = [
     title: "Spicy Twists",
     emoji: "🌶️",
     tag: "Wild",
+    isPlusOnly: true,
     description: "Hot questions and surprise double-points rounds.",
     questions: [
       "What is my favorite time of day for intimacy?",
@@ -200,6 +206,7 @@ const quizPacks = [
     title: "Extreme Compatibility",
     emoji: "⚡",
     tag: "Hard",
+    isPlusOnly: true,
     description: "The ultimate test to find your exact match.",
     questions: [
       "What is my absolute biggest pet peeve about you?",
@@ -213,8 +220,11 @@ const quizPacks = [
 
 export default function QuizPage() {
   const { user, pair, partner, loading } = useAuth();
+  const { isPlus } = useSubscription();
   const supabase = createClient();
 
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [paywallTitle, setPaywallTitle] = useState("");
   const [gameState, setGameState] = useState<any>(null);
   const [selectedPack, setSelectedPack] = useState<any>(null);
   const [myAnswerInput, setMyAnswerInput] = useState("");
@@ -396,6 +406,12 @@ export default function QuizPage() {
 
   // Start a new pack game
   const handleStartGame = (pack: any) => {
+    if (pack.isPlusOnly && !isPlus) {
+      setPaywallTitle(`${pack.title} Deck`);
+      setIsPaywallOpen(true);
+      return;
+    }
+
     if (!pair || !user) return;
 
     const initial: any = {
@@ -725,9 +741,16 @@ export default function QuizPage() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-3xl select-none">{pack.emoji}</span>
-                          <span className="text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider bg-[var(--bg-secondary)] px-2 py-0.5 rounded border border-[var(--border)]">
-                            {pack.tag}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {pack.isPlusOnly && (
+                              <span className="text-[9px] font-mono font-bold text-rose-600 bg-rose-100 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-200 uppercase tracking-wider flex items-center gap-1">
+                                <Lock className="w-2.5 h-2.5" /> PLUS
+                              </span>
+                            )}
+                            <span className="text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider bg-[var(--bg-secondary)] px-2 py-0.5 rounded border border-[var(--border)]">
+                              {pack.tag}
+                            </span>
+                          </div>
                         </div>
                         <div>
                           <h3 className="text-md font-bold text-[var(--text)] font-sans">
@@ -739,13 +762,25 @@ export default function QuizPage() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleStartGame(pack)}
-                        disabled={!partnerOnline}
-                        className="w-full mt-4 btn-primary py-2.5 text-xs"
-                      >
-                        <span>Start the quiz</span>
-                      </button>
+                      {pack.isPlusOnly && !isPlus ? (
+                        <button
+                          type="button"
+                          onClick={() => handleStartGame(pack)}
+                          className="w-full mt-4 py-2.5 px-3 text-xs font-mono font-bold rounded-button flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-500/15 to-pink-500/15 border border-rose-300 text-rose-700 dark:text-rose-300 hover:scale-[1.02] active:scale-98 transition-all cursor-pointer shadow-xs"
+                        >
+                          <Lock className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Unlock with Plus 🔒</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleStartGame(pack)}
+                          disabled={!partnerOnline}
+                          className="w-full mt-4 btn-primary py-2.5 text-xs"
+                        >
+                          <span>Start the quiz</span>
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -1055,6 +1090,14 @@ export default function QuizPage() {
 
           </div>
         )}
+
+        {/* ─── PLUS PAYWALL MODAL ─── */}
+        <PlusPaywallModal
+          isOpen={isPaywallOpen}
+          onClose={() => setIsPaywallOpen(false)}
+          featureTitle={paywallTitle}
+          featureDescription="Unlock this deck and all 14 spicy, intimate, and high-stakes quiz packs for both partners."
+        />
 
       </main>
     </div>

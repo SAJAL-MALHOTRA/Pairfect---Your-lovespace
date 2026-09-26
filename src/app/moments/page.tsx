@@ -9,6 +9,8 @@ import { Loader2, Search, Heart, Camera, Mail, Plus, Sparkles } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { useSubscription } from "@/hooks/use-subscription";
+import PlusPaywallModal from "@/components/plus-paywall-modal";
 
 // Helper to extract plain text from letter content
 function getLetterExcerpt(text: any, maxLen = 60): string {
@@ -41,12 +43,14 @@ interface UnifiedMemory {
 
 export default function MomentsPage() {
   const { user, pair, loading } = useAuth();
+  const { isPlus } = useSubscription();
   const supabase = createClient();
   
   const [memories, setMemories] = useState<UnifiedMemory[]>([]);
   const [fetching, setFetching] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "photos" | "letters" | "moments">("all");
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
   useEffect(() => {
     if (!pair || loading) return;
@@ -185,6 +189,32 @@ export default function MomentsPage() {
           </p>
         </div>
 
+        {/* ─── PERMANENT VAULT PLUS BANNER ─── */}
+        {!isPlus && (
+          <div className="rounded-2xl border border-[#FFD9E3] bg-gradient-to-r from-rose-50/70 via-stone-50/70 to-pink-50/70 p-4 md:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[var(--burgundy)]/10 text-[var(--burgundy)] flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-[#E8527D]" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[var(--text)]">
+                  Free Forever Plan — 30-Day Memory Retention
+                </p>
+                <p className="text-[11px] text-[var(--text-soft)] mt-0.5">
+                  Upgrade to Pairfect Plus for permanent lifetime vault storage and full-resolution uncompressed downloads.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPaywallOpen(true)}
+              className="btn-journal py-2 px-4 text-xs font-mono font-bold shrink-0 w-full sm:w-auto cursor-pointer"
+            >
+              <span>Unlock Permanent Vault ▷</span>
+            </button>
+          </div>
+        )}
+
         {/* Filters and Search */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between z-10 relative">
           <div className="flex gap-2 p-1 bg-[var(--paper-warm)] border border-[var(--border)] rounded-full shadow-sm overflow-x-auto w-full md:w-auto scrollbar-hide">
@@ -282,6 +312,13 @@ export default function MomentsPage() {
             )}
           </>
         )}
+
+        <PlusPaywallModal
+          isOpen={isPaywallOpen}
+          onClose={() => setIsPaywallOpen(false)}
+          featureTitle="Permanent Memory Vault"
+          featureDescription="Never lose a photo strip, moment, or love letter. Keep all high-resolution memories permanent forever."
+        />
       </main>
     </div>
   );
