@@ -769,7 +769,7 @@ export default function QuizPage() {
                           className="w-full mt-4 py-2.5 px-3 text-xs font-mono font-bold rounded-button flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-500/15 to-pink-500/15 border border-rose-300 text-rose-700 dark:text-rose-300 hover:scale-[1.02] active:scale-98 transition-all cursor-pointer shadow-xs"
                         >
                           <Lock className="w-3.5 h-3.5 text-rose-500" />
-                          <span>Unlock with Plus 🔒</span>
+                          <span>Get with Plus 🔒</span>
                         </button>
                       ) : (
                         <button
@@ -1096,7 +1096,7 @@ export default function QuizPage() {
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
           featureTitle={paywallTitle}
-          featureDescription="Unlock this deck and all 14 spicy, intimate, and high-stakes quiz packs for both partners."
+          featureDescription="Includes this deck and all 14 quiz packs for both partners."
         />
 
       </main>

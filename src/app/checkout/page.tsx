@@ -121,19 +121,19 @@ function CheckoutContent() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-stone-900 py-12 px-4 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white">
       <div className="max-w-5xl mx-auto space-y-8">
-        {/* Breadcrumb / Sanctuary Badge */}
+        {/* Breadcrumb / Plus Badge */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold tracking-wide uppercase shadow-xs">
             <Heart className="w-3.5 h-3.5 fill-current text-rose-600" />
-            <span>Pay for One, Unlock for Both</span>
+            <span>One Payment Covers Both Partners</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-stone-900 font-display">
-            Pairfect Sanctuary Passes
+            Pairfect Plus Passes
           </h1>
 
           <p className="max-w-2xl mx-auto text-sm sm:text-base text-stone-600 leading-relaxed">
-            When either you or your partner activates a Sanctuary Pass, both of your accounts unlock immediately. No recurring auto-debit surprises — recharge only when you want.
+            When either partner buys a pass, both accounts get full access. No recurring auto-debit surprises — recharge only when you want.
           </p>
 
           {/* User Sign-In Notice if unauthenticated */}
@@ -159,13 +159,13 @@ function CheckoutContent() {
             <div className="mt-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-center gap-3 text-sm">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>
-                <strong>Your couple sanctuary is currently active</strong>
+                <strong>Pairfect Plus is currently active for both of you</strong>
                 {isLifetime
-                  ? " (Forever Lifetime Pass)"
+                  ? " (Forever Pass)"
                   : daysRemaining !== null
                   ? ` (${daysRemaining} days remaining)`
                   : ""}
-                . Renewing now will seamlessly extend your pass.
+                . Renewing now extends your pass.
               </span>
             </div>
           )}
@@ -200,14 +200,14 @@ function CheckoutContent() {
               <div>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <span className="font-heading font-extrabold text-base text-stone-900">
-                    7-Day Free Plus Trial Available
+                    Try Pairfect Plus free for 7 days
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
                     NO CARD REQUIRED
                   </span>
                 </div>
                 <p className="text-xs text-stone-600 mt-1 max-w-xl">
-                  Unlock unlimited Memory Wall, high-res photostrips, custom mixtapes, and date rituals free for 7 days. One trial per couple.
+                  Full access for both of you. Keep everything on your Memory Wall forever, schedule letters up to 10 years ahead, and play all 14 quiz packs.
                 </p>
               </div>
             </div>

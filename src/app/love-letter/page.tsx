@@ -516,8 +516,8 @@ export default function LoveLetterPage() {
         <PlusPaywallModal
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
-          featureTitle="10-Year Letter Time Capsules"
-          featureDescription="Seal a handwritten love letter that unlocks on your 1st, 5th, or 10th anniversary in the future."
+          featureTitle="10-Year Letter Scheduling"
+          featureDescription="Write notes now that deliver on future anniversaries, up to 10 years ahead."
         />
         </main>
       </div>
@@ -741,8 +741,8 @@ export default function LoveLetterPage() {
         <PlusPaywallModal
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
-          featureTitle="10-Year Letter Time Capsules"
-          featureDescription="Seal a handwritten love letter that unlocks on your 1st, 5th, or 10th anniversary in the future."
+          featureTitle="10-Year Letter Scheduling"
+          featureDescription="Write notes now that deliver on future anniversaries, up to 10 years ahead."
         />
       </div>
     );

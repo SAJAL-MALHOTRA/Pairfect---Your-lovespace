@@ -750,10 +750,10 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <h3 className="font-display font-black italic text-lg sm:text-xl text-[#2D1F2D]">
-                  Elevate your sanctuary for two
+                  Everything you share, kept forever
                 </h3>
                 <p className="text-xs text-[#6E5564] max-w-md mt-0.5 leading-relaxed">
-                  Unlock 10-year letter time capsules, all 14 spicy quiz decks, unlimited permanent vault archives, and Spotify mixtapes. One pass unlocks both partners.
+                  Keep all photos and letters on your Memory Wall forever, schedule future letters, and play all 14 quiz packs. One pass covers both of you.
                 </p>
               </div>
             </div>
@@ -763,7 +763,7 @@ export default function DashboardPage() {
                 onClick={() => setIsPaywallOpen(true)}
                 className="w-full sm:w-auto btn-journal py-2.5 px-5 text-xs font-mono font-bold flex items-center justify-center gap-2 shadow-sm hover:scale-[1.02] active:scale-98 transition-transform cursor-pointer"
               >
-                <span>Unlock Plus ▷</span>
+                <span>Try Free or Upgrade ▷</span>
               </button>
             </div>
           </div>

@@ -101,16 +101,16 @@ export default function PlusPaywallModal({
           <div className="text-center space-y-2 mb-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-100 text-[#E8527D] text-[10px] font-mono font-bold tracking-widest uppercase shadow-xs">
               <Sparkles className="w-3.5 h-3.5 fill-current" />
-              <span>PAIRFECT PLUS EXCLUSIVE</span>
+              <span>PAIRFECT PLUS</span>
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-display italic font-black text-[#2D1F2D] tracking-tight">
-              {featureTitle ? `Unlock ${featureTitle}` : "Unlock Pairfect Plus"}
+              {featureTitle || "Get Pairfect Plus"}
             </h2>
 
             <p className="text-xs sm:text-sm text-[#6E5564] max-w-sm mx-auto leading-relaxed">
               {featureDescription ||
-                "One pass unlocks permanent memory archives, 10-year letter scheduling, and all connection rituals for BOTH partners."}
+                "One payment covers both of you. Pick a plan or try it free for 7 days."}
             </p>
           </div>
 
@@ -121,7 +121,7 @@ export default function PlusPaywallModal({
                 <Check className="w-3 h-3 stroke-[2.5]" />
               </div>
               <span className="font-medium">
-                <strong>Pay for One, Unlock for Both</strong> — no double billing ever
+                <strong>One price for both</strong> — your partner gets full access automatically
               </span>
             </div>
             <div className="flex items-center gap-2.5">
@@ -129,7 +129,7 @@ export default function PlusPaywallModal({
                 <Check className="w-3 h-3 stroke-[2.5]" />
               </div>
               <span>
-                <strong>Permanent living vault</strong> for all photostrips, moments, and letters
+                <strong>Memory Wall</strong> — keep all your photos, strips, and letters forever
               </span>
             </div>
             <div className="flex items-center gap-2.5">
@@ -137,7 +137,7 @@ export default function PlusPaywallModal({
                 <Check className="w-3 h-3 stroke-[2.5]" />
               </div>
               <span>
-                <strong>10-year letter time capsules</strong> that unseal on future anniversaries
+                <strong>Letter scheduling</strong> — write notes now that arrive up to 10 years later
               </span>
             </div>
             <div className="flex items-center gap-2.5">
@@ -145,7 +145,7 @@ export default function PlusPaywallModal({
                 <Check className="w-3 h-3 stroke-[2.5]" />
               </div>
               <span>
-                <strong>All 14 spicy &amp; deep quiz decks</strong> with simultaneous lock-in
+                <strong>All 14 quiz packs</strong> — answer together with simultaneous reveal
               </span>
             </div>
             <div className="flex items-center gap-2.5">
@@ -153,7 +153,7 @@ export default function PlusPaywallModal({
                 <Check className="w-3 h-3 stroke-[2.5]" />
               </div>
               <span>
-                <strong>Custom Spotify cassette mixtapes</strong> &amp; physical decal shells
+                <strong>High-res photostrips</strong> — download print-quality photo booth strips
               </span>
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function PlusPaywallModal({
 
           {/* Fine print */}
           <p className="text-[10px] font-mono text-center text-[#6E5564] mt-4">
-            No auto-debit surprises. Single payment unlocks both accounts instantly.
+            No auto-debit surprises. Single payment covers both partners.
           </p>
         </motion.div>
       </div>

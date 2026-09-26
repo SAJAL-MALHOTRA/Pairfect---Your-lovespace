@@ -189,7 +189,7 @@ export default function MomentsPage() {
           </p>
         </div>
 
-        {/* ─── PERMANENT VAULT PLUS BANNER ─── */}
+        {/* ─── PERMANENT MEMORY WALL PLUS BANNER ─── */}
         {!isPlus && (
           <div className="rounded-2xl border border-[#FFD9E3] bg-gradient-to-r from-rose-50/70 via-stone-50/70 to-pink-50/70 p-4 md:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
@@ -198,10 +198,10 @@ export default function MomentsPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-[var(--text)]">
-                  Free Forever Plan — 30-Day Memory Retention
+                  Free Plan: 30-Day Memory Wall Storage
                 </p>
                 <p className="text-[11px] text-[var(--text-soft)] mt-0.5">
-                  Upgrade to Pairfect Plus for permanent lifetime vault storage and full-resolution uncompressed downloads.
+                  With Pairfect Plus, your photos and letters stay on your Memory Wall forever with print-quality downloads.
                 </p>
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function MomentsPage() {
               onClick={() => setIsPaywallOpen(true)}
               className="btn-journal py-2 px-4 text-xs font-mono font-bold shrink-0 w-full sm:w-auto cursor-pointer"
             >
-              <span>Unlock Permanent Vault ▷</span>
+              <span>Keep Forever with Plus ▷</span>
             </button>
           </div>
         )}
@@ -316,8 +316,8 @@ export default function MomentsPage() {
         <PlusPaywallModal
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
-          featureTitle="Permanent Memory Vault"
-          featureDescription="Never lose a photo strip, moment, or love letter. Keep all high-resolution memories permanent forever."
+          featureTitle="Permanent Memory Wall"
+          featureDescription="Keep all your photos, photo strips, and letters on your Memory Wall forever."
         />
       </main>
     </div>

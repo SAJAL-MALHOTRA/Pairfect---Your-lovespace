@@ -764,7 +764,7 @@ export default function RoulettePage() {
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
           featureTitle="Chaos Mode Wheel"
-          featureDescription="Unlock spicy couple challenges, wild dares, and all playful rituals with Pairfect Plus."
+          featureDescription="Spicy couple challenges and playful dares for both partners."
         />
 
       </main>
