@@ -384,8 +384,8 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        {/* Pairfect Membership & Sanctuary Pass */}
-        <Section title="Pairfect Membership & Sanctuary Pass">
+        {/* Pairfect Membership & Plans */}
+        <Section title="Pairfect Membership & Plans">
           <div className="py-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ export default function SettingsPage() {
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
-                    Free Sanctuary
+                    Free Plan
                   </span>
                 )}
                 {isExpiringSoon && (
@@ -416,17 +416,17 @@ export default function SettingsPage() {
                 className="btn-primary py-1.5 px-3.5 text-[11px] uppercase tracking-wider flex items-center gap-1.5 cursor-pointer rounded-xl bg-[var(--burgundy)] text-white hover:opacity-90 transition-opacity"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>{isPlus ? "Extend / Upgrade" : "View Passes"}</span>
+                <span>{isPlus ? "Extend / Upgrade" : "View Plans"}</span>
               </Link>
             </div>
 
             <div className="text-xs text-[var(--text-soft)] space-y-1">
               <p>
                 {isLifetime
-                  ? "Both you and your partner have permanent lifetime access to all Pairfect rituals & features."
+                  ? "Both you and your partner have permanent lifetime access to all Pairfect features."
                   : isPlus
-                  ? `${daysRemaining !== null ? `${daysRemaining} days remaining` : "Active pass"} · Unlocks all rituals for both partners.`
-                  : "Pay for one, unlocks for both. Get unlimited Photobooth, AI Vibe Judge, and cloud archives."}
+                  ? `${daysRemaining !== null ? `${daysRemaining} days remaining` : "Active pass"} · Covers both partners.`
+                  : "One pass covers both partners. Includes unlimited Photobooth, AI Vibe Judge, and Memory Wall."}
               </p>
               {expiresAt && !isLifetime && (
                 <p className="text-[10px] font-mono text-[var(--text-soft)] flex items-center gap-1 pt-0.5">
