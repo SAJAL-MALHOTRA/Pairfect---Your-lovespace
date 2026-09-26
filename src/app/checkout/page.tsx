@@ -10,16 +10,15 @@ import { PAYMENT_PLANS, PaymentPlan, getPlan } from "@/lib/plans";
 import {
   Heart,
   Sparkles,
-  Shield,
+  ShieldCheck,
+  Check,
   CheckCircle2,
   AlertCircle,
   CreditCard,
   Camera,
   Scale,
-  Vault,
-  Calendar,
+  Archive,
   Infinity,
-  RotateCcw,
   Users,
 } from "lucide-react";
 
@@ -80,7 +79,7 @@ function CheckoutContent() {
       if (!res.ok || data.error) {
         throw new Error(data.error || "Failed to activate 7-day trial.");
       }
-      setTrialMessage("✨ 7-day Pairfect Plus trial activated for both of you! Refreshing your sanctuary...");
+      setTrialMessage("✨ 7-day Pairfect Plus trial activated for both of you! Refreshing your couple space...");
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -118,27 +117,41 @@ function CheckoutContent() {
     setLastError(errorMsg);
   };
 
+  const getPeriodLabel = (plan: PaymentPlan) => {
+    if (plan.durationDays === 30) return "/ 30 days";
+    if (plan.durationDays === 90) return "/ 3 months";
+    if (plan.durationDays === 365) return "/ 1 year";
+    return "/ lifetime";
+  };
+
+  const getPerMonthOrPartnerText = (plan: PaymentPlan) => {
+    if (plan.durationDays === 30) return "₹65 / partner · 30 days";
+    if (plan.durationDays === 90) return "~₹83/mo · Save 35%";
+    if (plan.durationDays === 365) return "~₹66/mo · Save 48%";
+    return "₹1,000 / partner · One-time";
+  };
+
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-stone-900 py-12 px-4 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white">
+    <div className="min-h-screen bg-[#FAF7F2] text-[#3D2432] py-12 px-4 sm:px-6 lg:px-8 selection:bg-[#E8527D] selection:text-white">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Breadcrumb / Plus Badge */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold tracking-wide uppercase shadow-xs">
-            <Heart className="w-3.5 h-3.5 fill-current text-rose-600" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFF0F4] border border-[#FFD9E3] text-[#802030] text-xs font-mono font-bold tracking-widest uppercase shadow-xs">
+            <Heart className="w-3.5 h-3.5 fill-current text-[#E8527D]" />
             <span>One Payment Covers Both Partners</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-stone-900 font-display">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#3D2432] font-display italic">
             Pairfect Plus Passes
           </h1>
 
-          <p className="max-w-2xl mx-auto text-sm sm:text-base text-stone-600 leading-relaxed">
+          <p className="max-w-2xl mx-auto text-sm sm:text-base text-[#7A4B5D] leading-relaxed">
             When either partner buys a pass, both accounts get full access. No recurring auto-debit surprises — recharge only when you want.
           </p>
 
           {/* User Sign-In Notice if unauthenticated */}
           {!user && (
-            <div className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-left">
+            <div className="mt-4 p-4 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-left shadow-xs">
               <div className="flex items-center gap-2.5">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                 <span>
@@ -156,7 +169,7 @@ function CheckoutContent() {
 
           {/* Active Membership Banner if already Plus */}
           {isPlus && (
-            <div className="mt-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-center gap-3 text-sm">
+            <div className="mt-4 p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/80 text-emerald-950 flex items-center justify-center gap-3 text-sm shadow-xs">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>
                 <strong>Pairfect Plus is currently active for both of you</strong>
@@ -173,8 +186,8 @@ function CheckoutContent() {
 
         {/* Error Alert */}
         {lastError && (
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 text-sm">
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#802030] flex items-start gap-3 text-sm shadow-xs">
+            <AlertCircle className="w-5 h-5 text-[#E8527D] shrink-0 mt-0.5" />
             <div className="flex-1">
               <span className="font-semibold block">Checkout Notice:</span>
               <span>{lastError}</span>
@@ -184,7 +197,7 @@ function CheckoutContent() {
 
         {/* Trial Success Message */}
         {trialMessage && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 text-sm animate-fade-in">
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-3 text-sm animate-fade-in shadow-xs">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <span className="font-semibold">{trialMessage}</span>
           </div>
@@ -192,21 +205,21 @@ function CheckoutContent() {
 
         {/* 7-Day Free Trial Banner for Eligible Couples */}
         {!isPlus && trialEligible && (
-          <div className="p-5 rounded-3xl bg-gradient-to-r from-rose-50 via-pink-50 to-orange-50 border-2 border-rose-200 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20">
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-[#FFF5F8] via-[#FFF9F5] to-[#FFF3F6] border border-[#FFD9E3] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#E8527D] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#E8527D]/20">
                 <Sparkles className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <span className="font-heading font-extrabold text-base text-stone-900">
+                  <span className="font-display italic font-bold text-lg text-[#3D2432]">
                     Try Pairfect Plus free for 7 days
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wider">
                     NO CARD REQUIRED
                   </span>
                 </div>
-                <p className="text-xs text-stone-600 mt-1 max-w-xl">
+                <p className="text-xs text-[#7A4B5D] mt-1 max-w-xl leading-relaxed">
                   Full access for both of you. Keep everything on your Memory Wall forever, schedule letters up to 10 years ahead, and play all 14 quiz packs.
                 </p>
               </div>
@@ -215,7 +228,7 @@ function CheckoutContent() {
               type="button"
               onClick={handleActivateTrial}
               disabled={trialLoading}
-              className="btn-journal py-3 px-6 text-xs font-mono font-bold shrink-0 w-full sm:w-auto shadow-sm whitespace-nowrap cursor-pointer hover:scale-105 transition-transform"
+              className="btn-journal py-3 px-6 text-xs font-mono font-bold shrink-0 w-full sm:w-auto shadow-sm whitespace-nowrap cursor-pointer hover:scale-[1.02] active:scale-98 transition-transform"
             >
               {trialLoading ? "Activating..." : "Start 7-Day Free Trial ▷"}
             </button>
@@ -223,7 +236,7 @@ function CheckoutContent() {
         )}
 
         {/* 4 Pricing Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
           {primaryPlans.map((plan) => {
             const isSelected = selectedPlan.id === plan.id;
             return (
@@ -233,77 +246,99 @@ function CheckoutContent() {
                   setSelectedPlan(plan);
                   setLastError(null);
                 }}
-                className={`relative cursor-pointer rounded-[24px] p-5 sm:p-6 transition-all duration-200 border-2 flex flex-col justify-between ${
+                className={`relative cursor-pointer rounded-[28px] p-6 transition-all duration-300 flex flex-col justify-between group ${
                   isSelected
-                    ? "border-rose-600 bg-white shadow-xl shadow-rose-900/10 ring-2 ring-rose-600/20 scale-[1.02]"
-                    : "border-stone-200 bg-white hover:border-stone-300 hover:shadow-md"
+                    ? "bg-gradient-to-b from-[#FFFDFE] to-[#FFF5F8] border-2 border-[#E8527D] shadow-[0_12px_36px_rgba(232,82,125,0.14)] ring-4 ring-[#E8527D]/10 sm:-translate-y-1 z-10"
+                    : "bg-white/90 hover:bg-white border border-[#FFD9E3] hover:border-[#E8527D]/50 shadow-[0_4px_20px_rgba(61,36,50,0.04)] hover:shadow-[0_8px_30px_rgba(232,82,125,0.08)] hover:-translate-y-0.5"
                 }`}
               >
                 {/* Badge if present */}
                 {plan.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[9px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow-xs whitespace-nowrap">
+                  <span
+                    className={`absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold uppercase tracking-widest py-1 px-3.5 rounded-full shadow-xs whitespace-nowrap transition-transform group-hover:scale-105 ${
+                      isSelected
+                        ? "bg-[#E8527D] text-white ring-2 ring-white"
+                        : plan.popular
+                        ? "bg-[#802030] text-white ring-2 ring-white"
+                        : "bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3] ring-2 ring-white"
+                    }`}
+                  >
                     {plan.badge}
                   </span>
                 )}
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  {/* Title & Radio indicator */}
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-bold text-stone-900 text-base">{plan.name}</h3>
-                      <p className="text-[10px] text-stone-500 font-mono">
+                      <h3 className="font-display italic font-bold text-[#3D2432] text-xl">
+                        {plan.name}
+                      </h3>
+                      <p className="text-[10px] text-[#7A4B5D] font-mono uppercase tracking-wider mt-0.5">
                         {plan.durationDays ? `${plan.durationDays} days access` : "Lifetime access"}
                       </p>
                     </div>
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${
-                        isSelected ? "border-rose-600 bg-rose-600" : "border-stone-300"
+                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all shrink-0 mt-0.5 ${
+                        isSelected
+                          ? "bg-[#E8527D] text-white shadow-xs scale-105"
+                          : "border-2 border-[#FFD9E3] bg-white group-hover:border-[#E8527D]/40"
                       }`}
                     >
-                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      {isSelected ? (
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      ) : null}
                     </div>
                   </div>
 
-                  <div className="flex items-baseline gap-1 pt-1">
-                    <span className="text-2xl sm:text-3xl font-black text-stone-900">
-                      ₹{plan.amount.toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-[11px] text-stone-500 font-medium">
-                      {plan.durationDays === 30
-                        ? "/ 30 days"
-                        : plan.durationDays === 90
-                        ? " (~₹83/mo)"
-                        : plan.durationDays === 365
-                        ? " (~₹66/mo)"
-                        : " / lifetime"}
-                    </span>
+                  {/* Price Row */}
+                  <div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-display font-black text-3xl sm:text-4xl text-[#3D2432] tracking-tight">
+                        ₹{plan.amount.toLocaleString("en-IN")}
+                      </span>
+                      <span className="text-xs text-[#7A4B5D] font-mono font-medium">
+                        {getPeriodLabel(plan)}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 inline-block text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3]/70">
+                      {getPerMonthOrPartnerText(plan)}
+                    </div>
                   </div>
 
-                  <p className="text-xs text-stone-600 leading-normal">{plan.subtitle}</p>
+                  {/* Subtitle */}
+                  <p className="text-xs text-[#7A4B5D] leading-relaxed min-h-[2.5rem]">
+                    {plan.subtitle}
+                  </p>
 
-                  <div className="pt-3 border-t border-stone-100 space-y-2">
-                    <div className="text-[10px] font-bold text-stone-700 uppercase tracking-wider">
+                  {/* Features List */}
+                  <div className="pt-3.5 border-t border-[#FFD9E3]/70 space-y-2.5">
+                    <div className="text-[10px] font-mono font-bold text-[#7A4B5D] uppercase tracking-wider">
                       Included for both of you:
                     </div>
-                    <ul className="space-y-1.5 text-xs text-stone-600">
+                    <ul className="space-y-2 text-xs text-[#3D2432]">
                       {plan.features.slice(0, 4).map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                          <span>{feat}</span>
+                        <li key={idx} className="flex items-start gap-2">
+                          <div className="w-4 h-4 rounded-full bg-[#FFF0F4] text-[#E8527D] flex items-center justify-center shrink-0 mt-0.5 border border-[#FFD9E3]/60">
+                            <Check className="w-2.5 h-2.5 stroke-[2.5]" />
+                          </div>
+                          <span className="leading-snug">{feat}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 </div>
 
-                <div className="pt-5">
+                {/* Plan Selection Action Button */}
+                <div className="pt-5 mt-auto">
                   <div
-                    className={`w-full py-2 px-3 rounded-xl text-xs font-semibold text-center transition-all ${
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-center transition-all ${
                       isSelected
-                        ? "bg-rose-600 text-white shadow-sm"
-                        : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+                        ? "bg-[#E8527D] text-white shadow-sm"
+                        : "bg-[#FFF0F4] text-[#802030] group-hover:bg-[#FFE3EB] border border-[#FFD9E3]"
                     }`}
                   >
-                    {isSelected ? "Selected Plan" : "Choose Plan"}
+                    {isSelected ? "Selected Pass ✓" : "Choose Pass ▷"}
                   </div>
                 </div>
               </div>
@@ -312,81 +347,97 @@ function CheckoutContent() {
         </div>
 
         {/* Checkout Execution Panel */}
-        <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-stone-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-5 gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600">
-                <CreditCard className="w-5 h-5" />
+        <div className="p-6 sm:p-8 rounded-[32px] bg-white/95 border border-[#FFD9E3] shadow-[0_8px_32px_rgba(232,82,125,0.08)] paper-grain relative space-y-6 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#FFD9E3]/70 pb-6 gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#E8527D] flex items-center justify-center shrink-0 shadow-xs">
+                <CreditCard className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="font-bold text-stone-900 text-lg">Instant Payment &amp; Activation</h2>
-                <p className="text-xs text-stone-500">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display italic font-bold text-[#3D2432] text-xl sm:text-2xl">
+                    Instant Payment &amp; Activation
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3] uppercase tracking-wider">
+                    Safe &amp; Encrypted
+                  </span>
+                </div>
+                <p className="text-xs text-[#7A4B5D] mt-0.5">
                   Secured by Cashfree with UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards &amp; Netbanking.
                 </p>
               </div>
             </div>
-            <div className="sm:text-right">
-              <span className="text-xs text-stone-500 block">Total Due</span>
-              <span className="text-2xl sm:text-3xl font-black text-rose-600">
-                ₹{selectedPlan.amount.toLocaleString("en-IN")}
-              </span>
+            <div className="sm:text-right bg-[#FFF9FB] sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#FFD9E3]/60 flex sm:block items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#7A4B5D] block">
+                  Total Due ({selectedPlan.name})
+                </span>
+                <span className="text-3xl sm:text-4xl font-display font-black text-[#3D2432] tracking-tight">
+                  ₹{selectedPlan.amount.toLocaleString("en-IN")}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Contact Prefill Inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+              <label className="block text-xs font-mono font-bold text-[#7A4B5D] tracking-wider uppercase mb-1.5">
                 Your Name
               </label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-stone-50/50"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-[#3D2432] placeholder:text-[#B392A0] focus:bg-white focus:border-[#E8527D] focus:ring-2 focus:ring-[#E8527D]/20 outline-none transition-all shadow-xs"
                 placeholder="Alex Smith"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+              <label className="block text-xs font-mono font-bold text-[#7A4B5D] tracking-wider uppercase mb-1.5">
                 Email Address
               </label>
               <input
                 type="email"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-stone-50/50"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-[#3D2432] placeholder:text-[#B392A0] focus:bg-white focus:border-[#E8527D] focus:ring-2 focus:ring-[#E8527D]/20 outline-none transition-all shadow-xs"
                 placeholder="alex@example.com"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+              <label className="block text-xs font-mono font-bold text-[#7A4B5D] tracking-wider uppercase mb-1.5">
                 Phone Number (Optional)
               </label>
               <input
                 type="tel"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-stone-50/50"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-[#FFD9E3] bg-[#FFF9FB] text-[#3D2432] placeholder:text-[#B392A0] focus:bg-white focus:border-[#E8527D] focus:ring-2 focus:ring-[#E8527D]/20 outline-none transition-all shadow-xs"
                 placeholder="Leave blank for all UPI options"
               />
-              <span className="text-[10px] text-stone-400 mt-1 block">
+              <span className="text-[10px] text-[#7A4B5D]/70 mt-1 block">
                 Leave blank to prevent 1-click saved method lock-in.
               </span>
             </div>
           </div>
 
           {/* Pay Button & Security Badges */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-stone-100">
-            <div className="flex items-center gap-3 text-xs text-stone-500">
+          <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#FFD9E3]/70">
+            <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#7A4B5D]">
               <div className="flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-emerald-600" />
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>256-bit SSL Encrypted</span>
               </div>
-              <span>•</span>
+              <span className="text-[#FFD9E3]">•</span>
               <div className="flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-rose-500" />
-                <span>Unlocks for Both Partners</span>
+                <Heart className="w-4 h-4 text-[#E8527D] fill-current" />
+                <span>One Pass for Both Partners</span>
+              </div>
+              <span className="text-[#FFD9E3]">•</span>
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Instant Activation</span>
               </div>
             </div>
 
@@ -397,58 +448,66 @@ function CheckoutContent() {
                 displayAmount={`₹${selectedPlan.amount.toLocaleString("en-IN")}`}
                 phone={customerPhone}
                 customerName={customerName}
-                buttonText={`Pay ₹${selectedPlan.amount.toLocaleString("en-IN")} via Cashfree`}
+                buttonText={`Pay ₹${selectedPlan.amount.toLocaleString("en-IN")} via Cashfree ▷`}
                 onSuccess={(orderId) => {
                   router.push(`/payment-status?order_id=${encodeURIComponent(orderId)}`);
                 }}
                 onError={(err) => {
                   handleError(err);
                 }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 active:scale-[0.99] transition-all shadow-md hover:shadow-lg cursor-pointer text-sm"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-3.5 px-8 rounded-xl font-mono text-xs font-bold tracking-wider uppercase text-white bg-[#E8527D] hover:bg-[#D13D68] active:scale-[0.99] transition-all shadow-md hover:shadow-lg cursor-pointer whitespace-nowrap"
               />
             </div>
           </div>
         </div>
 
         {/* Feature Highlights Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-stone-700 text-xs">
-          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
-            <div className="p-2 rounded-xl bg-pink-50 text-pink-700 w-fit">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div className="p-5 rounded-2xl bg-white/80 border border-[#FFD9E3] space-y-2 shadow-xs hover:border-[#E8527D]/40 hover:bg-white transition-all">
+            <div className="w-9 h-9 rounded-xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#E8527D] flex items-center justify-center">
               <Camera className="w-4 h-4" />
             </div>
-            <strong className="block font-bold text-stone-900 text-sm">Unlimited Photobooth</strong>
-            <p className="text-stone-500 leading-normal">
-              Capture synchronous photo strips with grain filters and custom couple frames.
+            <strong className="block font-display italic font-bold text-[#3D2432] text-sm">
+              Unlimited Photobooth
+            </strong>
+            <p className="text-[#7A4B5D] leading-relaxed">
+              Capture photo strips with vintage grain filters and custom couple frames.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
-            <div className="p-2 rounded-xl bg-amber-50 text-amber-700 w-fit">
+          <div className="p-5 rounded-2xl bg-white/80 border border-[#FFD9E3] space-y-2 shadow-xs hover:border-[#E8527D]/40 hover:bg-white transition-all">
+            <div className="w-9 h-9 rounded-xl bg-[#FFF0F4] border border-[#FFD9E3] text-amber-600 flex items-center justify-center">
               <Scale className="w-4 h-4" />
             </div>
-            <strong className="block font-bold text-stone-900 text-sm">AI Vibe Judge</strong>
-            <p className="text-stone-500 leading-normal">
+            <strong className="block font-display italic font-bold text-[#3D2432] text-sm">
+              AI Vibe Judge
+            </strong>
+            <p className="text-[#7A4B5D] leading-relaxed">
               Playful, objective mediation for relationship debates, habits, and gentle verdicts.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
-            <div className="p-2 rounded-xl bg-purple-50 text-purple-700 w-fit">
-              <Vault className="w-4 h-4" />
+          <div className="p-5 rounded-2xl bg-white/80 border border-[#FFD9E3] space-y-2 shadow-xs hover:border-[#E8527D]/40 hover:bg-white transition-all">
+            <div className="w-9 h-9 rounded-xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#E8527D] flex items-center justify-center">
+              <Archive className="w-4 h-4" />
             </div>
-            <strong className="block font-bold text-stone-900 text-sm">Lossless Cloud Vault</strong>
-            <p className="text-stone-500 leading-normal">
-              Permanent high-fidelity storage for love letters, moments, voice clips, and milestone memories.
+            <strong className="block font-display italic font-bold text-[#3D2432] text-sm">
+              Permanent Memory Wall
+            </strong>
+            <p className="text-[#7A4B5D] leading-relaxed">
+              Full-resolution cloud storage for love letters, moments, voice clips, and milestone photos.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-1.5">
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-700 w-fit">
+          <div className="p-5 rounded-2xl bg-white/80 border border-[#FFD9E3] space-y-2 shadow-xs hover:border-[#E8527D]/40 hover:bg-white transition-all">
+            <div className="w-9 h-9 rounded-xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#802030] flex items-center justify-center">
               <Infinity className="w-4 h-4" />
             </div>
-            <strong className="block font-bold text-stone-900 text-sm">No Auto-Debit Traps</strong>
-            <p className="text-stone-500 leading-normal">
-              Recharge with simple UPI passes when you need them. No surprise recurring charges ever.
+            <strong className="block font-display italic font-bold text-[#3D2432] text-sm">
+              No Auto-Debit Traps
+            </strong>
+            <p className="text-[#7A4B5D] leading-relaxed">
+              Recharge with simple passes when you need them. No surprise recurring charges ever.
             </p>
           </div>
         </div>
@@ -457,9 +516,9 @@ function CheckoutContent() {
         <div className="text-center pt-2">
           <Link
             href="/dashboard"
-            className="text-xs text-stone-500 hover:text-stone-800 underline underline-offset-4"
+            className="text-xs font-mono text-[#7A4B5D] hover:text-[#3D2432] underline underline-offset-4 transition-colors"
           >
-            Return to Sanctuary Dashboard
+            Return to Dashboard
           </Link>
         </div>
       </div>
@@ -473,9 +532,9 @@ export default function CheckoutPage() {
       fallback={
         <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-4 border-rose-200 border-t-rose-600 animate-spin" />
-            <p className="font-mono text-xs text-stone-500 uppercase tracking-wider">
-              Loading sanctuary passes...
+            <div className="w-8 h-8 rounded-full border-3 border-[#FFD9E3] border-t-[#E8527D] animate-spin" />
+            <p className="font-mono text-xs text-[#7A4B5D] uppercase tracking-wider">
+              Loading passes...
             </p>
           </div>
         </div>
