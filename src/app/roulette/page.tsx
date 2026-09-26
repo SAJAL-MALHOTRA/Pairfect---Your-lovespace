@@ -420,8 +420,8 @@ export default function RoulettePage() {
         </div>
 
         {/* Refined Segmented Preset Selector */}
-        <div className="w-full max-w-3xl mb-8">
-          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-2 no-scrollbar px-1">
+        <div className="w-full max-w-4xl mb-8">
+          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto py-2.5 px-3 no-scrollbar">
             {PRESETS.map((preset) => {
               const isActive = activePreset.id === preset.id && !isCustomMode;
               return (
@@ -429,10 +429,10 @@ export default function RoulettePage() {
                   key={preset.id}
                   onClick={() => handleSelectPreset(preset)}
                   disabled={isSpinning}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     isActive
-                      ? "bg-[#E8527D] text-white shadow-md shadow-pink-900/15 scale-105"
-                      : "bg-white/85 hover:bg-white text-[#2D1F2D] border border-[#FFD9E3] hover:border-[#E8527D]/40"
+                      ? "bg-[#E8527D] text-white shadow-md shadow-[#E8527D]/25 ring-2 ring-[#E8527D]/20 font-bold"
+                      : "bg-white/90 hover:bg-white text-[#2D1F2D] border border-[#FFD9E3] hover:border-[#E8527D]/40 shadow-2xs"
                   }`}
                 >
                   <span className="text-sm">{preset.icon}</span>
@@ -664,12 +664,12 @@ export default function RoulettePage() {
                         {savedToVault ? (
                           <>
                             <CheckCircle2 className="w-3.5 h-3.5 text-[#E8527D]" />
-                            <span>Saved in Vault!</span>
+                            <span>Saved to Memory Wall!</span>
                           </>
                         ) : (
                           <>
                             <Save className="w-3.5 h-3.5" />
-                            <span>Lock in Vault ▷</span>
+                            <span>Save to Memory Wall ▷</span>
                           </>
                         )}
                       </button>
