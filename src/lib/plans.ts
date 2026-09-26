@@ -26,7 +26,7 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
     features: [
       "One pass covers both partners",
       "Keep all photos and letters on your Memory Wall forever",
-      "Schedule letters up to 10 years ahead",
+      "Seal time-capsule letters for future anniversaries and dates",
       "Play all 14 quiz packs",
       "Unlimited full-resolution photo booth downloads",
       "Create unlimited Spotify mixtapes",

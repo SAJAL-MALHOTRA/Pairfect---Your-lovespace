@@ -516,8 +516,8 @@ export default function LoveLetterPage() {
         <PlusPaywallModal
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
-          featureTitle="10-Year Letter Scheduling"
-          featureDescription="Write notes now that deliver on future anniversaries, up to 10 years ahead."
+          featureTitle="Time-Capsule Love Letters"
+          featureDescription="Write and seal notes now with digital wax that only open on a future date or anniversary."
         />
         </main>
       </div>
@@ -672,7 +672,7 @@ export default function LoveLetterPage() {
                       </span>
                     </div>
                     <p className="text-[10px] text-[var(--ink-light)] mt-1 ml-6">
-                      Seal a letter that unlocks on your 1st, 5th, or 10th anniversary in the future.
+                      Seal a letter with digital wax that only opens on an upcoming anniversary, birthday, or milestone.
                     </p>
                     {scheduleUnseal && (
                       <div className="mt-3 ml-6">
@@ -741,8 +741,8 @@ export default function LoveLetterPage() {
         <PlusPaywallModal
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
-          featureTitle="10-Year Letter Scheduling"
-          featureDescription="Write notes now that deliver on future anniversaries, up to 10 years ahead."
+          featureTitle="Time-Capsule Love Letters"
+          featureDescription="Write and seal notes now with digital wax that only open on a future date or anniversary."
         />
       </div>
     );

@@ -2127,7 +2127,7 @@ export default function LandingContent() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
-                      <span>Full living memory vault</span>
+                      <span>Permanent Memory Wall storage</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
@@ -2179,7 +2179,7 @@ export default function LandingContent() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
-                      <span>Unlimited permanent Memory Vault</span>
+                      <span>Permanent Memory Wall storage</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
@@ -2187,7 +2187,7 @@ export default function LandingContent() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
-                      <span>Schedule letters up to 10 years ahead</span>
+                      <span>Seal time-capsule letters for future anniversaries</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
@@ -2214,7 +2214,7 @@ export default function LandingContent() {
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <span className="text-[10px] font-mono font-bold text-stone-500 uppercase tracking-wider">
-                      LIFETIME SANCTUARY
+                      PAY ONCE, KEEP FOREVER
                     </span>
                     <h3 className="font-display italic font-bold text-2xl text-[var(--text)]">Forever Pass</h3>
                     <div className="flex items-baseline gap-1 pt-2">
@@ -2227,7 +2227,7 @@ export default function LandingContent() {
                   <ul className="space-y-2 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 font-bold shrink-0" />
-                      <span><strong>Permanent encrypted living archive for life</strong></span>
+                      <span><strong>Memory Wall stays active for life</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
@@ -2235,7 +2235,7 @@ export default function LandingContent() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span>Early access to all upcoming date rituals</span>
+                      <span>All future features and quiz packs included</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />

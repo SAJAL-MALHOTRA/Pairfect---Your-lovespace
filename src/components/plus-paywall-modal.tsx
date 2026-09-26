@@ -137,7 +137,7 @@ export default function PlusPaywallModal({
                 <Check className="w-3 h-3 stroke-[2.5]" />
               </div>
               <span>
-                <strong>Letter scheduling</strong> — write notes now that arrive up to 10 years later
+                <strong>Time-capsule letters</strong> — seal notes now that only open on future anniversaries or dates
               </span>
             </div>
             <div className="flex items-center gap-2.5">

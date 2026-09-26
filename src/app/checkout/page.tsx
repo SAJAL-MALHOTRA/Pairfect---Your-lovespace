@@ -220,7 +220,7 @@ function CheckoutContent() {
                   </span>
                 </div>
                 <p className="text-xs text-[#7A4B5D] mt-1 max-w-xl leading-relaxed">
-                  Full access for both of you. Keep everything on your Memory Wall forever, schedule letters up to 10 years ahead, and play all 14 quiz packs.
+                  Full access for both of you. Keep everything on your Memory Wall forever, seal time-capsule letters for future anniversaries, and play all 14 quiz packs.
                 </p>
               </div>
             </div>
