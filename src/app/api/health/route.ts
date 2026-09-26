@@ -35,23 +35,25 @@ export async function GET() {
       "CASHFREE_KEY",
     ]);
 
-    const candidateKeys = Object.keys(process.env).filter(
-      (k) =>
-        k.toUpperCase().includes("CASH") ||
-        k.toUpperCase().includes("FREE") ||
-        k.toUpperCase().includes("CF") ||
-        k.toUpperCase().includes("PAY")
-    );
+    const safeKeys = Object.keys(process.env)
+      .filter(
+        (k) =>
+          !k.toUpperCase().includes("SECRET") &&
+          !k.toUpperCase().includes("TOKEN") &&
+          !k.toUpperCase().includes("PASSWORD") &&
+          !k.toUpperCase().includes("PRIVATE")
+      )
+      .sort();
 
     return NextResponse.json({
       status: "healthy",
       service: "pairfect-api",
-      version: "1.0.2",
+      version: "1.0.3",
       cashfree_configured: {
         has_app_id: !!appId,
         has_secret: !!secretKey,
         env: process.env.CASHFREE_ENV || "not_set",
-        candidate_keys: candidateKeys,
+        safe_keys: safeKeys,
       },
       timestamp,
     });
