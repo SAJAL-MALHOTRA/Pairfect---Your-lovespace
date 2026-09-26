@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { RazorpayCheckoutButton } from "@/components/payment/razorpay-checkout-button";
 import { CashfreeCheckoutButton } from "@/components/payment/cashfree-checkout-button";
 import { RazorpayVerificationResponse } from "@/lib/razorpay";
@@ -33,10 +34,10 @@ const PLANS: PlanOption[] = [
     displayPrice: "₹1",
     subtitle: "Minimum allowable transaction (100 paise) for instant verification test.",
     features: [
-      "Live Razorpay Standard Checkout modal",
+      "Live Cashfree Checkout modal",
       "Instant order creation via /api/create-order",
-      "HMAC SHA-256 signature verification",
-      "Instant feedback & receipt details",
+      "Cryptographic webhook signature verification",
+      "Instant feedback & receipt on /payment-status",
     ],
   },
   {
@@ -69,6 +70,7 @@ const PLANS: PlanOption[] = [
 ];
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<PlanOption>(PLANS[0]);
   const [customAmountRupees, setCustomAmountRupees] = useState<string>("10");
   const [useCustomAmount, setUseCustomAmount] = useState<boolean>(false);
@@ -135,16 +137,15 @@ export default function CheckoutPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold tracking-wide uppercase">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold tracking-wide uppercase">
             <Heart className="w-3.5 h-3.5 fill-current" />
-            Razorpay Web Checkout
+            Cashfree Secure Checkout
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-stone-900">
-            Secure Payment Integration
+            Pairfect Sanctuary Membership
           </h1>
           <p className="max-w-2xl mx-auto text-sm sm:text-base text-stone-600">
-            End-to-end Razorpay Standard Checkout featuring backend order creation,
-            interactive payment modal, and server-side HMAC-SHA256 signature verification.
+            Seamless payments powered by Cashfree Payments. Instant UPI, Cards, Netbanking & Wallets with bank-grade 256-bit encryption.
           </p>
         </div>
 
@@ -310,7 +311,7 @@ export default function CheckoutPage() {
               <div>
                 <h2 className="font-bold text-stone-900">Checkout Details</h2>
                 <p className="text-xs text-stone-500">
-                  Prefill information passed to the Razorpay modal
+                  Prefill information passed to the Cashfree checkout modal
                 </p>
               </div>
             </div>
@@ -367,7 +368,7 @@ export default function CheckoutPage() {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-xs text-stone-500">
               <Shield className="w-4 h-4 text-emerald-600" />
-              <span>256-bit encrypted • Cashfree & Razorpay Gateway Enabled</span>
+              <span>256-bit encrypted • Cashfree Gateway Enabled</span>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -378,6 +379,12 @@ export default function CheckoutPage() {
                 phone={prefillPhone}
                 customerName={prefillName}
                 buttonText={`Pay ₹${(selectedPlan.pricePaise / 100).toLocaleString("en-IN")} with Cashfree`}
+                onSuccess={(orderId) => {
+                  router.push(`/payment-status?order_id=${encodeURIComponent(orderId)}`);
+                }}
+                onError={(err) => {
+                  handleError(err);
+                }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 active:scale-[0.99] transition-all shadow-md hover:shadow-lg cursor-pointer"
               />
             </div>
@@ -387,20 +394,20 @@ export default function CheckoutPage() {
         {/* Integration Architecture Documentation Box */}
         <div className="rounded-2xl bg-white p-6 border border-stone-200 text-xs text-stone-600 space-y-3">
           <h4 className="font-bold text-stone-800 uppercase tracking-wider text-[11px]">
-            How This Integration Works
+            How Cashfree Payments Work
           </h4>
           <ol className="list-decimal pl-4 space-y-1.5 text-stone-600">
             <li>
-              <strong>Order Creation:</strong> Frontend calls <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">POST /api/create-order</code> with amount (in paise). Server calls Razorpay Orders API with Basic Auth and returns <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">order_id</code>.
+              <strong>Order Creation:</strong> Frontend calls <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">POST /api/create-order</code> with the selected plan. The server resolves the price from the server catalog and calls Cashfree PG API (<code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">cf.PGCreateOrder</code>) to generate a secure <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">payment_session_id</code>.
             </li>
             <li>
-              <strong>Standard Checkout Modal:</strong> The SDK dynamically opens the official Razorpay checkout popup preloaded with the verified <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">order_id</code>.
+              <strong>Seamless Web Checkout:</strong> The <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">@cashfreepayments/cashfree-js</code> SDK opens the official Cashfree checkout modal supporting UPI (GPay, PhonePe, Paytm), Debit/Credit Cards, and Netbanking.
             </li>
             <li>
-              <strong>Server-Side Verification:</strong> When the customer pays, Razorpay returns <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">razorpay_payment_id</code>, <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">razorpay_order_id</code>, and <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">razorpay_signature</code>.
+              <strong>Automatic Verification:</strong> Upon completion, the return URL (<code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">/payment-status?order_id=...</code>) invokes <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">GET /api/cashfree/order-status</code>, which server-verifies the order directly with Cashfree's gateway.
             </li>
             <li>
-              <strong>HMAC-SHA256 Check:</strong> Frontend forwards these to <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">POST /api/verify-payment</code>, which computes <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">crypto.createHmac(&apos;sha256&apos;, secret).update(order_id + &apos;|&apos; + payment_id).digest(&apos;hex&apos;)</code> and ensures timing-safe matching.
+              <strong>Instant Webhook Sync:</strong> Real-time asynchronous payment updates are verified cryptographically via HMAC-SHA256 signatures on <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">POST /api/cashfree/webhook</code>.
             </li>
           </ol>
         </div>

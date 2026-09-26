@@ -25,8 +25,13 @@ export function getResolvedCashfreeEnv(): {
     process.env.CASHFREE_ENV || process.env.NEXT_PUBLIC_CASHFREE_ENV
   ).toLowerCase();
 
-  // 1. If key is explicitly production (cfsk_ma_pr_ or contains _pr_), always use production
-  if (secretKey.startsWith("cfsk_ma_pr_") || secretKey.includes("_pr_")) {
+  // 1. If key is explicitly production (cfsk_ma_pr_, cfsk_ma_prod_, or contains _pr_ / _prod_), always use production
+  if (
+    secretKey.startsWith("cfsk_ma_pr_") ||
+    secretKey.startsWith("cfsk_ma_prod_") ||
+    secretKey.includes("_pr_") ||
+    secretKey.includes("_prod_")
+  ) {
     return { environment: CFEnvironment.PRODUCTION, mode: "production" };
   }
 

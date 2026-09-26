@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import {
-  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight, MapPin, Trash2
+  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight, MapPin, Trash2, Sparkles
 } from "lucide-react";
 import CitySelectorModal from "@/components/city-selector-modal";
 
@@ -379,6 +380,23 @@ export default function SettingsPage() {
               </div>
             </form>
           )}
+        </Section>
+
+        {/* Pairfect Membership & Billing */}
+        <Section title="Pairfect Membership & Billing">
+          <SettingsRow
+            label="Sanctuary Pass"
+            description="Unlock unmetered Photobooth, high-res keepsakes, and lifetime features."
+            right={
+              <Link
+                href="/checkout"
+                className="btn-primary py-1.5 px-3.5 text-[11px] uppercase tracking-wider flex items-center gap-1.5 cursor-pointer rounded-xl bg-[var(--burgundy)] text-white hover:opacity-90 transition-opacity"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>View Plans</span>
+              </Link>
+            }
+          />
         </Section>
 
         {/* Your City (Meanwhile Proximity) */}

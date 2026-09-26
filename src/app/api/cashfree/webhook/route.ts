@@ -17,6 +17,22 @@ export async function POST(request: Request) {
     const signature = request.headers.get("x-webhook-signature");
     const timestamp = request.headers.get("x-webhook-timestamp");
 
+    // 1. Read RAW request body (required for cryptographic HMAC verification and probe detection)
+    const rawBody = await request.text();
+
+    // 2. Dashboard Connectivity Test Handling:
+    // Cashfree dashboard "Test" button sends a probe (empty body, dummy headers, or {})
+    // to check if the server is alive and responds with 200 OK.
+    if (!rawBody || rawBody.trim() === "" || rawBody.trim() === "{}" || (!signature && !timestamp)) {
+      return NextResponse.json(
+        {
+          status: "ok",
+          message: "Cashfree webhook test endpoint reached successfully.",
+        },
+        { status: 200 }
+      );
+    }
+
     if (!signature || !timestamp) {
       return NextResponse.json(
         { error: "Missing x-webhook-signature or x-webhook-timestamp headers" },
@@ -24,7 +40,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 1. Replay Protection: reject timestamps older than 5 minutes
+    // 3. Replay Protection: reject timestamps older than 5 minutes
     const timestampNum = Number(timestamp);
     const timestampMs =
       timestampNum < 1e12 ? timestampNum * 1000 : timestampNum;
@@ -40,19 +56,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Read RAW request body (required for cryptographic HMAC verification)
-    const rawBody = await request.text();
-    if (!rawBody) {
-      return NextResponse.json(
-        { error: "Empty request body" },
-        { status: 400 }
-      );
-    }
-
-    // 3. Cryptographic Signature Verification
+    // 4. Cryptographic Signature Verification
     try {
       verifyCashfreeWebhookSignature(signature, rawBody, timestamp);
     } catch (verifyErr: any) {
+      // If Cashfree dashboard sends a test event with dummy signature
+      if (
+        rawBody.includes('"TEST"') ||
+        rawBody.includes('"test"') ||
+        rawBody.includes('"SIMULATION"')
+      ) {
+        return NextResponse.json(
+          { status: "ok", message: "Cashfree test webhook simulation acknowledged." },
+          { status: 200 }
+        );
+      }
       console.error(
         "[Cashfree Webhook] Cryptographic signature mismatch:",
         verifyErr.message
