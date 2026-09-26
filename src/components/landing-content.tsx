@@ -2143,7 +2143,7 @@ export default function LandingContent() {
                     <h3 className="font-display italic font-bold text-2xl text-[var(--text)]">Forever Pass</h3>
                     <div className="flex items-baseline gap-1 pt-2">
                       <span className="text-3xl font-black text-[var(--text)]">₹699</span>
-                      <span className="text-xs font-mono text-[var(--text-soft)]">/ once in a lifetime for both</span>
+                      <span className="text-xs font-mono text-[var(--text-soft)] whitespace-nowrap">/ lifetime for both</span>
                     </div>
                     <p className="text-[10px] font-mono text-purple-600 font-bold">Never pay again · Only ₹350 per partner</p>
                   </div>
