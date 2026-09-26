@@ -17,30 +17,30 @@ export interface PaymentPlan {
 export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
   "plus-monthly": {
     id: "plus-monthly",
-    name: "1-Month Sanctuary Pass",
-    amount: 99.0, // ₹99
+    name: "Plus Monthly",
+    amount: 129.0, // ₹129/mo (~₹65/partner)
     currency: "INR",
     tier: "plus",
     durationDays: 30,
-    subtitle: "30 days of unmetered digital sanctuary features for both of you.",
+    subtitle: "30 days of unmetered digital sanctuary features for both of you (~₹65/partner).",
     features: [
-      "Pay once, unlocks for BOTH partners",
+      "Pay once, unlocks for BOTH partners (~₹65/person)",
       "Unlimited high-resolution Photobooth sessions",
       "Priority AI Vibe Judge mediation",
       "Unlimited cloud keepsake vault storage",
-      "Exclusive romantic game decks",
+      "Exclusive romantic game decks & audio",
     ],
   },
   "plus-quarterly": {
     id: "plus-quarterly",
-    name: "3-Month Sanctuary Pass",
-    amount: 249.0, // ₹249
+    name: "3-Month Pass",
+    amount: 249.0, // ₹249 (~₹125/partner)
     currency: "INR",
     tier: "plus",
     durationDays: 90,
     popular: true,
     badge: "Most Popular for Couples",
-    subtitle: "90 days of living memories, rituals, and celebration for both of you.",
+    subtitle: "90 days of living memories, rituals, and celebration for both of you (Only ₹125/partner).",
     features: [
       "Pay once, unlocks for BOTH partners (Only ₹125/person)",
       "Unlimited permanent Memory Wall & Vault",
@@ -53,7 +53,7 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
   "plus-annual": {
     id: "plus-annual",
     name: "1-Year Sanctuary Pass",
-    amount: 799.0, // ₹799 (Save ~33%)
+    amount: 799.0, // ₹799
     currency: "INR",
     tier: "plus",
     durationDays: 365,
@@ -68,13 +68,13 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
   },
   "pairfect-forever": {
     id: "pairfect-forever",
-    name: "Forever Sanctuary Pass",
-    amount: 699.0, // ₹699 (Lifetime for both)
+    name: "Forever Pass",
+    amount: 1999.0, // ₹1,999 (~₹1,000/partner)
     currency: "INR",
     tier: "forever",
     durationDays: null,
-    badge: "Anniversary Keepsake #1",
-    subtitle: "One-time purchase of ₹699 (₹350/partner). Lifetime keepsake archive for exactly two people.",
+    badge: "Lifetime Sanctuary",
+    subtitle: "One-time purchase of ₹1,999 (₹1,000/partner). Lifetime keepsake archive for exactly two people.",
     features: [
       "Pay once — unlocks for BOTH partners forever",
       "Permanent encrypted living archive for life",

@@ -5,6 +5,9 @@ export interface SubscriptionPairState {
   subscription_tier?: string | null;
   subscription_status?: string | null;
   subscription_expires_at?: string | null;
+  subscription_order_id?: string | null;
+  trial_used?: boolean | null;
+  trial_ends_at?: string | null;
 }
 
 /**
@@ -18,7 +21,7 @@ export function hasPlusAccess(pair: SubscriptionPairState | null | undefined): b
     return true;
   }
 
-  // 2. Active Plus term access
+  // 2. Active Plus term access (includes active paid passes and 7-day trials)
   if (
     pair.subscription_tier === "plus" &&
     pair.subscription_status === "active" &&
@@ -38,6 +41,7 @@ export function getSubscriptionDetails(pair: SubscriptionPairState | null | unde
   const isPlus = hasPlusAccess(pair);
   const tier = (pair?.subscription_tier || "free") as "free" | "plus" | "forever";
   const isLifetime = tier === "forever";
+  const isTrial = isPlus && Boolean(pair?.trial_used && !pair?.subscription_order_id);
 
   let daysRemaining: number | null = null;
   let isExpiringSoon = false;
@@ -52,6 +56,7 @@ export function getSubscriptionDetails(pair: SubscriptionPairState | null | unde
     isPlus,
     tier,
     isLifetime,
+    isTrial,
     expiresAt: pair?.subscription_expires_at || null,
     daysRemaining,
     isExpiringSoon,

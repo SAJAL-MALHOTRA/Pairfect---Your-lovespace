@@ -2027,11 +2027,38 @@ export default function LandingContent() {
               </p>
             </div>
 
-            {/* 3 Pricing Cards (Cashfree Integration) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            {/* 7-Day Free Trial Banner */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--burgundy)]/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left paper-grain">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[var(--rose)]/20 text-[var(--burgundy)] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <span className="font-heading font-bold text-sm text-[var(--text)]">7-Day Free Plus Trial</span>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                      NO CREDIT CARD NEEDED
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-soft)] mt-0.5 font-sans">
+                    Experience all 11 games, unlimited vault, and custom mixtapes free for 7 days. One trial per couple.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/onboarding"
+                className="btn-journal py-2.5 px-6 text-xs font-mono font-bold shrink-0 whitespace-nowrap shadow-sm"
+                onMouseEnter={() => playTactileSound("tap")}
+              >
+                Start 7-Day Free Trial ▷
+              </Link>
+            </div>
+
+            {/* 4 Pricing Cards (Cashfree Integration) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
               
               {/* Plan 1: Free Forever */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
+              <div className="p-6 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <span className="text-[10px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider">
@@ -2042,9 +2069,10 @@ export default function LandingContent() {
                       <span className="text-3xl font-black text-[var(--text)]">₹0</span>
                       <span className="text-xs font-mono text-[var(--text-soft)]">/ forever for two</span>
                     </div>
+                    <p className="text-[10px] font-mono text-stone-500 font-bold">Never expires</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
+                  <ul className="space-y-2 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>All 11 connection games &amp; rituals</span>
@@ -2077,8 +2105,56 @@ export default function LandingContent() {
                 </Link>
               </div>
 
-              {/* Plan 2: Pairfect Plus 3-Month Pass (Most Popular) */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[var(--paper-warm)] border-2 border-[var(--burgundy)] shadow-xl flex flex-col justify-between space-y-6 relative paper-grain">
+              {/* Plan 2: Plus Monthly (NEW) */}
+              <div className="p-6 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono font-bold text-[var(--burgundy)] uppercase tracking-wider">
+                      PLUS MONTHLY
+                    </span>
+                    <h3 className="font-display italic font-bold text-2xl text-[var(--text)]">Monthly Pass</h3>
+                    <div className="flex items-baseline gap-1 pt-2">
+                      <span className="text-3xl font-black text-[var(--burgundy)]">₹129</span>
+                      <span className="text-xs font-mono text-[var(--text-soft)]">/ mo for both</span>
+                    </div>
+                    <p className="text-[10px] font-mono text-emerald-600 font-bold">Only ₹65 per partner · 30 days</p>
+                  </div>
+
+                  <ul className="space-y-2 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
+                    <li className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] font-bold shrink-0" />
+                      <span><strong>Everything in Free</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
+                      <span>Full living memory vault</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
+                      <span>High-Res photostrip print exports</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
+                      <span>Priority AI Vibe Judge mediation</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
+                      <span>Custom Spotify cassette shells</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link
+                  href="/checkout?plan=plus-monthly"
+                  className="btn-journal-ghost w-full text-center py-3 text-xs"
+                  onMouseEnter={() => playTactileSound("tap")}
+                >
+                  Get Monthly Pass ▷
+                </Link>
+              </div>
+
+              {/* Plan 3: Pairfect Plus 3-Month Pass (Most Popular) */}
+              <div className="p-6 rounded-3xl bg-[var(--paper-warm)] border-2 border-[var(--burgundy)] shadow-xl flex flex-col justify-between space-y-6 relative paper-grain">
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold uppercase tracking-widest shadow-xs whitespace-nowrap">
                   MOST POPULAR FOR COUPLES
                 </div>
@@ -2091,19 +2167,19 @@ export default function LandingContent() {
                     <h3 className="font-display italic font-bold text-2xl text-[var(--text)]">3-Month Pass</h3>
                     <div className="flex items-baseline gap-1 pt-2">
                       <span className="text-3xl font-black text-[var(--burgundy)]">₹249</span>
-                      <span className="text-xs font-mono text-[var(--text-soft)]">/ one-time for BOTH of you</span>
+                      <span className="text-xs font-mono text-[var(--text-soft)]">/ one-time for both</span>
                     </div>
-                    <p className="text-[10px] font-mono text-emerald-600 font-bold">Only ₹125 per partner</p>
+                    <p className="text-[10px] font-mono text-emerald-600 font-bold">Only ₹125 per partner · 90 days</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-[var(--text)] pt-4 border-t border-[var(--border)]">
+                  <ul className="space-y-2 text-xs text-[var(--text)] pt-4 border-t border-[var(--border)]">
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] font-bold shrink-0" />
-                      <span><strong>Everything in Free</strong></span>
+                      <span><strong>Everything in Monthly</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
-                      <span>Unlimited permanent Memory Wall &amp; Vault</span>
+                      <span>Unlimited permanent Memory Vault</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
@@ -2119,7 +2195,7 @@ export default function LandingContent() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
-                      <span>Custom Spotify cassette mixtape shells</span>
+                      <span>Save 35% vs monthly plan</span>
                     </li>
                   </ul>
                 </div>
@@ -2133,8 +2209,8 @@ export default function LandingContent() {
                 </Link>
               </div>
 
-              {/* Plan 3: Lifetime Forever Pass */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
+              {/* Plan 4: Lifetime Forever Pass */}
+              <div className="p-6 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <span className="text-[10px] font-mono font-bold text-stone-500 uppercase tracking-wider">
@@ -2142,13 +2218,13 @@ export default function LandingContent() {
                     </span>
                     <h3 className="font-display italic font-bold text-2xl text-[var(--text)]">Forever Pass</h3>
                     <div className="flex items-baseline gap-1 pt-2">
-                      <span className="text-3xl font-black text-[var(--text)]">₹699</span>
+                      <span className="text-3xl font-black text-[var(--text)]">₹1,999</span>
                       <span className="text-xs font-mono text-[var(--text-soft)] whitespace-nowrap">/ lifetime for both</span>
                     </div>
-                    <p className="text-[10px] font-mono text-purple-600 font-bold">Never pay again · Only ₹350 per partner</p>
+                    <p className="text-[10px] font-mono text-purple-600 font-bold">Never pay again · Only ₹1,000/partner</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
+                  <ul className="space-y-2 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 font-bold shrink-0" />
                       <span><strong>Permanent encrypted living archive for life</strong></span>
@@ -2286,7 +2362,7 @@ export default function LandingContent() {
                   },
                   {
                     q: "Does one subscription cover both partners?",
-                    a: "Yes! If either partner upgrades to Pairfect Plus (₹249 for 3 months or ₹699 for lifetime), both of your accounts immediately unlock unlimited memories and all premium features."
+                    a: "Yes! If either partner upgrades to Pairfect Plus (₹129/mo, ₹249 for 3 months, or ₹1,999 for lifetime), both of your accounts immediately unlock unlimited memories and all premium features. You can also start with our 7-day free trial with no card required."
                   }
                 ].map((faq, idx) => (
                   <div key={idx} className="pt-3 first:pt-0 space-y-1">

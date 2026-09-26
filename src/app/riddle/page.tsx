@@ -347,7 +347,7 @@ export default function RiddlePage() {
       />
       <Navigation />
 
-      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-start z-10 animate-fade-in">
+      <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 pt-24 md:pl-36 md:pr-12 pb-16 flex-1 flex flex-col justify-start z-10 animate-fade-in">
         
         {/* LOBBY SCREEN */}
         {!activeSession && (

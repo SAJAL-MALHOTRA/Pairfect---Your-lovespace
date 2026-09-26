@@ -61,6 +61,44 @@ function CheckoutContent() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [lastError, setLastError] = useState<string | null>(null);
 
+  // 7-Day Free Trial state
+  const [trialLoading, setTrialLoading] = useState(false);
+  const [trialEligible, setTrialEligible] = useState<boolean | null>(null);
+  const [trialMessage, setTrialMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetch("/api/trials/eligibility")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.eligible === "boolean") {
+            setTrialEligible(data.eligible);
+          }
+        })
+        .catch(() => setTrialEligible(false));
+    }
+  }, [user]);
+
+  const handleActivateTrial = async () => {
+    setTrialLoading(true);
+    setLastError(null);
+    try {
+      const res = await fetch("/api/trials/start", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to activate 7-day trial.");
+      }
+      setTrialMessage("✨ 7-day Pairfect Plus trial activated for both of you! Refreshing your sanctuary...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (err: any) {
+      setLastError(err?.message || "Failed to activate trial.");
+    } finally {
+      setTrialLoading(false);
+    }
+  };
+
   // Update selected plan if URL query param changes
   useEffect(() => {
     if (planParam) {
@@ -149,6 +187,46 @@ function CheckoutContent() {
               <span className="font-semibold block">Checkout Notice:</span>
               <span>{lastError}</span>
             </div>
+          </div>
+        )}
+
+        {/* Trial Success Message */}
+        {trialMessage && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 text-sm animate-fade-in">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span className="font-semibold">{trialMessage}</span>
+          </div>
+        )}
+
+        {/* 7-Day Free Trial Banner for Eligible Couples */}
+        {!isPlus && trialEligible && (
+          <div className="p-5 rounded-3xl bg-gradient-to-r from-rose-50 via-pink-50 to-orange-50 border-2 border-rose-200 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span className="font-heading font-extrabold text-base text-stone-900">
+                    7-Day Free Plus Trial Available
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                    NO CARD REQUIRED
+                  </span>
+                </div>
+                <p className="text-xs text-stone-600 mt-1 max-w-xl">
+                  Unlock unlimited Memory Wall, high-res photostrips, custom mixtapes, and date rituals free for 7 days. One trial per couple.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleActivateTrial}
+              disabled={trialLoading}
+              className="btn-journal py-3 px-6 text-xs font-mono font-bold shrink-0 w-full sm:w-auto shadow-sm whitespace-nowrap cursor-pointer hover:scale-105 transition-transform"
+            >
+              {trialLoading ? "Activating..." : "Start 7-Day Free Trial ▷"}
+            </button>
           </div>
         )}
 

@@ -265,7 +265,7 @@ export default function LoveMatchGamePage() {
     <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] transition-colors paper-grain">
       <Navigation />
 
-      <main className="flex-1 max-w-[1140px] w-full mx-auto px-4 sm:px-6 py-6 md:py-10 flex flex-col justify-center">
+      <main className="flex-1 max-w-[1140px] w-full mx-auto px-4 sm:px-6 pt-24 md:pl-36 md:pr-12 pb-16 flex flex-col justify-center">
 
         {/* ── TOP BACK BUTTON & BREADCRUMB ── */}
         <div className="flex items-center justify-between pb-6">

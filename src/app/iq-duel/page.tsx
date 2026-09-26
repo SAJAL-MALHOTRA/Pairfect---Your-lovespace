@@ -492,7 +492,7 @@ export default function IQDuelPage() {
       />
       <Navigation />
 
-      <main className="max-w-2xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col justify-center z-10">
+      <main className="max-w-2xl w-full mx-auto px-4 sm:px-6 pt-24 md:pl-36 md:pr-12 pb-16 flex-1 flex flex-col justify-center z-10">
 
         {error && (
           <div className="mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
