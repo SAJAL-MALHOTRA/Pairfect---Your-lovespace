@@ -48,7 +48,8 @@ export async function GET() {
     return NextResponse.json({
       status: "healthy",
       service: "pairfect-api",
-      version: "1.0.3",
+      version: "1.0.4",
+      vercel_project_name: process.env.VERCEL_PROJECT_NAME || "unknown",
       cashfree_configured: {
         has_app_id: !!appId,
         has_secret: !!secretKey,
