@@ -25,6 +25,7 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
     subtitle: "Month-to-month access for couples who want flexibility without a longer commitment.",
     features: [
       "One pass covers both partners",
+      "Watch Together: 1:1 video calls and screen sharing",
       "Keep all photos and letters on your Memory Wall forever",
       "Seal time-capsule letters for future anniversaries and dates",
       "Play all 14 quiz packs",

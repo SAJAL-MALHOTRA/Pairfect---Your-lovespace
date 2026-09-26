@@ -1,246 +1,144 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useSubscription } from "@/hooks/use-subscription";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
+import PlusPaywallModal from "@/components/plus-paywall-modal";
+import { FloatingHeartsLayer, FloatingHeartItem } from "@/components/watch/floating-hearts";
+import { SessionChat, SessionChatMessage } from "@/components/watch/session-chat";
 import {
-  Tv,
-  Play,
-  Pause,
-  RefreshCw,
-  AlertCircle,
-  Link2,
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  Monitor,
+  PhoneOff,
+  MessageSquare,
+  Heart,
+  Loader2,
   Sparkles,
+  AlertCircle,
+  PhoneCall,
+  Crown,
+  Users,
+  RefreshCw,
+  Info,
   Maximize2,
   Minimize2,
-  Plus,
-  Trash2,
-  Heart,
-  ListVideo,
-  Radio,
-  Flame,
-  Monitor,
-  Video,
-  Film,
-  ExternalLink,
-  Info,
-  SkipForward,
-  Clapperboard,
-  Music,
-  Smile,
-  Zap,
-  Volume2,
-  VolumeX,
-  Loader2,
+  Lock,
 } from "lucide-react";
-import { UnpairedPrompt } from "@/components/unpaired-prompt";
-import { useNotifications } from "@/components/providers/notification-provider";
 import { motion, AnimatePresence } from "framer-motion";
-
-declare global {
-  interface Window {
-    onYouTubeIframeAPIReady: (() => void) | undefined;
-    YT: any;
-  }
-}
-
-interface FloatingEmoji {
-  id: string;
-  emoji: string;
-  senderName: string;
-  x: number;
-  burst?: boolean;
-}
-
-interface QueueItem {
-  id: string;
-  videoId: string;
-  title: string;
-  addedBy: string;
-}
 
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
   ],
 };
 
-const PRESET_VIDEOS = [
-  { label: "☕ Lofi Hip Hop Radio", id: "jfKfPfyJRdk" },
-  { label: "🔥 Cozy Fireplace & Rain", id: "L_LUpnjgPso" },
-  { label: "🌌 Ghibli Piano Music", id: "0t3H-KjJtX0" },
-  { label: "🌊 Ocean Waves 4K", id: "bn9F19Hi1Lk" },
-];
-
-const MOODS = [
-  { id: "cozy", label: "🍿 Cozy", bgClass: "from-amber-950/20 via-background to-background" },
-  { id: "rain", label: "🌧 Rain", bgClass: "from-slate-950/20 via-background to-background" },
-  { id: "piano", label: "🎹 Piano", bgClass: "from-purple-950/20 via-background to-background" },
-  { id: "romantic", label: "✨ Romantic", bgClass: "from-rose-950/20 via-background to-background" },
-];
-
-const SUGGESTED_TONIGHT = [
-  { title: "Ghibli Lofi Studio Chill", search: "Ghibli Lofi Chill Beats", id: "0t3H-KjJtX0", type: "Music" },
-  { title: "Interstellar Soundtrack Live", search: "Interstellar Main Theme Live Hans Zimmer", id: "UDVtMYqUA4w", type: "Movie Theme" },
-  { title: "Cozy Coffee Shop Ambience", search: "Cozy Coffee Shop Ambience Jazz Music", id: "lP26UCnoHya", type: "Ambience" },
-  { title: "Friends Funny Moments Comp", search: "Best of Friends Season 1-10 Compilation", id: "xH380y8qS6c", type: "Show" },
-  { title: "Howl's Moving Castle Theme", search: "Merry Go Round of Life Piano", id: "38VzEMH76hU", type: "Anime" },
-];
-
-const REACTION_EMOJIS = ["❤️", "😂", "🥺", "😮", "🔥", "🍿", "👏", "😭"];
+type SessionMode = "camera" | "screenshare";
+type SessionState = "idle" | "waiting" | "connecting" | "connected" | "reconnecting" | "ended";
 
 export default function WatchPage() {
-  const { user, pair, partner, profile, loading } = useAuth();
-  const { sendGameNotification } = useNotifications();
+  const { user, profile, pair, partner, loading: authLoading } = useAuth();
+  const { isPlus, loading: subLoading } = useSubscription();
+  const supabase = createClient();
 
-  const [activeTab, setActiveTab] = useState<"youtube" | "screenshare" | "guide">("youtube");
-  const [selectedMood, setSelectedMood] = useState("cozy");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [currentVideoId, setCurrentVideoId] = useState("dQw4w9WgXcQ");
-  const [error, setError] = useState<string | null>(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
-  const [isTheaterMode, setIsTheaterMode] = useState(false);
-  const [isPartnerPresent, setIsPartnerPresent] = useState(false);
-  const [reactions, setReactions] = useState<FloatingEmoji[]>([]);
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [skipVotes, setSkipVotes] = useState<string[]>([]);
-  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  // Session lifecycle & mode
+  const [sessionState, setSessionState] = useState<SessionState>("idle");
+  const [sessionMode, setSessionMode] = useState<SessionMode>("camera");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isInitiator, setIsInitiator] = useState<boolean>(false);
+  const [callDuration, setCallDuration] = useState<number>(0);
+  const [isTheaterMode, setIsTheaterMode] = useState<boolean>(false);
 
-  // Screen Sharing states
-  const [isSharing, setIsSharing] = useState(false);
-  const [isReceivingStream, setIsReceivingStream] = useState(false);
-  const [isConnectingWebRTC, setIsConnectingWebRTC] = useState(false);
-  const [remoteSharerName, setRemoteSharerName] = useState<string>("");
-  const [isRemoteMuted, setIsRemoteMuted] = useState(false);
+  // Presence & status
+  const [isPartnerOnline, setIsPartnerOnline] = useState<boolean>(false);
+  const [isPartnerInCall, setIsPartnerInCall] = useState<boolean>(false);
+  const [incomingCallFromPartner, setIncomingCallFromPartner] = useState<boolean>(false);
+  const [strictNatWarning, setStrictNatWarning] = useState<boolean>(false);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
 
-  // Screen Sharing refs
-  const screenVideoRef = useRef<HTMLVideoElement | null>(null);
+  // Media track states
+  const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
+  const [isCamMuted, setIsCamMuted] = useState<boolean>(false);
+  const [isPartnerMicMuted, setIsPartnerMicMuted] = useState<boolean>(false);
+  const [isPartnerCamMuted, setIsPartnerCamMuted] = useState<boolean>(false);
+
+  // Feature detection for screen share (desktop vs mobile)
+  const [canScreenShare, setCanScreenShare] = useState<boolean>(false);
+
+  // Overlay chat & reactions
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
+  const [chatMessages, setChatMessages] = useState<SessionChatMessage[]>([]);
+  const [floatingHearts, setFloatingHearts] = useState<FloatingHeartItem[]>([]);
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
+
+  // Paywall modal
+  const [showPaywall, setShowPaywall] = useState<boolean>(false);
+
+  // Video element & stream refs
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const iceCandidatesQueueRef = useRef<RTCIceCandidateInit[]>([]);
-
-  const supabase = createClient();
-  const playerRef = useRef<any>(null);
   const channelRef = useRef<any>(null);
-  const isSyncingRef = useRef(false);
-  const lastStateRef = useRef<number>(-1);
+  const timerIntervalRef = useRef<any>(null);
 
+  const partnerName = partner?.display_name || "your partner";
+  const myName = profile?.display_name || "You";
+
+  // Check displayMedia capability once on client mount
   useEffect(() => {
-    if (pair && user) {
-      sendGameNotification("Movie Night", "/watch");
+    if (typeof navigator !== "undefined" && navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices) {
+      setCanScreenShare(true);
     }
-  }, [pair, user]);
-
-  // Clean up screen share media & peer connections on component unmount
-  useEffect(() => {
-    return () => {
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-        mediaStreamRef.current = null;
-      }
-      closePeerConnection();
-    };
   }, []);
 
-  // Rebind stream targets whenever activeTab or stream states update
+  // Duration timer
   useEffect(() => {
-    if (activeTab === "screenshare") {
-      if (isSharing && mediaStreamRef.current && screenVideoRef.current) {
-        screenVideoRef.current.srcObject = mediaStreamRef.current;
-      }
-      if (isReceivingStream && remoteStreamRef.current && remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remoteStreamRef.current;
-      }
+    if (sessionState === "connected") {
+      timerIntervalRef.current = setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      if (sessionState === "idle") setCallDuration(0);
     }
-  }, [activeTab, isSharing, isReceivingStream]);
-
-  const extractVideoId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  };
-
-  // 1. Initial State Fetch
-  const fetchSessionState = async () => {
-    if (!pair) return;
-    try {
-      const { data, error: fetchErr } = await supabase
-        .from("youtube_sessions")
-        .select("*")
-        .eq("pair_id", pair.id)
-        .maybeSingle();
-
-      if (fetchErr) throw fetchErr;
-      if (data && data.video_id) {
-        setCurrentVideoId(data.video_id);
-      }
-    } catch (err) {
-      console.error("Error loading watch session:", err);
-    } finally {
-      setSessionLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!loading && pair) {
-      fetchSessionState();
-    }
-  }, [pair, loading]);
-
-  // 2. YouTube IFrame API Initialization
-  useEffect(() => {
-    if (!window.YT) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
-    }
-
-    window.onYouTubeIframeAPIReady = () => {
-      initPlayer(currentVideoId);
-    };
-
-    if (window.YT && window.YT.Player) {
-      initPlayer(currentVideoId);
-    }
-
     return () => {
-      if (playerRef.current) {
-        try {
-          playerRef.current.destroy();
-        } catch (e) {}
-        playerRef.current = null;
-      }
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
-  }, [currentVideoId]);
+  }, [sessionState]);
 
-  const initPlayer = (videoId: string) => {
-    if (playerRef.current) {
-      try {
-        playerRef.current.destroy();
-      } catch (e) {}
-    }
-
-    playerRef.current = new window.YT.Player("youtube-player", {
-      height: "100%",
-      width: "100%",
-      videoId: videoId,
-      playerVars: {
-        playsinline: 1,
-        rel: 0,
-        modestbranding: 1,
-      },
-      events: {
-        onStateChange: onPlayerStateChange,
-      },
-    });
+  const showNotice = (msg: string) => {
+    setNoticeMessage(msg);
+    setTimeout(() => setNoticeMessage(null), 3500);
   };
 
-  // 3. WebRTC Peer Connection Helper Methods
+  // ─── WebRTC Peer Connection Cleaners & Builders ───
+  const cleanupMediaStreams = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+      remoteStreamRef.current = null;
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+  };
+
   const closePeerConnection = () => {
     if (pcRef.current) {
       try {
@@ -255,12 +153,13 @@ export default function WatchPage() {
     iceCandidatesQueueRef.current = [];
   };
 
-  const createPeerConnection = (isSharer: boolean): RTCPeerConnection => {
+  const createPeerConnection = (isCallInitiator: boolean): RTCPeerConnection => {
     closePeerConnection();
 
     const pc = new RTCPeerConnection(RTC_CONFIG);
     pcRef.current = pc;
 
+    // Send ICE candidates to partner over Supabase Realtime broadcast
     pc.onicecandidate = (event) => {
       if (event.candidate && channelRef.current && user) {
         channelRef.current.send({
@@ -271,31 +170,32 @@ export default function WatchPage() {
       }
     };
 
+    // Receive partner incoming remote audio/video tracks
     pc.ontrack = (event) => {
       if (event.streams && event.streams[0]) {
-        const incomingStream = event.streams[0];
-        remoteStreamRef.current = incomingStream;
-        setIsReceivingStream(true);
-        setIsConnectingWebRTC(false);
-
+        const stream = event.streams[0];
+        remoteStreamRef.current = stream;
         if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = incomingStream;
+          remoteVideoRef.current.srcObject = stream;
         }
+        setSessionState("connected");
       }
     };
 
+    // Monitor connection states
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
       if (state === "connected") {
-        setIsConnectingWebRTC(false);
-      } else if (state === "disconnected" || state === "failed" || state === "closed") {
-        setIsConnectingWebRTC(false);
-        if (!isSharer && state !== "disconnected") {
-          setIsReceivingStream(false);
-          remoteStreamRef.current = null;
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = null;
-          }
+        setSessionState("connected");
+        setStrictNatWarning(false);
+      } else if (state === "disconnected") {
+        setSessionState("reconnecting");
+      } else if (state === "failed") {
+        setStrictNatWarning(true);
+        setSessionState("reconnecting");
+      } else if (state === "closed") {
+        if (sessionState === "connected" || sessionState === "reconnecting") {
+          setSessionState("ended");
         }
       }
     };
@@ -303,15 +203,35 @@ export default function WatchPage() {
     return pc;
   };
 
-  const handleWebRTCOffer = async (offer: RTCSessionDescriptionInit, senderId: string) => {
+  // ─── WebRTC Signaling Handlers ───
+  const handleRemoteOffer = async (offer: RTCSessionDescriptionInit, senderId: string) => {
+    if (!user) return;
     try {
-      setIsConnectingWebRTC(true);
-      setIsReceivingStream(true);
-      setActiveTab("screenshare");
+      setSessionState("connecting");
+
+      // Obtain local media stream if not active
+      let localStream = localStreamRef.current;
+      if (!localStream) {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: true,
+        });
+        localStreamRef.current = localStream;
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = localStream;
+        }
+      }
 
       const pc = createPeerConnection(false);
+
+      // Add local tracks to peer connection
+      localStream.getTracks().forEach((track) => {
+        pc.addTrack(track, localStream!);
+      });
+
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
+      // Flush queued ICE candidates
       while (iceCandidatesQueueRef.current.length > 0) {
         const cand = iceCandidatesQueueRef.current.shift();
         if (cand) {
@@ -322,7 +242,7 @@ export default function WatchPage() {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      if (channelRef.current && user) {
+      if (channelRef.current) {
         channelRef.current.send({
           type: "broadcast",
           event: "webrtc-answer",
@@ -330,13 +250,13 @@ export default function WatchPage() {
         });
       }
     } catch (err) {
-      console.error("Error handling WebRTC offer:", err);
-      setIsConnectingWebRTC(false);
-      showSyncFeedback("Failed to connect to partner's screen share.");
+      console.error("Error answering WebRTC offer:", err);
+      showNotice("Failed to connect video call.");
+      setSessionState("idle");
     }
   };
 
-  const handleWebRTCAnswer = async (answer: RTCSessionDescriptionInit) => {
+  const handleRemoteAnswer = async (answer: RTCSessionDescriptionInit) => {
     const pc = pcRef.current;
     if (!pc) return;
 
@@ -344,6 +264,7 @@ export default function WatchPage() {
       if (pc.signalingState === "have-local-offer") {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
+        // Flush queued ICE candidates
         while (iceCandidatesQueueRef.current.length > 0) {
           const cand = iceCandidatesQueueRef.current.shift();
           if (cand) {
@@ -352,11 +273,11 @@ export default function WatchPage() {
         }
       }
     } catch (err) {
-      console.error("Error handling WebRTC answer:", err);
+      console.error("Error setting remote answer:", err);
     }
   };
 
-  const handleWebRTCIce = async (candidate: RTCIceCandidateInit) => {
+  const handleRemoteIceCandidate = async (candidate: RTCIceCandidateInit) => {
     const pc = pcRef.current;
     if (!candidate) return;
 
@@ -364,101 +285,93 @@ export default function WatchPage() {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
-        console.error("Error adding ICE candidate:", err);
+        console.error("Error adding remote ICE candidate:", err);
       }
     } else {
       iceCandidatesQueueRef.current.push(candidate);
     }
   };
 
-  const handleRemoteScreenStop = () => {
-    closePeerConnection();
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = null;
-    }
-    remoteStreamRef.current = null;
-    setIsReceivingStream(false);
-    setIsConnectingWebRTC(false);
-    setRemoteSharerName("");
-    showSyncFeedback("Partner ended screen share.");
-  };
-
-  // 4. Supabase Realtime Broadcast & Presence Listener
+  // ─── Supabase Realtime Channel (Signaling + Presence + Chat + Reactions) ───
   useEffect(() => {
     if (!pair || !user) return;
 
-    const channelName = `watch-sync-${pair.id}`;
+    const channelName = `watch-session:${pair.id}`;
     const channel = supabase.channel(channelName, {
       config: { presence: { key: user.id } },
     });
 
     channel
-      .on("broadcast", { event: "sync" }, ({ payload }: any) => {
-        if (payload.sender === user.id) return;
-
-        const player = playerRef.current;
-        if (!player || !player.getPlayerState) return;
-
-        isSyncingRef.current = true;
-
-        if (payload.action === "play") {
-          const diff = Math.abs(player.getCurrentTime() - payload.time);
-          if (diff > 1.5) {
-            player.seekTo(payload.time, true);
-          }
-          player.playVideo();
-          showSyncFeedback(`Synced: Partner resumed video`);
-        } else if (payload.action === "pause") {
-          player.pauseVideo();
-          showSyncFeedback(`Synced: Partner paused video`);
-        } else if (payload.action === "seek") {
-          player.seekTo(payload.time, true);
-          showSyncFeedback(`Synced: Partner seeked to ${Math.floor(payload.time)}s`);
-        } else if (payload.action === "load") {
-          setCurrentVideoId(payload.videoId);
-          showSyncFeedback(`Partner loaded a new video!`);
-        } else if (payload.action === "vote_skip") {
-          handlePartnerSkipVote(payload.sender);
-        }
-      })
-      .on("broadcast", { event: "reaction" }, ({ payload }: any) => {
-        triggerEmojiAnimation(payload.emoji, payload.senderName || "Partner", payload.burst);
-      })
-      .on("broadcast", { event: "screen-start" }, ({ payload }: any) => {
-        if (payload.sender === user.id) return;
-        setRemoteSharerName(payload.senderName || "Partner");
-        setIsReceivingStream(true);
-        setIsConnectingWebRTC(true);
-        setActiveTab("screenshare");
-        showSyncFeedback(`${payload.senderName || "Partner"} started Virtual Cinema screen sharing!`);
-      })
+      // WebRTC SDP Offer
       .on("broadcast", { event: "webrtc-offer" }, ({ payload }: any) => {
         if (payload.sender === user.id) return;
-        handleWebRTCOffer(payload.offer, payload.sender);
+        setIncomingCallFromPartner(false);
+        handleRemoteOffer(payload.offer, payload.sender);
       })
+      // WebRTC SDP Answer
       .on("broadcast", { event: "webrtc-answer" }, ({ payload }: any) => {
         if (payload.sender === user.id) return;
-        handleWebRTCAnswer(payload.answer);
+        handleRemoteAnswer(payload.answer);
       })
+      // WebRTC ICE Candidate
       .on("broadcast", { event: "webrtc-ice" }, ({ payload }: any) => {
         if (payload.sender === user.id) return;
-        handleWebRTCIce(payload.candidate);
+        handleRemoteIceCandidate(payload.candidate);
       })
-      .on("broadcast", { event: "screen-stop" }, ({ payload }: any) => {
+      // Live Invite Notification
+      .on("broadcast", { event: "session-invite" }, ({ payload }: any) => {
         if (payload.sender === user.id) return;
-        handleRemoteScreenStop();
+        setSessionId(payload.sessionId);
+        setSessionMode(payload.mode || "camera");
+        setIncomingCallFromPartner(true);
       })
+      // Partner ended session
+      .on("broadcast", { event: "session-ended" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return;
+        closePeerConnection();
+        cleanupMediaStreams();
+        setSessionState("ended");
+        showNotice(`${partnerName} ended the call.`);
+      })
+      // Track muting indicators
+      .on("broadcast", { event: "track-muted" }, ({ payload }: any) => {
+        if (payload.sender === user.id) return;
+        if (payload.kind === "audio") setIsPartnerMicMuted(payload.muted);
+        if (payload.kind === "video") setIsPartnerCamMuted(payload.muted);
+      })
+      // Live In-Call Chat Message
+      .on("broadcast", { event: "chat-message" }, ({ payload }: any) => {
+        setChatMessages((prev) => [...prev, payload.message]);
+        if (!isChatOpen) {
+          setUnreadChatCount((prev) => prev + 1);
+        }
+      })
+      // Live Floating Heart Reaction
+      .on("broadcast", { event: "heart-reaction" }, ({ payload }: any) => {
+        spawnFloatingHeart(payload.senderName, payload.color || "burgundy");
+      })
+      // Supabase Presence Tracking
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
-        const partnerPresent = Object.keys(state).some((id) => id !== user.id);
-        setIsPartnerPresent(partnerPresent);
-        if (!partnerPresent && isReceivingStream) {
-          handleRemoteScreenStop();
+        const partnerPresence = Object.entries(state).find(([id]) => id !== user.id);
+
+        if (partnerPresence) {
+          setIsPartnerOnline(true);
+          const pData = (partnerPresence[1] as any)?.[0];
+          setIsPartnerInCall(Boolean(pData?.in_call));
+        } else {
+          setIsPartnerOnline(false);
+          setIsPartnerInCall(false);
         }
       })
       .subscribe(async (status: string) => {
         if (status === "SUBSCRIBED") {
-          await channel.track({ online_at: new Date().toISOString() });
+          await channel.track({
+            display_name: profile?.display_name || "Partner",
+            in_call: sessionState === "connected" || sessionState === "waiting",
+            mode: sessionMode,
+            online_at: new Date().toISOString(),
+          });
         }
       });
 
@@ -466,139 +379,158 @@ export default function WatchPage() {
 
     return () => {
       supabase.removeChannel(channel);
+      closePeerConnection();
+      cleanupMediaStreams();
     };
-  }, [pair, user, isReceivingStream]);
+  }, [pair?.id, user?.id, sessionState]);
 
-  const showSyncFeedback = (msg: string) => {
-    setSyncStatus(msg);
-    setTimeout(() => setSyncStatus(null), 3000);
-  };
-
-  const triggerEmojiAnimation = (emoji: string, senderName: string, isBurst = false) => {
-    const count = isBurst ? 8 : 1;
-    const newItems: FloatingEmoji[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const id = `${Date.now()}-${Math.random()}-${i}`;
-      const x = Math.floor(Math.random() * 75) + 12;
-      newItems.push({ id, emoji, senderName, x, burst: isBurst });
+  // Update presence whenever call state or mode changes
+  useEffect(() => {
+    if (channelRef.current && user) {
+      channelRef.current.track({
+        display_name: profile?.display_name || "Partner",
+        in_call: sessionState === "connected" || sessionState === "waiting",
+        mode: sessionMode,
+        online_at: new Date().toISOString(),
+      });
     }
+  }, [sessionState, sessionMode]);
 
-    setReactions((prev) => [...prev, ...newItems].slice(-25));
+  // Check active session on mount
+  useEffect(() => {
+    if (!pair) return;
+    fetch("/api/watch/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.session) {
+          setSessionId(data.session.id);
+          if (data.session.status === "waiting" && data.session.initiator_id !== user?.id) {
+            setIncomingCallFromPartner(true);
+            setSessionMode(data.session.mode || "camera");
+          }
+        }
+      })
+      .catch(() => {});
+  }, [pair]);
+
+  // ─── Floating Heart Trigger ───
+  const spawnFloatingHeart = (senderName: string, color: "rose" | "burgundy" = "burgundy") => {
+    const id = `${Date.now()}-${Math.random()}`;
+    const x = Math.floor(Math.random() * 65) + 15; // 15% - 80%
+    const scale = Math.random() * 0.4 + 0.9; // 0.9 - 1.3
+    const newHeart: FloatingHeartItem = { id, senderName, x, scale, color };
+
+    setFloatingHearts((prev) => [...prev, newHeart].slice(-18));
 
     setTimeout(() => {
-      const idsToRemove = new Set(newItems.map((n) => n.id));
-      setReactions((prev) => prev.filter((r) => !idsToRemove.has(r.id)));
-    }, 2800);
+      setFloatingHearts((prev) => prev.filter((h) => h.id !== id));
+    }, 3400);
   };
 
-  const sendReaction = (emoji: string, isBurst = false) => {
-    if (!channelRef.current || !user) return;
-    const senderName = profile?.display_name || "You";
-
-    triggerEmojiAnimation(emoji, senderName, isBurst);
-
-    channelRef.current.send({
-      type: "broadcast",
-      event: "reaction",
-      payload: { emoji, senderName, burst: isBurst },
-    });
+  const handleSendHeart = (color: "rose" | "burgundy" = "burgundy") => {
+    spawnFloatingHeart(myName, color);
+    if (channelRef.current && user) {
+      channelRef.current.send({
+        type: "broadcast",
+        event: "heart-reaction",
+        payload: { sender: user.id, senderName: myName, color },
+      });
+    }
   };
 
-  const forceSyncToPartner = () => {
-    if (!channelRef.current || !user || !playerRef.current) return;
-    const time = playerRef.current.getCurrentTime();
-    channelRef.current.send({
-      type: "broadcast",
-      event: "sync",
-      payload: { sender: user.id, action: "seek", time },
-    });
-    showSyncFeedback("Sent time-sync pulse to partner!");
-  };
-
-  const handleSkipVote = () => {
+  // ─── In-Call Chat Sender ───
+  const handleSendChatMessage = (content: { text?: string; gifUrl?: string; emoji?: string }) => {
     if (!user) return;
-    if (skipVotes.includes(user.id)) return;
+    const msg: SessionChatMessage = {
+      id: `${Date.now()}-${Math.random()}`,
+      senderId: user.id,
+      senderName: myName,
+      text: content.text,
+      gifUrl: content.gifUrl,
+      emoji: content.emoji,
+      createdAt: new Date().toISOString(),
+    };
 
-    const newVotes = [...skipVotes, user.id];
-    setSkipVotes(newVotes);
+    setChatMessages((prev) => [...prev, msg]);
 
     if (channelRef.current) {
       channelRef.current.send({
         type: "broadcast",
-        event: "sync",
-        payload: { sender: user.id, action: "vote_skip" },
+        event: "chat-message",
+        payload: { message: msg },
       });
     }
-
-    if (newVotes.length >= 2 || !isPartnerPresent) {
-      playNextInQueue();
-    } else {
-      showSyncFeedback("Voted to skip (1/2 votes)");
-    }
   };
 
-  const handlePartnerSkipVote = (partnerId: string) => {
-    setSkipVotes((prev) => {
-      if (prev.includes(partnerId)) return prev;
-      const updated = [...prev, partnerId];
-      if (updated.length >= 2) {
-        playNextInQueue();
-      } else {
-        showSyncFeedback("Partner voted to skip! (1/2 votes)");
-      }
-      return updated;
-    });
-  };
-
-  const playNextInQueue = () => {
-    setSkipVotes([]);
-    if (queue.length > 0) {
-      const nextItem = queue[0];
-      setQueue((prev) => prev.slice(1));
-      loadVideoById(nextItem.videoId);
-      showSyncFeedback(`Skipped! Now playing: ${nextItem.title}`);
-    } else {
-      showSyncFeedback("Queue is empty.");
-    }
-  };
-
-  const startScreenShare = async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-      setError("Screen sharing is not supported in this browser.");
+  // ─── Start Call (Initiator Flow) ───
+  const startSession = async (mode: SessionMode = "camera") => {
+    if (!isPlus) {
+      setShowPaywall(true);
       return;
     }
 
     try {
-      setError(null);
-      setIsConnectingWebRTC(true);
+      setSessionMode(mode);
+      setIsInitiator(true);
+      setSessionState("waiting");
 
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          width: { max: 1920, ideal: 1280 },
-          height: { max: 1080, ideal: 720 },
-          frameRate: { max: 30, ideal: 24 },
-          cursor: "always",
-        } as any,
-        audio: true,
-      });
-
-      mediaStreamRef.current = stream;
-      setIsSharing(true);
-      setActiveTab("screenshare");
-      showSyncFeedback("Virtual Cinema started! Switch to your streaming tab to watch together.");
-
-      if (screenVideoRef.current) {
-        screenVideoRef.current.srcObject = stream;
+      // 1. Get media stream
+      let stream: MediaStream;
+      if (mode === "screenshare" && canScreenShare) {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: true,
+        });
+        stream.getVideoTracks()[0].onended = () => {
+          endSession();
+        };
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: true,
+        });
       }
 
-      // Handle stream end when user stops sharing via browser native floating bar
-      stream.getVideoTracks()[0].onended = () => {
-        stopScreenShare();
-      };
+      localStreamRef.current = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
 
+      // 2. Start session in DB & trigger partner invite
+      const res = await fetch("/api/watch/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.requiresPlus) {
+          cleanupMediaStreams();
+          setSessionState("idle");
+          setShowPaywall(true);
+          return;
+        }
+        throw new Error(data.error || "Failed to start call");
+      }
+
+      setSessionId(data.session?.id || null);
+
+      // 3. Broadcast invite through Realtime channel
+      if (channelRef.current && user) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "session-invite",
+          payload: {
+            sender: user.id,
+            sessionId: data.session?.id,
+            mode,
+          },
+        });
+      }
+
+      // 4. Create WebRTC offer
       const pc = createPeerConnection(true);
-
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
       });
@@ -609,156 +541,186 @@ export default function WatchPage() {
       if (channelRef.current && user) {
         channelRef.current.send({
           type: "broadcast",
-          event: "screen-start",
-          payload: { sender: user.id, senderName: profile?.display_name || "Partner" },
-        });
-
-        channelRef.current.send({
-          type: "broadcast",
           event: "webrtc-offer",
           payload: { sender: user.id, offer },
         });
       }
     } catch (err: any) {
-      setIsConnectingWebRTC(false);
-      setIsSharing(false);
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        showSyncFeedback("Screen sharing permission was cancelled.");
-      } else {
-        console.error("Screen share error:", err);
-        setError(err?.message || "Screen sharing failed.");
+      console.error("Start session error:", err);
+      cleanupMediaStreams();
+      setSessionState("idle");
+      if (err.name !== "NotAllowedError" && err.name !== "PermissionDeniedError") {
+        showNotice(err.message || "Could not start video session.");
       }
     }
   };
 
-  const stopScreenShare = () => {
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      mediaStreamRef.current = null;
-    }
-    if (screenVideoRef.current) {
-      screenVideoRef.current.srcObject = null;
+  // ─── Join Call (Receiver Flow) ───
+  const joinIncomingSession = async () => {
+    if (!isPlus) {
+      setShowPaywall(true);
+      return;
     }
 
+    try {
+      setIncomingCallFromPartner(false);
+      setSessionState("connecting");
+
+      // Inform API that we are joining
+      await fetch("/api/watch/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: sessionMode }),
+      });
+
+      // Get local camera & mic
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: true,
+      });
+
+      localStreamRef.current = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      // If we already have the offer queued or pc established
+      if (pcRef.current && pcRef.current.remoteDescription) {
+        stream.getTracks().forEach((track) => {
+          pcRef.current?.addTrack(track, stream);
+        });
+      }
+    } catch (err: any) {
+      console.error("Join call error:", err);
+      setSessionState("idle");
+      showNotice("Could not join video session.");
+    }
+  };
+
+  // ─── End Call / Cancel ───
+  const endSession = async () => {
     closePeerConnection();
+    cleanupMediaStreams();
+    setSessionState("ended");
+    setIncomingCallFromPartner(false);
 
     if (channelRef.current && user) {
       channelRef.current.send({
         type: "broadcast",
-        event: "screen-stop",
+        event: "session-ended",
         payload: { sender: user.id },
       });
     }
 
-    setIsSharing(false);
-    setIsConnectingWebRTC(false);
-    showSyncFeedback("Virtual Cinema ended.");
-  };
-
-  const onPlayerStateChange = (event: any) => {
-    const player = playerRef.current;
-    if (!player || !channelRef.current || !user || !pair) return;
-
-    const currentState = event.data;
-    const time = player.getCurrentTime();
-
-    if (isSyncingRef.current) {
-      isSyncingRef.current = false;
-      lastStateRef.current = currentState;
-      return;
-    }
-
-    if (currentState === lastStateRef.current) return;
-
-    if (currentState === window.YT.PlayerState.PLAYING) {
-      channelRef.current.send({
-        type: "broadcast",
-        event: "sync",
-        payload: { sender: user.id, action: "play", time },
-      });
-      updateSessionDB(currentVideoId, time, true);
-    } else if (currentState === window.YT.PlayerState.PAUSED) {
-      channelRef.current.send({
-        type: "broadcast",
-        event: "sync",
-        payload: { sender: user.id, action: "pause", time },
-      });
-      updateSessionDB(currentVideoId, time, false);
-    }
-
-    lastStateRef.current = currentState;
-  };
-
-  const updateSessionDB = async (videoId: string, time: number, isPlaying: boolean) => {
-    if (!pair || !user) return;
     try {
-      await supabase.from("youtube_sessions").upsert({
-        pair_id: pair.id,
-        video_id: videoId,
-        last_time: time,
-        is_playing: isPlaying,
-        updated_by: user.id,
-        updated_at: new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error("Failed to persist player session:", err);
+      await fetch("/api/watch/session/end", { method: "POST" });
+    } catch (e) {}
+  };
+
+  // ─── Toggle Mic / Camera ───
+  const toggleMic = () => {
+    const stream = localStreamRef.current;
+    if (stream) {
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        const muted = !audioTrack.enabled;
+        setIsMicMuted(muted);
+        if (channelRef.current && user) {
+          channelRef.current.send({
+            type: "broadcast",
+            event: "track-muted",
+            payload: { sender: user.id, kind: "audio", muted },
+          });
+        }
+      }
     }
   };
 
-  const handleLoadVideo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const toggleCam = () => {
+    const stream = localStreamRef.current;
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        const muted = !videoTrack.enabled;
+        setIsCamMuted(muted);
+        if (channelRef.current && user) {
+          channelRef.current.send({
+            type: "broadcast",
+            event: "track-muted",
+            payload: { sender: user.id, kind: "video", muted },
+          });
+        }
+      }
+    }
+  };
 
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId) {
-      setError("Please paste a valid YouTube watch URL or share link.");
+  // ─── Mode Switch (Camera <-> Screen-share during active call) ───
+  const switchSessionMode = async (targetMode: SessionMode) => {
+    if (targetMode === "screenshare" && !canScreenShare) {
+      showNotice("Screen sharing is supported on desktop browsers.");
       return;
     }
 
-    loadVideoById(videoId);
-    setVideoUrl("");
-  };
+    try {
+      let newStream: MediaStream;
+      if (targetMode === "screenshare") {
+        newStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: true,
+        });
+        newStream.getVideoTracks()[0].onended = () => {
+          switchSessionMode("camera");
+        };
+      } else {
+        newStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: true,
+        });
+      }
 
-  const loadVideoById = async (videoId: string) => {
-    setCurrentVideoId(videoId);
+      const pc = pcRef.current;
+      if (pc) {
+        const senders = pc.getSenders();
+        const videoSender = senders.find((s) => s.track?.kind === "video");
+        const newVideoTrack = newStream.getVideoTracks()[0];
 
-    if (channelRef.current && user) {
-      channelRef.current.send({
-        type: "broadcast",
-        event: "sync",
-        payload: { sender: user.id, action: "load", videoId },
-      });
+        if (videoSender && newVideoTrack) {
+          await videoSender.replaceTrack(newVideoTrack);
+        }
+      }
+
+      // Stop old tracks
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((t) => t.stop());
+      }
+
+      localStreamRef.current = newStream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = newStream;
+      }
+
+      setSessionMode(targetMode);
+      showNotice(`Switched to ${targetMode === "screenshare" ? "Screen Sharing" : "Camera"}`);
+    } catch (e: any) {
+      console.error("Failed to switch stream mode:", e);
     }
-
-    await updateSessionDB(videoId, 0, false);
-    showSyncFeedback("Loaded new video for both screens!");
   };
 
-  const addToQueue = () => {
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId) {
-      setError("Please paste a valid YouTube link to add to queue.");
-      return;
-    }
-
-    const newItem: QueueItem = {
-      id: `${Date.now()}`,
-      videoId,
-      title: `YouTube Video (${videoId})`,
-      addedBy: profile?.display_name || "You",
-    };
-
-    setQueue((prev) => [...prev, newItem]);
-    setVideoUrl("");
-    showSyncFeedback(`Added to queue!`);
+  const formatSeconds = (sec: number) => {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (loading || (pair && sessionLoading)) {
+  // ─── Loading / Unpaired Guards ───
+  if (authLoading || subLoading) {
     return (
       <div className="flex-1 flex flex-col min-h-screen bg-[var(--bg)]">
         <Navigation />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-4 border-[var(--burgundy)]/25 border-t-[var(--burgundy)] animate-spin" />
+          <Loader2 className="w-8 h-8 rounded-full text-[#E8527D] animate-spin" />
         </div>
       </div>
     );
@@ -767,18 +729,15 @@ export default function WatchPage() {
   if (!pair) {
     return (
       <UnpairedPrompt
-        title="Watch Together · Movie Night"
-        description="Synchronized YouTube playback, floating emoji bursts, shared video queues, and virtual cinema screen sharing. Connect your partner to watch together."
-        icon={Tv}
+        title="Watch Together"
+        description="Private 1:1 real-time video calls and cinema screen sharing for the two of you. Connect your partner to start your first session."
+        icon={Video}
       />
     );
   }
 
-  const partnerName = partner?.display_name || "Partner";
-  const watchStreak = pair?.current_streak || 1;
-
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-[var(--bg)] text-[var(--text)] pb-24 md:pb-8">
+    <div className="flex-1 flex flex-col min-h-screen bg-[#FFF5F8] text-[#3D2432] pb-24 md:pb-8 selection:bg-[#E8527D] selection:text-white">
       <Navigation />
 
       <main
@@ -786,512 +745,535 @@ export default function WatchPage() {
           isTheaterMode ? "max-w-6xl" : "max-w-4xl"
         }`}
       >
-        {/* 🎬 MOVIE NIGHT DESTINATION HEADER */}
-        <div className="p-6 rounded-card bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-md space-y-4">
+        {/* Top Header Card */}
+        <div className="p-6 rounded-[28px] bg-white/95 border border-[#FFD9E3] paper-grain shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-heading font-bold text-[var(--burgundy)] tracking-tight flex items-center space-x-2.5">
-                  <Clapperboard className="w-8 h-8 text-[var(--burgundy)]" />
-                  <span>Movie Night</span>
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-2xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#E8527D]">
+                  <Video className="w-5 h-5" />
+                </span>
+                <h1 className="font-display italic font-bold text-3xl text-[#3D2432] tracking-tight">
+                  Watch Together
                 </h1>
-                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--burgundy)] flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 fill-current" /> {watchStreak} Day Watch Streak
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3] uppercase tracking-wider">
+                  1:1 Live
                 </span>
               </div>
-              <p className="text-xs font-sans text-[var(--text-soft)] mt-1">
-                Your private cinema for two. Stream YouTube, share Netflix & Prime tabs, and react together in real time.
+              <p className="text-xs text-[#7A4B5D] mt-1 leading-relaxed">
+                Direct peer-to-peer video calls and co-streaming for you &amp; {partnerName}.
               </p>
             </div>
 
-            {/* Live Partner Status Card */}
+            {/* Live Presence Indicator */}
             <div className="flex items-center gap-2">
               <div
-                className={`px-4 py-2 rounded-full border text-xs font-mono font-medium flex items-center gap-2 shadow-xs transition-all ${
-                  isPartnerPresent
-                    ? "bg-emerald-950/10 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
-                    : "bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-soft)]"
+                className={`px-3.5 py-1.5 rounded-full border text-xs font-mono flex items-center gap-2 shadow-2xs ${
+                  isPartnerInCall
+                    ? "bg-rose-50 border-rose-300 text-rose-700 font-bold"
+                    : isPartnerOnline
+                    ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                    : "bg-[#FFF9FB] border-[#FFD9E3] text-[#7A4B5D]"
                 }`}
               >
                 <span
                   className={`w-2.5 h-2.5 rounded-full ${
-                    isPartnerPresent ? "bg-emerald-500 animate-pulse" : "bg-[var(--border)]"
+                    isPartnerInCall
+                      ? "bg-rose-500 animate-ping"
+                      : isPartnerOnline
+                      ? "bg-emerald-500 animate-pulse"
+                      : "bg-stone-300"
                   }`}
                 />
-                <span>{isPartnerPresent ? `${partnerName} is waiting ❤️` : `Waiting for ${partnerName}`}</span>
+                <span>
+                  {isPartnerInCall
+                    ? `${partnerName} in session`
+                    : isPartnerOnline
+                    ? `${partnerName} is online`
+                    : `${partnerName} offline`}
+                </span>
               </div>
 
-              <button
-                type="button"
-                onClick={forceSyncToPartner}
-                className="p-2 rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-soft)] hover:text-[var(--burgundy)] transition-all shadow-xs"
-                title="Force time sync with partner"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsTheaterMode(!isTheaterMode)}
-                className="p-2 rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-soft)] hover:text-[var(--burgundy)] transition-all shadow-xs"
-                title="Toggle Theater Mode"
-              >
-                {isTheaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-              </button>
+              {sessionState === "connected" && (
+                <button
+                  type="button"
+                  onClick={() => setIsTheaterMode(!isTheaterMode)}
+                  className="p-2 rounded-full border border-[#FFD9E3] bg-white text-[#7A4B5D] hover:text-[#E8527D] transition-colors"
+                  title="Toggle Theater Mode"
+                >
+                  {isTheaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+              )}
             </div>
           </div>
-
-          {/* Tonight's Mood Selector */}
-          <div className="flex items-center gap-2 pt-2 overflow-x-auto scrollbar-none">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)] shrink-0">
-              Tonight's Mood:
-            </span>
-            {MOODS.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setSelectedMood(m.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-sans transition-all shrink-0 shadow-xs ${
-                  selectedMood === m.id
-                    ? "bg-[var(--burgundy)] text-white font-bold"
-                    : "bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--burgundy)]"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Quick Mode Switcher Navigation */}
-        <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3 overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => setActiveTab("youtube")}
-            className={`px-4 py-2 rounded-full text-xs font-heading font-bold transition-all flex items-center gap-2 shrink-0 ${
-              activeTab === "youtube"
-                ? "bg-[var(--burgundy)] text-white shadow-xs"
-                : "bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
-            }`}
-          >
-            <Tv className="w-4 h-4" /> ▶ YouTube Sync
-          </button>
-
-          <button
-            onClick={() => setActiveTab("screenshare")}
-            className={`px-4 py-2 rounded-full text-xs font-heading font-bold transition-all flex items-center gap-2 shrink-0 ${
-              activeTab === "screenshare"
-                ? "bg-[var(--burgundy)] text-white shadow-xs"
-                : "bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
-            }`}
-          >
-            <Monitor className="w-4 h-4" /> 📺 Virtual Cinema (Netflix/Prime)
-            {(isSharing || isReceivingStream) && (
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab("guide")}
-            className={`px-4 py-2 rounded-full text-xs font-heading font-bold transition-all flex items-center gap-2 shrink-0 ${
-              activeTab === "guide"
-                ? "bg-[var(--burgundy)] text-white shadow-xs"
-                : "bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)]"
-            }`}
-          >
-            <Info className="w-4 h-4" /> 💡 Streaming Guide
-          </button>
-        </div>
-
-        {/* Toast Notification Bar */}
+        {/* Notice toast */}
         <AnimatePresence>
-          {syncStatus && (
+          {noticeMessage && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="px-4 py-2 rounded-full bg-[var(--burgundy)] text-white text-xs font-sans font-medium shadow-md flex items-center gap-2 self-center"
+              className="px-4 py-2 rounded-full bg-[#E8527D] text-white text-xs font-mono font-medium shadow-md flex items-center gap-2 self-center z-30"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{syncStatus}</span>
+              <span>{noticeMessage}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {error && (
-          <div className="p-4 rounded-card bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--burgundy)] text-xs flex items-start space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+        {/* Strict NAT Firewall Notice (if WebRTC cannot negotiate peer connection) */}
+        {strictNatWarning && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs flex items-start gap-2.5 shadow-2xs">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold">Strict Firewall Detected</p>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Direct peer-to-peer connection couldn't traverse your local Wi-Fi / carrier network. A dedicated TURN relay server will be needed for this specific network setup.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* TAB 1: YOUTUBE SYNC */}
-        {activeTab === "youtube" && (
-          <div className="space-y-6">
-            {/* Input Bar */}
-            <form onSubmit={handleLoadVideo} className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--text-soft)]">
-                  <Link2 className="h-4 w-4" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Paste any YouTube URL (e.g. https://www.youtube.com/watch?v=...)"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="input-warm block w-full pl-10 pr-4 py-2.5 rounded-button text-xs"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button type="submit" className="btn-primary py-2.5 px-5 text-xs flex-1 sm:flex-none">
-                  Play Now
-                </button>
-                <button
-                  type="button"
-                  onClick={addToQueue}
-                  className="btn-secondary py-2.5 px-3 text-xs inline-flex items-center gap-1.5"
-                  title="Add to Up Next Queue"
-                >
-                  <Plus className="w-4 h-4" /> Queue
-                </button>
-              </div>
-            </form>
-
-            {/* Quick Co-Watch Presets */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-soft)] shrink-0">
-                Quick Ambient Rooms:
-              </span>
-              {PRESET_VIDEOS.map((preset) => (
-                <button
-                  key={preset.id}
-                  onClick={() => loadVideoById(preset.id)}
-                  className="px-3 py-1.5 rounded-full text-xs font-sans bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--burgundy)] hover:text-[var(--burgundy)] transition-all shrink-0 shadow-xs"
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Sync Player Video Container */}
-            <div className="relative aspect-video w-full rounded-card overflow-hidden bg-black border border-[var(--border)] shadow-xl paper-grain">
-              <div className="accent-line absolute top-0 left-0 right-0 z-20 pointer-events-none" />
-
-              <div id="youtube-player" className="w-full h-full" />
-
-              {/* Floating Live Reactions Layer */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
-                <AnimatePresence>
-                  {reactions.map((r) => (
-                    <motion.div
-                      key={r.id}
-                      initial={{ opacity: 0, y: 150, scale: 0.5 }}
-                      animate={{ opacity: 1, y: -40, scale: r.burst ? 1.8 : 1.4 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 2.5, ease: "easeOut" }}
-                      style={{ left: `${r.x}%` }}
-                      className="absolute bottom-6 flex flex-col items-center gap-0.5"
-                    >
-                      <span className="text-3xl filter drop-shadow-md">{r.emoji}</span>
-                      <span className="text-[9px] font-mono bg-black/60 text-white px-2 py-0.5 rounded-full backdrop-blur-xs">
-                        {r.senderName}
-                      </span>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Live Reaction Bar & Double-Tap Heart */}
-            <div
-              className="p-3 rounded-card bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs flex items-center justify-between gap-2 flex-wrap"
-              onDoubleClick={() => sendReaction("❤️", true)}
-              title="Double click anywhere here to send a Love Heart Shower!"
+        {/* ─── INCOMING CALL BANNER (Receiver alert) ─── */}
+        <AnimatePresence>
+          {incomingCallFromPartner && sessionState === "idle" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="p-6 rounded-[28px] bg-gradient-to-r from-[#FFF0F4] to-[#FFE6EE] border-2 border-[#E8527D] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-heading font-bold text-[var(--burgundy)] flex items-center gap-1.5">
-                  <Heart className="w-4 h-4 fill-current" /> Express to {partnerName}:
-                </span>
-                <span className="text-[10px] font-mono text-[var(--text-soft)] hidden sm:inline">
-                  (Double-click for Emoji Shower 🎉)
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {REACTION_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => sendReaction(emoji, false)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      sendReaction(emoji, true);
-                    }}
-                    className="w-8 h-8 rounded-full bg-[var(--bg-secondary)] hover:bg-[var(--burgundy)]/10 hover:scale-125 active:scale-95 transition-all text-base flex items-center justify-center border border-[var(--border)] shadow-xs"
-                    title="Click for single emoji, Right click / Long press for Explosion!"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Up Next Queue & Turn-Based Controls */}
-            {queue.length > 0 && (
-              <div className="p-4 rounded-card bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-heading font-bold text-sm text-[var(--burgundy)] flex items-center gap-2">
-                    <ListVideo className="w-4 h-4" /> Up Next Queue ({queue.length})
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleSkipVote}
-                      className="btn-secondary py-1 px-3 text-[11px] inline-flex items-center gap-1"
-                    >
-                      <SkipForward className="w-3.5 h-3.5" /> Vote Skip ({skipVotes.length}/2)
-                    </button>
-                    <button
-                      onClick={() => setQueue([])}
-                      className="text-[10px] font-mono text-[var(--text-soft)] hover:text-[var(--burgundy)]"
-                    >
-                      Clear all
-                    </button>
-                  </div>
+              <div className="flex items-center gap-3.5 text-center sm:text-left">
+                <div className="w-12 h-12 rounded-full bg-[#E8527D] text-white flex items-center justify-center animate-bounce shadow-md">
+                  <PhoneCall className="w-6 h-6" />
                 </div>
-
-                <div className="space-y-2">
-                  {queue.map((item, idx) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-xs"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-[var(--text-soft)] font-bold">#{idx + 1}</span>
-                        <div>
-                          <p className="font-sans font-medium text-[var(--text)]">{item.title}</p>
-                          <p className="text-[10px] text-[var(--text-soft)]">Added by {item.addedBy}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            loadVideoById(item.videoId);
-                            setQueue((prev) => prev.filter((q) => q.id !== item.id));
-                          }}
-                          className="btn-primary py-1 px-3 text-[10px]"
-                        >
-                          Play Now
-                        </button>
-                        <button
-                          onClick={() => setQueue((prev) => prev.filter((q) => q.id !== item.id))}
-                          className="p-1 text-[var(--text-soft)] hover:text-[var(--burgundy)]"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 🍿 SUGGESTED TONIGHT SELECTION */}
-            <div className="p-4 rounded-card bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs space-y-3">
-              <h3 className="font-heading font-bold text-sm text-[var(--burgundy)] flex items-center gap-2">
-                <Sparkles className="w-4 h-4" /> Suggested Tonight
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {SUGGESTED_TONIGHT.map((s) => (
-                  <div
-                    key={s.id}
-                    className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col justify-between space-y-2 hover:border-[var(--burgundy)]/50 transition-all"
-                  >
-                    <div>
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-[var(--burgundy)]/10 text-[var(--burgundy)]">
-                        {s.type}
-                      </span>
-                      <p className="font-heading font-bold text-xs text-[var(--text)] mt-1">{s.title}</p>
-                    </div>
-                    <button
-                      onClick={() => loadVideoById(s.id)}
-                      className="btn-primary py-1 px-3 text-[10px] w-full"
-                    >
-                      Stream Together
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: VIRTUAL CINEMA (REAL-TIME WEBRTC SCREEN SHARE FOR NETFLIX / PRIME) */}
-        {activeTab === "screenshare" && (
-          <div className="space-y-4">
-            <div className="p-4 rounded-card bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs space-y-3">
-              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-heading font-bold text-base text-[var(--burgundy)] flex items-center gap-2">
-                      <Monitor className="w-5 h-5" /> Virtual Cinema Mode
-                    </h3>
-                    {isSharing && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-500 text-white animate-pulse flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white" /> Live (Sharer)
-                      </span>
-                    )}
-                    {isReceivingStream && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-600 text-white animate-pulse flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white" /> Live ({remoteSharerName || partnerName})
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-[var(--text-soft)] mt-0.5 leading-relaxed">
-                    Real-time peer-to-peer tab & screen streaming over WebRTC. Share your browser tab to watch together with {partnerName}.
+                  <h3 className="font-display italic font-bold text-xl text-[#3D2432]">
+                    {partnerName} is calling you!
+                  </h3>
+                  <p className="text-xs text-[#7A4B5D] mt-0.5">
+                    Tap join to connect your 1:1 video session now.
                   </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {isReceivingStream && (
-                    <button
-                      onClick={() => {
-                        if (remoteVideoRef.current) {
-                          remoteVideoRef.current.muted = !isRemoteMuted;
-                          setIsRemoteMuted(!isRemoteMuted);
-                        }
-                      }}
-                      className="btn-secondary py-2 px-3 text-xs inline-flex items-center gap-1.5"
-                      title={isRemoteMuted ? "Unmute Stream Audio" : "Mute Stream Audio"}
-                    >
-                      {isRemoteMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4" />}
-                      <span>{isRemoteMuted ? "Unmute" : "Mute"}</span>
-                    </button>
-                  )}
-
-                  {!isSharing ? (
-                    <button
-                      onClick={startScreenShare}
-                      disabled={isConnectingWebRTC}
-                      className="btn-primary py-2.5 px-5 text-xs inline-flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {isConnectingWebRTC ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Video className="w-4 h-4" />
-                      )}
-                      <span>Share Netflix / Prime Tab</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={stopScreenShare}
-                      className="btn-secondary py-2.5 px-4 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
-                    >
-                      Stop Sharing
-                    </button>
-                  )}
-                </div>
               </div>
 
-              {/* Virtual Cinema Video Screen Container */}
-              <div className="relative aspect-video w-full rounded-card overflow-hidden bg-black border border-[var(--border)] shadow-xl paper-grain flex items-center justify-center">
-                <div className="accent-line absolute top-0 left-0 right-0 z-20 pointer-events-none" />
-
-                {/* Local Sharer Video Screen */}
-                <video
-                  ref={screenVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className={`w-full h-full object-contain ${isSharing ? "block" : "hidden"}`}
-                />
-
-                {/* Remote Partner Incoming Video Screen */}
-                <video
-                  ref={remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  muted={isRemoteMuted}
-                  className={`w-full h-full object-contain ${isReceivingStream && !isSharing ? "block" : "hidden"}`}
-                />
-
-                {/* Connecting WebRTC Spinner */}
-                {isConnectingWebRTC && (
-                  <div className="absolute inset-0 z-30 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3">
-                    <Loader2 className="w-10 h-10 text-[var(--burgundy)] animate-spin" />
-                    <p className="font-heading font-bold text-sm text-white">Establishing Secure WebRTC Connection...</p>
-                    <p className="text-xs text-stone-300 max-w-xs">Connecting peer-to-peer stream with {partnerName}.</p>
-                  </div>
-                )}
-
-                {/* Cinema Screen Offline Placeholder */}
-                {!isSharing && !isReceivingStream && !isConnectingWebRTC && (
-                  <div className="text-center p-6 space-y-3">
-                    <Film className="w-12 h-12 text-[var(--burgundy)]/40 mx-auto" />
-                    <div>
-                      <p className="font-heading font-bold text-sm text-white">Cinema Screen Offline</p>
-                      <p className="text-xs text-stone-400 mt-1 max-w-sm mx-auto leading-relaxed">
-                        Click "Share Netflix / Prime Tab" above to start streaming live over WebRTC. In the browser popup, select your streaming tab and make sure "Also share tab audio" is enabled.
-                      </p>
-                    </div>
-                  </div>
-                )}
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <button
+                  onClick={() => setIncomingCallFromPartner(false)}
+                  className="flex-1 sm:flex-none btn-journal-ghost py-2.5 px-4 text-xs font-mono"
+                >
+                  Dismiss
+                </button>
+                <button
+                  onClick={joinIncomingSession}
+                  className="flex-1 sm:flex-none btn-journal py-2.5 px-6 text-xs font-mono font-bold tracking-wider uppercase shadow-md hover:scale-[1.02] active:scale-98 transition-transform cursor-pointer"
+                >
+                  Join Call ▷
+                </button>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* TAB 3: STREAMING GUIDE FOR NETFLIX / PRIME */}
-        {activeTab === "guide" && (
-          <div className="p-6 rounded-card bg-[var(--paper-warm)] border border-[var(--border)] paper-grain shadow-xs space-y-6">
-            <div>
-              <h3 className="font-heading font-bold text-lg text-[var(--burgundy)] flex items-center gap-2">
-                <Film className="w-5 h-5" /> How Co-Watching Netflix & Amazon Prime Works
-              </h3>
-              <p className="text-xs text-[var(--text-soft)] mt-1 leading-relaxed">
-                Some streaming services (like Netflix, Amazon Prime Video, and Disney+) protect copyrighted video with DRM (Digital Rights Management). Depending on your browser, operating system, and DRM policy, video or audio capture may vary. Here are the best ways to co-watch:
+        {/* ═══════════════════════════════════════════════════════════════
+            STATE 1: IDLE — START SESSION SELECTION CARD
+           ═══════════════════════════════════════════════════════════════ */}
+        {sessionState === "idle" && (
+          <div className="p-8 sm:p-10 rounded-[32px] bg-white/95 border border-[#FFD9E3] paper-grain shadow-md space-y-8 text-center">
+            <div className="max-w-md mx-auto space-y-2.5">
+              <div className="w-14 h-14 rounded-2xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#E8527D] flex items-center justify-center mx-auto shadow-xs">
+                <Video className="w-7 h-7" />
+              </div>
+              <h2 className="font-display italic font-bold text-3xl text-[#3D2432]">
+                Start Watch Together
+              </h2>
+              <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                Connect in real time with {partnerName}. Choose whether to chat face-to-face on camera or co-stream your screen.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Method 1: Virtual Cinema */}
-              <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--burgundy)] text-white">
-                  Method 1 (Built-In WebRTC)
-                </span>
-                <h4 className="font-heading font-bold text-sm text-[var(--text)]">
-                  Pairfect Virtual Cinema (Tab Share)
-                </h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Switch to the **Virtual Cinema** tab inside Pairfect. Click "Share Netflix / Prime Tab" and enable tab audio. WebRTC stream will transmit live to your partner inside Pairfect!
+            {/* Mode selection cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto text-left">
+              {/* Option 1: Camera Call (Primary) */}
+              <div
+                onClick={() => setSessionMode("camera")}
+                className={`p-5 rounded-2xl border-2 transition-all cursor-pointer space-y-2 relative ${
+                  sessionMode === "camera"
+                    ? "bg-[#FFF9FB] border-[#E8527D] shadow-sm ring-2 ring-[#E8527D]/20"
+                    : "bg-white border-[#FFD9E3] hover:border-[#E8527D]/50"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="p-2 rounded-xl bg-[#FFF0F4] text-[#E8527D]">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold uppercase">
+                    Mobile &amp; Desktop
+                  </span>
+                </div>
+                <h3 className="font-display italic font-bold text-base text-[#3D2432]">
+                  1:1 Video Call
+                </h3>
+                <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                  Face-to-face live stream using front camera and audio. Works reliably across mobile and desktop.
                 </p>
               </div>
 
-              {/* Method 2: Teleparty Extension */}
-              <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--burgundy)] text-white">
-                  Method 2 (Native Extension)
-                </span>
-                <h4 className="font-heading font-bold text-sm text-[var(--text)]">
-                  Teleparty (Netflix Party) Extension
-                </h4>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Install the free Teleparty Chrome/Edge browser extension. Open Netflix or Prime, click Teleparty to generate a party link, and send it to your partner. Play/pause will sync directly inside Netflix/Prime!
+              {/* Option 2: Screen Sharing (Co-Watch Desktop) */}
+              <div
+                onClick={() => {
+                  if (canScreenShare) {
+                    setSessionMode("screenshare");
+                  }
+                }}
+                className={`p-5 rounded-2xl border-2 transition-all space-y-2 relative ${
+                  !canScreenShare
+                    ? "opacity-60 cursor-not-allowed bg-[#FAF7F2] border-[#EADFD0]"
+                    : sessionMode === "screenshare"
+                    ? "bg-[#FFF9FB] border-[#E8527D] shadow-sm ring-2 ring-[#E8527D]/20 cursor-pointer"
+                    : "bg-white border-[#FFD9E3] hover:border-[#E8527D]/50 cursor-pointer"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="p-2 rounded-xl bg-[#FFF0F4] text-[#E8527D]">
+                    <Monitor className="w-5 h-5" />
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-bold uppercase ${
+                    canScreenShare
+                      ? "bg-purple-50 text-purple-800 border-purple-200"
+                      : "bg-stone-100 text-stone-600 border-stone-200"
+                  }`}>
+                    {canScreenShare ? "Desktop Co-Stream" : "Desktop Only"}
+                  </span>
+                </div>
+                <h3 className="font-display italic font-bold text-base text-[#3D2432]">
+                  Screen Sharing
+                </h3>
+                <p className="text-xs text-[#7A4B5D] leading-relaxed">
+                  Stream your browser tab or desktop to watch Netflix, YouTube, or photos together.
                 </p>
-                <a
-                  href="https://www.teleparty.com/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--burgundy)] hover:underline pt-1"
+              </div>
+            </div>
+
+            {/* Launch CTA Button */}
+            <div className="pt-2">
+              <button
+                onClick={() => startSession(sessionMode)}
+                className="btn-journal py-3 px-8 text-xs font-mono font-bold tracking-wider uppercase shadow-md hover:scale-[1.02] active:scale-98 transition-transform cursor-pointer"
+              >
+                <PhoneCall className="w-4 h-4 mr-2" />
+                <span>Start Call ({sessionMode === "camera" ? "Camera Mode" : "Screen Share"}) ▷</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            STATE 2: WAITING — CALLING PARTNER RINGING PULSE
+           ═══════════════════════════════════════════════════════════════ */}
+        {sessionState === "waiting" && (
+          <div className="p-10 rounded-[32px] bg-white/95 border border-[#FFD9E3] paper-grain shadow-md text-center space-y-6">
+            <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-[#E8527D]/20 animate-ping" />
+              <div className="relative w-20 h-20 rounded-full bg-[#FFF0F4] border-2 border-[#E8527D] text-[#E8527D] flex items-center justify-center shadow-md">
+                <PhoneCall className="w-9 h-9" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 max-w-sm mx-auto">
+              <h3 className="font-display italic font-bold text-2xl text-[#3D2432]">
+                Calling {partnerName}...
+              </h3>
+              <p className="text-xs text-[#7A4B5D]">
+                {isPartnerOnline
+                  ? `${partnerName} is online. Waiting for them to accept.`
+                  : `Notification sent to ${partnerName}. Waiting for them to join.`}
+              </p>
+            </div>
+
+            {/* Self preview while waiting */}
+            <div className="max-w-xs mx-auto aspect-video rounded-2xl overflow-hidden bg-black border border-[#FFD9E3] shadow-md relative">
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute bottom-2 left-2 text-[10px] font-mono bg-black/60 text-white px-2 py-0.5 rounded-full">
+                Your Camera
+              </span>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={endSession}
+                className="btn-secondary py-2.5 px-6 text-xs font-mono text-rose-700 border-rose-200 hover:bg-rose-50 cursor-pointer"
+              >
+                Cancel Call
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            STATE 3 & 4: CONNECTING / CONNECTED / RECONNECTING VIDEO STAGE
+           ═══════════════════════════════════════════════════════════════ */}
+        {(sessionState === "connecting" ||
+          sessionState === "connected" ||
+          sessionState === "reconnecting") && (
+          <div className="space-y-4">
+            {/* Live Session Viewport Container */}
+            <div
+              className="relative aspect-video w-full rounded-[28px] overflow-hidden bg-black border border-[#FFD9E3] shadow-2xl paper-grain select-none cursor-pointer"
+              onDoubleClick={() => handleSendHeart("burgundy")}
+              title="Double tap anywhere to shower love hearts!"
+            >
+              {/* Floating Hearts Layer */}
+              <FloatingHeartsLayer hearts={floatingHearts} />
+
+              {/* Main Remote Partner Stream */}
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-contain"
+              />
+
+              {/* Reconnection / Connecting Overlay */}
+              {(sessionState === "connecting" || sessionState === "reconnecting") && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3 z-20">
+                  <Loader2 className="w-10 h-10 text-[#E8527D] animate-spin" />
+                  <p className="font-display italic font-bold text-lg text-white">
+                    {sessionState === "connecting"
+                      ? `Connecting securely with ${partnerName}...`
+                      : `Reconnecting with ${partnerName}...`}
+                  </p>
+                  <p className="text-xs text-stone-300 font-mono">
+                    Direct WebRTC peer-to-peer session
+                  </p>
+                </div>
+              )}
+
+              {/* Partner video mute indicator placeholder */}
+              {isPartnerCamMuted && sessionState === "connected" && (
+                <div className="absolute inset-0 bg-stone-900 flex flex-col items-center justify-center space-y-2 z-10">
+                  <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white">
+                    <VideoOff className="w-8 h-8" />
+                  </div>
+                  <p className="font-mono text-xs text-stone-300">
+                    {partnerName} turned camera off
+                  </p>
+                </div>
+              )}
+
+              {/* Top Meta Bar (Timer & Mode) */}
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-30">
+                <div className="flex items-center gap-2 pointer-events-auto">
+                  <span className="px-3 py-1 rounded-full bg-black/60 text-white backdrop-blur-md text-xs font-mono font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                    <span>{formatSeconds(callDuration)}</span>
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-black/60 text-white backdrop-blur-md text-xs font-mono uppercase tracking-wider hidden sm:inline">
+                    {sessionMode === "screenshare" ? "Screen Share" : "Camera Mode"}
+                  </span>
+                </div>
+
+                {isPartnerMicMuted && (
+                  <span className="px-3 py-1 rounded-full bg-rose-600/80 text-white backdrop-blur-md text-xs font-mono flex items-center gap-1.5">
+                    <MicOff className="w-3.5 h-3.5" />
+                    <span>{partnerName} muted</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Picture-in-Picture (PiP) Local Self View */}
+              <div className="absolute bottom-4 left-4 w-28 sm:w-44 aspect-video rounded-2xl overflow-hidden bg-stone-900 border-2 border-white/80 shadow-2xl z-30 pointer-events-auto">
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full object-cover ${isCamMuted ? "hidden" : "block"}`}
+                />
+                {isCamMuted && (
+                  <div className="w-full h-full flex items-center justify-center bg-stone-800 text-stone-400">
+                    <VideoOff className="w-5 h-5" />
+                  </div>
+                )}
+                <span className="absolute bottom-1 left-2 text-[9px] font-mono text-white/90 drop-shadow-xs">
+                  You {isMicMuted ? "(Muted)" : ""}
+                </span>
+              </div>
+
+              {/* In-Call Overlay Chat component */}
+              <SessionChat
+                messages={chatMessages}
+                currentUserId={user?.id || ""}
+                partnerName={partnerName}
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                onSendMessage={handleSendChatMessage}
+                onSendHeart={() => handleSendHeart("rose")}
+              />
+            </div>
+
+            {/* In-Call Bottom Floating Controls Bar */}
+            <div className="p-3.5 rounded-3xl bg-white/95 border border-[#FFD9E3] shadow-md paper-grain flex items-center justify-between gap-2 max-w-2xl mx-auto flex-wrap">
+              {/* Mic & Cam toggles */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                    isMicMuted
+                      ? "bg-rose-50 text-rose-600 border-rose-300"
+                      : "bg-[#FFF9FB] border-[#FFD9E3] text-[#3D2432] hover:border-[#E8527D]"
+                  }`}
+                  title={isMicMuted ? "Unmute Microphone" : "Mute Microphone"}
                 >
-                  Get Teleparty Extension <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                  {isMicMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleCam}
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                    isCamMuted
+                      ? "bg-rose-50 text-rose-600 border-rose-300"
+                      : "bg-[#FFF9FB] border-[#FFD9E3] text-[#3D2432] hover:border-[#E8527D]"
+                  }`}
+                  title={isCamMuted ? "Turn Camera On" : "Turn Camera Off"}
+                >
+                  {isCamMuted ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
+                </button>
+              </div>
+
+              {/* Mode switch (Camera vs Screen-share) */}
+              <div className="flex items-center gap-2">
+                {canScreenShare && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      switchSessionMode(sessionMode === "camera" ? "screenshare" : "camera")
+                    }
+                    className="p-3 rounded-2xl border border-[#FFD9E3] bg-[#FFF9FB] text-[#7A4B5D] hover:text-[#E8527D] hover:border-[#E8527D] transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono"
+                    title="Switch Camera / Screen Share"
+                  >
+                    <Monitor className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {sessionMode === "camera" ? "Share Screen" : "Use Camera"}
+                    </span>
+                  </button>
+                )}
+
+                {/* Floating Heart Button */}
+                <button
+                  type="button"
+                  onClick={() => handleSendHeart("burgundy")}
+                  className="p-3 rounded-2xl border border-[#FFD9E3] bg-[#FFF0F4] text-[#E8527D] hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                  title="Send Love Heart Shower"
+                >
+                  <Heart className="w-5 h-5 fill-current" />
+                </button>
+
+                {/* Chat Drawer Toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChatOpen(!isChatOpen);
+                    setUnreadChatCount(0);
+                  }}
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer relative ${
+                    isChatOpen
+                      ? "bg-[#E8527D] text-white border-[#E8527D]"
+                      : "bg-[#FFF9FB] border-[#FFD9E3] text-[#3D2432] hover:border-[#E8527D]"
+                  }`}
+                  title="Toggle In-Call Chat"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  {unreadChatCount > 0 && !isChatOpen && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-mono flex items-center justify-center font-bold">
+                      {unreadChatCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* End Call Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={endSession}
+                  className="px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-md cursor-pointer transition-all"
+                  title="End Video Call"
+                >
+                  <PhoneOff className="w-4 h-4" />
+                  <span className="hidden sm:inline">End Call</span>
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Sync Info Footer */}
-        <div className="p-4 rounded-card border border-[var(--border)] bg-[var(--paper-warm)] text-xs text-[var(--text-soft)] leading-relaxed shadow-xs paper-grain">
-          💡 **Real-time Movie Night Active**: Playback, WebRTC screen sharing, seeking, and floating reactions sync live across both partner devices via Supabase Realtime WebSockets.
+        {/* ═══════════════════════════════════════════════════════════════
+            STATE 5: ENDED — CALL SUMMARY & RETURN
+           ═══════════════════════════════════════════════════════════════ */}
+        {sessionState === "ended" && (
+          <div className="p-8 sm:p-10 rounded-[32px] bg-white/95 border border-[#FFD9E3] paper-grain shadow-md text-center space-y-5">
+            <div className="w-14 h-14 rounded-2xl bg-[#FFF0F4] border border-[#FFD9E3] text-[#E8527D] flex items-center justify-center mx-auto shadow-xs">
+              <Heart className="w-7 h-7 fill-current" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-display italic font-bold text-2xl text-[#3D2432]">
+                Session Completed
+              </h3>
+              <p className="text-xs text-[#7A4B5D]">
+                You connected with {partnerName} for {formatSeconds(callDuration)}.
+              </p>
+            </div>
+
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  setSessionState("idle");
+                  setCallDuration(0);
+                }}
+                className="btn-journal py-2.5 px-6 text-xs font-mono font-bold tracking-wider uppercase cursor-pointer"
+              >
+                Start Another Call ▷
+              </button>
+              <a
+                href="/dashboard"
+                className="btn-journal-ghost py-2.5 px-5 text-xs font-mono cursor-pointer"
+              >
+                Return to Dashboard
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Feature Overview Footer */}
+        <div className="p-4 rounded-2xl border border-[#FFD9E3] bg-white/70 text-xs text-[#7A4B5D] leading-relaxed shadow-2xs space-y-1">
+          <p className="font-bold text-[#3D2432]">
+            💡 About Watch Together
+          </p>
+          <p>
+            Direct 1:1 WebRTC peer connection for couples. Camera mode streams real-time audio and video between you and {partnerName}. Desktop screen sharing lets you co-stream your favorite movies and shows together.
+          </p>
         </div>
       </main>
+
+      {/* Plus Paywall Modal Integration */}
+      <PlusPaywallModal
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        featureTitle="Watch Together"
+        featureDescription="1:1 direct video calls and desktop screen sharing with in-call chat, floating heart reactions, and Tenor GIFs."
+      />
     </div>
   );
 }

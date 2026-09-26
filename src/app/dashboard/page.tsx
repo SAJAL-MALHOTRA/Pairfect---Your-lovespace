@@ -5,7 +5,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset } from "lucide-react";
+import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset, Video } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 import PushOptInBanner from "@/components/push-opt-in-banner";
@@ -852,7 +852,35 @@ export default function DashboardPage() {
           {/* ─── RIGHT COLUMN (WIDGETS) ─── */}
           <div className="lg:col-span-5 flex flex-col space-y-6">
             
-
+            {/* Widget 1: Watch Together 1:1 Live Video & Screen Sharing */}
+            <Link
+              href="/watch"
+              className="p-5 rounded-[20px] border flex items-center justify-between gap-4 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md group"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                borderColor: "var(--border)",
+                boxShadow: "0 4px 16px var(--shadow)",
+              }}
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B95]/15 to-[var(--burgundy)]/15 border border-[#FF6B95]/30 flex items-center justify-center text-[var(--burgundy)] shrink-0 transition-transform group-hover:scale-105">
+                  <Video className="w-5 h-5 text-[var(--burgundy)]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-heading font-bold text-base text-[var(--text)]">Watch Together</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <p className="text-xs text-[var(--text-soft)] truncate">
+                    {partner?.display_name ? `Call ${partner.display_name} or share your screen` : "1:1 video calls & screen sharing"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0 px-3.5 py-1.5 rounded-full bg-[var(--burgundy)] text-white text-xs font-mono font-medium shadow-xs group-hover:opacity-95">
+                <span>Start</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </Link>
 
             {/* Widget 2: Split Row (Gratitude Jar & Recent Activity) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
