@@ -10,6 +10,7 @@ import {
   ArrowLeft, Timer, MessageSquare, Plus, RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 
 import { useNotifications } from "@/components/providers/notification-provider";
 
@@ -272,7 +273,7 @@ export default function VibeJudgePage() {
     }
   };
 
-  if (loading || !user || !pair) {
+  if (loading || !user) {
     return (
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
@@ -280,6 +281,16 @@ export default function VibeJudgePage() {
           <Loader2 className="w-8 h-8 text-[var(--burgundy)] animate-spin" />
         </div>
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Couples Debate & AI Vibe Judge"
+        description="Plead your case with timed rebuttals and let our playful AI judge deliver an impartial verdict and loving penalty. Connect your partner to start a debate."
+        icon={Scale}
+      />
     );
   }
 

@@ -8,6 +8,7 @@ import { Loader2, ArrowLeft, BookOpen, Plus, Smile, Search, X, Mail, Gift } from
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { WritingLetters } from "@/components/cozy-illustrations";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 
 // ── Giphy block ──────────────────────────────────────────────────────────────
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
@@ -383,12 +384,22 @@ export default function LoveLetterPage() {
     finally { setSavingMoment(false); }
   };
 
-  if (loading || fetching) {
+  if (loading || (pair && fetching)) {
     return (
       <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
         <Navigation />
         <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Wax-Sealed Love Letters"
+        description="Compose multi-block rich text letters sealed with a wax monogram, encrypted end-to-end, and delivered with authentic paper sounds. Connect your partner to start writing."
+        icon={Mail}
+      />
     );
   }
 

@@ -34,6 +34,7 @@ import {
   VolumeX,
   Loader2,
 } from "lucide-react";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -752,7 +753,7 @@ export default function WatchPage() {
     showSyncFeedback(`Added to queue!`);
   };
 
-  if (loading || sessionLoading) {
+  if (loading || (pair && sessionLoading)) {
     return (
       <div className="flex-1 flex flex-col min-h-screen bg-[var(--bg)]">
         <Navigation />
@@ -760,6 +761,16 @@ export default function WatchPage() {
           <div className="w-8 h-8 rounded-full border-4 border-[var(--burgundy)]/25 border-t-[var(--burgundy)] animate-spin" />
         </div>
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Watch Together · Movie Night"
+        description="Synchronized YouTube playback, floating emoji bursts, shared video queues, and virtual cinema screen sharing. Connect your partner to watch together."
+        icon={Tv}
+      />
     );
   }
 

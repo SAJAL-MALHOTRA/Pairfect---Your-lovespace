@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { checkCorrectAnswer } from "@/lib/string-similarity";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 
 import { useNotifications } from "@/components/providers/notification-provider";
 
@@ -311,7 +312,7 @@ export default function RiddlePage() {
     return checkCorrectAnswer(userAns, correctAns);
   };
 
-  if (loading || !user || !pair) {
+  if (loading) {
     return (
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
@@ -319,6 +320,16 @@ export default function RiddlePage() {
           <Loader2 className="w-8 h-8 text-[var(--burgundy)] animate-spin" />
         </div>
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Riddle Night"
+        description="Co-op brain teasers with synchronized timers and fuzzy answer matching. Connect your partner to crack riddles together."
+        icon={HelpCircle}
+      />
     );
   }
 

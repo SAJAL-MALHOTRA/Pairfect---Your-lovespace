@@ -31,6 +31,25 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
       "Exclusive romantic game decks",
     ],
   },
+  "plus-quarterly": {
+    id: "plus-quarterly",
+    name: "3-Month Sanctuary Pass",
+    amount: 249.0, // ₹249
+    currency: "INR",
+    tier: "plus",
+    durationDays: 90,
+    popular: true,
+    badge: "Most Popular for Couples",
+    subtitle: "90 days of living memories, rituals, and celebration for both of you.",
+    features: [
+      "Pay once, unlocks for BOTH partners (Only ₹125/person)",
+      "Unlimited permanent Memory Wall & Vault",
+      "High-Res photostrip print exports",
+      "Schedule letters up to 10 years ahead",
+      "Meanwhile weather & distance card",
+      "Custom Spotify cassette mixtape shells",
+    ],
+  },
   "plus-annual": {
     id: "plus-annual",
     name: "1-Year Sanctuary Pass",
@@ -38,7 +57,6 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
     currency: "INR",
     tier: "plus",
     durationDays: 365,
-    popular: true,
     badge: "Save 33% · Best Value",
     subtitle: "A full year of living memories, rituals, and celebration.",
     features: [
@@ -51,17 +69,18 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
   "pairfect-forever": {
     id: "pairfect-forever",
     name: "Forever Sanctuary Pass",
-    amount: 1499.0, // ₹1,499
+    amount: 699.0, // ₹699 (Lifetime for both)
     currency: "INR",
     tier: "forever",
     durationDays: null,
-    badge: "Anniversary Gift #1",
-    subtitle: "One-time purchase. Lifetime keepsake archive for exactly two people.",
+    badge: "Anniversary Keepsake #1",
+    subtitle: "One-time purchase of ₹699 (₹350/partner). Lifetime keepsake archive for exactly two people.",
     features: [
-      "Lifetime access to all current & future features",
-      "Permanent digital memory vault forever",
+      "Pay once — unlocks for BOTH partners forever",
+      "Permanent encrypted living archive for life",
       "All couple themes, frames, and audio mixtapes",
-      "Pay once — no recurring charges ever",
+      "Gold VIP couple badge on profile & room",
+      "All future updates & date rituals included forever",
     ],
   },
   "micro-test": {
@@ -81,14 +100,22 @@ export const PAYMENT_PLANS: Record<string, PaymentPlan> = {
   },
 };
 
-// Aliases for backward compatibility
+// Aliases for backward compatibility and flexible URL params
 const PLAN_ALIASES: Record<string, string> = {
   "pairfect-plus": "plus-monthly",
+  "monthly": "plus-monthly",
+  "plus-3month": "plus-quarterly",
+  "3month": "plus-quarterly",
+  "quarterly": "plus-quarterly",
+  "annual": "plus-annual",
+  "yearly": "plus-annual",
+  "forever": "pairfect-forever",
+  "lifetime": "pairfect-forever",
 };
 
 export function getPlan(planId: string): PaymentPlan | null {
   if (!planId || typeof planId !== "string") return null;
-  const normalized = planId.trim();
+  const normalized = planId.trim().toLowerCase();
   const targetId = PLAN_ALIASES[normalized] || normalized;
   return PAYMENT_PLANS[targetId] || null;
 }

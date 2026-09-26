@@ -9,6 +9,7 @@ import {
   HelpCircle, Trophy, Sparkles, Send, Lock, Unlock, 
   ArrowLeft, RefreshCw, Smile, Users, Heart, Star, Flame, Coffee, Compass, Utensils
 } from "lucide-react";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 
 // The 14 Quiz Packs
 const quizPacks = [
@@ -627,7 +628,7 @@ export default function QuizPage() {
   };
 
   // Rendering Loader
-  if (loading || !user || !pair) {
+  if (loading || !user) {
     return (
       <div className="flex-1 flex flex-col min-h-screen">
         <Navigation />
@@ -635,6 +636,16 @@ export default function QuizPage() {
           <Loader2 className="w-8 h-8 text-[var(--burgundy)] animate-spin" />
         </div>
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Know Me Quiz"
+        description="Test how deeply you know each other with 14 curated quiz decks, simultaneous lock-in, and compatibility scoring. Connect your partner to play together."
+        icon={Gamepad2}
+      />
     );
   }
 

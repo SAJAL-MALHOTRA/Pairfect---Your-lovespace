@@ -61,7 +61,7 @@ const timelineMilestones = [
   { emoji: "💍", label: "Still Choosing Each Other" },
 ];
 
-/* ─── Interactive Dual-Phone Quiz Simulation Component (from Screenshot 1) ─── */
+/* ─── Interactive Dual-Phone Quiz Simulation Component (Fully Mobile & Viewport Responsive) ─── */
 function DualPhoneInteractiveDemo() {
   const [step, setStep] = useState<"picking" | "locked" | "revealed">("picking");
 
@@ -78,54 +78,54 @@ function DualPhoneInteractiveDemo() {
   }, [step]);
 
   return (
-    <div className="relative w-full max-w-[620px] mx-auto p-6 sm:p-10 rounded-[32px] bg-gradient-to-b from-[#FFF5F8] via-[#FFF9FB] to-[#FFF0F4] border border-[#FFDCE5] shadow-xl overflow-hidden paper-grain select-none">
+    <div className="relative w-full max-w-[620px] mx-auto p-3 min-[400px]:p-6 sm:p-10 rounded-[28px] sm:rounded-[32px] bg-gradient-to-b from-[#FFF5F8] via-[#FFF9FB] to-[#FFF0F4] border border-[#FFDCE5] shadow-xl overflow-hidden paper-grain select-none">
       {/* Decorative ambient sparkles & floating hearts */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ y: [0, -12, 0], opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-6 left-10 text-xl"
+          className="absolute top-4 sm:top-6 left-6 sm:left-10 text-base sm:text-xl"
         >
           💖
         </motion.div>
         <motion.div
           animate={{ y: [0, -16, 0], opacity: [0.5, 0.9, 0.5] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute top-10 right-12 text-lg"
+          className="absolute top-6 sm:top-10 right-6 sm:right-12 text-sm sm:text-lg"
         >
           ✨
         </motion.div>
         <motion.div
           animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-8 left-14 text-sm"
+          className="absolute bottom-4 sm:bottom-8 left-6 sm:left-14 text-xs sm:text-sm"
         >
           🌸
         </motion.div>
       </div>
 
       {/* Main Dual Phone Stage */}
-      <div className="flex items-center justify-center gap-3 sm:gap-6 relative z-10">
+      <div className="flex items-center justify-center gap-2 sm:gap-6 relative z-10">
         
         {/* Left Phone (Mia - Pink Theme) */}
-        <div className="w-[145px] sm:w-[210px] rounded-[24px] sm:rounded-[30px] p-2.5 sm:p-3.5 bg-white border-[3px] border-[#FF8DA1] shadow-lg flex flex-col justify-between aspect-[9/16] relative transition-transform duration-300 hover:scale-[1.02]">
-          <div className="flex items-center justify-between pb-1.5 border-b border-rose-100">
-            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-rose-500 uppercase tracking-wider">
+        <div className="w-[120px] min-[380px]:w-[140px] sm:w-[200px] md:w-[210px] rounded-[20px] sm:rounded-[30px] p-2 sm:p-3.5 bg-white border-[2.5px] sm:border-[3px] border-[#FF8DA1] shadow-lg flex flex-col justify-between aspect-[9/16] relative transition-transform duration-300 hover:scale-[1.02]">
+          <div className="flex items-center justify-between pb-1 sm:pb-1.5 border-b border-rose-100">
+            <span className="text-[7px] sm:text-[10px] font-mono font-bold text-rose-500 uppercase tracking-wider">
               ✨ Mia
             </span>
-            <div className="w-8 sm:w-12 h-2 rounded-full bg-rose-200" />
-            <span className="text-[8px] sm:text-[9px] font-mono text-rose-400">Live</span>
+            <div className="w-6 sm:w-12 h-1.5 sm:h-2 rounded-full bg-rose-200" />
+            <span className="text-[7px] sm:text-[9px] font-mono text-rose-400">Live</span>
           </div>
 
-          <div className="my-1.5 p-2 rounded-xl bg-rose-50 border border-rose-100 text-center">
-            <span className="text-[7px] sm:text-[9px] font-mono uppercase font-bold text-rose-400 block">Question 04</span>
-            <p className="text-[9px] sm:text-[11px] font-display italic font-bold text-[#3D2432] leading-tight mt-0.5">
+          <div className="my-1 sm:my-1.5 p-1.5 sm:p-2 rounded-xl bg-rose-50 border border-rose-100 text-center">
+            <span className="text-[6px] sm:text-[9px] font-mono uppercase font-bold text-rose-400 block">Question 04</span>
+            <p className="text-[8px] sm:text-[11px] font-display italic font-bold text-[#3D2432] leading-tight mt-0.5">
               Ideal Friday night ritual?
             </p>
           </div>
 
-          <div className="space-y-1.5 flex-1 flex flex-col justify-center relative">
-            <div className={`p-2 rounded-xl text-left border transition-all duration-300 relative ${
+          <div className="space-y-1 sm:space-y-1.5 flex-1 flex flex-col justify-center relative">
+            <div className={`p-1.5 sm:p-2 rounded-xl text-left border transition-all duration-300 relative ${
               step === "revealed"
                 ? "bg-rose-500 text-white border-rose-600 shadow-md scale-[1.02]"
                 : step === "locked"
@@ -133,17 +133,17 @@ function DualPhoneInteractiveDemo() {
                 : "bg-rose-50/70 border-rose-100 text-[#3D2432]"
             }`}>
               <div className="flex items-center justify-between">
-                <span className="text-[8px] sm:text-[10px] font-bold">Midnight Drive 🌙</span>
-                {step === "revealed" && <span className="text-[10px]">✓</span>}
+                <span className="text-[7px] min-[380px]:text-[8px] sm:text-[10px] font-bold">Midnight Drive 🌙</span>
+                {step === "revealed" && <span className="text-[8px] sm:text-[10px]">✓</span>}
               </div>
             </div>
 
-            <div className="p-2 rounded-xl text-left border border-rose-100 bg-white/80 text-[var(--text-soft)] opacity-60">
-              <span className="text-[8px] sm:text-[10px]">Rooftop Pizza 🍕</span>
+            <div className="p-1.5 sm:p-2 rounded-xl text-left border border-rose-100 bg-white/80 text-[var(--text-soft)] opacity-60">
+              <span className="text-[7px] min-[380px]:text-[8px] sm:text-[10px]">Rooftop Pizza 🍕</span>
             </div>
           </div>
 
-          <div className="pt-1.5 border-t border-rose-100 flex items-center justify-between text-[7px] sm:text-[8px] font-mono">
+          <div className="pt-1 sm:pt-1.5 border-t border-rose-100 flex items-center justify-between text-[6px] sm:text-[8px] font-mono">
             <span className="text-rose-400">Pairfect Sync</span>
             {step === "locked" && <span className="text-amber-600 font-bold">🔒 LOCKED IN</span>}
             {step === "revealed" && <span className="text-rose-600 font-bold">100% MATCH 🎉</span>}
@@ -151,40 +151,40 @@ function DualPhoneInteractiveDemo() {
         </div>
 
         {/* Sync Heart Pulse Center */}
-        <div className="flex flex-col items-center gap-1 z-20">
+        <div className="flex flex-col items-center gap-1 z-20 shrink-0">
           <motion.div
             animate={{ scale: step === "revealed" ? [1, 1.4, 1.2] : [1, 1.1, 1] }}
             transition={{ duration: 1.2, repeat: Infinity }}
-            className={`w-8 sm:w-12 h-8 sm:h-12 rounded-full flex items-center justify-center text-sm sm:text-xl shadow-md transition-colors duration-500 ${
+            className={`w-7 min-[380px]:w-8 sm:w-12 h-7 min-[380px]:h-8 sm:h-12 rounded-full flex items-center justify-center text-xs sm:text-xl shadow-md transition-colors duration-500 ${
               step === "revealed" ? "bg-rose-500 text-white" : "bg-white text-rose-500 border border-rose-200"
             }`}
           >
             ♥
           </motion.div>
-          <span className="text-[8px] font-mono font-bold text-rose-400 uppercase tracking-widest text-center">
+          <span className="text-[6px] sm:text-[8px] font-mono font-bold text-rose-400 uppercase tracking-widest text-center">
             {step === "revealed" ? "SYNC" : "SYNCING"}
           </span>
         </div>
 
         {/* Right Phone (Alex - Slate Theme) */}
-        <div className="w-[145px] sm:w-[210px] rounded-[24px] sm:rounded-[30px] p-2.5 sm:p-3.5 bg-white border-[3px] border-[#93B1C6] shadow-lg flex flex-col justify-between aspect-[9/16] relative transition-transform duration-300 hover:scale-[1.02]">
-          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+        <div className="w-[120px] min-[380px]:w-[140px] sm:w-[200px] md:w-[210px] rounded-[20px] sm:rounded-[30px] p-2 sm:p-3.5 bg-white border-[2.5px] sm:border-[3px] border-[#93B1C6] shadow-lg flex flex-col justify-between aspect-[9/16] relative transition-transform duration-300 hover:scale-[1.02]">
+          <div className="flex items-center justify-between pb-1 sm:pb-1.5 border-b border-slate-100">
+            <span className="text-[7px] sm:text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
               💙 Alex
             </span>
-            <div className="w-8 sm:w-12 h-2 rounded-full bg-slate-200" />
-            <span className="text-[8px] sm:text-[9px] font-mono text-slate-400">Live</span>
+            <div className="w-6 sm:w-12 h-1.5 sm:h-2 rounded-full bg-slate-200" />
+            <span className="text-[7px] sm:text-[9px] font-mono text-slate-400">Live</span>
           </div>
 
-          <div className="my-1.5 p-2 rounded-xl bg-slate-50 border border-slate-100 text-center">
-            <span className="text-[7px] sm:text-[9px] font-mono uppercase font-bold text-slate-400 block">Question 04</span>
-            <p className="text-[9px] sm:text-[11px] font-display italic font-bold text-[#1F2937] leading-tight mt-0.5">
+          <div className="my-1 sm:my-1.5 p-1.5 sm:p-2 rounded-xl bg-slate-50 border border-slate-100 text-center">
+            <span className="text-[6px] sm:text-[9px] font-mono uppercase font-bold text-slate-400 block">Question 04</span>
+            <p className="text-[8px] sm:text-[11px] font-display italic font-bold text-[#1F2937] leading-tight mt-0.5">
               Ideal Friday night ritual?
             </p>
           </div>
 
-          <div className="space-y-1.5 flex-1 flex flex-col justify-center relative">
-            <div className={`p-2 rounded-xl text-left border transition-all duration-300 relative ${
+          <div className="space-y-1 sm:space-y-1.5 flex-1 flex flex-col justify-center relative">
+            <div className={`p-1.5 sm:p-2 rounded-xl text-left border transition-all duration-300 relative ${
               step === "revealed"
                 ? "bg-slate-700 text-white border-slate-800 shadow-md scale-[1.02]"
                 : step === "locked"
@@ -192,17 +192,17 @@ function DualPhoneInteractiveDemo() {
                 : "bg-slate-50/70 border-slate-100 text-[#1F2937]"
             }`}>
               <div className="flex items-center justify-between">
-                <span className="text-[8px] sm:text-[10px] font-bold">Midnight Drive 🌙</span>
-                {step === "revealed" && <span className="text-[10px]">✓</span>}
+                <span className="text-[7px] min-[380px]:text-[8px] sm:text-[10px] font-bold">Midnight Drive 🌙</span>
+                {step === "revealed" && <span className="text-[8px] sm:text-[10px]">✓</span>}
               </div>
             </div>
 
-            <div className="p-2 rounded-xl text-left border border-slate-100 bg-white/80 text-[var(--text-soft)] opacity-60">
-              <span className="text-[8px] sm:text-[10px]">Rooftop Pizza 🍕</span>
+            <div className="p-1.5 sm:p-2 rounded-xl text-left border border-slate-100 bg-white/80 text-[var(--text-soft)] opacity-60">
+              <span className="text-[7px] min-[380px]:text-[8px] sm:text-[10px]">Rooftop Pizza 🍕</span>
             </div>
           </div>
 
-          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[7px] sm:text-[8px] font-mono">
+          <div className="pt-1 sm:pt-1.5 border-t border-slate-100 flex items-center justify-between text-[6px] sm:text-[8px] font-mono">
             <span className="text-slate-400">Pairfect Sync</span>
             {step === "locked" && <span className="text-amber-600 font-bold">🔒 LOCKED IN</span>}
             {step === "revealed" && <span className="text-slate-700 font-bold">100% MATCH 🎉</span>}
@@ -219,7 +219,17 @@ export default function LandingContent() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [joinCode, setJoinCode] = useState(["", "", "", "", "", ""]);
+  
+  // Interactive Letter Tabs & Atelier State
   const [activeLetterStep, setActiveLetterStep] = useState<number>(0);
+  const waxColors = [
+    { name: "Crimson Rose", hex: "#E8527D", border: "#FFCCD8", icon: "♥" },
+    { name: "Velvet Violet", hex: "#8B5CF6", border: "#DDD6FE", icon: "🌙" },
+    { name: "Honey Amber", hex: "#F59E0B", border: "#FDE68A", icon: "☀️" },
+    { name: "Sage Emerald", hex: "#10B981", border: "#A7F3D0", icon: "🌿" },
+  ];
+  const [selectedWax, setSelectedWax] = useState(waxColors[0]);
+
   const [journalRevealed, setJournalRevealed] = useState(false);
   const [vaultSearchQuery, setVaultSearchQuery] = useState("anniversary");
   const [heartbeatSent, setHeartbeatSent] = useState(false);
@@ -324,12 +334,12 @@ export default function LandingContent() {
   );
 
   return (
-    <div className="landing-journal relative min-h-screen flex flex-col overflow-hidden bg-[var(--bg)]">
+    <div className="landing-journal relative min-h-screen flex flex-col overflow-x-hidden bg-[var(--bg)]">
 
       {/* ── TOP ANNOUNCEMENT BANNER (From Screenshot 2) ── */}
       <div className="bg-gradient-to-r from-[var(--burgundy)] via-[#D13D68] to-[var(--burgundy)] text-white text-[11px] font-mono py-2 px-4 text-center tracking-wide font-medium flex items-center justify-center gap-2 shadow-xs z-30 relative">
-        <Image src="/logo-book.png" alt="Pairfect" width={14} height={14} className="rounded-xs" />
-        <span>♡ Pairfect · The private digital sanctuary &amp; living archive for two</span>
+        <Image src="/logo-book.png" alt="Pairfect" width={14} height={14} className="rounded-xs shrink-0" />
+        <span className="truncate">♡ Pairfect · The private digital sanctuary &amp; living archive for two</span>
       </div>
 
       {/* ── FLOATING PARTICLES ── */}
@@ -366,7 +376,7 @@ export default function LandingContent() {
       {/* ══════════════════════════════════════════════════════════
           NAVBAR — Book Logo & Navigation Links
           ══════════════════════════════════════════════════════════ */}
-      <header className="px-6 py-4 max-w-[1280px] w-full mx-auto flex items-center justify-between z-20 relative bg-[var(--bg)]/90 backdrop-blur-md sticky top-0 border-b border-[var(--border)]">
+      <header className="px-4 sm:px-6 py-4 max-w-[1280px] w-full mx-auto flex items-center justify-between z-20 relative bg-[var(--bg)]/90 backdrop-blur-md sticky top-0 border-b border-[var(--border)]">
         <div className="flex items-center space-x-3">
           <Link href="/" className="flex items-center gap-2.5 group select-none">
             <Image src="/logo-book.png" alt="Pairfect" height={32} width={32} className="rounded-lg shadow-xs" priority />
@@ -388,7 +398,7 @@ export default function LandingContent() {
           <a href="#pricing" className="hover:text-[var(--text)] transition-colors">Pricing</a>
         </nav>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <button
             onClick={() => {
               setSoundEnabled(!soundEnabled);
@@ -412,13 +422,13 @@ export default function LandingContent() {
 
           <Link
             href="/login"
-            className="text-xs font-mono uppercase tracking-widest text-[var(--text-soft)] hover:text-[var(--text)] transition-colors px-3 py-2"
+            className="text-xs font-mono uppercase tracking-widest text-[var(--text-soft)] hover:text-[var(--text)] transition-colors px-2 sm:px-3 py-2"
           >
             Sign In
           </Link>
           <Link
             href="/signup"
-            className="btn-journal"
+            className="btn-journal py-2 px-4 sm:px-6 text-xs"
             onMouseEnter={() => playTactileSound("tap")}
           >
             Open Room ▷
@@ -432,8 +442,8 @@ export default function LandingContent() {
       <main className="flex-1 w-full z-10 relative">
 
         {/* ── 01 · HERO (Matches Screenshot 2) ── */}
-        <section id="hero" aria-label="01 Hero Introduction" className="max-w-[1280px] mx-auto px-6 pt-10 md:pt-16 pb-16">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <section id="hero" aria-label="01 Hero Introduction" className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-8 md:pt-16 pb-16">
+          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
             
             {/* Left Column: Pairfect Headline & Subtext */}
             <div className="w-full lg:w-7/12 text-left space-y-6">
@@ -541,7 +551,7 @@ export default function LandingContent() {
                   {/* Item 1: Wax Letter Unsealed */}
                   <div className="p-3.5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-[var(--burgundy)] transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[var(--burgundy)]/10 border border-[var(--burgundy)]/30 flex items-center justify-center text-lg">
+                      <div className="w-9 h-9 rounded-xl bg-[var(--burgundy)]/10 border border-[var(--burgundy)]/30 flex items-center justify-center text-lg shrink-0">
                         💌
                       </div>
                       <div>
@@ -549,7 +559,7 @@ export default function LandingContent() {
                         <p className="text-[10px] font-mono text-[var(--text-soft)]">&quot;Written 365 days ago on our 1st date...&quot;</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-full">
+                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-full shrink-0">
                       UNSEALED
                     </span>
                   </div>
@@ -557,7 +567,7 @@ export default function LandingContent() {
                   {/* Item 2: Photobooth Strip */}
                   <div className="p-3.5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-purple-400 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-lg">
+                      <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-lg shrink-0">
                         📸
                       </div>
                       <div>
@@ -565,7 +575,7 @@ export default function LandingContent() {
                         <p className="text-[10px] font-mono text-[var(--text-soft)]">Saved to shared memory wall</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">
+                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full shrink-0">
                       SAVED
                     </span>
                   </div>
@@ -573,7 +583,7 @@ export default function LandingContent() {
                   {/* Item 3: Movie Night */}
                   <div className="p-3.5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-blue-400 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-lg">
+                      <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-lg shrink-0">
                         🍿
                       </div>
                       <div>
@@ -581,7 +591,7 @@ export default function LandingContent() {
                         <p className="text-[10px] font-mono text-[var(--text-soft)]">Alex synchronized playhead</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                    <span className="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full shrink-0">
                       LIVE SYNC
                     </span>
                   </div>
@@ -608,7 +618,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 02 · WHY PAIRFECT (Why relationship memories disappear in chat) ── */}
-        <section id="why-pairfect" aria-label="02 Why Pairfect" className="max-w-[1100px] mx-auto px-6 py-20">
+        <section id="why-pairfect" aria-label="02 Why Pairfect" className="max-w-[1100px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -630,10 +640,10 @@ export default function LandingContent() {
             </div>
 
             {/* Contrast Visual: Chat Stream vs Pairfect Sanctuary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               
               {/* Card A: The Chaotic Chat Stream */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-white/70 border border-slate-200/80 shadow-sm relative overflow-hidden space-y-4">
+              <div className="p-5 sm:p-8 rounded-3xl bg-white/70 border border-slate-200/80 shadow-sm relative overflow-hidden space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">
                     Standard Messaging App
@@ -644,22 +654,22 @@ export default function LandingContent() {
                 </div>
 
                 <div className="space-y-2.5 opacity-80 text-xs">
-                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[80%]">
+                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[85%]">
                     Can you pick up eggs and oat milk on your way back? 🥚
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[75%]">
+                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[80%]">
                     Look at this funny reel https://instagram.com/reel/xyz...
                   </div>
-                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 max-w-[85%] relative">
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 max-w-[90%] relative">
                     <span className="text-[8px] font-mono font-bold text-rose-400 uppercase block mb-1">
                       Anniversary Note (Sent 6 months ago)
                     </span>
                     &quot;I love you more than words can say. You make every day magic...&quot;
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[70%]">
+                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[75%]">
                     Where is the Netflix password again?
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[80%]">
+                  <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 max-w-[85%]">
                     Running late by 15 mins! See you soon.
                   </div>
                 </div>
@@ -670,7 +680,7 @@ export default function LandingContent() {
               </div>
 
               {/* Card B: The Dedicated Pairfect Sanctuary */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[var(--paper-warm)] border-2 border-[#FFCCD8] shadow-lg relative overflow-hidden space-y-4 paper-grain">
+              <div className="p-5 sm:p-8 rounded-3xl bg-[var(--paper-warm)] border-2 border-[#FFCCD8] shadow-lg relative overflow-hidden space-y-4 paper-grain">
                 <div className="washi-tape-top" />
                 <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
                   <span className="text-[10px] font-mono font-bold text-[var(--burgundy)] uppercase tracking-widest">
@@ -682,37 +692,37 @@ export default function LandingContent() {
                 </div>
 
                 <div className="space-y-2.5 text-xs">
-                  <div className="p-3 rounded-2xl bg-white border border-[var(--border)] flex items-center justify-between">
+                  <div className="p-3 rounded-2xl bg-white border border-[var(--border)] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-lg">💌</span>
+                      <span className="text-lg shrink-0">💌</span>
                       <div>
                         <p className="font-bold text-[var(--text)]">Wax-Sealed Love Letter</p>
                         <p className="text-[10px] text-[var(--text-soft)]">Unseals on 1st Anniversary · Encrypted</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)]">SEALED</span>
+                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] shrink-0">SEALED</span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-white border border-[var(--border)] flex items-center justify-between">
+                  <div className="p-3 rounded-2xl bg-white border border-[var(--border)] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-lg">📸</span>
+                      <span className="text-lg shrink-0">📸</span>
                       <div>
                         <p className="font-bold text-[var(--text)]">Rainy Day 4-Frame Strip</p>
                         <p className="text-[10px] text-[var(--text-soft)]">Realtime booth capture · High-Res</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-purple-600">SAVED</span>
+                    <span className="text-[9px] font-mono font-bold text-purple-600 shrink-0">SAVED</span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-white border border-[var(--border)] flex items-center justify-between">
+                  <div className="p-3 rounded-2xl bg-white border border-[var(--border)] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-lg">✨</span>
+                      <span className="text-lg shrink-0">✨</span>
                       <div>
                         <p className="font-bold text-[var(--text)]">Love Match · 100% Sync</p>
                         <p className="text-[10px] text-[var(--text-soft)]">Midnight drive question · Day 152</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-emerald-600">MATCHED</span>
+                    <span className="text-[9px] font-mono font-bold text-emerald-600 shrink-0">MATCHED</span>
                   </div>
                 </div>
 
@@ -726,7 +736,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 03 · SEE IT IN ACTION (Matches Screenshot 1) ── */}
-        <section id="see-in-action" aria-label="03 See It In Action Game Demo" className="max-w-[1000px] mx-auto px-6 py-20">
+        <section id="see-in-action" aria-label="03 See It In Action Game Demo" className="max-w-[1000px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -763,14 +773,14 @@ export default function LandingContent() {
           </motion.div>
         </section>
 
-        {/* ── 04 · LETTERS (Seal → open → read → reply) ── */}
-        <section id="letters" aria-label="04 Love Letters" className="max-w-[1100px] mx-auto px-6 py-20">
+        {/* ── 04 · LETTERS (Seal → open → read → reply) — FULLY INTERACTIVE & RESPONSIVE ── */}
+        <section id="letters" aria-label="04 Love Letters" className="max-w-[1100px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
-            className="space-y-12"
+            className="space-y-10"
           >
             <div className="text-center space-y-3 max-w-2xl mx-auto">
               <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
@@ -780,12 +790,12 @@ export default function LandingContent() {
                 Seal → open → read → reply.
               </h2>
               <p className="text-sm sm:text-base text-[var(--text-soft)] leading-relaxed">
-                Some words are too precious for a disposable text bubble. Write letters sealed with digital wax and scheduled to unseal on future anniversaries, birthdays, or rainy Tuesdays.
+                Some words are too precious for a disposable text bubble. Click any step below to experience how a letter travels from molten wax to your living archive.
               </p>
             </div>
 
             {/* 4-Step Interactive Flow Tabs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 max-w-3xl mx-auto">
               {[
                 { step: "01", label: "SEAL", desc: "Choose wax & stamp" },
                 { step: "02", label: "LOCK", desc: "Set future unseal date" },
@@ -798,77 +808,327 @@ export default function LandingContent() {
                     setActiveLetterStep(idx);
                     playTactileSound("paper");
                   }}
-                  className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
+                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border text-center transition-all cursor-pointer select-none ${
                     activeLetterStep === idx
-                      ? "bg-[var(--burgundy)] text-white border-[var(--burgundy)] shadow-md"
-                      : "bg-white border-[var(--border)] text-[var(--text)] hover:border-[var(--burgundy)]/40"
+                      ? "bg-[var(--burgundy)] text-white border-[var(--burgundy)] shadow-md scale-[1.02]"
+                      : "bg-white border-[var(--border)] text-[var(--text)] hover:border-[var(--burgundy)]/40 hover:bg-rose-50/30"
                   }`}
                 >
-                  <span className={`text-[9px] font-mono font-bold block ${activeLetterStep === idx ? "text-rose-100" : "text-[var(--text-soft)]"}`}>
+                  <span className={`text-[8px] sm:text-[9px] font-mono font-bold block ${activeLetterStep === idx ? "text-rose-100" : "text-[var(--text-soft)]"}`}>
                     {s.step}
                   </span>
-                  <p className="font-display italic font-bold text-base mt-0.5">{s.label}</p>
-                  <p className={`text-[10px] font-mono mt-1 ${activeLetterStep === idx ? "text-rose-100" : "text-[var(--text-soft)]"}`}>
+                  <p className="font-display italic font-bold text-sm sm:text-base mt-0.5">{s.label}</p>
+                  <p className={`text-[9px] sm:text-[10px] font-mono mt-1 ${activeLetterStep === idx ? "text-rose-100" : "text-[var(--text-soft)]"}`}>
                     {s.desc}
                   </p>
                 </button>
               ))}
             </div>
 
-            {/* Tactile Letter Showcase Card */}
-            <div className="max-w-[700px] mx-auto p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl relative overflow-hidden paper-grain">
+            {/* Dynamic Interactive Letter Card responding to activeLetterStep */}
+            <div className="max-w-[720px] mx-auto p-5 sm:p-10 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl relative overflow-hidden paper-grain">
               <div className="washi-tape-top" />
               
-              {/* Envelope Flap Header */}
-              <div className="flex items-center justify-between pb-6 border-b border-[var(--border)]">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center text-xl shadow-xs">
-                    💌
-                  </div>
-                  <div>
-                    <h3 className="font-display italic font-bold text-lg text-[var(--text)]">
-                      Anniversary Letter for Mia
-                    </h3>
-                    <p className="text-[10px] font-mono text-[var(--text-soft)]">
-                      Scheduled to unseal: October 14th · Sealed with Crimson Wax
-                    </p>
-                  </div>
-                </div>
+              <AnimatePresence mode="wait">
+                {activeLetterStep === 0 && (
+                  <motion.div
+                    key="step-seal"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    {/* Step 1: SEAL */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[var(--border)] gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-xl shrink-0">
+                          💌
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] uppercase tracking-wider block">
+                            STEP 1 OF 4 · DIGITAL WAX ATELIER
+                          </span>
+                          <h3 className="font-display italic font-bold text-base sm:text-lg text-[var(--text)]">
+                            Crafting a Wax-Sealed Letter
+                          </h3>
+                        </div>
+                      </div>
 
-                {/* Wax Stamp Graphic */}
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E8527D] to-[#B31D4A] shadow-md border-2 border-[#FFA3BA] flex items-center justify-center text-white font-serif text-lg font-bold select-none cursor-pointer transform hover:scale-110 transition-transform">
-                  ♥
-                </div>
-              </div>
+                      {/* Interactive Stamp Preview */}
+                      <div
+                        className="w-12 h-12 rounded-full shadow-md border-2 flex items-center justify-center text-white text-lg font-bold select-none cursor-pointer self-start sm:self-center transition-transform hover:scale-105"
+                        style={{ backgroundColor: selectedWax.hex, borderColor: selectedWax.border }}
+                      >
+                        {selectedWax.icon}
+                      </div>
+                    </div>
 
-              {/* Letter Handwritten Content Excerpt */}
-              <div className="py-6 space-y-3">
-                <p className="font-handwriting text-2xl text-[var(--text)] leading-relaxed">
-                  &quot;I still remember the rain on our first drive through the hills. You fell asleep with the radio playing, and I knew right then I wanted to protect this quiet world of ours forever.&quot;
-                </p>
-                <p className="text-right font-display italic text-sm text-[var(--burgundy)] font-bold">
-                  — Always, Alex
-                </p>
-              </div>
+                    {/* Wax Color Picker */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider block">
+                        Choose Wax Color &amp; Stamp Motif:
+                      </label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {waxColors.map((w) => (
+                          <button
+                            key={w.name}
+                            onClick={() => {
+                              setSelectedWax(w);
+                              playTactileSound("tap");
+                            }}
+                            className={`px-3 py-1.5 rounded-full border text-xs font-mono flex items-center gap-2 transition-all cursor-pointer ${
+                              selectedWax.name === w.name
+                                ? "bg-white border-2 shadow-sm font-bold scale-105"
+                                : "bg-white/70 border-slate-200 text-stone-600 hover:bg-white"
+                            }`}
+                            style={{ borderColor: selectedWax.name === w.name ? w.hex : undefined }}
+                          >
+                            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: w.hex }} />
+                            <span>{w.name}</span>
+                            <span>{w.icon}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-              <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
-                <span className="text-[10px] font-mono text-[var(--text-soft)]">
-                  🔒 Encrypted with AES-256 · Unseals simultaneously
-                </span>
-                <Link
-                  href="/love-letter"
-                  className="btn-journal py-2 px-5 text-[10px]"
-                  onMouseEnter={() => playTactileSound("tap")}
-                >
-                  Write a letter ▷
-                </Link>
-              </div>
+                    {/* Letter Draft Excerpt */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[var(--border)] shadow-xs space-y-2">
+                      <p className="text-[9px] font-mono text-[var(--text-soft)] uppercase">Letter In Progress</p>
+                      <p className="font-handwriting text-xl sm:text-2xl text-[var(--text)] leading-relaxed">
+                        &quot;Dear Mia, I&apos;m writing this so when you wake up on our anniversary in 18 days, you remember how much I love this quiet world of ours...&quot;
+                      </p>
+                      <p className="text-right text-xs font-mono text-[var(--text-soft)]">— Alex</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--border)]">
+                      <span className="text-[10px] font-mono text-[var(--text-soft)]">
+                        Seals letter with authentic molten wax imprint
+                      </span>
+                      <button
+                        onClick={() => {
+                          setActiveLetterStep(1);
+                          playTactileSound("pop");
+                        }}
+                        className="btn-journal py-2 px-5 text-[10px] w-full sm:w-auto text-center"
+                      >
+                        Seal &amp; Lock Letter ▷
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeLetterStep === 1 && (
+                  <motion.div
+                    key="step-lock"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    {/* Step 2: LOCK (What was selected in screenshot) */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[var(--border)] gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-xl shrink-0">
+                          🔒
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-mono font-bold text-amber-700 uppercase tracking-wider block">
+                            STEP 2 OF 4 · SCHEDULED &amp; ENCRYPTED
+                          </span>
+                          <h3 className="font-display italic font-bold text-base sm:text-lg text-[var(--text)]">
+                            Anniversary Letter for Mia
+                          </h3>
+                        </div>
+                      </div>
+
+                      <div
+                        className="w-12 h-12 rounded-full shadow-md border-2 flex items-center justify-center text-white text-lg font-bold select-none self-start sm:self-center"
+                        style={{ backgroundColor: selectedWax.hex, borderColor: selectedWax.border }}
+                      >
+                        {selectedWax.icon}
+                      </div>
+                    </div>
+
+                    {/* Lock Countdown Display */}
+                    <div className="p-4 sm:p-6 rounded-2xl bg-amber-50/60 border border-amber-200/80 text-center space-y-3">
+                      <span className="text-[10px] font-mono font-bold text-amber-800 uppercase tracking-widest block">
+                        SCHEDULED TO UNSEAL TOGETHER IN:
+                      </span>
+                      <div className="flex items-center justify-center gap-2 sm:gap-4 font-mono font-bold text-lg sm:text-2xl text-amber-950">
+                        <div className="bg-white px-2 sm:px-3 py-1.5 rounded-lg border border-amber-200 shadow-xs">
+                          18<span className="text-[8px] sm:text-[9px] text-amber-600 block font-normal">DAYS</span>
+                        </div>
+                        <span>:</span>
+                        <div className="bg-white px-2 sm:px-3 py-1.5 rounded-lg border border-amber-200 shadow-xs">
+                          14<span className="text-[8px] sm:text-[9px] text-amber-600 block font-normal">HOURS</span>
+                        </div>
+                        <span>:</span>
+                        <div className="bg-white px-2 sm:px-3 py-1.5 rounded-lg border border-amber-200 shadow-xs">
+                          22<span className="text-[8px] sm:text-[9px] text-amber-600 block font-normal">MINS</span>
+                        </div>
+                        <span>:</span>
+                        <div className="bg-white px-2 sm:px-3 py-1.5 rounded-lg border border-amber-200 shadow-xs">
+                          05<span className="text-[8px] sm:text-[9px] text-amber-600 block font-normal">SECS</span>
+                        </div>
+                      </div>
+                      <p className="text-xs font-mono text-amber-800 leading-relaxed max-w-md mx-auto">
+                        Locked with AES-256 encryption. Neither partner can peek early until both devices synchronize on October 14th.
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--border)]">
+                      <span className="text-[10px] font-mono text-[var(--text-soft)]">
+                        🔒 Safe inside your encrypted relationship vault
+                      </span>
+                      <button
+                        onClick={() => {
+                          setActiveLetterStep(2);
+                          playTactileSound("paper");
+                        }}
+                        className="btn-journal py-2 px-5 text-[10px] w-full sm:w-auto text-center"
+                      >
+                        Fast-Forward to Unseal Day ▷
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeLetterStep === 2 && (
+                  <motion.div
+                    key="step-open"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    {/* Step 3: OPEN */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[var(--border)] gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-xl shrink-0">
+                          ✨
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-mono font-bold text-rose-600 uppercase tracking-wider block">
+                            STEP 3 OF 4 · UNSEALED TOGETHER
+                          </span>
+                          <h3 className="font-display italic font-bold text-base sm:text-lg text-[var(--text)]">
+                            The Wax Seal Breaks in Sync
+                          </h3>
+                        </div>
+                      </div>
+
+                      <span className="px-2.5 py-1 rounded-full bg-rose-50 text-[var(--burgundy)] border border-rose-200 text-[9px] font-mono font-bold self-start sm:self-center">
+                        UNSEALED · OCT 14
+                      </span>
+                    </div>
+
+                    {/* Unsealed Handwritten Letter */}
+                    <div className="p-4 sm:p-7 rounded-2xl bg-white border border-[var(--border)] shadow-sm space-y-3">
+                      <div className="flex items-center justify-between border-b border-rose-100 pb-2">
+                        <span className="text-[10px] font-mono text-[var(--text-soft)]">From: Alex · Unsealed 10:00 AM</span>
+                        <span className="text-xs">💌</span>
+                      </div>
+                      <p className="font-handwriting text-xl sm:text-2xl text-[var(--text)] leading-relaxed">
+                        &quot;I still remember the rain on our first drive through the hills. You fell asleep with the radio playing, and I knew right then I wanted to protect this quiet world of ours forever.&quot;
+                      </p>
+                      <p className="text-right font-display italic text-sm text-[var(--burgundy)] font-bold">
+                        — Always, Alex
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--border)]">
+                      <span className="text-[10px] font-mono text-[var(--text-soft)]">
+                        Both screens unlocked simultaneously with gentle audio chime
+                      </span>
+                      <button
+                        onClick={() => {
+                          setActiveLetterStep(3);
+                          playTactileSound("tap");
+                        }}
+                        className="btn-journal py-2 px-5 text-[10px] w-full sm:w-auto text-center"
+                      >
+                        Write Reply to Alex ▷
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeLetterStep === 3 && (
+                  <motion.div
+                    key="step-reply"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    {/* Step 4: REPLY */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[var(--border)] gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-xl shrink-0">
+                          📖
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-mono font-bold text-purple-600 uppercase tracking-wider block">
+                            STEP 4 OF 4 · WOVEN INTO THE ARCHIVE
+                          </span>
+                          <h3 className="font-display italic font-bold text-base sm:text-lg text-[var(--text)]">
+                            Mia&apos;s Reply Sealed in Return
+                          </h3>
+                        </div>
+                      </div>
+
+                      <span className="px-2.5 py-1 rounded-full bg-purple-50 text-purple-600 border border-purple-200 text-[9px] font-mono font-bold self-start sm:self-center">
+                        SAVED TO VOLUME 1
+                      </span>
+                    </div>
+
+                    {/* Dual Thread Excerpt */}
+                    <div className="space-y-3">
+                      <div className="p-3.5 rounded-xl bg-rose-50/60 border border-rose-100 text-xs">
+                        <span className="text-[9px] font-mono font-bold text-rose-500 uppercase block">Alex&apos;s Letter:</span>
+                        <p className="font-display italic text-stone-700 mt-0.5">
+                          &quot;...I knew right then I wanted to protect this quiet world of ours forever.&quot;
+                        </p>
+                      </div>
+
+                      <div className="p-4 sm:p-5 rounded-xl bg-white border border-[var(--border)] shadow-xs space-y-1">
+                        <span className="text-[9px] font-mono font-bold text-purple-600 uppercase block">Mia&apos;s Handwritten Reply:</span>
+                        <p className="font-handwriting text-xl sm:text-2xl text-[var(--text)] leading-relaxed">
+                          &quot;I wasn&apos;t actually asleep — I was just listening to the rain and your heartbeat. Happy anniversary, my love.&quot;
+                        </p>
+                        <p className="text-right text-xs font-mono text-[var(--text-soft)]">— Mia ♡</p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--border)]">
+                      <span className="text-[10px] font-mono text-[var(--text-soft)]">
+                        Kept forever in your private living relationship library
+                      </span>
+                      <Link
+                        href="/love-letter"
+                        className="btn-journal py-2 px-5 text-[10px] w-full sm:w-auto text-center"
+                        onMouseEnter={() => playTactileSound("tap")}
+                      >
+                        Start Your First Letter ▷
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         </section>
 
         {/* ── 05 · MEMORIES (Polaroids → caption → save) ── */}
-        <section id="memories" aria-label="05 Shared Memories" className="max-w-[1100px] mx-auto px-6 py-20 space-y-12">
+        <section id="memories" aria-label="05 Shared Memories" className="max-w-[1100px] mx-auto px-4 sm:px-6 py-16 sm:py-20 space-y-12">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -887,12 +1147,12 @@ export default function LandingContent() {
             </p>
           </motion.div>
 
-          {/* 3 Real Tactile Tilted Polaroids */}
-          <div className="flex flex-wrap items-center justify-center gap-8 pt-4">
+          {/* 3 Real Tactile Tilted Polaroids (Fully responsive stack on mobile) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 pt-4">
             
             {/* Polaroid 1 */}
             <div
-              className="w-[230px] p-4 pb-6 rounded-lg bg-white shadow-xl border border-stone-200 -rotate-3 transition-transform hover:rotate-0 hover:scale-105 duration-300 cursor-pointer relative"
+              className="w-[220px] sm:w-[230px] p-4 pb-6 rounded-lg bg-white shadow-xl border border-stone-200 -rotate-2 sm:-rotate-3 transition-transform hover:rotate-0 hover:scale-105 duration-300 cursor-pointer relative"
               onMouseEnter={() => playTactileSound("paper")}
             >
               <div className="washi-tape-top" />
@@ -907,7 +1167,7 @@ export default function LandingContent() {
 
             {/* Polaroid 2 */}
             <div
-              className="w-[230px] p-4 pb-6 rounded-lg bg-white shadow-xl border border-stone-200 rotate-2 transition-transform hover:rotate-0 hover:scale-105 duration-300 cursor-pointer relative"
+              className="w-[220px] sm:w-[230px] p-4 pb-6 rounded-lg bg-white shadow-xl border border-stone-200 rotate-1 sm:rotate-2 transition-transform hover:rotate-0 hover:scale-105 duration-300 cursor-pointer relative"
               onMouseEnter={() => playTactileSound("paper")}
             >
               <div className="washi-tape-top" />
@@ -922,7 +1182,7 @@ export default function LandingContent() {
 
             {/* Polaroid 3 */}
             <div
-              className="w-[230px] p-4 pb-6 rounded-lg bg-white shadow-xl border border-stone-200 -rotate-2 transition-transform hover:rotate-0 hover:scale-105 duration-300 cursor-pointer relative"
+              className="w-[220px] sm:w-[230px] p-4 pb-6 rounded-lg bg-white shadow-xl border border-stone-200 -rotate-1 sm:-rotate-2 transition-transform hover:rotate-0 hover:scale-105 duration-300 cursor-pointer relative"
               onMouseEnter={() => playTactileSound("paper")}
             >
               <div className="washi-tape-top" />
@@ -937,28 +1197,28 @@ export default function LandingContent() {
 
           </div>
 
-          {/* Memory Wall Badges Grid (from Original) */}
+          {/* Memory Wall Badges Grid */}
           <div className="pt-8">
             <motion.div
               variants={fadeIn}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-60px" }}
-              className="memory-wall grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-5"
+              className="memory-wall grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"
             >
               {memoryWallItems.map((item, i) => (
                 <div
                   key={item.label}
                   onMouseEnter={() => playTactileSound("paper")}
-                  className="memory-wall-card rounded-xl p-4 sm:p-5 flex flex-col items-center gap-2 cursor-pointer shadow-md border border-[var(--border)]"
+                  className="memory-wall-card rounded-xl p-3 sm:p-5 flex flex-col items-center gap-1.5 sm:gap-2 cursor-pointer shadow-md border border-[var(--border)]"
                   style={{
                     background: item.color,
                     transform: `rotate(${item.rotate}deg)`,
                     zIndex: i % 3 === 0 ? 10 : 5,
                   }}
                 >
-                  <span className="text-2xl sm:text-3xl">{item.emoji}</span>
-                  <span className="text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider text-center">
+                  <span className="text-xl sm:text-3xl">{item.emoji}</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider text-center">
                     {item.label}
                   </span>
                 </div>
@@ -968,7 +1228,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 06 · JOURNAL (Prompt → write → archive) ── */}
-        <section id="journal" aria-label="06 Couple's Journal" className="max-w-[1000px] mx-auto px-6 py-20">
+        <section id="journal" aria-label="06 Couple's Journal" className="max-w-[1000px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -989,33 +1249,33 @@ export default function LandingContent() {
             </div>
 
             {/* Cozy Hardcover Book Spread */}
-            <div className="p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl relative overflow-hidden paper-grain">
+            <div className="p-5 sm:p-10 md:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl relative overflow-hidden paper-grain">
               <div className="washi-tape-top" />
               
               <div className="text-center pb-6 border-b border-[var(--border)] space-y-1">
                 <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] uppercase tracking-widest">
                   DAILY QUESTION · DAY 152
                 </span>
-                <p className="text-xl sm:text-2xl font-display italic font-bold text-[var(--text)]">
+                <p className="text-lg sm:text-2xl font-display italic font-bold text-[var(--text)]">
                   &quot;What is a small, quiet moment with you this week that I never want to forget?&quot;
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-6">
                 
                 {/* Mia's Entry */}
-                <div className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs space-y-3">
+                <div className="p-4 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-rose-600 font-mono">Mia&apos;s Answer</span>
                     <span className="text-[9px] font-mono text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">SUBMITTED</span>
                   </div>
-                  <p className="font-handwriting text-2xl text-[var(--text)] leading-relaxed">
+                  <p className="font-handwriting text-xl sm:text-2xl text-[var(--text)] leading-relaxed">
                     &quot;When we sat by the window during the rainstorm and you handed me the warm mug without saying a word.&quot;
                   </p>
                 </div>
 
                 {/* Alex's Entry (Interactive Lock/Unlock Toggle) */}
-                <div className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs space-y-3 relative overflow-hidden">
+                <div className="p-4 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs space-y-3 relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-blue-600 font-mono">Alex&apos;s Answer</span>
                     <button
@@ -1030,11 +1290,11 @@ export default function LandingContent() {
                   </div>
 
                   {journalRevealed ? (
-                    <p className="font-handwriting text-2xl text-[var(--text)] leading-relaxed animate-in fade-in duration-300">
+                    <p className="font-handwriting text-xl sm:text-2xl text-[var(--text)] leading-relaxed animate-in fade-in duration-300">
                       &quot;Watching you burst out laughing at the airport gate because we both bought the exact same book.&quot;
                     </p>
                   ) : (
-                    <div className="p-6 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
+                    <div className="p-4 sm:p-6 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
                       <Lock className="w-5 h-5 text-slate-400 mx-auto" />
                       <p className="text-xs font-mono text-slate-500">
                         Locked until both write their entry
@@ -1045,7 +1305,7 @@ export default function LandingContent() {
 
               </div>
 
-              <div className="pt-6 mt-6 border-t border-[var(--border)] flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
+              <div className="pt-6 mt-6 border-t border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] font-mono text-[var(--text-soft)]">
                 <span>Bound into Volume 1 · 152 Entries Kept</span>
                 <span className="font-bold text-[var(--burgundy)]">Permanent Keepsake Archive</span>
               </div>
@@ -1054,7 +1314,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 07 · RITUALS (Games & Activities Directory from Screenshot 4 & 5) ── */}
-        <section id="rituals" aria-label="07 Games and Activities Directory" className="max-w-[1180px] mx-auto px-6 py-20 space-y-10">
+        <section id="rituals" aria-label="07 Games and Activities Directory" className="max-w-[1180px] mx-auto px-4 sm:px-6 py-16 sm:py-20 space-y-10">
           
           <div className="space-y-3 text-left">
             <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
@@ -1074,7 +1334,7 @@ export default function LandingContent() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="p-6 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6 paper-grain"
+            className="p-5 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6 paper-grain"
           >
             <div className="flex items-start sm:items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
@@ -1104,12 +1364,12 @@ export default function LandingContent() {
           </motion.div>
 
           {/* 3x3 Real Rituals Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             
             {/* 1: Love Match */}
             <Link
               href="/play/love-match"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-purple-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-purple-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
@@ -1132,7 +1392,7 @@ export default function LandingContent() {
             {/* 2: Know Me Quiz */}
             <Link
               href="/quiz"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-[var(--burgundy)]/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-[var(--burgundy)]/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-500">
@@ -1155,7 +1415,7 @@ export default function LandingContent() {
             {/* 3: IQ Duel */}
             <Link
               href="/iq-duel"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-blue-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-blue-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
@@ -1178,7 +1438,7 @@ export default function LandingContent() {
             {/* 4: Couples Debate */}
             <Link
               href="/vibe-judge"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-emerald-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-emerald-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
@@ -1201,7 +1461,7 @@ export default function LandingContent() {
             {/* 5: Riddle Night */}
             <Link
               href="/riddle"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-amber-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-amber-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
@@ -1224,7 +1484,7 @@ export default function LandingContent() {
             {/* 6: Watch Together */}
             <Link
               href="/watch"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-indigo-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-indigo-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
@@ -1247,7 +1507,7 @@ export default function LandingContent() {
             {/* 7: Gratitude Jar */}
             <Link
               href="/gratitude-jar"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-rose-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-rose-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
@@ -1270,7 +1530,7 @@ export default function LandingContent() {
             {/* 8: Love Letters */}
             <Link
               href="/love-letter"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-[var(--burgundy)]/40 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-[var(--burgundy)]/40 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-[var(--burgundy)]">
@@ -1293,7 +1553,7 @@ export default function LandingContent() {
             {/* 9: Focus Session */}
             <Link
               href="/focus"
-              className="p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-teal-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--border)] shadow-xs hover:border-teal-400/50 hover:shadow-md transition-all group flex flex-col justify-between text-left space-y-3"
             >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
@@ -1317,7 +1577,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 08 · PHOTOBOOTH (3 → 2 → 1 → ♡ → strip → memory) ── */}
-        <section id="photobooth" aria-label="08 Realtime Photobooth" className="max-w-[1100px] mx-auto px-6 py-20">
+        <section id="photobooth" aria-label="08 Realtime Photobooth" className="max-w-[1100px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -1341,7 +1601,7 @@ export default function LandingContent() {
               
               {/* Photobooth Strip Visual */}
               <div className="lg:col-span-5 flex justify-center">
-                <div className="w-[200px] p-4 bg-[#FFFDFC] border-2 border-stone-200 rounded-2xl shadow-2xl space-y-3 relative paper-grain">
+                <div className="w-[190px] sm:w-[200px] p-4 bg-[#FFFDFC] border-2 border-stone-200 rounded-2xl shadow-2xl space-y-3 relative paper-grain">
                   <div className="washi-tape-top" />
                   
                   {/* 4 Photo Frames */}
@@ -1375,7 +1635,7 @@ export default function LandingContent() {
               <div className="lg:col-span-7 space-y-6 text-left">
                 <div className="space-y-4">
                   <div className="p-4 rounded-2xl bg-white border border-[var(--border)] shadow-xs flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm shrink-0">
                       3s
                     </div>
                     <div>
@@ -1385,7 +1645,7 @@ export default function LandingContent() {
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white border border-[var(--border)] shadow-xs flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
                       🎞️
                     </div>
                     <div>
@@ -1395,7 +1655,7 @@ export default function LandingContent() {
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white border border-[var(--border)] shadow-xs flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
                       🖨️
                     </div>
                     <div>
@@ -1421,7 +1681,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 09 · PRESENCE ("Kimi checked in as peaceful.") ── */}
-        <section id="presence" aria-label="09 Quiet Presence" className="max-w-[1000px] mx-auto px-6 py-20">
+        <section id="presence" aria-label="09 Quiet Presence" className="max-w-[1000px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -1442,10 +1702,10 @@ export default function LandingContent() {
             </div>
 
             {/* Ambient Presence Dashboard Card */}
-            <div className="max-w-[700px] mx-auto p-8 sm:p-10 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl relative overflow-hidden paper-grain">
+            <div className="max-w-[700px] mx-auto p-5 sm:p-10 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl relative overflow-hidden paper-grain">
               <div className="washi-tape-top" />
               
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pb-6 border-b border-[var(--border)]">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-[var(--border)]">
                 
                 {/* Partner Info */}
                 <div className="flex items-center gap-4">
@@ -1469,8 +1729,8 @@ export default function LandingContent() {
                 </div>
 
                 {/* Local Weather & Timezone */}
-                <div className="text-right sm:border-l sm:pl-6 sm:border-[var(--border)] space-y-1">
-                  <div className="flex items-center gap-1.5 justify-end text-xs font-mono text-[var(--text)]">
+                <div className="text-left sm:text-right sm:border-l sm:pl-6 sm:border-[var(--border)] space-y-1">
+                  <div className="flex items-center gap-1.5 sm:justify-end text-xs font-mono text-[var(--text)]">
                     <CloudRain className="w-4 h-4 text-blue-500" />
                     <span>24°C · Light rain</span>
                   </div>
@@ -1481,14 +1741,14 @@ export default function LandingContent() {
               </div>
 
               {/* Heartbeat Send Nudge */}
-              <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <span className="text-xs font-mono text-[var(--text-soft)]">
                   No read receipts. No typing bubbles. Just gentle ambient closeness.
                 </span>
 
                 <button
                   onClick={triggerHeartbeat}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-mono font-bold transition-all shadow-sm cursor-pointer ${
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-mono font-bold transition-all shadow-sm cursor-pointer w-full sm:w-auto justify-center ${
                     heartbeatSent
                       ? "bg-rose-500 text-white scale-105"
                       : "bg-white border border-[var(--border)] text-[var(--burgundy)] hover:border-[var(--burgundy)]"
@@ -1504,7 +1764,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 10 · MEMORY VAULT (Search across the relationship) ── */}
-        <section id="vault" aria-label="10 Memory Vault" className="max-w-[1000px] mx-auto px-6 py-20">
+        <section id="vault" aria-label="10 Memory Vault" className="max-w-[1000px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -1527,7 +1787,7 @@ export default function LandingContent() {
             {/* Interactive Vault Search Box */}
             <div className="max-w-[760px] mx-auto space-y-6">
               
-              <div className="p-4 rounded-2xl bg-white border-2 border-[var(--border)] shadow-md flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border-2 border-[var(--border)] shadow-md flex items-center gap-3">
                 <Search className="w-5 h-5 text-[var(--text-soft)] shrink-0" />
                 <input
                   type="text"
@@ -1573,12 +1833,12 @@ export default function LandingContent() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left hover:border-[var(--burgundy)] transition-colors paper-grain"
+                      className="p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between text-left hover:border-[var(--burgundy)] transition-colors paper-grain gap-2 sm:gap-3"
                     >
                       <div className="flex items-center gap-3.5">
-                        <span className="text-2xl">{item.icon}</span>
+                        <span className="text-2xl shrink-0">{item.icon}</span>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-bold text-sm text-[var(--text)]">{item.title}</h4>
                             <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2 py-0.5 rounded-full">
                               {item.type}
@@ -1587,7 +1847,7 @@ export default function LandingContent() {
                           <p className="text-xs text-[var(--text-soft)] mt-0.5 line-clamp-1">{item.excerpt}</p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-mono text-[var(--text-soft)] shrink-0 pl-3">
+                      <span className="text-[10px] font-mono text-[var(--text-soft)] shrink-0 sm:pl-3">
                         {item.date}
                       </span>
                     </motion.div>
@@ -1604,8 +1864,8 @@ export default function LandingContent() {
         </section>
 
         {/* ── 11 · YOUR STORY (Timeline & Relationship Archive from Screenshot 3) ── */}
-        <section id="your-story" aria-label="11 Today's Story Preview" className="max-w-[1100px] mx-auto px-6 py-20">
-          <div className="p-8 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md grid grid-cols-1 lg:grid-cols-12 gap-10 items-center paper-grain">
+        <section id="your-story" aria-label="11 Today's Story Preview" className="max-w-[1100px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
+          <div className="p-6 sm:p-12 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-md grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center paper-grain">
             
             {/* Left Info Column */}
             <div className="lg:col-span-5 text-left space-y-5">
@@ -1625,47 +1885,47 @@ export default function LandingContent() {
 
             {/* Right Story Feed Showcase (from Screenshot 3) */}
             <div className="lg:col-span-7 relative">
-              <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-inner space-y-4">
+              <div className="p-4 sm:p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-inner space-y-4">
                 <div className="space-y-3">
                   
                   {/* Story Entry 1: Love Letter */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left gap-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">💌</span>
+                      <span className="text-xl shrink-0">💌</span>
                       <div>
                         <p className="text-xs font-bold text-[var(--text)]">Letter Sealed for Anniversary</p>
                         <p className="text-[10px] text-[var(--text-soft)]">Unseals in 14 days · Encrypted</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-full">
+                    <span className="text-[9px] font-mono font-bold text-[var(--burgundy)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-full shrink-0">
                       SEALED
                     </span>
                   </div>
 
                   {/* Story Entry 2: Photobooth */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left gap-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">📸</span>
+                      <span className="text-xl shrink-0">📸</span>
                       <div>
                         <p className="text-xs font-bold text-[var(--text)]">4-Frame Photobooth Strip</p>
                         <p className="text-[10px] text-[var(--text-soft)]">Saved to shared memories</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                    <span className="text-[9px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full shrink-0">
                       SAVED
                     </span>
                   </div>
 
                   {/* Story Entry 3: Daily Quiz */}
-                  <div className="p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left">
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs flex items-center justify-between text-left gap-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">✨</span>
+                      <span className="text-xl shrink-0">✨</span>
                       <div>
                         <p className="text-xs font-bold text-[var(--text)]">Know Me Quiz · 100% Match</p>
                         <p className="text-[10px] text-[var(--text-soft)]">Karaoke Songs Pack</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-500/10 px-2.5 py-1 rounded-full">
+                    <span className="text-[9px] font-mono font-bold text-purple-600 bg-purple-500/10 px-2.5 py-1 rounded-full shrink-0">
                       MATCHED
                     </span>
                   </div>
@@ -1677,11 +1937,11 @@ export default function LandingContent() {
           </div>
 
           {/* Shared Timeline Milestones */}
-          <div className="pt-16 text-center space-y-6">
+          <div className="pt-12 sm:pt-16 text-center space-y-6">
             <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
               Milestones Kept In Order
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
               {timelineMilestones.map((m, i) => (
                 <React.Fragment key={m.label}>
                   {i > 0 && (
@@ -1690,11 +1950,11 @@ export default function LandingContent() {
                     </span>
                   )}
                   <div
-                    className="px-4 py-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm text-center keepsake-lift cursor-pointer"
+                    className="px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-sm text-center keepsake-lift cursor-pointer"
                     onMouseEnter={() => playTactileSound("tap")}
                   >
-                    <p className="text-xl mb-1">{m.emoji}</p>
-                    <p className="text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider whitespace-nowrap">
+                    <p className="text-lg sm:text-xl mb-0.5 sm:mb-1">{m.emoji}</p>
+                    <p className="text-[8px] sm:text-[9px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider whitespace-nowrap">
                       {m.label}
                     </p>
                   </div>
@@ -1705,13 +1965,13 @@ export default function LandingContent() {
         </section>
 
         {/* ── 12 · PRIVACY ("A little world that stays yours.") ── */}
-        <section id="privacy" aria-label="12 Privacy by Design" className="max-w-[850px] mx-auto px-6 py-20">
+        <section id="privacy" aria-label="12 Privacy by Design" className="max-w-[850px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="bg-[var(--paper-warm)] border border-[var(--border)] p-10 md:p-14 rounded-3xl text-center space-y-8 shadow-sm relative overflow-hidden paper-grain"
+            className="bg-[var(--paper-warm)] border border-[var(--border)] p-6 sm:p-12 md:p-14 rounded-3xl text-center space-y-8 shadow-sm relative overflow-hidden paper-grain"
           >
             <div className="space-y-4 max-w-md mx-auto">
               <p className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
@@ -1720,12 +1980,12 @@ export default function LandingContent() {
               <h2 className="text-2xl sm:text-3xl font-display italic font-black text-[var(--text)]">
                 A little world that stays yours.
               </h2>
-              <p className="font-quote italic text-base text-[var(--text-soft)] leading-relaxed">
+              <p className="font-quote italic text-sm sm:text-base text-[var(--text-soft)] leading-relaxed">
                 Not on a public feed. Not inside an ad algorithm. Never used to train public models. Only you two hold the keys.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 max-w-lg mx-auto">
               {[
                 { icon: <Shield className="w-4 h-4" />, label: "AES-256 Encrypted" },
                 { icon: <Lock className="w-4 h-4" />, label: "Invite-Only Rooms" },
@@ -1747,7 +2007,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 13 · PRICING (Actual Paid Plans for Both) ── */}
-        <section id="pricing" aria-label="13 Paid Plans" className="max-w-[1100px] mx-auto px-6 py-20">
+        <section id="pricing" aria-label="13 Paid Plans" className="max-w-[1100px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -1771,7 +2031,7 @@ export default function LandingContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
               
               {/* Plan 1: Free Forever */}
-              <div className="p-8 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
+              <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <span className="text-[10px] font-mono font-bold text-[var(--text-soft)] uppercase tracking-wider">
@@ -1786,23 +2046,23 @@ export default function LandingContent() {
 
                   <ul className="space-y-2.5 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>All 11 connection games &amp; rituals</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>Unlimited Photobooth sessions</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>Realtime synchronized dates</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>30-day shared memory archive</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>Standard digital wax love letters</span>
                     </li>
                   </ul>
@@ -1818,8 +2078,8 @@ export default function LandingContent() {
               </div>
 
               {/* Plan 2: Pairfect Plus 3-Month Pass (Most Popular) */}
-              <div className="p-8 rounded-3xl bg-[var(--paper-warm)] border-2 border-[var(--burgundy)] shadow-xl flex flex-col justify-between space-y-6 relative paper-grain">
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold uppercase tracking-widest shadow-xs">
+              <div className="p-6 sm:p-8 rounded-3xl bg-[var(--paper-warm)] border-2 border-[var(--burgundy)] shadow-xl flex flex-col justify-between space-y-6 relative paper-grain">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold uppercase tracking-widest shadow-xs whitespace-nowrap">
                   MOST POPULAR FOR COUPLES
                 </div>
 
@@ -1838,34 +2098,34 @@ export default function LandingContent() {
 
                   <ul className="space-y-2.5 text-xs text-[var(--text)] pt-4 border-t border-[var(--border)]">
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] font-bold" />
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] font-bold shrink-0" />
                       <span><strong>Everything in Free</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
                       <span>Unlimited permanent Memory Wall &amp; Vault</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
                       <span>High-Res photostrip print exports</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
                       <span>Schedule letters up to 10 years ahead</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
                       <span>Meanwhile weather &amp; distance card</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                      <Check className="w-3.5 h-3.5 text-[var(--burgundy)] shrink-0" />
                       <span>Custom Spotify cassette mixtape shells</span>
                     </li>
                   </ul>
                 </div>
 
                 <Link
-                  href="/pricing"
+                  href="/checkout?plan=plus-quarterly"
                   className="btn-journal w-full text-center py-3 text-xs"
                   onMouseEnter={() => playTactileSound("tap")}
                 >
@@ -1874,7 +2134,7 @@ export default function LandingContent() {
               </div>
 
               {/* Plan 3: Lifetime Forever Pass */}
-              <div className="p-8 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
+              <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[var(--border)] shadow-xs flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <span className="text-[10px] font-mono font-bold text-stone-500 uppercase tracking-wider">
@@ -1883,33 +2143,33 @@ export default function LandingContent() {
                     <h3 className="font-display italic font-bold text-2xl text-[var(--text)]">Forever Pass</h3>
                     <div className="flex items-baseline gap-1 pt-2">
                       <span className="text-3xl font-black text-[var(--text)]">₹699</span>
-                      <span className="text-xs font-mono text-[var(--text-soft)]">/ once in a lifetime</span>
+                      <span className="text-xs font-mono text-[var(--text-soft)]">/ once in a lifetime for both</span>
                     </div>
-                    <p className="text-[10px] font-mono text-purple-600 font-bold">Never pay again</p>
+                    <p className="text-[10px] font-mono text-purple-600 font-bold">Never pay again · Only ₹350 per partner</p>
                   </div>
 
                   <ul className="space-y-2.5 text-xs text-[var(--text-soft)] pt-4 border-t border-[var(--border)]">
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-purple-600 font-bold" />
+                      <Check className="w-3.5 h-3.5 text-purple-600 font-bold shrink-0" />
                       <span><strong>Permanent encrypted living archive for life</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-purple-600" />
+                      <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                       <span>Gold VIP couple badge on profile &amp; room</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-purple-600" />
+                      <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                       <span>Early access to all upcoming date rituals</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-purple-600" />
+                      <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                       <span>All future updates included forever</span>
                     </li>
                   </ul>
                 </div>
 
                 <Link
-                  href="/pricing"
+                  href="/checkout?plan=pairfect-forever"
                   className="btn-journal-ghost w-full text-center py-3 text-xs"
                   onMouseEnter={() => playTactileSound("tap")}
                 >
@@ -1922,7 +2182,7 @@ export default function LandingContent() {
         </section>
 
         {/* ── 14 · EMOTIONAL PAUSE ("Not another chat app.") ── */}
-        <section aria-label="14 Emotional Pause" className="max-w-[800px] mx-auto px-6 py-24 text-center">
+        <section aria-label="14 Emotional Pause" className="max-w-[800px] mx-auto px-4 sm:px-6 py-20 sm:py-24 text-center">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -1953,13 +2213,13 @@ export default function LandingContent() {
         </section>
 
         {/* ── 15 · FINAL CTA ("Make a little world of your own.") ── */}
-        <section aria-label="15 Final Call to Action" className="max-w-[850px] mx-auto px-6 pb-24 text-center">
+        <section aria-label="15 Final Call to Action" className="max-w-[850px] mx-auto px-4 sm:px-6 pb-24 text-center">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="p-10 md:p-16 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl space-y-8 paper-grain relative overflow-hidden"
+            className="p-6 sm:p-12 md:p-16 rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl space-y-8 paper-grain relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--rose)] via-[var(--burgundy)] to-[var(--rose)]" />
 
@@ -1977,7 +2237,7 @@ export default function LandingContent() {
 
             {/* Quick Room Code Input Box */}
             <form onSubmit={handleJoinWithCode} className="flex flex-col items-center gap-4">
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                 {[0, 1, 2, 3, 4, 5].map((idx) => (
                   <input
                     key={idx}
@@ -1986,26 +2246,26 @@ export default function LandingContent() {
                     maxLength={1}
                     value={joinCode[idx]}
                     onChange={(e) => handleCodeChange(idx, e.target.value)}
-                    className="w-10 h-12 text-center text-lg font-mono font-bold uppercase rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:border-[var(--burgundy)] focus:ring-2 focus:ring-[var(--burgundy)]/20 outline-none transition-all"
+                    className="w-9 sm:w-10 h-11 sm:h-12 text-center text-base sm:text-lg font-mono font-bold uppercase rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:border-[var(--burgundy)] focus:ring-2 focus:ring-[var(--burgundy)]/20 outline-none transition-all"
                   />
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <button type="submit" className="btn-journal py-2.5 px-6 text-[10px]">
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-2">
+                <button type="submit" className="btn-journal py-2.5 px-5 sm:px-6 text-[10px]">
                   Join Room Now ▷
                 </button>
-                <Link href="/onboarding" className="btn-journal py-2.5 px-6 text-[10px]">
+                <Link href="/onboarding" className="btn-journal py-2.5 px-5 sm:px-6 text-[10px]">
                   Create New Room ▷
                 </Link>
-                <Link href="/login" className="btn-journal-ghost py-2.5 px-6 text-[10px]">
+                <Link href="/login" className="btn-journal-ghost py-2.5 px-5 sm:px-6 text-[10px]">
                   Sign In With Email
                 </Link>
               </div>
             </form>
 
             {/* Frequently Asked Questions Accordion */}
-            <div className="pt-10 border-t border-[var(--border)] text-left space-y-4 max-w-xl mx-auto">
+            <div className="pt-8 sm:pt-10 border-t border-[var(--border)] text-left space-y-4 max-w-xl mx-auto">
               <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase block text-center">
                 FREQUENTLY ASKED QUESTIONS
               </span>
@@ -2060,7 +2320,7 @@ export default function LandingContent() {
       {/* ══════════════════════════════════════════════════════════
           FOOTER (Matches Brand Standard)
           ══════════════════════════════════════════════════════════ */}
-      <footer className="border-t border-[var(--border)] py-12 px-6 bg-[var(--paper-warm)]">
+      <footer className="border-t border-[var(--border)] py-12 px-4 sm:px-6 bg-[var(--paper-warm)]">
         <div className="max-w-[1100px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col items-center md:items-start space-y-2">
             <div className="flex items-center gap-2 select-none">

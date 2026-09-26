@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SpotifySearchInput from "@/components/spotify-search-input";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 
 // ── Handmade Cassette Shell Options ─────────────────────────────────────────
 const CASSETTE_PATTERNS: { key: CassettePattern; label: string; icon: string }[] = [
@@ -467,6 +468,16 @@ export default function MixtapePage() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
         <Loader2 className="w-6 h-6 animate-spin text-[var(--burgundy)]" />
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Handmade Spotify Mixtapes"
+        description="Design physical cassette tapes with custom shells and sticker decals, add songs with personal memories, and build your couple's soundtrack. Connect your partner to start creating."
+        icon={Music}
+      />
     );
   }
 

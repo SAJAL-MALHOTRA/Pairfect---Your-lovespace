@@ -8,6 +8,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { Loader2, Plus, X, Trash2, Heart, Sparkles, Filter, Archive, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GratitudeJarRitual } from "@/components/cozy-illustrations";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 
 // Natural colors for paper slips
 const SLIP_COLORS = [
@@ -155,12 +156,22 @@ export default function GratitudeJarPage() {
     new Set(notes.map((n) => new Date(n.created_at).getFullYear().toString()))
   ).sort().reverse();
 
-  if (loading || fetching) {
+  if (loading || (pair && fetching)) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <Navigation />
         <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Gratitude Jar"
+        description="Fold little paper notes of appreciation, drop them in your shared glass jar, and draw random memories on cozy evenings. Connect your partner to start filling your jar."
+        icon={Heart}
+      />
     );
   }
 

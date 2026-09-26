@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CashfreeCheckoutButton } from "@/components/payment/cashfree-checkout-button";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useSubscription } from "@/hooks/use-subscription";
-import { PAYMENT_PLANS, PaymentPlan } from "@/lib/plans";
+import { PAYMENT_PLANS, PaymentPlan, getPlan } from "@/lib/plans";
 import {
   Heart,
   Sparkles,
@@ -26,24 +26,33 @@ import {
   Users,
 } from "lucide-react";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planParam = searchParams.get("plan");
+
   const { user, profile } = useAuth();
   const { isPlus, tier, daysRemaining, isLifetime } = useSubscription();
 
   // Primary public plans
   const primaryPlans: PaymentPlan[] = [
     PAYMENT_PLANS["plus-monthly"],
+    PAYMENT_PLANS["plus-quarterly"],
     PAYMENT_PLANS["plus-annual"],
     PAYMENT_PLANS["pairfect-forever"],
-  ];
+  ].filter(Boolean);
 
   // Micro-test diagnostic plan
   const testPlan = PAYMENT_PLANS["micro-test"];
 
-  const [selectedPlan, setSelectedPlan] = useState<PaymentPlan>(
-    PAYMENT_PLANS["plus-annual"] || primaryPlans[1]
-  );
+  const [selectedPlan, setSelectedPlan] = useState<PaymentPlan>(() => {
+    if (planParam) {
+      const p = getPlan(planParam);
+      if (p) return p;
+    }
+    return PAYMENT_PLANS["plus-quarterly"] || PAYMENT_PLANS["plus-annual"] || primaryPlans[0];
+  });
+
   const [showDevTest, setShowDevTest] = useState(false);
 
   // Customer contact info
@@ -51,6 +60,16 @@ export default function CheckoutPage() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [lastError, setLastError] = useState<string | null>(null);
+
+  // Update selected plan if URL query param changes
+  useEffect(() => {
+    if (planParam) {
+      const matched = getPlan(planParam);
+      if (matched) {
+        setSelectedPlan(matched);
+      }
+    }
+  }, [planParam]);
 
   // Prefill user details from auth session
   useEffect(() => {
@@ -71,7 +90,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-stone-900 py-12 px-4 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Breadcrumb / Sanctuary Badge */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold tracking-wide uppercase shadow-xs">
@@ -86,6 +105,24 @@ export default function CheckoutPage() {
           <p className="max-w-2xl mx-auto text-sm sm:text-base text-stone-600 leading-relaxed">
             When either you or your partner activates a Sanctuary Pass, both of your accounts unlock immediately. No recurring auto-debit surprises — recharge only when you want.
           </p>
+
+          {/* User Sign-In Notice if unauthenticated */}
+          {!user && (
+            <div className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-left">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                <span>
+                  <strong>Sign in required to activate:</strong> Passes are bound to your couple account.
+                </span>
+              </div>
+              <Link
+                href={`/login?redirect=${encodeURIComponent("/checkout" + (planParam ? `?plan=${planParam}` : ""))}`}
+                className="btn-journal py-1.5 px-4 text-xs shrink-0 w-full sm:w-auto text-center"
+              >
+                Sign In First ▷
+              </Link>
+            </div>
+          )}
 
           {/* Active Membership Banner if already Plus */}
           {isPlus && (
@@ -115,8 +152,8 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* 3 Main Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 4 Pricing Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {primaryPlans.map((plan) => {
             const isSelected = selectedPlan.id === plan.id;
             return (
@@ -126,29 +163,29 @@ export default function CheckoutPage() {
                   setSelectedPlan(plan);
                   setLastError(null);
                 }}
-                className={`relative cursor-pointer rounded-[24px] p-6 transition-all duration-200 border-2 flex flex-col justify-between ${
+                className={`relative cursor-pointer rounded-[24px] p-5 sm:p-6 transition-all duration-200 border-2 flex flex-col justify-between ${
                   isSelected
-                    ? "border-rose-600 bg-white shadow-xl shadow-rose-900/10 ring-2 ring-rose-600/20"
+                    ? "border-rose-600 bg-white shadow-xl shadow-rose-900/10 ring-2 ring-rose-600/20 scale-[1.02]"
                     : "border-stone-200 bg-white hover:border-stone-300 hover:shadow-md"
                 }`}
               >
                 {/* Badge if present */}
                 {plan.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[10px] font-bold uppercase tracking-wider py-1 px-3 rounded-full shadow-sm whitespace-nowrap">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[9px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow-xs whitespace-nowrap">
                     {plan.badge}
                   </span>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-stone-900 text-base">{plan.name}</h3>
-                      <p className="text-[11px] text-stone-500">
+                      <p className="text-[10px] text-stone-500 font-mono">
                         {plan.durationDays ? `${plan.durationDays} days access` : "Lifetime access"}
                       </p>
                     </div>
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${
                         isSelected ? "border-rose-600 bg-rose-600" : "border-stone-300"
                       }`}
                     >
@@ -156,28 +193,30 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-baseline gap-1.5 pt-1">
-                    <span className="text-3xl sm:text-4xl font-black text-stone-900">
+                  <div className="flex items-baseline gap-1 pt-1">
+                    <span className="text-2xl sm:text-3xl font-black text-stone-900">
                       ₹{plan.amount.toLocaleString("en-IN")}
                     </span>
-                    <span className="text-xs text-stone-500 font-medium">
+                    <span className="text-[11px] text-stone-500 font-medium">
                       {plan.durationDays === 30
                         ? "/ 30 days"
+                        : plan.durationDays === 90
+                        ? " (~₹83/mo)"
                         : plan.durationDays === 365
                         ? " (~₹66/mo)"
-                        : " / one-time"}
+                        : " / lifetime"}
                     </span>
                   </div>
 
                   <p className="text-xs text-stone-600 leading-normal">{plan.subtitle}</p>
 
-                  <div className="pt-3 border-t border-stone-100 space-y-2.5">
-                    <div className="text-[11px] font-bold text-stone-700 uppercase tracking-wider">
+                  <div className="pt-3 border-t border-stone-100 space-y-2">
+                    <div className="text-[10px] font-bold text-stone-700 uppercase tracking-wider">
                       Included for both of you:
                     </div>
-                    <ul className="space-y-2 text-xs text-stone-600">
-                      {plan.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
+                    <ul className="space-y-1.5 text-xs text-stone-600">
+                      {plan.features.slice(0, 4).map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
                           <span>{feat}</span>
                         </li>
@@ -186,9 +225,9 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-5">
                   <div
-                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-center transition-all ${
+                    className={`w-full py-2 px-3 rounded-xl text-xs font-semibold text-center transition-all ${
                       isSelected
                         ? "bg-rose-600 text-white shadow-sm"
                         : "bg-stone-100 text-stone-700 hover:bg-stone-200"
@@ -210,9 +249,9 @@ export default function CheckoutPage() {
                 <CreditCard className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-bold text-stone-900 text-lg">Instant Payment & Activation</h2>
+                <h2 className="font-bold text-stone-900 text-lg">Instant Payment &amp; Activation</h2>
                 <p className="text-xs text-stone-500">
-                  Secured by Cashfree PG with UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards & Netbanking.
+                  Secured by Cashfree with UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards &amp; Netbanking.
                 </p>
               </div>
             </div>
@@ -363,7 +402,7 @@ export default function CheckoutPage() {
           {showDevTest && (
             <div className="p-5 border-t border-stone-100 bg-stone-50/60 space-y-3">
               <p className="text-stone-600">
-                You can run a ₹1 live transaction to verify Cashfree UPI & card webhooks end-to-end.
+                You can run a ₹1 live transaction to verify Cashfree UPI &amp; card webhooks end-to-end.
                 <em> Note: By design, test transactions do not grant production Plus access unless test passes are enabled in configuration.</em>
               </p>
               <div className="flex items-center gap-3">
@@ -399,5 +438,24 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 rounded-full border-4 border-rose-200 border-t-rose-600 animate-spin" />
+            <p className="font-mono text-xs text-stone-500 uppercase tracking-wider">
+              Loading sanctuary passes...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }
