@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import Navigation from "@/components/navigation";
-import { format, parseISO } from "date-fns";
+import { UnpairedPrompt } from "@/components/unpaired-prompt";
 import {
   Plus, X, Loader2, Bookmark, BookOpen, Compass, Search,
   ShieldCheck, Check, ArrowRight, Flag, Calendar,
@@ -22,6 +22,34 @@ import {
   ExploreStory,
   WritingPrompt,
 } from "@/lib/stories-data";
+
+const FULL_MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+const SHORT_MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+function safeFormatDate(val?: any, style: "short" | "full" = "full"): string {
+  if (!val) return "Recent";
+  try {
+    const d = typeof val === "string" || typeof val === "number" ? new Date(val) : val;
+    if (!(d instanceof Date) || isNaN(d.getTime())) return "Recent";
+    if (style === "short") {
+      const hours = d.getHours();
+      const minutes = d.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const h12 = hours % 12 || 12;
+      return `${SHORT_MONTHS[d.getMonth()]} ${d.getDate()}, ${h12}:${minutes} ${ampm}`;
+    }
+    return `${FULL_MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  } catch {
+    return "Recent";
+  }
+}
 
 export default function StoriesPage() {
   const { user, profile, pair, partner, loading } = useAuth();
@@ -414,7 +442,7 @@ export default function StoriesPage() {
   // Filter saved stories by topic
   const filteredSavedStories = savedFilterTopic === "all"
     ? savedStories
-    : savedStories.filter((s) => Array.isArray(s.situation_tags) && s.situation_tags.includes(savedFilterTopic));
+    : savedStories.filter((s) => Array.isArray(s?.situation_tags) && s.situation_tags.includes(savedFilterTopic));
 
   // Loading Screen
   if (loading || fetchingChapters) {
@@ -428,6 +456,16 @@ export default function StoriesPage() {
           </p>
         </div>
       </div>
+    );
+  }
+
+  if (!pair) {
+    return (
+      <UnpairedPrompt
+        title="Stories & Explore"
+        description="Write chapters of your story together, reflect on lessons learned, and explore real advice from couples who navigated the same hurdles."
+        icon={BookOpen}
+      />
     );
   }
 
@@ -615,7 +653,7 @@ export default function StoriesPage() {
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-mono font-bold text-[#3D2432] flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5 text-[#E8527D]" />
-                                <span>{ch.chapter_date ? format(parseISO(ch.chapter_date), "MMMM d, yyyy") : "Recent"}</span>
+                                <span>{safeFormatDate(ch.chapter_date, "full")}</span>
                               </span>
                               <span className="text-[#FFD9E3]">•</span>
                               <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#FFF0F4] text-[#802030] border border-[#FFD9E3]/70 font-semibold">
@@ -666,7 +704,7 @@ export default function StoriesPage() {
                           )}
 
                           {/* Photos if present */}
-                          {ch.photos && ch.photos.length > 0 && (
+                          {Array.isArray(ch.photos) && ch.photos.length > 0 && (
                             <div className="flex flex-wrap gap-2 pt-1">
                               {ch.photos.map((url, pIdx) => (
                                 <img
@@ -853,9 +891,9 @@ export default function StoriesPage() {
                 </div>
               ) : (
                 exploreStories.map((story) => {
-                  const isSaved = savedIds.has(story.id);
-                  const isHelpful = helpfulIds.has(story.id);
-                  const mainTopic = STORY_TOPICS.find((t) => story.situation_tags?.includes(t.id)) || STORY_TOPICS[0];
+                  const isSaved = Boolean(savedIds?.has?.(story.id));
+                  const isHelpful = Boolean(helpfulIds?.has?.(story.id));
+                  const mainTopic = STORY_TOPICS.find((t) => Array.isArray(story?.situation_tags) && story.situation_tags.includes(t.id)) || STORY_TOPICS[0];
 
                   return (
                     <div
@@ -902,7 +940,7 @@ export default function StoriesPage() {
                           {story.title}
                         </h4>
                         <p className="text-xs text-[#3D2432] leading-relaxed line-clamp-3">
-                          {story.body_anonymized}
+                          {story.body_anonymized || story.problem_statement || (story as any).content || ""}
                         </p>
                       </div>
 
@@ -1587,25 +1625,25 @@ export default function StoriesPage() {
                   <button
                     onClick={() => handleToggleHelpful(activeStory.id)}
                     className={`text-xs font-mono px-4 py-2 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
-                      helpfulIds.has(activeStory.id)
+                      Boolean(helpfulIds?.has?.(activeStory.id))
                         ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-bold"
                         : "bg-white text-[#7A4B5D] border-[#FFD9E3] hover:border-[#E8527D]/40"
                     }`}
                   >
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${helpfulIds.has(activeStory.id) ? "text-emerald-600" : "text-stone-400"}`} />
-                    <span>{helpfulIds.has(activeStory.id) ? "Marked helpful (private)" : "Helpful to me"}</span>
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${Boolean(helpfulIds?.has?.(activeStory.id)) ? "text-emerald-600" : "text-stone-400"}`} />
+                    <span>{Boolean(helpfulIds?.has?.(activeStory.id)) ? "Marked helpful (private)" : "Helpful to me"}</span>
                   </button>
 
                   <button
                     onClick={() => handleToggleSave(activeStory.id)}
                     className={`text-xs font-mono px-4 py-2 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
-                      savedIds.has(activeStory.id)
+                      Boolean(savedIds?.has?.(activeStory.id))
                         ? "bg-[#E8527D] text-white border-[#E8527D]"
                         : "bg-white text-[#7A4B5D] border-[#FFD9E3] hover:border-[#E8527D]/40"
                     }`}
                   >
                     <Bookmark className="w-3.5 h-3.5 fill-current" />
-                    <span>{savedIds.has(activeStory.id) ? "Saved" : "Save Story"}</span>
+                    <span>{Boolean(savedIds?.has?.(activeStory.id)) ? "Saved" : "Save Story"}</span>
                   </button>
                 </div>
 
@@ -1826,7 +1864,7 @@ export default function StoriesPage() {
                                 Reason: {rep.reason}
                               </span>
                               <span className="text-stone-500">
-                                {rep.created_at ? format(new Date(rep.created_at), "MMM d, h:mm a") : ""}
+                                {safeFormatDate(rep.created_at, "short")}
                               </span>
                             </div>
 

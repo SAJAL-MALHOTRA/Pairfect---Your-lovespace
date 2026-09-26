@@ -30,13 +30,19 @@ export default function Error({
           </p>
         </div>
 
-        <div className="pt-2">
+        <div className="pt-2 flex items-center justify-center gap-3">
           <button
             onClick={() => reset()}
-            className="btn-primary py-2.5 px-6 text-xs inline-flex items-center gap-2"
+            className="btn-primary py-2.5 px-6 text-xs inline-flex items-center gap-2 cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" /> Try Again
           </button>
+          <a
+            href="/dashboard"
+            className="btn-secondary py-2.5 px-5 text-xs inline-flex items-center gap-2"
+          >
+            Return to Dashboard
+          </a>
         </div>
       </div>
     </div>
