@@ -83,12 +83,21 @@ export async function POST(req: Request) {
         });
 
       if (!uploadErr && uploadData?.path) {
-        const { data: publicUrlData } = admin.storage
+        // The memories bucket is private — use signed URLs instead of public URLs
+        const { data: signedUrlData, error: signedUrlErr } = await admin.storage
           .from("memories")
-          .getPublicUrl(uploadData.path);
+          .createSignedUrl(uploadData.path, 60 * 60 * 24 * 7); // 7 days
 
-        if (publicUrlData?.publicUrl) {
-          finalImageUrl = publicUrlData.publicUrl;
+        if (!signedUrlErr && signedUrlData?.signedUrl) {
+          finalImageUrl = signedUrlData.signedUrl;
+        } else {
+          // Fallback: try public URL (works if bucket is made public later)
+          const { data: publicUrlData } = admin.storage
+            .from("memories")
+            .getPublicUrl(uploadData.path);
+          if (publicUrlData?.publicUrl) {
+            finalImageUrl = publicUrlData.publicUrl;
+          }
         }
       } else if (uploadErr) {
         console.warn("[Booth Upload] Storage bucket upload warning (using data URL fallback):", uploadErr.message);

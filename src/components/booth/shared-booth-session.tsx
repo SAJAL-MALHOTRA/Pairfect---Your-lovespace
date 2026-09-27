@@ -1003,12 +1003,24 @@ export default function SharedBoothSession({
                         src={capturedFrames[idx]}
                         alt={`Shot ${idx + 1}`}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Replace broken image with a visual placeholder
+                          const target = e.currentTarget;
+                          target.style.display = "none";
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = "flex";
+                        }}
                       />
-                    ) : (
-                      <div className="text-[10px] font-mono text-[var(--text-soft)]">
-                        Frame {idx + 1}
-                      </div>
-                    )}
+                    ) : null}
+                    <div
+                      className="absolute inset-0 flex-col items-center justify-center text-center p-2"
+                      style={{ display: capturedFrames[idx] ? "none" : "flex" }}
+                    >
+                      <span className="text-lg mb-1">📷</span>
+                      <span className="text-[10px] font-mono text-[var(--text-soft)]">
+                        {capturedFrames[idx] ? `Shot ${idx + 1}` : `Frame ${idx + 1}`}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

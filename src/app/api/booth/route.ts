@@ -95,7 +95,33 @@ export async function GET(req: Request) {
       .eq("session_id", session.id)
       .order("shot_number", { ascending: true });
 
-    return NextResponse.json({ session, shots: shots || [] });
+    // Re-sign any storage URLs that may be expired or broken (private bucket)
+    const refreshedShots = await Promise.all(
+      (shots || []).map(async (shot: any) => {
+        const url = shot.image_url || "";
+        // Only re-sign Supabase storage URLs (not base64 data URLs)
+        if (url.includes("/storage/v1/") && url.includes("/memories/")) {
+          try {
+            // Extract the storage path after "/memories/"
+            const pathMatch = url.match(/\/memories\/(.+?)(\?|$)/);
+            if (pathMatch?.[1]) {
+              const storagePath = decodeURIComponent(pathMatch[1]);
+              const { data: signedData, error: signErr } = await admin.storage
+                .from("memories")
+                .createSignedUrl(storagePath, 60 * 60 * 24 * 7); // 7 days
+              if (!signErr && signedData?.signedUrl) {
+                return { ...shot, image_url: signedData.signedUrl };
+              }
+            }
+          } catch {
+            // Fall through to return original
+          }
+        }
+        return shot;
+      })
+    );
+
+    return NextResponse.json({ session, shots: refreshedShots });
   } catch (err: any) {
     console.error("[Booth API] GET error:", err);
     return NextResponse.json({ error: err.message || "Failed to fetch session" }, { status: 500 });
