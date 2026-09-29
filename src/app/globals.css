@@ -103,40 +103,40 @@
 
 /* ── Color tokens ── */
 :root {
-  /* Design Tokens — Bright Warm Cozy Pink Palette */
-  --bg:                 #FFF3F6;
-  --bg-secondary:       #FFE6ED;
-  --text:               #3D2432;
-  --text-soft:          #7A4B5D;
+  /* Design Tokens — Warm Cozy Sanctuary Palette with High-Contrast Typography */
+  --bg:                 #FFF4F7;
+  --bg-secondary:       #FFEBF0;
+  --text:               #24141E;
+  --text-soft:          #573846;
   --burgundy:           #E8527D;
   --rose:               #FFB3C6;
-  --border:             #FFD9E3;
+  --border:             #F5CAD6;
   --shadow:             rgba(232, 82, 125, 0.14);
 
   --background:         var(--bg);
   --foreground:         var(--text);
-  --paper-warm:         #FFF8FA;
-  --paper-mid:          #FFEEF3;
-  --paper-deep:         #FFE0E9;
+  --paper-warm:         #FFFFFF;
+  --paper-mid:          #FFF1F5;
+  --paper-deep:         #FFE2E9;
   --ink-dark:           var(--text);
   --ink-mid:            var(--text-soft);
-  --ink-light:          #7A4B5D;
+  --ink-light:          #6E495B;
   --seal-red:           var(--burgundy);
   --seal-red-hover:     #D13D68;
   --washi-warm:         rgba(232, 82, 125, 0.12);
-  --border-warm:        #FFD0DD;
+  --border-warm:        #F5CAD6;
   --border-mid:         var(--border);
   --card-bg:            var(--bg-secondary);
 
   color-scheme: light;
   --primary:            #E8527D;
   --primary-foreground: #ffffff;
-  --muted:              #FFF6F8;
-  --muted-foreground:   #7A4B5D;
-  --border:             #FFD9E3;
+  --muted:              #FFF4F7;
+  --muted-foreground:   #573846;
+  --border:             #F5CAD6;
   --card:               #FFFFFF;
-  --card-foreground:    #3D2432;
-  --input:              #FFD9E3;
+  --card-foreground:    #24141E;
+  --input:              #F5CAD6;
   --ring:               #E8527D;
 }
 
@@ -169,7 +169,7 @@ body {
 }
 
 /* ── Typography helpers ── */
-.font-handwriting { font-family: var(--font-handwriting), cursive; }
+.font-handwriting { font-family: var(--font-handwriting), var(--font-display), Georgia, serif; font-style: italic; }
 .font-display     { font-family: var(--font-display), Georgia, serif; }
 .font-heading     { font-family: var(--font-heading), Georgia, serif; }
 .font-quote       { font-family: var(--font-quote), Georgia, serif; }
@@ -661,35 +661,35 @@ textarea.input-warm {
    ══════════════════════════════════════════════ */
 
 .landing-journal {
-  --bg:               #FFF6F8;
+  --bg:               #FFF4F7;
   --bg-secondary:     #FFEBF0;
-  --text:             #3D2432;
-  --text-soft:        #7A4B5D;
+  --text:             #24141E;
+  --text-soft:        #573846;
   --burgundy:         #E8527D;
   --rose:             #FFB3C6;
-  --border:           #FFD0DD;
+  --border:           #F5CAD6;
   --shadow:           rgba(232, 82, 125, 0.12);
-  --paper-warm:       #FFF8FA;
-  --paper-mid:        #FFEEF3;
-  --paper-deep:       #FFE0E9;
-  --ink-dark:         #3D2432;
-  --ink-mid:          #7A4B5D;
-  --ink-light:        #9E6B7F;
+  --paper-warm:       #FFFFFF;
+  --paper-mid:        #FFF1F5;
+  --paper-deep:       #FFE2E9;
+  --ink-dark:         #24141E;
+  --ink-mid:          #573846;
+  --ink-light:        #6E495B;
   --seal-red:         #E8527D;
   --seal-red-hover:   #D13D68;
   --washi-warm:       rgba(232, 82, 125, 0.12);
-  --border-warm:      #FFD0DD;
-  --border-mid:       #FFD9E3;
-  --card-bg:          #FFF8FA;
+  --border-warm:      #F5CAD6;
+  --border-mid:       #F5CAD6;
+  --card-bg:          #FFFFFF;
   --gold:             #D6B36A;
   --accent:           #E8527D;
-  --background:       #FFF6F8;
-  --foreground:       #3D2432;
+  --background:       #FFF4F7;
+  --foreground:       #24141E;
   --primary:          #E8527D;
   --primary-foreground: #FFFFFF;
 
-  background: #FFF6F8;
-  color: #3D2432;
+  background: #FFF4F7;
+  color: #24141E;
   color-scheme: light;
 }
 
@@ -898,3 +898,192 @@ textarea.input-warm {
   animation: shimmer-sweep 4s ease-in-out infinite;
   animation-delay: 2s;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ANGIE DESIGN PATTERNS: RETRO PHOTOBOOTH, CLOTHESLINE, ROADMAP
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Clothesline swaying physics */
+@keyframes clothesline-sway {
+  0%, 100% {
+    transform: rotate(-1.5deg) translateY(0);
+    transform-origin: top center;
+  }
+  50% {
+    transform: rotate(2deg) translateY(-2px);
+    transform-origin: top center;
+  }
+}
+
+@keyframes clothesline-sway-alt {
+  0%, 100% {
+    transform: rotate(2.5deg) translateY(-1px);
+    transform-origin: top center;
+  }
+  50% {
+    transform: rotate(-1.8deg) translateY(1px);
+    transform-origin: top center;
+  }
+}
+
+.clothesline-strip-1 {
+  animation: clothesline-sway 4.5s ease-in-out infinite;
+}
+.clothesline-strip-2 {
+  animation: clothesline-sway-alt 5.2s ease-in-out infinite;
+}
+.clothesline-strip-3 {
+  animation: clothesline-sway 4.8s ease-in-out infinite 0.6s;
+}
+.clothesline-strip-4 {
+  animation: clothesline-sway-alt 5.6s ease-in-out infinite 0.3s;
+}
+.clothesline-strip-5 {
+  animation: clothesline-sway 5s ease-in-out infinite 1s;
+}
+
+/* Clothesline wire */
+.clothesline-wire {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #D6D3D1 0%, #78716C 15%, #78716C 85%, #D6D3D1 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  z-index: 5;
+}
+
+/* Realistic clothespin / peg */
+.clothesline-peg {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 28px;
+  border-radius: 3px;
+  z-index: 20;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.clothesline-peg::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  right: 2px;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 1px;
+}
+
+/* Partner cursor tag badges (Alex / Blue and Mia / Pink) */
+.partner-cursor {
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.16));
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.partner-cursor-blue .cursor-pointer-arrow {
+  color: #3B82F6;
+}
+.partner-cursor-blue .cursor-pill {
+  background: #3B82F6;
+  color: #FFFFFF;
+}
+
+.partner-cursor-pink .cursor-pointer-arrow {
+  color: #F43F5E;
+}
+.partner-cursor-pink .cursor-pill {
+  background: #F43F5E;
+  color: #FFFFFF;
+}
+
+/* Retro Photobooth Machine Visual Styles */
+.photobooth-cabinet {
+  background: radial-gradient(circle at 50% 20%, #FFF1F4 0%, #FFE4E9 55%, #FCD0D9 100%);
+  border: 4px solid #1C1917;
+  border-radius: 36px;
+  box-shadow: 0 24px 60px -12px rgba(244, 63, 94, 0.22),
+              0 8px 0 #1C1917,
+              0 14px 28px rgba(0, 0, 0, 0.15);
+}
+
+.photobooth-slot {
+  background: #1C1917;
+  height: 12px;
+  border-radius: 6px;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.6), 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Photostrip rolling out keyframe */
+@keyframes strip-rollout {
+  0% {
+    transform: translateY(-80px) rotate(0deg);
+    opacity: 0.3;
+  }
+  60% {
+    transform: translateY(10px) rotate(-1.5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0px) rotate(-1.5deg);
+    opacity: 1;
+  }
+}
+.strip-rollout-anim {
+  animation: strip-rollout 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Fridge magnet 3D button */
+.fridge-magnet {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3),
+              inset 0 2px 3px rgba(255, 255, 255, 0.6),
+              inset 0 -2px 3px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  z-index: 25;
+}
+
+/* Candy Dotted Roadmap Trail */
+.roadmap-trail {
+  stroke-dasharray: 8 8;
+  animation: roadmap-flow 30s linear infinite;
+}
+@keyframes roadmap-flow {
+  to {
+    stroke-dashoffset: -320;
+  }
+}
+
+/* Phone Bezel Mockup styling */
+.phone-chassis {
+  position: relative;
+  border: 7px solid #1C1917;
+  border-radius: 44px;
+  background: #FFFFFF;
+  box-shadow: 0 24px 48px -12px rgba(28, 25, 23, 0.18),
+              0 0 0 1px rgba(28, 25, 23, 0.08),
+              inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.phone-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 18px;
+  background: #1C1917;
+  border-radius: 12px;
+  z-index: 30;
+}
+

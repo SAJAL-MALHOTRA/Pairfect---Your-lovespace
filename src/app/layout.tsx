@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Caveat } from "next/font/google";
+import { Inter, Playfair_Display, Lora } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import AmbientHearts from "@/components/ambient-hearts";
-import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
@@ -22,10 +21,11 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
-const caveat = Caveat({
+const lora = Lora({
   subsets: ["latin"],
   variable: "--font-handwriting",
-  weight: ["400", "700"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -54,7 +54,7 @@ export default function RootLayout({
       lang="en"
       data-theme="light"
       style={{ colorScheme: "light" }}
-      className={`${inter.variable} ${playfair.variable} ${caveat.variable} h-full antialiased`}
+      className={`${inter.variable} ${playfair.variable} ${lora.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider>
@@ -63,7 +63,6 @@ export default function RootLayout({
             <NotificationProvider>{children}</NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
-        <Analytics />
         <GoogleAnalytics gaId="G-NPQ65ZKZ0T" />
       </body>
     </html>

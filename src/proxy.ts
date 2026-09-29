@@ -62,15 +62,36 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/avatars");
 
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
+  const isLandingPage = path === "/";
 
   // Fast-exit for public pages without incurring an external auth network roundtrip
-  if (!isProtectedRoute && !isAuthRoute) {
+  if (!isProtectedRoute && !isAuthRoute && !isLandingPage) {
+    return supabaseResponse;
+  }
+
+  // Only check auth if there's a Supabase session cookie present (avoid unnecessary roundtrips)
+  const hasSessionCookie = request.cookies.getAll().some(
+    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token")
+  );
+
+  // Landing page: if no session cookie, fast-exit (serve static page from CDN)
+  if (isLandingPage && !hasSessionCookie) {
+    return supabaseResponse;
+  }
+
+  // Only call getUser() when we actually need to check auth
+  if (!hasSessionCookie && !isProtectedRoute) {
     return supabaseResponse;
   }
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Landing page: logged-in users get redirected to dashboard
+  if (isLandingPage && user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   if (!user && isProtectedRoute) {
     const redirectUrl = new URL("/login", request.url);

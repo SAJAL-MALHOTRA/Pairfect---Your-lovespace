@@ -34,9 +34,20 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   async headers() {
     return [
+      // Security headers for all routes
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      // Immutable cache for static assets in /public (images, video, fonts)
+      {
+        source: "/:all*(svg|jpg|jpeg|png|gif|ico|webp|mp4|webm|woff|woff2|ttf|eot)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
       },
     ];
   },

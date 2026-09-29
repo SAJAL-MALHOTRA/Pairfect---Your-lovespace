@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import CheckoutPage from "@/app/checkout/page";
 
-export const dynamic = "force-dynamic";
 
 export default function PricingPage() {
   return (
