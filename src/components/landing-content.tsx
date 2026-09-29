@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const EASE_CUBIC = [0.22, 0.61, 0.36, 1] as const;
 
 /* ─── Audio Sound Effects Engine ─── */
-function playTactileSound(type: "tap" | "paper" | "click" | "pop" | "shutter" | "spin" = "tap", enabled: boolean = true) {
+function playTactileSound(type: "tap" | "paper" | "click" | "pop" | "shutter" | "spin" | "crack" | "seal" = "tap", enabled: boolean = true) {
   if (!enabled || typeof window === "undefined") return;
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -28,7 +28,23 @@ function playTactileSound(type: "tap" | "paper" | "click" | "pop" | "shutter" | 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    if (type === "shutter") {
+    if (type === "crack") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(860, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.1);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } else if (type === "seal") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(260, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.16);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      osc.start(now);
+      osc.stop(now + 0.16);
+    } else if (type === "shutter") {
       osc.type = "triangle";
       osc.frequency.setValueAtTime(620, now);
       osc.frequency.exponentialRampToValueAtTime(70, now + 0.09);
@@ -142,7 +158,7 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
   return (
     <div className="relative w-full max-w-[440px] mx-auto select-none">
       {/* Photobooth Machine Enclosure */}
-      <div className="photobooth-cabinet p-6 sm:p-7 relative overflow-visible transition-all duration-300">
+      <div className="photobooth-cabinet p-4 sm:p-7 relative overflow-visible transition-all duration-300">
         
         {/* Shutter Flash Screen Overlay */}
         <AnimatePresence>
@@ -527,8 +543,11 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
     { id: 3, emoji: "🥺", x: 70 },
   ]);
 
-  /* Wax Letter state */
+  /* Wax Letter state & animations */
   const [isLetterUnsealed, setIsLetterUnsealed] = useState(false);
+  const [isWaxBreaking, setIsWaxBreaking] = useState(false);
+  const [isWaxPacking, setIsWaxPacking] = useState(false);
+  const [waxShards, setWaxShards] = useState<{ id: number; x: number; y: number; rotate: number; size: number }[]>([]);
 
   /* Quiz auto-sequence */
   useEffect(() => {
@@ -587,6 +606,49 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
     playTactileSound("pop", soundEnabled);
     const newId = Date.now();
     setFloatingEmojis((prev) => [...prev.slice(-6), { id: newId, emoji, x: 15 + Math.random() * 70 }]);
+  };
+
+  /* Break / Pack Wax Letter Seal */
+  const handleToggleSeal = () => {
+    if (isWaxBreaking || isWaxPacking) return;
+
+    if (!isLetterUnsealed) {
+      // BREAK SEAL ANIMATION
+      setIsWaxBreaking(true);
+      playTactileSound("crack", soundEnabled);
+
+      const shards = Array.from({ length: 16 }).map((_, i) => {
+        const angle = (i / 16) * 2 * Math.PI + (Math.random() - 0.5) * 0.35;
+        const dist = 50 + Math.random() * 60;
+        return {
+          id: Date.now() + i,
+          x: Math.cos(angle) * dist,
+          y: Math.sin(angle) * dist,
+          rotate: (Math.random() - 0.5) * 360,
+          size: 6 + Math.floor(Math.random() * 8),
+        };
+      });
+      setWaxShards(shards);
+
+      setTimeout(() => {
+        setIsLetterUnsealed(true);
+        setIsWaxBreaking(false);
+        setWaxShards([]);
+        playTactileSound("paper", soundEnabled);
+      }, 550);
+    } else {
+      // PACK & RESEAL CAPSULE ANIMATION
+      setIsWaxPacking(true);
+      playTactileSound("paper", soundEnabled);
+
+      setTimeout(() => {
+        setIsLetterUnsealed(false);
+        playTactileSound("seal", soundEnabled);
+        setTimeout(() => {
+          setIsWaxPacking(false);
+        }, 500);
+      }, 400);
+    }
   };
 
   return (
@@ -659,7 +721,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
         </div>
 
         {/* Dynamic Display Container */}
-        <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-[#FFF5F8] via-white to-[#FFF9FB] border-2 border-rose-200 shadow-xl min-h-[440px] flex items-center justify-center">
+        <div className="p-4 sm:p-10 rounded-3xl bg-gradient-to-b from-[#FFF5F8] via-white to-[#FFF9FB] border-2 border-rose-200 shadow-xl min-h-[440px] flex items-center justify-center">
           
           {/* TAB 1: DUAL PHONE QUIZ DUEL */}
           {activeTab === "quiz" && (
@@ -939,7 +1001,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
             </motion.div>
           )}
 
-          {/* TAB 4: WAX SEALED LOVE LETTER */}
+          {/* TAB 4: WAX SEALED LOVE LETTER & PACK ANIMATION */}
           {activeTab === "letter" && (
             <motion.div
               key="letter"
@@ -947,7 +1009,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.3 }}
-              className="w-full max-w-[520px] text-center space-y-6"
+              className="w-full max-w-[540px] text-center space-y-6"
             >
               <div className="space-y-1">
                 <span className="text-[11px] font-mono font-bold text-rose-800 uppercase tracking-wider">
@@ -958,48 +1020,147 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                 </h3>
               </div>
 
-              {/* Parchment Letter Mockup with 3D Wax Seal */}
-              <div className="relative p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border-2 border-amber-200/80 shadow-2xl space-y-4 text-left">
-                <div className="flex justify-between items-center border-b border-amber-200/60 pb-3">
+              {/* Parchment Letter Mockup with 3D Wax Seal & Pack Animation */}
+              <div className="relative p-5 sm:p-8 rounded-3xl bg-[#FDFBF7] border-2 border-amber-200/80 shadow-2xl space-y-4 text-left overflow-hidden">
+                {/* Envelope Flap Accent Border */}
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-200 via-rose-300 to-amber-200 opacity-70" />
+
+                {/* Mobile Responsive Header Wrapping */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/60 pb-3">
                   <div className="flex items-center gap-2">
                     <Image src="/logo-book.png" alt="Logo" width={18} height={18} className="rounded-xs" />
-                    <span className="text-xs font-mono font-bold text-stone-600 uppercase">
+                    <span className="text-xs font-mono font-bold text-stone-700 uppercase tracking-wide">
                       From Alex to Mia · 1,420 km
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">
-                    Anniversary Capsule 🔒
+                  <span className="self-start sm:self-auto text-[10px] font-mono bg-rose-100 text-rose-800 font-bold px-2.5 py-0.5 rounded-full border border-rose-200 shadow-2xs">
+                    {isLetterUnsealed ? "Anniversary Capsule 💌" : "Anniversary Capsule 🔒"}
                   </span>
                 </div>
 
-                <div className="space-y-2 py-2">
-                  <p className="font-sans font-bold text-sm text-stone-900">
-                    To the love of my life,
-                  </p>
-                  <p className="font-sans text-sm leading-relaxed text-stone-700">
-                    {isLetterUnsealed
-                      ? "“I can't wait until airports are just places we visit for vacations, not goodbyes. Thank you for making distance feel small. Happy Anniversary my favorite human.”"
-                      : "“Even when we're living in different cities, you make my whole world feel warm. Promise me you won't peek until our date...”"}
-                  </p>
-                </div>
+                {/* Content: Sealed vs Unsealed */}
+                <AnimatePresence mode="wait">
+                  {!isLetterUnsealed ? (
+                    <motion.div
+                      key="sealed"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25 }}
+                      className="space-y-4 py-2"
+                    >
+                      <div className="space-y-2">
+                        <p className="font-sans font-bold text-sm text-stone-900">
+                          To the love of my life,
+                        </p>
+                        <p className="font-sans text-sm leading-relaxed text-stone-600 italic">
+                          &ldquo;Even when we&apos;re living in different cities, you make my whole world feel warm. Promise me you won&apos;t peek until our date...&rdquo;
+                        </p>
+                      </div>
 
-                {/* Wax Seal Stamp (Clickable to unseal) */}
-                <div className="pt-2 text-center">
-                  <button
-                    onClick={() => {
-                      setIsLetterUnsealed(!isLetterUnsealed);
-                      playTactileSound("paper", soundEnabled);
-                    }}
-                    className="relative inline-flex flex-col items-center group cursor-pointer"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-rose-700 shadow-xl ring-4 ring-rose-900/30 border-2 border-rose-400 flex items-center justify-center text-rose-100 text-lg font-black group-hover:scale-105 transition-transform">
-                      ♥
-                    </div>
-                    <span className="text-[10px] font-mono font-bold text-rose-800 mt-2 uppercase tracking-wider group-hover:underline">
-                      {isLetterUnsealed ? "✓ Unsealed (Click to Seal)" : "Tap Seal to Break Wax ▷"}
-                    </span>
-                  </button>
-                </div>
+                      {/* 3D Wax Seal Button with Break Particles */}
+                      <div className="pt-2 pb-1 text-center relative flex flex-col items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={handleToggleSeal}
+                          disabled={isWaxBreaking || isWaxPacking}
+                          aria-label="Break wax seal and open letter"
+                          className="relative inline-flex flex-col items-center group cursor-pointer active:scale-95 transition-transform"
+                        >
+                          {/* Radial Shards Bursting on Break */}
+                          {isWaxBreaking && waxShards.map((s) => (
+                            <motion.span
+                              key={s.id}
+                              initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
+                              animate={{ x: s.x, y: s.y, scale: 0.2, opacity: 0, rotate: s.rotate }}
+                              transition={{ duration: 0.5, ease: "easeOut" }}
+                              className="absolute rounded-full bg-[#B31D3F] pointer-events-none z-30"
+                              style={{ width: `${s.size}px`, height: `${s.size}px` }}
+                            />
+                          ))}
+
+                          {/* 3D Wax Stamp with Rich Metallic Ring and Heart */}
+                          <motion.div
+                            animate={
+                              isWaxBreaking
+                                ? { scale: [1, 1.25, 0], opacity: [1, 1, 0] }
+                                : isWaxPacking
+                                ? { scale: [0, 1.15, 1], opacity: [0, 1, 1] }
+                                : { scale: 1, opacity: 1 }
+                            }
+                            transition={{ duration: 0.45 }}
+                            className="w-16 h-16 rounded-full bg-gradient-to-br from-[#C41C44] via-[#941332] to-[#5C0A1E] shadow-[0_10px_25px_rgba(148,19,50,0.45)] ring-4 ring-[#5C0A1E]/30 border-2 border-rose-300/60 flex items-center justify-center text-rose-100 text-xl font-black group-hover:scale-105 transition-transform select-none relative"
+                          >
+                            <span className="drop-shadow-sm select-none">♥</span>
+                            <div className="absolute top-1.5 left-2.5 w-4 h-2 rounded-full bg-white/35 blur-[1px] transform -rotate-45 pointer-events-none" />
+                          </motion.div>
+
+                          <span className="text-[10px] font-mono font-bold text-rose-800 mt-2.5 uppercase tracking-wider group-hover:text-rose-900 group-hover:underline flex items-center gap-1">
+                            {isWaxBreaking ? "Breaking Seal..." : "Tap Seal to Break Wax ▷"}
+                          </span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="unsealed"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.4, ease: EASE_CUBIC }}
+                      className="space-y-4 py-2"
+                    >
+                      {/* Full Unsealed Letter Note */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-white/90 border border-amber-300/70 shadow-sm space-y-3">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-stone-500">
+                          <span className="font-bold text-stone-700">To Mia, with all my heart</span>
+                          <span>Oct 14 · 11:42 PM</span>
+                        </div>
+
+                        <p className="font-sans text-sm sm:text-base leading-relaxed text-stone-800 font-medium">
+                          &ldquo;I can&apos;t wait until airports are just places we visit for vacations, not goodbyes. Thank you for making distance feel small. Happy Anniversary my favorite human.&rdquo;
+                        </p>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-amber-100">
+                          <span className="font-display italic text-sm text-rose-700 font-bold">Forever yours, Alex ♡</span>
+                          <span className="text-[10px] font-mono text-stone-400">Verified Capsule #2026</span>
+                        </div>
+                      </div>
+
+                      {/* Attached Polaroid Keepsake */}
+                      <div className="flex flex-col sm:flex-row items-center gap-3 p-3 rounded-2xl bg-[#FFF8FA] border border-rose-200">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 border-white shadow-sm shrink-0 bg-stone-100">
+                          <Image
+                            src="/booth/monkey-heart.jpg"
+                            alt="Alex & Mia"
+                            width={80}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="text-left space-y-1">
+                          <span className="text-[10px] font-mono font-bold text-rose-700 uppercase">Attached Memory Snapshot</span>
+                          <p className="text-xs font-sans text-stone-700 font-medium">
+                            &ldquo;Our favorite moment from the weekend we spent together.&rdquo;
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Pack & Reseal Capsule Button */}
+                      <div className="pt-2 text-center">
+                        <button
+                          type="button"
+                          onClick={handleToggleSeal}
+                          disabled={isWaxBreaking || isWaxPacking}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-rose-700 active:scale-95 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer group"
+                        >
+                          <Lock className="w-3.5 h-3.5 text-rose-300 group-hover:scale-110 transition-transform" />
+                          <span>{isWaxPacking ? "Packing Capsule..." : "Pack & Reseal Capsule ▷"}</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="pt-3 border-t border-amber-200/60 text-center text-[10px] font-mono text-stone-500">
                   Permanently archived in your shared vault forever
@@ -1996,7 +2157,7 @@ function JoinRoomAndFaqSection() {
         </div>
 
         <form onSubmit={handleJoin} className="space-y-4">
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2">
             {[0, 1, 2, 3, 4, 5].map((idx) => (
               <input
                 key={idx}
@@ -2005,7 +2166,7 @@ function JoinRoomAndFaqSection() {
                 maxLength={1}
                 value={joinCode[idx]}
                 onChange={(e) => handleCodeChange(idx, e.target.value)}
-                className="w-10 sm:w-12 h-12 sm:h-14 text-center text-lg sm:text-xl font-mono font-black uppercase rounded-xl border-2 border-stone-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
+                className="w-9 sm:w-12 h-11 sm:h-14 text-center text-base sm:text-xl font-mono font-black uppercase rounded-xl border-2 border-stone-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
               />
             ))}
           </div>
@@ -2082,11 +2243,11 @@ export default function LandingContent() {
 
       {/* ── STICKY NAVBAR MATCHING DESIGN SPEC ── */}
       <header className="w-full bg-[#FFF5F7] border-b border-[#F7D8E0] sticky top-0 z-40 backdrop-blur-md">
-        <div className="max-w-[1360px] mx-auto px-4 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between">
+        <div className="max-w-[1360px] mx-auto px-3 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between">
           
           {/* Brand Logo: circular icon wrapper with pink border + italic pairfect + pink dot */}
-          <Link href="/" className="flex items-center gap-2.5 group select-none shrink-0">
-            <div className="w-8 h-8 rounded-full bg-white border border-[#F5C2CC] flex items-center justify-center p-1 shadow-2xs group-hover:scale-105 transition-transform">
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group select-none shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-[#F5C2CC] flex items-center justify-center p-1 shadow-2xs group-hover:scale-105 transition-transform">
               <Image
                 src="/logo-book.png"
                 alt="Pairfect"
@@ -2097,10 +2258,10 @@ export default function LandingContent() {
               />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-display italic text-2xl font-bold tracking-tight text-[#2C1E1A]">
+              <span className="font-display italic text-xl sm:text-2xl font-bold tracking-tight text-[#2C1E1A]">
                 pairfect
               </span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#FF8DA1] inline-block shrink-0" />
+              <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#FF8DA1] inline-block shrink-0" />
             </div>
           </Link>
 
@@ -2115,37 +2276,38 @@ export default function LandingContent() {
           </nav>
 
           {/* Right CTA & Sound Control */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={() => {
                 setSoundEnabled(!soundEnabled);
                 playTactileSound("pop", true);
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#F5C2CC] bg-white/70 hover:bg-white text-[10px] sm:text-[11px] font-mono font-medium text-[#7A5B64] hover:text-[#2C1E1A] uppercase tracking-wider transition-all cursor-pointer shadow-2xs"
+              className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-full border border-[#F5C2CC] bg-white/70 hover:bg-white text-[10px] sm:text-[11px] font-mono font-medium text-[#7A5B64] hover:text-[#2C1E1A] uppercase tracking-wider transition-all cursor-pointer shadow-2xs"
               aria-label="Toggle soundscapes"
+              title={soundEnabled ? "Soundscapes ON" : "Soundscapes OFF"}
             >
               {soundEnabled ? (
                 <>
                   <Volume2 className="w-3.5 h-3.5 text-[#D2436D]" />
-                  <span>SOUNDSCAPES ON</span>
+                  <span className="hidden sm:inline">SOUNDSCAPES ON</span>
                 </>
               ) : (
                 <>
                   <VolumeX className="w-3.5 h-3.5 text-[#A0707D]" />
-                  <span>SOUNDSCAPES OFF</span>
+                  <span className="hidden sm:inline">SOUNDSCAPES OFF</span>
                 </>
               )}
             </button>
 
             <Link
               href="/login"
-              className="text-xs font-mono font-semibold uppercase tracking-wider text-[#7A5B64] hover:text-[#2C1E1A] transition-colors px-1"
+              className="hidden sm:inline-block text-xs font-mono font-semibold uppercase tracking-wider text-[#7A5B64] hover:text-[#2C1E1A] transition-colors px-1"
             >
               SIGN IN
             </Link>
             <Link
               href="/onboarding"
-              className="px-5 py-2.5 rounded-2xl bg-[#E8557F] hover:bg-[#D43D69] active:scale-98 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-[0_4px_14px_rgba(232,85,127,0.35)] hover:shadow-[0_6px_20px_rgba(232,85,127,0.45)] transition-all flex items-center gap-1 cursor-pointer"
+              className="px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#E8557F] hover:bg-[#D43D69] active:scale-98 text-white font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider shadow-[0_4px_14px_rgba(232,85,127,0.35)] hover:shadow-[0_6px_20px_rgba(232,85,127,0.45)] transition-all flex items-center gap-1 cursor-pointer shrink-0"
             >
               <span>OPEN ROOM</span>
               <span className="text-[10px]">▷</span>
