@@ -155,9 +155,9 @@ export function CassetteJewelCase({
                         >
                           {song.title}
                         </span>
-                        {song.artist && (
+                        {song.artist && song.artist.trim().toLowerCase() !== "unknown artist" && (
                           <span className="text-[11px] font-sans text-zinc-500 truncate">
-                            {song.artist}
+                            · {song.artist}
                           </span>
                         )}
                       </div>

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         data: {
           videoId,
           title: data.title || "YouTube Track",
-          artist: data.author_name || "Unknown Artist",
+          artist: data.author_name || "",
           thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
           url: `https://www.youtube.com/watch?v=${videoId}`,
         },

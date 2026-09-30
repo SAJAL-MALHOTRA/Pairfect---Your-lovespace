@@ -292,9 +292,11 @@ export function RetroAudioPlayer({
               <h4 className="font-sans font-semibold text-zinc-900 text-sm sm:text-base truncate leading-snug">
                 {currentTrack.title}
               </h4>
-              <p className="font-sans text-xs sm:text-sm text-zinc-500 truncate mt-0.5">
-                {currentTrack.artist || "Unknown Artist"}
-              </p>
+              {currentTrack.artist && currentTrack.artist.toLowerCase() !== "unknown artist" && (
+                <p className="font-sans text-xs sm:text-sm text-zinc-500 truncate mt-0.5">
+                  {currentTrack.artist}
+                </p>
+              )}
             </div>
 
             {currentTrack.youtube_url && (

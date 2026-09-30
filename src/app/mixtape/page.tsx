@@ -189,7 +189,7 @@ function MixtapeContent() {
           setDraftTracks(
             (songs || []).map((s: any) => ({
               title: s.title,
-              artist: s.artist || "",
+              artist: (s.artist || "").toLowerCase() === "unknown artist" ? "" : (s.artist || ""),
               youtube_url: s.youtube_url || "",
               thumbnail_url: s.story || "",
             }))
@@ -233,7 +233,7 @@ function MixtapeContent() {
 
     const newTrack: DraftTrack = {
       title: manualTitle.trim() || "Untitled Track",
-      artist: manualArtist.trim() || "Unknown Artist",
+      artist: manualArtist.trim().toLowerCase() === "unknown artist" ? "" : manualArtist.trim(),
       youtube_url: youtubeInput.trim(),
       thumbnail_url: thumb,
     };
@@ -344,7 +344,7 @@ function MixtapeContent() {
     setDraftTracks(
       (tape.songs || []).map((s) => ({
         title: s.title,
-        artist: s.artist || "",
+        artist: (s.artist || "").toLowerCase() === "unknown artist" ? "" : (s.artist || ""),
         youtube_url: s.youtube_url || "",
         thumbnail_url: s.story || "",
       }))
@@ -752,7 +752,9 @@ function MixtapeContent() {
                       <div className="flex items-center gap-2 truncate flex-1 min-w-0">
                         <span className="font-mono text-zinc-400 font-bold">{idx + 1}.</span>
                         <span className="font-medium text-zinc-800 truncate">{tr.title}</span>
-                        {tr.artist && <span className="text-zinc-400 truncate">({tr.artist})</span>}
+                        {tr.artist && tr.artist.toLowerCase() !== "unknown artist" && (
+                          <span className="text-zinc-400 truncate">({tr.artist})</span>
+                        )}
                       </div>
                       <button
                         onClick={() => handleRemoveTrack(idx)}
