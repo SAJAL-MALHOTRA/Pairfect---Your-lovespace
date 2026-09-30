@@ -35,8 +35,9 @@ export async function proxy(request: NextRequest) {
   );
 
   const path = request.nextUrl.pathname;
+  const isSharedLetter = path.startsWith("/love-letter") && (request.nextUrl.searchParams.has("id") || request.nextUrl.searchParams.has("share"));
 
-  const isProtectedRoute =
+  const isProtectedRoute = !isSharedLetter && (
     path.startsWith("/dashboard") ||
     path.startsWith("/checkin") ||
     path.startsWith("/history") ||
@@ -58,7 +59,8 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/calendar") ||
     path.startsWith("/onboarding") ||
     path.startsWith("/quiz") ||
-    path.startsWith("/avatars");
+    path.startsWith("/avatars")
+  );
 
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
   const isLandingPage = path === "/";
