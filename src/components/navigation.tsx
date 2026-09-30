@@ -24,11 +24,13 @@ import {
   Flame,
   BookOpen,
   Flower2,
+  Radio,
 } from "lucide-react";
 
 /* Navigation Items */
 const SIDEBAR_ITEMS = [
   { href: "/dashboard",    icon: Home,     label: "HOME",      title: "Home",       subtitle: "Return to your story →" },
+  { href: "/whisper",      icon: Radio,    label: "WHISPER",   title: "Whisper Radio", subtitle: "Tune in to voice notes →" },
   { href: "/bouquet",      icon: Flower2,  label: "BOUQUET",   title: "Bouquets",   subtitle: "Handpick botanical blooms →" },
   { href: "/love-letter",  icon: Mail,     label: "LETTERS",   title: "Letters",    subtitle: "Sealed with wax, kept forever →" },
   { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Four frames of us →" },

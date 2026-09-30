@@ -7,7 +7,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import {
   Camera, HelpCircle, Heart, Brain, MessageSquare,
   Scale, Flower2, Gift, Mail, Timer, Music, BookOpen,
-  Sparkles, ArrowRight, Check, Disc
+  Sparkles, ArrowRight, Check, Disc, Radio
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -133,6 +133,18 @@ const REAL_EXPERIENCES: RealExperienceItem[] = [
     iconBg: "bg-red-50",
     iconColor: "text-[var(--burgundy)]",
     accentBorder: "hover:border-[var(--burgundy)]/40",
+  },
+  {
+    id: "whisper-radio",
+    title: "Whisper Radio",
+    badge: "VOICE NOTES",
+    badgeType: "ritual",
+    desc: "Broadcast intimate voice notes across private FM frequencies. Tune the vintage radio dial to hear your loved one.",
+    href: "/whisper",
+    icon: Radio,
+    iconBg: "bg-teal-50",
+    iconColor: "text-teal-700",
+    accentBorder: "hover:border-teal-300",
   },
   {
     id: "focus-session",

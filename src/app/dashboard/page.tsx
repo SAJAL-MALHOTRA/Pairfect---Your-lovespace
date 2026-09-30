@@ -5,7 +5,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset, Flower2 } from "lucide-react";
+import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset, Flower2, Radio } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 import PushOptInBanner from "@/components/push-opt-in-banner";
@@ -294,6 +294,8 @@ export default function DashboardPage() {
   const [latestGratitude, setLatestGratitude] = useState<any>(null);
   const [mixtapeCount, setMixtapeCount] = useState(0);
   const [latestMixtape, setLatestMixtape] = useState<any>(null);
+  const [whisperCount, setWhisperCount] = useState(0);
+  const [latestWhisper, setLatestWhisper] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const { refreshSession } = useAuth();
@@ -347,6 +349,17 @@ export default function DashboardPage() {
         if (data.latestMixtape) {
           setLatestMixtape(data.latestMixtape);
         }
+
+        fetch(`/api/whisper?pairId=${pair.id}`)
+          .then((r) => r.json())
+          .then((whisperList) => {
+            if (cancelled) return;
+            if (Array.isArray(whisperList) && whisperList.length > 0) {
+              setLatestWhisper(whisperList[0]);
+              setWhisperCount(whisperList.length);
+            }
+          })
+          .catch(() => {});
 
         if (data.partnerMood) {
           setPartnerFeeling(`feeling ${data.partnerMood}`);
@@ -1143,6 +1156,53 @@ export default function DashboardPage() {
               <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
                 <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No mixtapes created yet</p>
                 <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Create your first tape →</p>
+              </div>
+            )}
+          </div>
+        </Link>
+
+        {/* ─── WHISPER RADIO WIDGET (RETRO VOICE BROADCAST) ─── */}
+        <Link
+          href="/whisper"
+          className="block p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
+                <Radio className="w-3.5 h-3.5 text-teal-700" />
+                <span>Whisper Radio</span>
+              </div>
+              <h3 className="font-heading font-bold text-2xl text-[var(--text)] leading-none pt-0.5">
+                {latestWhisper ? `${latestWhisper.frequency.toFixed(1)} FM: ${latestWhisper.title}` : "Private Airwaves ♡"}
+              </h3>
+            </div>
+            <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-800">
+              {whisperCount > 0 ? `${whisperCount} Note${whisperCount !== 1 ? "s" : ""}` : "Tune In"}
+            </span>
+          </div>
+
+          <div className="pt-3 mt-3 border-t border-[var(--border)]">
+            {latestWhisper ? (
+              <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0">
+                    <Radio className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-heading font-bold text-sm text-[var(--text)] truncate">{latestWhisper.title}</p>
+                    <p className="text-[9px] font-mono text-[var(--text-soft)]">
+                      From {latestWhisper.sender_name} • {new Date(latestWhisper.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
+                  </div>
+                </div>
+                <span className="btn-primary py-1.5 px-3 text-[10px] font-sans flex-shrink-0">
+                  Listen →
+                </span>
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
+                <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No voice notes dropped yet</p>
+                <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Broadcast your first whisper →</p>
               </div>
             )}
           </div>
