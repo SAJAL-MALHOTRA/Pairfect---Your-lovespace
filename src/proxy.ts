@@ -54,7 +54,6 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/riddle") ||
     path.startsWith("/iq-duel") ||
     path.startsWith("/vibe-judge") ||
-    path.startsWith("/mixtape") ||
     path.startsWith("/focus") ||
     path.startsWith("/calendar") ||
     path.startsWith("/onboarding") ||

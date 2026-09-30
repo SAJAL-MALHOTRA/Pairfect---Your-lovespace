@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Lora } from "next/font/google";
+import { Inter, Playfair_Display, Lora, Silkscreen, Caveat } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
@@ -29,6 +29,20 @@ const lora = Lora({
   display: "swap",
 });
 
+const silkscreen = Silkscreen({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-pixel",
+  display: "swap",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-script",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Pairfect — Private Relationship Sanctuary",
   description: "A private digital sanctuary & living archive for two.",
@@ -54,7 +68,7 @@ export default function RootLayout({
       lang="en"
       data-theme="light"
       style={{ colorScheme: "light" }}
-      className={`${inter.variable} ${playfair.variable} ${lora.variable} h-full antialiased`}
+      className={`${inter.variable} ${playfair.variable} ${lora.variable} ${silkscreen.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider>

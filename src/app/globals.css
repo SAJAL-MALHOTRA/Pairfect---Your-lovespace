@@ -1087,3 +1087,12 @@ textarea.input-warm {
   z-index: 30;
 }
 
+/* ── Retro Mixtape Fonts ── */
+.font-pixel {
+  font-family: var(--font-pixel), "Courier New", monospace;
+}
+
+.font-script {
+  font-family: var(--font-script), "Comic Sans MS", cursive;
+}
+
