@@ -48,7 +48,7 @@ export function CassetteJewelCase({
           onClick={onPeekingNoteClick}
           className="absolute -top-12 left-6 right-6 h-20 rounded-t-xl bg-[#FAF6EE] border-t-2 border-l-2 border-r-2 border-amber-200/80 shadow-md p-3 overflow-hidden cursor-pointer transition-transform hover:-translate-y-2"
           style={{
-            backgroundImage: "repeating-linear-gradient(transparent, transparent 19px, #BAE6FD 19px, #BAE6FD 20px)",
+            backgroundImage: "repeating-linear-gradient(transparent, transparent 19px, #F0DCE2 19px, #F0DCE2 20px)",
           }}
           title="Click to view note"
         >
@@ -125,7 +125,7 @@ export function CassetteJewelCase({
           </div>
 
           {/* Ruled Song Lines (Notebook Style) */}
-          <div className="px-5 py-3 divide-y divide-blue-200/60 bg-[#FFFDF9]">
+          <div className="px-5 py-3 divide-y divide-[#F5CAD6]/70 bg-[#FFFDF9]">
             {slots.map((song, idx) => {
               const isPlaying = activeSongIndex === idx;
 

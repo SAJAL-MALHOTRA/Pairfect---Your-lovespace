@@ -45,12 +45,12 @@ export function NotebookNoteCard({
       {/* Red / Salmon Vertical Margin Line */}
       <div className="absolute top-0 bottom-0 left-12 w-0.5 bg-red-300/80 pointer-events-none z-10" />
 
-      {/* Blue Ruled Lines Background */}
+      {/* Ruled Lines Background */}
       <div
         className="absolute inset-0 pl-14 pr-5 pt-5 pb-12 pointer-events-none"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(transparent, transparent 33px, #CDE2F5 33px, #CDE2F5 34px)",
+            "repeating-linear-gradient(transparent, transparent 33px, #F0DCE2 33px, #F0DCE2 34px)",
           backgroundPositionY: "24px",
         }}
       />

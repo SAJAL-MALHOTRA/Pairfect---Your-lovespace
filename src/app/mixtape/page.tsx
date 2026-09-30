@@ -382,22 +382,22 @@ function MixtapeContent() {
   }, [draftTracks]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#A5C5D8] via-[#B4D0DF] to-[#C7DDE9] text-zinc-900 pb-36 sm:pb-40">
+    <div className="min-h-screen bg-gradient-to-b from-[#FFF5F8] via-[#FFEBF1] to-[#FFF0F4] text-[var(--text)] pb-36 sm:pb-40 paper-grain">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 backdrop-blur-md bg-white/20 border-b border-white/30 px-4 py-3 sm:px-8">
+      <header className="sticky top-0 z-30 backdrop-blur-md bg-white/75 border-b border-[var(--border)] px-4 py-3 sm:px-8">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
-              className="p-2 rounded-full bg-white/80 hover:bg-white text-zinc-700 shadow-xs border border-white/60 transition-transform active:scale-95"
+              className="p-2 rounded-full bg-white/90 hover:bg-white text-[var(--text)] shadow-xs border border-[var(--border)] transition-transform active:scale-95"
               title="Back to Dashboard"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <span className="font-pixel text-[11px] sm:text-xs tracking-wider bg-zinc-900 text-white px-2.5 py-1 rounded shadow-sm">
+            <span className="font-pixel text-[11px] sm:text-xs tracking-wider bg-[var(--burgundy)] text-white px-2.5 py-1 rounded shadow-xs">
               PAIRFECT
             </span>
-            <h1 className="font-pixel text-sm sm:text-lg tracking-wide text-zinc-900 uppercase">
+            <h1 className="font-pixel text-sm sm:text-lg tracking-wide text-[var(--text)] uppercase">
               MIXTAPE
             </h1>
           </div>
@@ -405,16 +405,16 @@ function MixtapeContent() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowCollection(!showCollection)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-xs font-medium text-zinc-800 shadow-sm border border-white/60 transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-medium text-[var(--text)] shadow-xs border border-[var(--border)] transition-all active:scale-95"
             >
-              <FolderHeart className="w-3.5 h-3.5 text-rose-500" />
+              <FolderHeart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
               <span>Our Tapes ({savedTapes.length})</span>
             </button>
 
             {currentStep === 4 && (
               <button
                 onClick={handleCreateNew}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium shadow-sm transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white text-xs font-medium shadow-xs transition-all active:scale-95"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New</span>
@@ -433,25 +433,25 @@ function MixtapeContent() {
             exit={{ opacity: 0, y: -15 }}
             className="max-w-4xl mx-auto px-4 mt-4"
           >
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-white shadow-xl p-5">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-[var(--border)] shadow-xl p-5">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-[var(--border)]/50">
                 <div className="flex items-center gap-2">
-                  <FolderHeart className="w-5 h-5 text-rose-500" />
-                  <h2 className="font-sans font-semibold text-zinc-900 text-base">
+                  <FolderHeart className="w-5 h-5 text-[var(--burgundy)]" />
+                  <h2 className="font-sans font-semibold text-[var(--text)] text-base">
                     Saved Mixtapes
                   </h2>
                 </div>
                 <button
                   onClick={() => setShowCollection(false)}
-                  className="text-xs text-zinc-400 hover:text-zinc-700"
+                  className="text-xs text-[var(--text-soft)] hover:text-[var(--text)]"
                 >
                   Close
                 </button>
               </div>
 
               {loadingTapes ? (
-                <div className="py-8 flex justify-center items-center gap-2 text-zinc-500 text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Loading your collection...
+                <div className="py-8 flex justify-center items-center gap-2 text-[var(--text-soft)] text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin text-[var(--burgundy)]" /> Loading your collection...
                 </div>
               ) : savedTapes.length === 0 ? (
                 <div className="text-center py-8 text-zinc-500 text-sm">
@@ -470,15 +470,15 @@ function MixtapeContent() {
                       <div
                         key={tape.id}
                         onClick={() => handleOpenSavedTape(tape)}
-                        className="group relative p-3 rounded-xl bg-white border border-zinc-200/80 shadow-sm hover:shadow-md hover:border-zinc-400 transition-all cursor-pointer flex flex-col justify-between"
+                        className="group relative p-3 rounded-xl bg-white border border-[var(--border)] shadow-xs hover:shadow-md hover:border-[var(--burgundy)] transition-all cursor-pointer flex flex-col justify-between"
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <Disc className="w-4 h-4 text-zinc-700 group-hover:rotate-45 transition-transform" />
-                          <h4 className="font-semibold text-sm text-zinc-900 truncate">
+                          <Disc className="w-4 h-4 text-[var(--burgundy)] group-hover:rotate-45 transition-transform" />
+                          <h4 className="font-semibold text-sm text-[var(--text)] truncate">
                             {tape.title}
                           </h4>
                         </div>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-[var(--text-soft)]">
                           {tape.songs?.length || 0} songs •{" "}
                           {new Date(tape.created_at).toLocaleDateString()}
                         </p>
@@ -509,12 +509,12 @@ function MixtapeContent() {
                         setCurrentStep(stepNum as 1 | 2 | 3 | 4);
                       }
                     }}
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all shadow-md ${
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all shadow-xs ${
                       isPassed
                         ? "bg-emerald-500 text-white"
                         : isActive
-                        ? "bg-zinc-900 text-white ring-4 ring-white/60 scale-105"
-                        : "bg-white/70 text-zinc-400 border border-white"
+                        ? "bg-[var(--burgundy)] text-white ring-4 ring-[#E8527D]/25 scale-105 shadow-md"
+                        : "bg-white/80 text-[var(--text-soft)] border border-[var(--border)]"
                     }`}
                   >
                     {isPassed ? <Check className="w-4 h-4 stroke-[3]" /> : stepNum}
@@ -525,7 +525,7 @@ function MixtapeContent() {
                       className={`w-8 sm:w-14 h-0.5 border-t-2 border-dashed transition-colors ${
                         currentStep > stepNum
                           ? "border-emerald-500"
-                          : "border-white/70"
+                          : "border-[var(--border)]"
                       }`}
                     />
                   )}
@@ -541,14 +541,14 @@ function MixtapeContent() {
             key={currentStep}
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-pixel text-lg sm:text-2xl text-zinc-900 uppercase tracking-wide"
+            className="font-pixel text-lg sm:text-2xl text-[var(--text)] uppercase tracking-wide"
           >
             {currentStep === 1 && "PICK CASSETTE COLOR"}
             {currentStep === 2 && "ADD YOUR SONGS"}
             {currentStep === 3 && "ADD A LITTLE NOTE"}
             {currentStep === 4 && "SHARE YOUR MIXTAPE"}
           </motion.h2>
-          <p className="text-xs sm:text-sm text-zinc-600 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-[var(--text-soft)] mt-1 font-medium">
             {currentStep === 1 && "Choose from 18 vintage patterns for your physical cassette shell"}
             {currentStep === 2 && "Paste YouTube links to automatically add up to 4 romantic tracks"}
             {currentStep === 3 && "Handwrite a sweet message onto your spiral binder note card"}
@@ -564,9 +564,9 @@ function MixtapeContent() {
             className="space-y-6"
           >
             {/* Mixtape Title & Recipient Inputs */}
-            <div className="max-w-md mx-auto bg-white/70 backdrop-blur-sm p-4 rounded-2xl border border-white shadow-sm flex flex-col gap-3">
+            <div className="max-w-md mx-auto bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-[var(--border)] shadow-xs flex flex-col gap-3">
               <div>
-                <label className="text-[11px] font-mono uppercase text-zinc-500 font-semibold tracking-wider">
+                <label className="text-[11px] font-mono uppercase text-[var(--text-soft)] font-semibold tracking-wider">
                   Mixtape Name
                 </label>
                 <input
@@ -575,12 +575,12 @@ function MixtapeContent() {
                   onChange={(e) => setTapeTitle(e.target.value)}
                   placeholder="e.g. Late Night Drives"
                   maxLength={40}
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-white border border-zinc-200 text-sm font-medium text-zinc-900 outline-none focus:border-zinc-500"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-white border border-[var(--border)] text-sm font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-mono uppercase text-zinc-500 font-semibold tracking-wider">
+                <label className="text-[11px] font-mono uppercase text-[var(--text-soft)] font-semibold tracking-wider">
                   For (Recipient)
                 </label>
                 <input
@@ -589,7 +589,7 @@ function MixtapeContent() {
                   onChange={(e) => setRecipientName(e.target.value)}
                   placeholder="e.g. My Favorite Person"
                   maxLength={30}
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-white border border-zinc-200 text-sm font-medium text-zinc-900 outline-none focus:border-zinc-500"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-white border border-[var(--border)] text-sm font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)] transition-colors"
                 />
               </div>
             </div>
@@ -606,12 +606,12 @@ function MixtapeContent() {
             </div>
 
             {/* 18 Circular Swatches Grid */}
-            <div className="max-w-lg mx-auto bg-white/80 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white shadow-md">
+            <div className="max-w-lg mx-auto bg-white/85 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[var(--border)] shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-semibold uppercase text-zinc-600 tracking-wider">
-                  Selected: <span className="text-zinc-900">{selectedPattern.name}</span>
+                <span className="text-xs font-mono font-semibold uppercase text-[var(--text-soft)] tracking-wider">
+                  Selected: <span className="text-[var(--text)]">{selectedPattern.name}</span>
                 </span>
-                <span className="text-[11px] font-mono text-zinc-400">18 PATTERNS</span>
+                <span className="text-[11px] font-mono text-[var(--text-soft)]">18 PATTERNS</span>
               </div>
 
               <div className="grid grid-cols-6 sm:grid-cols-9 gap-2.5 sm:gap-3 place-items-center">
@@ -625,17 +625,17 @@ function MixtapeContent() {
                       title={pattern.name}
                       style={{
                         backgroundColor: pattern.swatchBg,
-                        borderColor: isSelected ? "#18181B" : pattern.swatchBorder,
+                        borderColor: isSelected ? "var(--burgundy)" : pattern.swatchBorder,
                       }}
-                      className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-transform shadow-sm hover:scale-110 active:scale-95 ${
+                      className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-transform shadow-xs hover:scale-110 active:scale-95 ${
                         isSelected
-                          ? "ring-2 ring-zinc-900 ring-offset-2 scale-110 shadow-md"
+                          ? "ring-2 ring-[var(--burgundy)] ring-offset-2 scale-110 shadow-md"
                           : ""
                       }`}
                     >
                       {isSelected && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-2.5 h-2.5 rounded-full bg-zinc-900" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-[var(--burgundy)]" />
                         </div>
                       )}
                     </button>
@@ -648,7 +648,7 @@ function MixtapeContent() {
             <div className="flex justify-center pt-2">
               <button
                 onClick={() => setCurrentStep(2)}
-                className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-sm shadow-xl transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white font-medium text-sm shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span>NEXT: ADD SONGS</span>
                 <ArrowRight className="w-4 h-4" />
@@ -675,12 +675,12 @@ function MixtapeContent() {
             </div>
 
             {/* YouTube Track Input Card */}
-            <div className="max-w-md mx-auto bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-white shadow-lg space-y-4">
+            <div className="max-w-md mx-auto bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-[var(--border)] shadow-md space-y-4">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold uppercase text-zinc-600 tracking-wider">
+                <span className="font-mono text-xs font-semibold uppercase text-[var(--text-soft)] tracking-wider">
                   Add From YouTube
                 </span>
-                <span className="text-xs font-mono font-medium text-zinc-500">
+                <span className="text-xs font-mono font-medium text-[var(--text-soft)]">
                   {draftTracks.length} / 4 tracks
                 </span>
               </div>
@@ -694,10 +694,10 @@ function MixtapeContent() {
                     onChange={(e) => setYoutubeInput(e.target.value)}
                     onBlur={handleFetchYoutubeMeta}
                     placeholder="Paste YouTube link (watch?v=...)"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-sans text-zinc-900 outline-none focus:border-zinc-800 focus:bg-white transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[var(--border)] text-sm font-sans text-[var(--text)] outline-none focus:border-[var(--burgundy)] transition-all"
                   />
                   {fetchingMeta && (
-                    <div className="absolute right-3 top-2.5 text-zinc-400">
+                    <div className="absolute right-3 top-2.5 text-[var(--burgundy)]">
                       <Loader2 className="w-4 h-4 animate-spin" />
                     </div>
                   )}
@@ -707,7 +707,7 @@ function MixtapeContent() {
                   type="button"
                   onClick={handleFetchYoutubeMeta}
                   disabled={!youtubeInput || fetchingMeta}
-                  className="px-3 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 disabled:opacity-40 text-xs font-medium text-zinc-700 transition-colors"
+                  className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-[var(--bg-secondary)] border border-[var(--border)] disabled:opacity-40 text-xs font-medium text-[var(--text)] transition-colors cursor-pointer"
                 >
                   Fetch
                 </button>
@@ -720,14 +720,14 @@ function MixtapeContent() {
                   value={manualTitle}
                   onChange={(e) => setManualTitle(e.target.value)}
                   placeholder="Song Title"
-                  className="px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-900 outline-none focus:border-zinc-800 focus:bg-white"
+                  className="px-3 py-2 rounded-xl bg-white border border-[var(--border)] text-xs font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)]"
                 />
                 <input
                   type="text"
                   value={manualArtist}
                   onChange={(e) => setManualArtist(e.target.value)}
                   placeholder="Artist"
-                  className="px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-900 outline-none focus:border-zinc-800 focus:bg-white"
+                  className="px-3 py-2 rounded-xl bg-white border border-[var(--border)] text-xs font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)]"
                 />
               </div>
 
@@ -735,7 +735,7 @@ function MixtapeContent() {
               <button
                 onClick={handleAddTrack}
                 disabled={draftTracks.length >= 4 || (!manualTitle && !youtubeInput)}
-                className="w-full py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                className="w-full py-2.5 rounded-xl bg-[var(--burgundy)] hover:bg-[#D13D68] disabled:opacity-40 text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Track To J-Card</span>
@@ -743,22 +743,22 @@ function MixtapeContent() {
 
               {/* Track list pills with remove button */}
               {draftTracks.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-zinc-100">
+                <div className="space-y-2 pt-2 border-t border-[var(--border)]/50">
                   {draftTracks.map((tr, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 text-xs"
+                      className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-xs"
                     >
                       <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                        <span className="font-mono text-zinc-400 font-bold">{idx + 1}.</span>
-                        <span className="font-medium text-zinc-800 truncate">{tr.title}</span>
+                        <span className="font-mono text-[var(--burgundy)] font-bold">{idx + 1}.</span>
+                        <span className="font-medium text-[var(--text)] truncate">{tr.title}</span>
                         {tr.artist && tr.artist.toLowerCase() !== "unknown artist" && (
-                          <span className="text-zinc-400 truncate">({tr.artist})</span>
+                          <span className="text-[var(--text-soft)] truncate">({tr.artist})</span>
                         )}
                       </div>
                       <button
                         onClick={() => handleRemoveTrack(idx)}
-                        className="text-zinc-400 hover:text-red-500 p-1 transition-colors"
+                        className="text-[var(--text-soft)] hover:text-red-500 p-1 transition-colors cursor-pointer"
                         title="Remove track"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -773,7 +773,7 @@ function MixtapeContent() {
             <div className="flex items-center justify-center gap-4 pt-2">
               <button
                 onClick={() => setCurrentStep(1)}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/80 hover:bg-white text-zinc-800 font-medium text-sm shadow-md transition-all active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/90 hover:bg-white text-[var(--text)] border border-[var(--border)] font-medium text-sm shadow-xs transition-all active:scale-95 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>BACK</span>
@@ -782,7 +782,7 @@ function MixtapeContent() {
               <button
                 onClick={() => setCurrentStep(3)}
                 disabled={draftTracks.length === 0}
-                className="flex items-center gap-2 px-8 py-3 rounded-full bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white font-medium text-sm shadow-xl transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] disabled:opacity-40 text-white font-medium text-sm shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span>NEXT: ADD A NOTE</span>
                 <ArrowRight className="w-4 h-4" />
@@ -813,7 +813,7 @@ function MixtapeContent() {
             <div className="flex items-center justify-center gap-4 pt-2">
               <button
                 onClick={() => setCurrentStep(2)}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/80 hover:bg-white text-zinc-800 font-medium text-sm shadow-md transition-all active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/90 hover:bg-white text-[var(--text)] border border-[var(--border)] font-medium text-sm shadow-xs transition-all active:scale-95 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>BACK</span>
@@ -822,7 +822,7 @@ function MixtapeContent() {
               <button
                 onClick={handleSaveAndShare}
                 disabled={savingMixtape}
-                className="flex items-center gap-2 px-8 py-3 rounded-full bg-zinc-900 hover:bg-zinc-800 disabled:opacity-60 text-white font-medium text-sm shadow-xl transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] disabled:opacity-60 text-white font-medium text-sm shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 {savingMixtape ? (
                   <>
@@ -870,7 +870,7 @@ function MixtapeContent() {
                 onPlaybackStateChange={(playing) => setIsPlaying(playing)}
               />
             ) : (
-              <div className="max-w-md mx-auto p-4 rounded-xl bg-white/80 text-center text-sm text-zinc-500">
+              <div className="max-w-md mx-auto p-4 rounded-xl bg-white/90 border border-[var(--border)] text-center text-sm text-[var(--text-soft)]">
                 No songs in this mixtape yet. Click &quot;Edit&quot; to add tracks!
               </div>
             )}
@@ -879,11 +879,11 @@ function MixtapeContent() {
             <div className="max-w-md mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 onClick={handleCopyLink}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-sm shadow-lg transition-all active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white font-medium text-sm shadow-md transition-all active:scale-95 cursor-pointer"
               >
                 {copyToast ? (
                   <>
-                    <Check className="w-4 h-4 text-emerald-400" />
+                    <Check className="w-4 h-4 text-emerald-300" />
                     <span>Link Copied!</span>
                   </>
                 ) : (
@@ -896,9 +896,9 @@ function MixtapeContent() {
 
               <button
                 onClick={() => setCurrentStep(1)}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white/90 hover:bg-white text-zinc-800 font-medium text-sm shadow-md border border-white transition-all active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white/90 hover:bg-white text-[var(--text)] font-medium text-sm shadow-xs border border-[var(--border)] transition-all active:scale-95 cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4 text-zinc-500" />
+                <RotateCcw className="w-4 h-4 text-[var(--text-soft)]" />
                 <span>Edit Mixtape</span>
               </button>
             </div>
@@ -940,8 +940,8 @@ export default function MixtapePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#A5C5D8] flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-zinc-700" />
+        <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--burgundy)]" />
         </div>
       }
     >

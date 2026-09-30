@@ -252,7 +252,7 @@ export function RetroAudioPlayer({
   return (
     <div
       ref={containerRef}
-      className={`relative mx-auto rounded-2xl bg-white/95 backdrop-blur-md border border-zinc-200/90 shadow-[0_15px_35px_rgba(0,0,0,0.12)] p-4 sm:p-5 select-none ${className}`}
+      className={`relative mx-auto rounded-2xl bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_15px_35px_rgba(232,82,125,0.08)] p-4 sm:p-5 select-none ${className}`}
       style={{ maxWidth: 460, width: "100%" }}
     >
       {/* Hidden YouTube Iframe Mount */}
@@ -321,7 +321,7 @@ export function RetroAudioPlayer({
                 max={duration || 100}
                 value={currentTime}
                 onChange={handleSeek}
-                className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-zinc-900 focus:outline-none"
+                className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[var(--burgundy)] focus:outline-none"
               />
             </div>
 
@@ -353,7 +353,7 @@ export function RetroAudioPlayer({
           {/* Play / Pause Toggle */}
           <button
             onClick={togglePlay}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-800 transition-transform active:scale-95 shadow-md"
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[var(--burgundy)] text-white flex items-center justify-center hover:bg-[#D13D68] transition-transform active:scale-95 shadow-md cursor-pointer"
             title={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
