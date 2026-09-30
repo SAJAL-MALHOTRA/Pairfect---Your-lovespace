@@ -34,9 +34,16 @@ interface BoothLandingProps {
 }
 
 const LAYOUT_OPTIONS = [
+  { id: "filmStrip", label: "Classic 35mm Strip", shots: 4, desc: "35mm vertical strip with sprockets and frame numbers" },
+  { id: "filmStrip6", label: "6-Frame Film Strip", shots: 6, desc: "Extended 6-frame vertical film roll" },
+  { id: "instax", label: "Instax Instant Print", shots: 2, desc: "Iconic Polaroid print with wide note chin" },
+  { id: "coupleStrip", label: "Side-by-Side Couple", shots: 4, desc: "Paired frames showing both partners side-by-side" },
+  { id: "grid2x2", label: "2x2 Quad Grid", shots: 4, desc: "Square 2x2 grid keepsake" },
+  { id: "grid3x2", label: "3x2 Collage Grid", shots: 6, desc: "6-frame rectangular photo collage" },
+  { id: "polaroid", label: "Dark Polaroid", shots: 2, desc: "Moody dark-bordered vintage keepsake" },
   { id: "strip_4", label: "Classic 4-Cut", shots: 4, desc: "Iconic vertical photo strip" },
   { id: "strip_3", label: "Classic 3-Cut", shots: 3, desc: "Traditional 3-frame strip" },
-  { id: "polaroid_grid", label: "2×2 Polaroid Grid", shots: 4, desc: "Vintage scrapbook quad" },
+  { id: "polaroid_grid", label: "2x2 Polaroid Grid", shots: 4, desc: "Vintage scrapbook quad" },
   { id: "anniversary_card", label: "Hero & Snaps", shots: 3, desc: "1 hero photo + 2 snaps" },
   { id: "journal", label: "Journal Memory", shots: 2, desc: "2 wide shots + ruled notes" },
   { id: "film_roll", label: "35mm Film Reel", shots: 3, desc: "Dark borders & sprocket holes" },
@@ -53,7 +60,7 @@ export default function BoothLanding({
 }: BoothLandingProps) {
   const [mode, setMode] = useState<"choose" | "create" | "join">("choose");
   const [joinCode, setJoinCode] = useState("");
-  const [selectedLayout, setSelectedLayout] = useState("strip_4");
+  const [selectedLayout, setSelectedLayout] = useState("filmStrip");
   const [perspective, setPerspective] = useState<PerspectiveMode>("SIDE_BY_SIDE");
   const [customPrompt, setCustomPrompt] = useState("");
 

@@ -13,9 +13,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import BoothLanding from "@/components/booth/booth-landing";
 import SharedBoothSession from "@/components/booth/shared-booth-session";
 import { BoothSession, PerspectiveMode } from "@/lib/booth/types";
+import {
+  renderPhotostripOnCanvas,
+  PhotostripTemplate,
+  FilmStockGrade,
+  BoothPhotoItem,
+} from "@/lib/booth/strip-engine";
 
 // ── Layout Definitions ──────────────────────────────────────────────────────
-type LayoutType = "strip_4" | "strip_3" | "polaroid_grid" | "anniversary_card" | "journal" | "film_roll";
+type LayoutType =
+  | "filmStrip"
+  | "filmStrip6"
+  | "instax"
+  | "coupleStrip"
+  | "grid2x2"
+  | "grid3x2"
+  | "polaroid"
+  | "strip_4"
+  | "strip_3"
+  | "polaroid_grid"
+  | "anniversary_card"
+  | "journal"
+  | "film_roll";
 
 interface LayoutConfig {
   key: LayoutType;
@@ -25,6 +44,13 @@ interface LayoutConfig {
 }
 
 const LAYOUTS: LayoutConfig[] = [
+  { key: "filmStrip",        label: "Classic 35mm Strip",       count: 4, description: "35mm film frames with sprockets and frame numbers" },
+  { key: "filmStrip6",       label: "6-Frame Film Strip",       count: 6, description: "Extended 6-frame vertical film roll" },
+  { key: "instax",           label: "Instax Instant Print",     count: 2, description: "Iconic Polaroid print with wide bottom notes chin" },
+  { key: "coupleStrip",      label: "Side-by-Side Couple",      count: 4, description: "Paired frames showing both partners side-by-side" },
+  { key: "grid2x2",          label: "2x2 Quad Grid",            count: 4, description: "Square 2x2 grid keepsake" },
+  { key: "grid3x2",          label: "3x2 Collage Grid",         count: 6, description: "6-frame rectangular photo collage" },
+  { key: "polaroid",         label: "Dark Polaroid",            count: 2, description: "Moody dark-bordered vintage keepsake" },
   { key: "strip_4",          label: "Classic 4-Cut Strip",      count: 4, description: "Iconic 4-photo vertical photobooth strip" },
   { key: "strip_3",          label: "Classic 3-Cut Strip",      count: 3, description: "Traditional 3-photo vertical memory strip" },
   { key: "polaroid_grid",    label: "2x2 Polaroid Grid",        count: 4, description: "2x2 vintage polaroid quad keepsake" },
@@ -33,8 +59,8 @@ const LAYOUTS: LayoutConfig[] = [
   { key: "film_roll",        label: "35mm Film Roll",           count: 3, description: "Vintage 35mm film reel frames with sprockets" },
 ];
 
-// ── CSS Filter Definitions ──────────────────────────────────────────────────
-type FilterKey = "none" | "warm" | "vintage" | "film" | "bw" | "soft" | "golden";
+// ── CSS & Film Stock Filter Definitions ─────────────────────────────────────
+type FilterKey = "none" | "fuji" | "instax" | "dslr" | "bw" | "golden" | "warm" | "vintage" | "film" | "soft";
 
 interface FilterConfig {
   key: FilterKey;
@@ -43,13 +69,16 @@ interface FilterConfig {
 }
 
 const FILTERS: FilterConfig[] = [
-  { key: "none",    label: "No Filter",     css: "none" },
+  { key: "none",    label: "Natural",       css: "none" },
+  { key: "fuji",    label: "Fuji Vivid",    css: "saturate(1.12) contrast(1.07) brightness(1.04)" },
+  { key: "instax",  label: "Instax Soft",   css: "saturate(1.25) contrast(1.1) sepia(0.06)" },
+  { key: "dslr",    label: "Clean DSLR",    css: "contrast(1.1) saturate(1.04)" },
+  { key: "bw",      label: "Classic B&W",   css: "grayscale(1) contrast(1.22) brightness(1.03)" },
+  { key: "golden",  label: "Golden Hour",   css: "sepia(0.32) saturate(1.3) contrast(1.06) hue-rotate(5deg)" },
   { key: "warm",    label: "Warm",          css: "sepia(0.25) saturate(1.2) contrast(1.05) brightness(1.02)" },
   { key: "vintage", label: "Vintage",       css: "sepia(0.4) contrast(1.1) brightness(0.95) hue-rotate(-10deg)" },
   { key: "film",    label: "Film",          css: "contrast(1.15) saturate(0.85) sepia(0.15)" },
-  { key: "bw",      label: "Black & White", css: "grayscale(1) contrast(1.2) brightness(1.05)" },
   { key: "soft",    label: "Soft",          css: "brightness(1.08) contrast(0.92) saturate(0.95) blur(0.3px)" },
-  { key: "golden",  label: "Golden",        css: "sepia(0.35) saturate(1.4) hue-rotate(5deg) contrast(1.05)" },
 ];
 
 // ── Frame Colors ────────────────────────────────────────────────────────────
@@ -439,7 +468,7 @@ export default function PhotoBoothPage() {
         ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
         ctx.restore();
       } else {
-        // Fallback drawing if camera is unavailable — ALWAYS upright & centered!
+        // Fallback drawing if camera is unavailable: ALWAYS upright & centered!
         ctx.fillStyle = "#FAF5EB";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = "#FFD9E3";
@@ -601,6 +630,63 @@ export default function PhotoBoothPage() {
     const dateText = showDateStamp ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const timeText = showTimeStamp ? new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
     const stampCombined = [dateText, timeText, locationText].filter(Boolean).join(" · ");
+
+    const isAuthenticTemplate = [
+      "filmStrip",
+      "filmStrip6",
+      "instax",
+      "coupleStrip",
+      "grid2x2",
+      "grid3x2",
+      "polaroid",
+    ].includes(selectedLayout);
+
+    if (isAuthenticTemplate) {
+      const photosToRender = [...capturedPhotos];
+      while (photosToRender.length < count) {
+        photosToRender.push(photosToRender[0] || capturePhotoFrame());
+      }
+      const boothItems: BoothPhotoItem[] = photosToRender.map((url, i) => ({
+        id: `photo-${i}`,
+        dataURL: url,
+        name: user?.user_metadata?.name || "Partner",
+        isSelf: true,
+      }));
+
+      const gradeKey = (
+        ["none", "fuji", "instax", "dslr", "bw", "golden"].includes(currentFilterConfig.key)
+          ? currentFilterConfig.key
+          : "none"
+      ) as FilmStockGrade;
+
+      await renderPhotostripOnCanvas(canvas, {
+        photos: boothItems,
+        template: selectedLayout as PhotostripTemplate,
+        filmGrade: gradeKey,
+        roomName: activeSessionData?.session?.booth_code || "PAIRFECT",
+        customNote: captionText || undefined,
+        dateStr: stampCombined || undefined,
+      });
+
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        placedStickers.forEach((st) => {
+          ctx.save();
+          const posX = (st.x / 100) * canvas.width;
+          const posY = (st.y / 100) * canvas.height;
+          ctx.translate(posX, posY);
+          ctx.rotate((st.rotation * Math.PI) / 180);
+          ctx.scale(st.scale, st.scale);
+          ctx.font = "56px serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(st.icon, 0, 0);
+          ctx.restore();
+        });
+      }
+
+      return canvas;
+    }
 
     const topHeaderHeight = stampCombined ? 160 : 120;
     const bottomFooterHeight = captionText ? 150 : 110;
@@ -1012,7 +1098,7 @@ export default function PhotoBoothPage() {
           </div>
           <h1 className="font-display italic font-bold text-4xl text-[var(--text)]">Online Photobooth</h1>
           <p className="font-sans text-xs sm:text-sm text-[var(--text-soft)] max-w-md mx-auto leading-relaxed">
-            A realtime 4-frame photo booth for two — snap, customize vintage frames & stickers, and export high-res strips.
+            A realtime 4-frame photo booth for two: snap, customize vintage frames & stickers, and export high-res strips.
           </p>
         </motion.div>
 

@@ -181,7 +181,7 @@ export class ClockSync {
       return () => this.cancelScheduled();
     }
 
-    // 1. Web Worker unthrottled watchdog — completely immune to Chrome background tab clamping
+    // 1. Web Worker unthrottled watchdog: completely immune to Chrome background tab clamping
     const worker = this.getOrCreateWorker();
     if (worker) {
       worker.onmessage = (e) => {

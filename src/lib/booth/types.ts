@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Types & Constants for Pairfect Synchronized Virtual Photobooth.
  */
 
@@ -46,7 +46,7 @@ export const PHOTOBOOTH_PROMPTS = [
   "Give your biggest goofy smile",
   "Make your absolute worst face",
   "Blow a kiss across the distance",
-  "Soft romantic gaze — like the day you met",
+  "Soft romantic gaze: like the day you met",
   "Pretend you just heard the wildest secret",
   "Peace signs and happy squinty eyes",
   "Dramatic high-fashion model pose",
