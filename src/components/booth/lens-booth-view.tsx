@@ -20,6 +20,7 @@ import {
   ArrowLeft,
   X,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -216,7 +217,7 @@ export default function LensBoothView({
   initialSessionId,
   onExit,
 }: LensBoothViewProps) {
-  const { user, pair, partner } = useAuth();
+  const { user, profile, pair, partner } = useAuth();
   const supabase = createClient();
 
   // Screen flow: "capture" | "result"
@@ -250,11 +251,12 @@ export default function LensBoothView({
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Room / WebRTC state
-  const [sessionId, setSessionId] = useState<string | null>(initialSessionId || null);
+  const roomId = initialSessionId || pair?.id || "pairfect-booth-room";
   const [isPartnerConnected, setIsPartnerConnected] = useState(false);
   const [partnerDisplayName, setPartnerDisplayName] = useState<string>(
     partner?.display_name || "Partner"
   );
+  const [partnerFallbackUrl, setPartnerFallbackUrl] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -263,6 +265,9 @@ export default function LensBoothView({
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const channelRef = useRef<any>(null);
+  const isInitiatorRef = useRef(false);
 
   const currentFilterObj = BOOTH_FILTERS.find((f) => f.key === activeFilter) || BOOTH_FILTERS[0];
   const currentResultFilterObj = BOOTH_FILTERS.find((f) => f.key === resultFilter) || BOOTH_FILTERS[0];
@@ -292,6 +297,86 @@ export default function LensBoothView({
     }
   }, []);
 
+  // WebRTC Peer Connection Helper
+  const createPeerConnection = useCallback(() => {
+    if (pcRef.current) return pcRef.current;
+
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ],
+    });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && channelRef.current && user) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "signal",
+          payload: { from: user.id, signal: { candidate: event.candidate } },
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      if (remoteVideoRef.current && event.streams[0]) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+        setIsPartnerConnected(true);
+      }
+    };
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, localStreamRef.current!);
+      });
+    }
+
+    pcRef.current = pc;
+    return pc;
+  }, [user]);
+
+  // Handle incoming WebRTC signal
+  const handleSignal = useCallback(
+    async (signal: any) => {
+      const pc = pcRef.current || createPeerConnection();
+      try {
+        if (signal.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+          if (signal.sdp.type === "offer") {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            channelRef.current?.send({
+              type: "broadcast",
+              event: "signal",
+              payload: { from: user?.id, signal: { sdp: pc.localDescription } },
+            });
+          }
+        } else if (signal.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        }
+      } catch (err) {
+        console.warn("WebRTC signal error:", err);
+      }
+    },
+    [createPeerConnection, user]
+  );
+
+  // Send WebRTC Offer
+  const makeOffer = useCallback(async () => {
+    const pc = pcRef.current || createPeerConnection();
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "signal",
+        payload: { from: user?.id, signal: { sdp: pc.localDescription } },
+      });
+    } catch (err) {
+      console.warn("WebRTC offer error:", err);
+    }
+  }, [createPeerConnection, user]);
+
   // Initialize camera stream
   const startCamera = useCallback(async () => {
     try {
@@ -305,6 +390,13 @@ export default function LensBoothView({
       localStreamRef.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
+      }
+
+      // Add tracks to existing PC if available
+      if (pcRef.current) {
+        stream.getTracks().forEach((track) => {
+          pcRef.current?.addTrack(track, stream);
+        });
       }
     } catch (err) {
       console.warn("Camera access denied or unavailable:", err);
@@ -326,6 +418,67 @@ export default function LensBoothView({
     }
     return () => stopCamera();
   }, [screen, startCamera, stopCamera]);
+
+  // Realtime Supabase Channel for synchronized booth and partner video
+  useEffect(() => {
+    if (!roomId) return;
+
+    const myName =
+      profile?.display_name ||
+      user?.user_metadata?.name ||
+      user?.email?.split("@")[0] ||
+      "You";
+
+    const channel = supabase.channel(`booth-room-${roomId}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    channel
+      .on("broadcast", { event: "peer_joined" }, ({ payload }: { payload: any }) => {
+        setIsPartnerConnected(true);
+        if (payload?.name) setPartnerDisplayName(payload.name);
+
+        // Offerer determination: deterministic by ID
+        if (user && payload?.id && user.id < payload.id) {
+          isInitiatorRef.current = true;
+          setTimeout(makeOffer, 800);
+        }
+      })
+      .on("broadcast", { event: "signal" }, ({ payload }: { payload: any }) => {
+        if (payload?.from !== user?.id && payload?.signal) {
+          handleSignal(payload.signal);
+        }
+      })
+      .on("broadcast", { event: "preview_frame" }, ({ payload }: { payload: any }) => {
+        if (payload?.from !== user?.id && payload?.dataURL) {
+          setPartnerFallbackUrl(payload.dataURL);
+          setIsPartnerConnected(true);
+        }
+      })
+      .on("broadcast", { event: "trigger_capture" }, () => {
+        // Partner triggered the capture sequence
+        runCaptureFlow();
+      })
+      .subscribe((status: string) => {
+        if (status === "SUBSCRIBED") {
+          channel.send({
+            type: "broadcast",
+            event: "peer_joined",
+            payload: { id: user?.id, name: myName },
+          });
+        }
+      });
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+    };
+  }, [roomId, user, profile, partner, makeOffer, handleSignal]);
 
   // Handle Mute toggle
   const toggleMute = () => {
@@ -377,7 +530,6 @@ export default function LensBoothView({
       }
       ctx.restore();
     } else {
-      // Atmospheric couple silhouette fallback if camera unavailable
       ctx.fillStyle = "#27272A";
       ctx.fillRect(0, 0, halfW, h);
       ctx.fillStyle = "#E8527D";
@@ -398,7 +550,6 @@ export default function LensBoothView({
       drawImageCover(ctx, remoteVid, halfW, 0, halfW, h);
       ctx.restore();
     } else if (localVid && localVid.readyState >= 2 && localVid.videoWidth > 0) {
-      // Duo split using camera feed
       ctx.save();
       ctx.beginPath();
       ctx.rect(halfW, 0, halfW, h);
@@ -411,7 +562,7 @@ export default function LensBoothView({
       ctx.fillStyle = "#FAF5EB";
       ctx.font = "bold 32px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("Partner ♡", halfW + halfW / 2, h / 2);
+      ctx.fillText(partnerDisplayName || "Partner ♡", halfW + halfW / 2, h / 2);
     }
 
     // Vertical seam divider
@@ -423,10 +574,10 @@ export default function LensBoothView({
     ctx.stroke();
 
     return canvas.toDataURL("image/jpeg", 0.95);
-  }, [isMirrored]);
+  }, [isMirrored, partnerDisplayName]);
 
   // Execute 3-shot automated sequence
-  const startCaptureSequence = useCallback(async () => {
+  const runCaptureFlow = useCallback(async () => {
     if (isCapturing) return;
     setIsCapturing(true);
     setShowFilterTray(false);
@@ -479,6 +630,18 @@ export default function LensBoothView({
     activeFilter,
   ]);
 
+  // User click trigger: broadcasts to partner and runs locally
+  const startCaptureSequence = () => {
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: "broadcast",
+        event: "trigger_capture",
+        payload: {},
+      });
+    }
+    runCaptureFlow();
+  };
+
   // Load image helper for canvas export
   const loadImageAsync = (src: string): Promise<HTMLImageElement | null> => {
     return new Promise((resolve) => {
@@ -524,10 +687,8 @@ export default function LensBoothView({
       for (let i = 0; i < totalSprockets; i++) {
         const sy = i * sprocketPitch + 16;
         ctx.fillStyle = "#E4E4E7";
-        // Left sprocket
         drawRoundedRect(ctx, 16, sy, 18, 30, 4);
         ctx.fill();
-        // Right sprocket
         drawRoundedRect(ctx, W - 34, sy, 18, 30, 4);
         ctx.fill();
       }
@@ -538,7 +699,6 @@ export default function LensBoothView({
       ctx.textAlign = "center";
       ctx.fillText("PAIRFECT 400 • VIRTUAL BOOTH", W / 2, 70);
 
-      // 3 Stacked frames
       const marginX = 58;
       const frameW = W - marginX * 2;
       const frameH = 590;
@@ -588,7 +748,6 @@ export default function LensBoothView({
         if (!img) return;
         const fy = startY + idx * (frameH + gapY);
 
-        // Frame border
         ctx.save();
         ctx.fillStyle = "#09090B";
         drawRoundedRect(ctx, marginX - 4, fy - 4, frameW + 8, frameH + 8, 12);
@@ -831,6 +990,11 @@ export default function LensBoothView({
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>{partnerDisplayName} Connected</span>
             </div>
+          ) : partner?.display_name ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-mono font-medium">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>{partner.display_name} • In Pair</span>
+            </div>
           ) : (
             <button
               onClick={() => setShowShareModal(true)}
@@ -924,19 +1088,32 @@ export default function LensBoothView({
 
               {/* Right Pane: Partner or Local Duo Split */}
               <div className="relative w-full h-full overflow-hidden bg-zinc-850 flex items-center justify-center">
-                {isPartnerConnected ? (
-                  <video
-                    ref={remoteVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={{
-                      transform: `scale(${getZoomScale()})`,
-                      filter: currentFilterObj.css,
-                    }}
-                    className="w-full h-full object-cover transition-transform duration-300"
+                {/* P2P WebRTC Video Stream */}
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{
+                    transform: `scale(${getZoomScale()})`,
+                    filter: currentFilterObj.css,
+                  }}
+                  className={`w-full h-full object-cover transition-transform duration-300 ${
+                    isPartnerConnected ? "block" : "hidden"
+                  }`}
+                />
+
+                {/* Low-FPS Relay Fallback */}
+                {partnerFallbackUrl && !remoteVideoRef.current?.srcObject && (
+                  <img
+                    src={partnerFallbackUrl}
+                    alt="Partner Relay"
+                    className="w-full h-full object-cover"
                   />
-                ) : (
+                )}
+
+                {/* Local Duo Mirror if partner not connected yet */}
+                {!isPartnerConnected && !partnerFallbackUrl && (
                   <video
                     autoPlay
                     playsInline
@@ -950,11 +1127,17 @@ export default function LensBoothView({
                       transform: `scale(${getZoomScale()})`,
                       filter: currentFilterObj.css,
                     }}
-                    className="w-full h-full object-cover transition-transform duration-300"
+                    className="w-full h-full object-cover transition-transform duration-300 opacity-90"
                   />
                 )}
-                <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90">
-                  {isPartnerConnected ? partnerDisplayName : "Partner"}
+
+                <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5">
+                  <span>{partnerDisplayName}</span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isPartnerConnected ? "bg-emerald-400" : "bg-amber-400 animate-pulse"
+                    }`}
+                  />
                 </div>
               </div>
             </div>
@@ -1396,7 +1579,6 @@ export default function LensBoothView({
                         style={{ filter: f.css }}
                         className="w-full h-full object-cover"
                       />
-                      {/* Dark pill badge: LOOK */}
                       <span className="absolute bottom-0 inset-x-0 bg-black/75 text-white text-[8px] font-bold text-center py-0.5 tracking-wider">
                         LOOK
                       </span>
