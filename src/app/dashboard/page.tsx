@@ -5,7 +5,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset, Video } from "lucide-react";
+import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset, Flower2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 import PushOptInBanner from "@/components/push-opt-in-banner";
@@ -403,7 +403,7 @@ export default function DashboardPage() {
         activities.sort((a, b) => b.timestamp - a.timestamp);
         setRecentActivities(activities.slice(0, 3));
 
-        // Anniversary calculation — display actual start date, not future year date
+        // Anniversary calculation: display actual start date, not future year date
         const anniversaryDateISO = pair.started_dating_date || pair.created_at;
         if (anniversaryDateISO) {
           const startDate = new Date(anniversaryDateISO);
@@ -465,8 +465,8 @@ export default function DashboardPage() {
     const hours = new Date().getHours();
     if (hours >= 5 && hours < 10) return { text: "Start the day with a small note of gratitude.", icon: Coffee, href: "/gratitude-jar", label: "Write a note" };
     if (hours >= 10 && hours < 14) return { text: "Thinking of each other? Send a little letter.", icon: Sun, href: "/love-letter", label: "Write a letter" };
-    if (hours >= 14 && hours < 18) return { text: "Take a moment — maybe play a game together.", icon: Sunset, href: "/play", label: "Play together" };
-    if (hours >= 18 && hours < 22) return { text: "Tonight — maybe write them a goodnight letter.", icon: Moon, href: "/love-letter", label: "Write tonight" };
+    if (hours >= 14 && hours < 18) return { text: "Take a moment: maybe play a game together.", icon: Sunset, href: "/play", label: "Play together" };
+    if (hours >= 18 && hours < 22) return { text: "Tonight: maybe write them a goodnight letter.", icon: Moon, href: "/love-letter", label: "Write tonight" };
     return { text: "Can't sleep? Leave a note for tomorrow.", icon: Moon, href: "/gratitude-jar", label: "Leave a note" };
   };
   const ritual = getRitualPrompt();
@@ -806,7 +806,7 @@ export default function DashboardPage() {
           
           {/* ─── LEFT COLUMN (HERO) ─── */}
           <div className="lg:col-span-7 flex flex-col items-center text-center lg:items-start lg:text-left space-y-10">
-            {/* Header Greeting — Editorial Typography */}
+            {/* Header Greeting: Editorial Typography */}
             <div className="flex flex-row items-center justify-between w-full pb-6 gap-6">
               <div className="space-y-2 text-left">
                 <p className="typo-chapter">
@@ -852,9 +852,9 @@ export default function DashboardPage() {
           {/* ─── RIGHT COLUMN (WIDGETS) ─── */}
           <div className="lg:col-span-5 flex flex-col space-y-6">
             
-            {/* Widget 1: Watch Together 1:1 Live Video & Screen Sharing */}
+            {/* Widget 1: Digital Bouquets */}
             <Link
-              href="/watch"
+              href="/bouquet"
               className="p-5 rounded-[20px] border flex items-center justify-between gap-4 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md group"
               style={{
                 backgroundColor: "var(--bg-secondary)",
@@ -864,20 +864,22 @@ export default function DashboardPage() {
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B95]/15 to-[var(--burgundy)]/15 border border-[#FF6B95]/30 flex items-center justify-center text-[var(--burgundy)] shrink-0 transition-transform group-hover:scale-105">
-                  <Video className="w-5 h-5 text-[var(--burgundy)]" />
+                  <Flower2 className="w-5 h-5 text-[var(--burgundy)]" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-heading font-bold text-base text-[var(--text)]">Watch Together</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-heading font-bold text-base text-[var(--text)]">Digital Bouquets</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-bold uppercase">
+                      New
+                    </span>
                   </div>
                   <p className="text-xs text-[var(--text-soft)] truncate">
-                    {partner?.display_name ? `Call ${partner.display_name} or share your screen` : "1:1 video calls & screen sharing"}
+                    {partner?.display_name ? `Pick fresh blooms & write a note for ${partner.display_name}` : "Handpick botanical blooms & personal note"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0 px-3.5 py-1.5 rounded-full bg-[var(--burgundy)] text-white text-xs font-mono font-medium shadow-xs group-hover:opacity-95">
-                <span>Start</span>
+                <span>Create</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Link>
@@ -995,18 +997,18 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ─── ON THIS DAY — MEMORY RESURFACING ─── */}
+        {/* ON THIS DAY: MEMORY RESURFACING */}
         <MemoryResurfacingCard pairId={pair?.id} />
 
-        {/* ─── DAILY DUAL-LOCK JOURNAL ─── */}
+        {/* DAILY DUAL-LOCK JOURNAL */}
         <div className="w-full pt-8">
           <JournalCard />
         </div>
 
-        {/* ─── 3. NARRATIVE KEEPSAKE CARDS (Material Identity) ─── */}
+        {/* 3. NARRATIVE KEEPSAKE CARDS (Material Identity) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
           
-          {/* Card 1: Milestone Journey — material-badge inspired */}
+          {/* Card 1: Milestone Journey (material-badge inspired) */}
           <Link
             href="/checkin"
             className="material-cotton p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
@@ -1038,7 +1040,7 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          {/* Card 2: Love Letters — cotton paper material */}
+          {/* Card 2: Love Letters (cotton paper material) */}
           <Link
             href="/love-letter"
             className="material-cotton p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
@@ -1067,7 +1069,7 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          {/* Card 3: Gratitude — folded note material */}
+          {/* Card 3: Gratitude (folded note material) */}
           <Link
             href="/gratitude-jar"
             className="material-note p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"

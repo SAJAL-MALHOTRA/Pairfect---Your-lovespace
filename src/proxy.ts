@@ -46,7 +46,6 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/love-letter") ||
     path.startsWith("/gratitude-jar") ||
     path.startsWith("/stories") ||
-    path.startsWith("/watch") ||
     path.startsWith("/play") ||
     path.startsWith("/match-game") ||
     path.startsWith("/settings") ||

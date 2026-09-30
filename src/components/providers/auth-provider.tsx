@@ -262,7 +262,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         pathname.startsWith("/love-letter") ||
         pathname.startsWith("/gratitude-jar") ||
         pathname.startsWith("/stories") ||
-        pathname.startsWith("/watch") ||
         pathname.startsWith("/play") ||
         pathname.startsWith("/profile");
       const isSettingsRoute = pathname.startsWith("/settings");

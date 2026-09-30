@@ -6,7 +6,7 @@ import Navigation from "@/components/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
   Camera, HelpCircle, Heart, Brain, MessageSquare,
-  Scale, Tv, Gift, Mail, Timer, Music, BookOpen,
+  Scale, Flower2, Gift, Mail, Timer, Music, BookOpen,
   Sparkles, ArrowRight, Check, Disc
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -31,7 +31,7 @@ const REAL_EXPERIENCES: RealExperienceItem[] = [
     title: "Love Match",
     badge: "NEW",
     badgeType: "new",
-    desc: "Answer the same questions at the same instant — then discover just how in sync you really are.",
+    desc: "Answer the same questions at the same instant, then discover just how in sync you really are.",
     href: "/play/love-match",
     icon: Heart,
     iconBg: "bg-purple-50",
@@ -55,7 +55,7 @@ const REAL_EXPERIENCES: RealExperienceItem[] = [
     title: "Know Me Quiz",
     badge: "★ MOST PLAYED",
     badgeType: "most-played",
-    desc: "Lock in your answers privately, reveal them together, and see how well you really know each other — 14 question packs.",
+    desc: "Lock in your answers privately, reveal them together, and see how well you really know each other across 14 question packs.",
     href: "/quiz",
     icon: HelpCircle,
     iconBg: "bg-pink-50",
@@ -99,16 +99,16 @@ const REAL_EXPERIENCES: RealExperienceItem[] = [
     accentBorder: "hover:border-amber-300",
   },
   {
-    id: "watch-together",
-    title: "Watch Together",
-    badge: "REALTIME",
-    badgeType: "free",
-    desc: "Synchronize YouTube videos in real-time with live floating emoji reactions and cinema tab sharing.",
-    href: "/watch",
-    icon: Tv,
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
-    accentBorder: "hover:border-indigo-300",
+    id: "digital-bouquet",
+    title: "Digital Bouquets",
+    badge: "KEEPSAKE",
+    badgeType: "new",
+    desc: "Handpick botanical blooms, wrap in artisanal papers, and seal with a personal note for your partner.",
+    href: "/bouquet",
+    icon: Flower2,
+    iconBg: "bg-rose-50",
+    iconColor: "text-rose-600",
+    accentBorder: "hover:border-rose-300",
   },
   {
     id: "gratitude-jar",
@@ -228,7 +228,7 @@ export default function GamesHubPage() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-[var(--text-soft)] leading-relaxed max-w-2xl">
-                The realtime 4-frame photo booth for two — a shared countdown fires the shot on both screens at once, so every frame holds both of you.
+                The realtime 4-frame photo booth for two: a shared countdown fires the shot on both screens at once, so every frame holds both of you.
               </p>
             </div>
           </div>

@@ -23,13 +23,13 @@ import {
   Sparkles,
   Flame,
   BookOpen,
-  Video,
+  Flower2,
 } from "lucide-react";
 
-/* ─── Navigation Items matching user's exact design spec ─── */
+/* Navigation Items */
 const SIDEBAR_ITEMS = [
   { href: "/dashboard",    icon: Home,     label: "HOME",      title: "Home",       subtitle: "Return to your story →" },
-  { href: "/watch",        icon: Video,    label: "WATCH",     title: "Watch Together", subtitle: "1:1 video calls & screen share →" },
+  { href: "/bouquet",      icon: Flower2,  label: "BOUQUET",   title: "Bouquets",   subtitle: "Handpick botanical blooms →" },
   { href: "/love-letter",  icon: Mail,     label: "LETTERS",   title: "Letters",    subtitle: "Sealed with wax, kept forever →" },
   { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Four frames of us →" },
   { href: "/play",         icon: Gamepad2, label: "PLAYROOM",  title: "Playroom",   subtitle: "Play tonight's date night →" },
@@ -121,7 +121,7 @@ export default function Navigation() {
   return (
     <>
       {/* ══════════════════════════════════════════════════
-          TOP CONTROL BAR — Logo, Streak, Ping, Bell, Avatar
+          TOP CONTROL BAR: Logo, Streak, Ping, Bell, Avatar
           ══════════════════════════════════════════════════ */}
       <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:pl-32 md:pr-12 flex items-center justify-between pointer-events-none">
 
@@ -301,7 +301,7 @@ export default function Navigation() {
 
 
       {/* ══════════════════════════════════════════════════
-          DESKTOP — SIGNATURE COZY PINK CAPSULE SIDEBAR
+          DESKTOP: SIGNATURE COZY PINK CAPSULE SIDEBAR
           Matches exact design from reference screenshot
           ══════════════════════════════════════════════════ */}
       <AnimatePresence>
@@ -440,7 +440,7 @@ export default function Navigation() {
 
 
       {/* ══════════════════════════════════════════════════
-          MOBILE — FLOATING BOTTOM CAPSULE
+          MOBILE: FLOATING BOTTOM CAPSULE
           ══════════════════════════════════════════════════ */}
       <AnimatePresence>
         {visible && (

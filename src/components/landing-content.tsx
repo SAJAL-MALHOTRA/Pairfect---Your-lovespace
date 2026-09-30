@@ -1272,62 +1272,38 @@ function ActivitiesShowcase() {
       link: "/quiz",
     },
     {
-      id: "watch-together",
-      title: "Watch Together & Live Mic",
-      tag: "SYNCHRONIZED CINEMA",
-      desc: "Stream YouTube videos and movies simultaneously with zero playback lag, shared play/pause controls, and floating live emoji reactions.",
-      screenTheme: "from-stone-950 to-slate-900",
+      id: "botanical-bouquet",
+      title: "Digital Bouquets & Letters",
+      tag: "BOTANICAL KEEPSAKES",
+      desc: "Handpick fresh botanical blooms, choose artisanal wrapping paper and silk ribbon ties, and seal with a personal note for your partner.",
+      screenTheme: "from-rose-50 to-pink-100",
       mockupContent: (
-        <div className="h-full flex flex-col justify-between p-3 bg-stone-950 text-white rounded-2xl select-none relative overflow-hidden">
-          <div className="flex items-center justify-between text-[9px] font-mono text-stone-400 border-b border-white/10 pb-1.5">
+        <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#FFFDF9] to-[#FBF4EC] text-stone-800 rounded-2xl select-none relative overflow-hidden border border-[#E8D9C8]">
+          <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 border-b border-stone-200/60 pb-1.5">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-stone-200 font-bold">Room #812 · Synced</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              <span className="text-stone-700 font-bold uppercase tracking-wider">Botanical Bloom</span>
             </div>
-            <span className="text-emerald-400 font-bold">0ms drift</span>
+            <span className="text-rose-600 font-bold">12 Varieties</span>
           </div>
 
-          <div className="relative w-full aspect-16/10 rounded-xl bg-gradient-to-tr from-stone-900 via-indigo-950 to-stone-900 border border-white/10 overflow-hidden flex flex-col justify-between p-2 shadow-inner my-auto">
-            <div className="flex items-center justify-between text-[8px] font-mono text-stone-300">
-              <span className="bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs font-bold">YouTube Sync</span>
-              <span className="bg-rose-600/90 text-white px-1.5 py-0.5 rounded font-bold">1080p HD</span>
-            </div>
-
-            <div className="mx-auto w-8 h-8 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-lg">
-              <Play className="w-3.5 h-3.5 fill-white ml-0.5" />
-            </div>
-
-            <div className="absolute right-2 bottom-2 flex flex-col gap-1 items-end pointer-events-none">
-              <span className="text-xs">💖</span>
-              <span className="text-xs">🥺</span>
-              <span className="text-xs">🍿</span>
-            </div>
-
-            <div className="space-y-0.5">
-              <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                <div className="w-3/5 h-full bg-rose-500 rounded-full" />
-              </div>
-              <div className="flex justify-between text-[8px] font-mono text-stone-400 font-bold">
-                <span>18:42</span>
-                <span>42:15</span>
-              </div>
-            </div>
+          <div className="py-2 text-center space-y-1">
+            <div className="text-3xl">💐</div>
+            <p className="font-serif italic font-bold text-sm text-[#3D2432]">
+              Handcrafted with Love
+            </p>
+            <p className="text-[10px] text-stone-600 font-mono">
+              Roses, Peonies &amp; Lavender tied with Silk Ribbon
+            </p>
           </div>
 
-          <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-[9px] font-mono">
-            <div className="flex items-center gap-1.5 text-stone-300">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-              <span>Mia speaking...</span>
-            </div>
-            <div className="flex gap-1">
-              <span className="px-1.5 py-0.5 rounded bg-white/10 text-stone-300">🍿</span>
-              <span className="px-1.5 py-0.5 rounded bg-white/10 text-stone-300">😂</span>
-              <span className="px-1.5 py-0.5 rounded bg-rose-500 text-white">❤️</span>
-            </div>
+          <div className="pt-1.5 border-t border-stone-200/60 flex items-center justify-between text-[9px] font-mono">
+            <span className="text-stone-500">Sealed with wax</span>
+            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold">Keepsake PNG</span>
           </div>
         </div>
       ),
-      link: "/watch",
+      link: "/bouquet",
     },
     {
       id: "wax-letters",
