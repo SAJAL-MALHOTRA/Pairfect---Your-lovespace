@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import BoothLanding from "@/components/booth/booth-landing";
 import SharedBoothSession from "@/components/booth/shared-booth-session";
+import LensBoothView from "@/components/booth/lens-booth-view";
 import { BoothSession, PerspectiveMode } from "@/lib/booth/types";
 import {
   renderPhotostripOnCanvas,
@@ -185,8 +186,8 @@ export default function PhotoBoothPage() {
   const { user, profile, pair, partner } = useAuth();
   const supabase = createClient();
 
-  // ── Booth Mode ("landing" | "shared" | "solo" | "keepsake") ─────────
-  const [boothMode, setBoothMode] = useState<"landing" | "shared" | "solo" | "keepsake">("landing");
+  // Booth Mode ("lensbooth" | "landing" | "shared" | "solo" | "keepsake")
+  const [boothMode, setBoothMode] = useState<"lensbooth" | "landing" | "shared" | "solo" | "keepsake">("lensbooth");
   const [activeSessionData, setActiveSessionData] = useState<{ id: string; session: BoothSession; isHost: boolean } | null>(null);
   const [isStartingShared, setIsStartingShared] = useState(false);
   const [isJoiningShared, setIsJoiningShared] = useState(false);
@@ -1030,6 +1031,15 @@ export default function PhotoBoothPage() {
   const fStyle = FRAME_COLORS[frameColor] || FRAME_COLORS.cream;
   const pTexture = PAPER_TEXTURES[paperTexture] || PAPER_TEXTURES.plain;
 
+  if (boothMode === "lensbooth") {
+    return (
+      <LensBoothView
+        initialSessionId={activeSessionData?.id}
+        onExit={() => setBoothMode("landing")}
+      />
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-[var(--bg)] text-[var(--text)] paper-grain">
       <Navigation />
@@ -1044,15 +1054,14 @@ export default function PhotoBoothPage() {
         )}
       </AnimatePresence>
 
-      {/* ─── VIRTUAL BOOTH LOBBY / LANDING ─── */}
+      {/* Virtual Booth Lobby / Landing */}
       {boothMode === "landing" && (
         <main className="max-w-5xl mx-auto px-4 py-12 pb-36">
           <BoothLanding
             onStartSharedBooth={handleStartSharedBooth}
             onJoinSharedBooth={handleJoinSharedBooth}
             onStartSoloBooth={() => {
-              setBoothMode("solo");
-              setStep(1);
+              setBoothMode("lensbooth");
             }}
             isStarting={isStartingShared}
             isJoining={isJoiningShared}

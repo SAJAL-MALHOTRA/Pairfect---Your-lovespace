@@ -50,7 +50,6 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/match-game") ||
     path.startsWith("/settings") ||
     path.startsWith("/profile") ||
-    path.startsWith("/photo-booth") ||
     path.startsWith("/riddle") ||
     path.startsWith("/iq-duel") ||
     path.startsWith("/vibe-judge") ||
