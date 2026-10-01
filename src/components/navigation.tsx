@@ -126,6 +126,19 @@ export default function Navigation() {
   const currentStreak = pair?.current_streak || 0;
   const isStreakPaused = pair?.is_paused || false;
 
+  const getNotificationHref = (n: any) => {
+    if (n.metadata?.route) return n.metadata.route;
+    if (n.metadata?.bouquet || n.title?.toLowerCase().includes("bouquet")) {
+      return `/bouquet?unwrap=${n.id}`;
+    }
+    if (n.type === "letter_sent" || n.type === "reaction_reply") return "/love-letter";
+    if (n.type === "gratitude_note") return "/gratitude-jar";
+    if (n.type === "memory_added") return "/stories";
+    if (n.type === "game_started") return "/play";
+    if (n.type === "ping_sent") return "/dashboard";
+    return "/dashboard";
+  };
+
   return (
     <>
       {/* ══════════════════════════════════════════════════
@@ -249,24 +262,27 @@ export default function Navigation() {
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      {notifications.map((n) => (
-                        <Link
-                          key={n.id}
-                          href="/dashboard"
-                          onClick={() => {
-                            markAsRead(n.id);
-                            setShowNotifPanel(false);
-                          }}
-                          className={`block p-2.5 rounded-xl transition-all cursor-pointer ${
-                            !n.read
-                              ? "bg-[var(--bg-secondary)] border border-[var(--border)] font-medium"
-                              : "hover:bg-black/5 opacity-80"
-                          }`}
-                        >
-                          <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
-                          {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
-                        </Link>
-                      ))}
+                      {notifications.map((n) => {
+                        const targetHref = getNotificationHref(n);
+                        return (
+                          <Link
+                            key={n.id}
+                            href={targetHref}
+                            onClick={() => {
+                              markAsRead(n.id);
+                              setShowNotifPanel(false);
+                            }}
+                            className={`block p-2.5 rounded-xl transition-all cursor-pointer ${
+                              !n.read
+                                ? "bg-[var(--bg-secondary)] border border-[var(--border)] font-medium"
+                                : "hover:bg-black/5 opacity-80"
+                            }`}
+                          >
+                            <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
+                            {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </motion.div>

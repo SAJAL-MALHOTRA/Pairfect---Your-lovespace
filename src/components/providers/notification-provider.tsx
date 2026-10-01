@@ -104,8 +104,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           setNotifications(prev => [newNotif, ...prev]);
           setUnreadCount(prev => prev + 1);
 
-          // Extract game route from metadata or body
-          const gameRoute = newNotif.metadata?.route || (newNotif.body?.includes("/") ? newNotif.body.split(" ").find(w => w.startsWith("/")) : undefined);
+          // Extract specific route from metadata, bouquet detection, or body
+          const notifRoute = newNotif.metadata?.route
+            || (newNotif.metadata?.bouquet || newNotif.title?.toLowerCase().includes("bouquet") ? `/bouquet?unwrap=${newNotif.id}` : undefined)
+            || (newNotif.body?.includes("/") ? newNotif.body.split(" ").find(w => w.startsWith("/")) : undefined);
 
           // Trigger live warm toast
           const toastId = `${newNotif.id}-${Date.now()}`;
@@ -114,7 +116,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             title: newNotif.title,
             body: newNotif.body,
             type: newNotif.type,
-            route: gameRoute,
+            route: notifRoute,
           }]);
 
           // Auto dismiss toast after 8 seconds
@@ -198,7 +200,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         recipient_id: partner.id,
         sender_id: user.id,
         type: "game_started",
-        title: `${partnerName} started playing ${gameName} — join them?`,
+        title: `${partnerName} started playing ${gameName} - join them?`,
         body: `Tap Join Now to play ${gameName} together!`,
         metadata: { route: gameRoute },
       });
@@ -234,6 +236,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           {toasts.map((toast) => {
             const getToastRoute = (t: ToastNotice) => {
               if (t.route) return t.route;
+              if (t.title?.toLowerCase().includes("bouquet")) return "/bouquet";
               if (t.type === "letter_sent" || t.type === "reaction_reply") return "/love-letter";
               if (t.type === "gratitude_note") return "/gratitude-jar";
               if (t.type === "memory_added") return "/stories";
