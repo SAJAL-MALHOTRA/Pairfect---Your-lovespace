@@ -225,8 +225,11 @@ export function RetroRadio({
           </button>
         </div>
 
+        {/* Ambient Warm Vacuum Glow */}
+        <div className="absolute -inset-2 bg-gradient-to-r from-amber-300/20 via-rose-300/25 to-amber-200/20 rounded-[40px] blur-xl pointer-events-none" />
+
         {/* ─── MAIN RADIO BODY CHASSIS ─── */}
-        <div className="relative rounded-[28px] sm:rounded-[34px] bg-gradient-to-b from-[#489987] via-[#358271] to-[#256657] border-[3px] border-[#5EBAA5] shadow-[0_24px_50px_rgba(0,0,0,0.3),inset_0_3px_6px_rgba(255,255,255,0.45),inset_0_-4px_10px_rgba(0,0,0,0.3)] p-4 sm:p-6 overflow-hidden">
+        <div className="relative rounded-[30px] sm:rounded-[38px] bg-gradient-to-b from-[#609E8F] via-[#468677] to-[#2E6B5D] border-[3px] border-[#7FBDAE] shadow-[0_24px_50px_rgba(30,70,60,0.25),inset_0_3px_6px_rgba(255,255,255,0.45),inset_0_-4px_10px_rgba(0,0,0,0.3)] p-4 sm:p-6 overflow-hidden">
           {/* Subtle Vintage Radiance Texture */}
           <div className="absolute inset-0 bg-gradient-to-tr from-black/15 via-transparent to-white/10 pointer-events-none" />
 
@@ -276,7 +279,7 @@ export function RetroRadio({
 
             {/* ─── RIGHT: RECESS TUNING PANEL (7 Cols) ─── */}
             <div className="col-span-7">
-              <div className="rounded-2xl sm:rounded-[22px] bg-[#FAF6EE] border-2 border-[#1B4B40] shadow-[inset_0_3px_8px_rgba(0,0,0,0.25),0_4px_12px_rgba(0,0,0,0.15)] p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
+              <div className="rounded-2xl sm:rounded-[24px] bg-gradient-to-b from-[#FFFDF8] via-[#FAF3E6] to-[#F1E6D0] border-2 border-[#D4AF37]/50 shadow-[inset_0_2px_8px_rgba(180,140,50,0.15),0_6px_16px_rgba(0,0,0,0.1)] p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
                 {/* ─── TOP LCD FREQUENCY SCREEN ─── */}
                 <div className="rounded-xl bg-[#13171B] border border-black/40 shadow-inner px-3 py-2 flex items-center justify-between text-white">
                   <div className="text-[10px] sm:text-xs font-mono font-bold tracking-widest text-zinc-400 uppercase">
@@ -307,7 +310,7 @@ export function RetroRadio({
                   </div>
                 </div>
 
-                {/* ─── ROTARY TUNING KNOB WITH DIAL TICKS ─── */}
+                {/* ─── ROTARY BRASS TUNING KNOB WITH GOLDEN DIAL TICKS ─── */}
                 <div
                   ref={knobRef}
                   onMouseDown={handleKnobMouseDown}
@@ -317,32 +320,36 @@ export function RetroRadio({
                   className="relative flex items-center justify-center py-1 sm:py-2 cursor-grab active:cursor-grabbing"
                 >
                   {/* Circular Tick Marks Ring */}
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
-                    {Array.from({ length: 16 }).map((_, i) => {
-                      const rot = (i / 16) * 360;
-                      return (
-                        <div
-                          key={i}
-                          className="absolute w-1 h-2 rounded-full bg-[#8E7869]/70 origin-bottom"
-                          style={{
-                            transform: `rotate(${rot}deg) translateY(-38px)`,
-                          }}
-                        />
-                      );
-                    })}
+                  <div className="relative w-22 h-22 sm:w-26 sm:h-26 rounded-full bg-gradient-to-tr from-[#BFA054] via-[#F5E6C4] to-[#9E7A32] p-1 shadow-[0_6px_16px_rgba(0,0,0,0.18),inset_0_2px_4px_rgba(255,255,255,0.8)] flex items-center justify-center">
+                    <div className="w-full h-full rounded-full bg-gradient-to-b from-[#FFFDF9] via-[#FAF4E8] to-[#EFE2C6] border border-[#C5A059]/40 relative flex items-center justify-center shadow-inner">
+                      {Array.from({ length: 24 }).map((_, i) => {
+                        const rot = (i / 24) * 360;
+                        return (
+                          <div
+                            key={i}
+                            className={`absolute w-0.5 rounded-full origin-bottom ${
+                              i % 4 === 0 ? "h-3 bg-[#8C6D2B]" : "h-1.5 bg-[#8C6D2B]/50"
+                            }`}
+                            style={{
+                              transform: `rotate(${rot}deg) translateY(-40px)`,
+                            }}
+                          />
+                        );
+                      })}
 
-                    {/* Rotary Knob Face */}
-                    <div
-                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#FAF0E6] via-[#E6D7C8] to-[#C9B4A0] border-2 border-[#8E7869] shadow-[0_4px_10px_rgba(0,0,0,0.22),inset_0_2px_4px_rgba(255,255,255,0.8),inset_0_-2px_4px_rgba(0,0,0,0.2)] flex items-center justify-center transition-transform duration-75"
-                      style={{
-                        transform: `rotate(${knobAngle}deg)`,
-                      }}
-                    >
-                      {/* Red Indicator Pointer Notch */}
-                      <div className="absolute top-1 w-1.5 h-3.5 sm:h-4 rounded-full bg-[#D70D08] shadow-xs" />
+                      {/* Rotary Brass Knob Face */}
+                      <div
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-[#9E7833] via-[#E5C77A] to-[#8C6524] border-2 border-[#6D4E1B] shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_2px_4px_rgba(255,255,255,0.7)] flex items-center justify-center transition-transform duration-75"
+                        style={{
+                          transform: `rotate(${knobAngle}deg)`,
+                        }}
+                      >
+                        {/* Red Indicator Pointer Notch */}
+                        <div className="absolute -top-3 w-1.5 h-6 rounded-full bg-[#E51E2B] shadow-[0_0_6px_rgba(229,30,43,0.7)]" />
 
-                      {/* Brushed Center Cap */}
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-tr from-[#C5B3A0] to-[#EFE7DE] border border-[#9E8B7C] shadow-inner" />
+                        {/* Brushed Center Cap */}
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#FAF0D7] via-[#D8BA75] to-[#8C6524] border border-[#7A561E] shadow-inner" />
+                      </div>
                     </div>
                   </div>
                 </div>

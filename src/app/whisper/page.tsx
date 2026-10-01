@@ -24,6 +24,8 @@ import { WhisperArchiveDrawer } from "@/components/whisper/whisper-archive-drawe
 import { WhisperNote, DEFAULT_FREQUENCY, PRESET_STATIONS, MOOD_TAG_LABELS } from "@/lib/whisper/types";
 import { playRadioClick, playStaticNoise, playStationLockChime } from "@/lib/whisper/audio-fx";
 
+const WAVEFORM_BARS = [32, 48, 70, 42, 65, 88, 62, 78, 48, 72, 94, 82, 58, 42, 72, 88, 98, 74, 52, 82, 64, 84, 62, 46, 68, 54, 38, 28];
+
 function WhisperContent() {
   const { user, profile, pair, partner } = useAuth();
 
@@ -268,10 +270,10 @@ function WhisperContent() {
                 playRadioClick();
                 setIsArchiveOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-semibold text-[var(--text)] shadow-xs border border-[var(--border)] transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-rose-50/50 text-xs font-semibold text-[var(--text)] shadow-xs border border-[#F5CAD6] transition-all active:scale-95 cursor-pointer"
             >
               <ListMusic className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-              <span>Guide ({whispers.length})</span>
+              <span>Audio Guide ({whispers.length})</span>
             </button>
 
             <button
@@ -279,9 +281,9 @@ function WhisperContent() {
                 playRadioClick();
                 setIsRecorderOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
-              <Mic className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Drop Whisper</span>
             </button>
           </div>
@@ -319,27 +321,30 @@ function WhisperContent() {
         </div>
 
         {/* ─── ACTIVE FREQUENCY STATUS & AUDIO CONTROLS ─── */}
-        <div className="w-full max-w-[540px] mt-6">
+        {/* ─── ACTIVE FREQUENCY STATUS & AUDIO CONTROLS CAPSULE ─── */}
+        <div className="w-full max-w-[560px] mt-6">
           {activeWhisper ? (
-            <div className="p-4 sm:p-5 rounded-3xl bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_12px_32px_rgba(232,82,125,0.08)]">
+            <div className="p-5 sm:p-6 rounded-[32px] bg-white/95 backdrop-blur-xl border border-[#F5CAD6]/70 shadow-[0_16px_40px_rgba(232,82,125,0.1)] transition-all">
               {/* Header Info */}
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono font-bold text-xs bg-[#1C1F24] text-emerald-400 px-2 py-0.5 rounded-md">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="font-mono font-bold text-xs bg-[var(--burgundy)] text-white px-3 py-0.5 rounded-full shadow-xs">
                       {frequency.toFixed(1)} FM
                     </span>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${MOOD_TAG_LABELS[activeWhisper.mood_tag]?.color || "bg-rose-50 text-rose-700 border-rose-200"}`}>
-                      {MOOD_TAG_LABELS[activeWhisper.mood_tag]?.icon} {MOOD_TAG_LABELS[activeWhisper.mood_tag]?.label}
+                    <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-[var(--burgundy)] border border-rose-200/80 flex items-center gap-1">
+                      {MOOD_TAG_LABELS[activeWhisper.mood_tag]?.icon || "♡"} {MOOD_TAG_LABELS[activeWhisper.mood_tag]?.label || "Romantic Vibe"}
                     </span>
                   </div>
 
-                  <h3 className="font-heading font-bold text-lg text-[var(--text)] truncate">
+                  <h3 className="font-heading font-extrabold text-xl text-[var(--text)] truncate tracking-tight">
                     {activeWhisper.title}
                   </h3>
 
-                  <p className="text-xs text-[var(--text-soft)] mt-0.5">
-                    From <span className="font-medium text-[var(--text)]">{activeWhisper.sender_name}</span> • {new Date(activeWhisper.created_at).toLocaleDateString()}
+                  <p className="text-xs text-[var(--text-soft)] mt-1 flex items-center gap-2">
+                    <span>From <strong className="font-semibold text-[var(--text)]">{activeWhisper.sender_name}</strong></span>
+                    <span>•</span>
+                    <span>{new Date(activeWhisper.created_at).toLocaleDateString()}</span>
                   </p>
                 </div>
 
@@ -347,43 +352,75 @@ function WhisperContent() {
                 <button
                   onClick={() => handleMarkListened(activeWhisper.id)}
                   title="Listened with love"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95 cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95 cursor-pointer shadow-xs ${
                     hasHearted
-                      ? "bg-rose-50 border-rose-200 text-rose-600 shadow-xs"
-                      : "bg-white border-zinc-200 text-zinc-600 hover:text-rose-500"
+                      ? "bg-rose-50 border-rose-300 text-rose-600 shadow-rose-100"
+                      : "bg-white border-zinc-200 text-zinc-600 hover:text-rose-500 hover:border-rose-200"
                   }`}
                 >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <Heart className={`w-3.5 h-3.5 ${hasHearted ? "fill-current text-rose-500" : ""}`} />
                   <span>{hasHearted ? "Heard ♡" : "Send Love"}</span>
                 </button>
               </div>
 
-              {/* Scrubber Slider */}
-              <div className="mt-4">
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 100}
-                  value={currentTime}
-                  onChange={handleSeek}
-                  className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[var(--burgundy)] focus:outline-none"
-                />
-                <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 mt-1">
+              {/* Dynamic 28-Bar Waveform Scrubber */}
+              <div className="mt-5">
+                <div
+                  className="group relative flex items-center justify-between gap-1 sm:gap-1.5 h-14 px-3.5 py-2 rounded-2xl bg-rose-50/50 hover:bg-rose-50/80 border border-rose-100/80 transition-colors cursor-pointer select-none"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const pct = Math.max(0, Math.min(1, clickX / rect.width));
+                    const newTime = pct * (duration || 1);
+                    setCurrentTime(newTime);
+                    if (audioRef.current) {
+                      audioRef.current.currentTime = newTime;
+                    }
+                  }}
+                  title="Click anywhere to seek"
+                >
+                  {WAVEFORM_BARS.map((heightPercent, barIdx) => {
+                    const barProgress = (barIdx / (WAVEFORM_BARS.length - 1)) * 100;
+                    const currentPct = duration > 0 ? (currentTime / duration) * 100 : 0;
+                    const isPlayed = barProgress <= currentPct;
+
+                    return (
+                      <div
+                        key={barIdx}
+                        className="flex-1 flex items-center justify-center h-full"
+                      >
+                        <div
+                          style={{ height: `${heightPercent}%` }}
+                          className={`w-full max-w-[5px] rounded-full transition-all duration-150 ${
+                            isPlayed
+                              ? "bg-[var(--burgundy)] shadow-[0_0_8px_rgba(232,82,125,0.4)]"
+                              : "bg-[#F5CAD6] group-hover:bg-[#EBB9C7]"
+                          }`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Timestamps */}
+                <div className="flex items-center justify-between text-[11px] font-mono text-[var(--text-soft)] mt-1.5 px-1 font-medium">
                   <span>{formatTime(currentTime)}</span>
                   <span>{formatTime(duration)}</span>
                 </div>
               </div>
 
               {/* Playback Actions Bar */}
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border)]/60">
-                <div className="text-[11px] font-mono text-[var(--text-soft)]">
-                  SIGNAL LOCKED • 100%
+              <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-[var(--border)]/70">
+                <div className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>SIGNAL LOCKED • 100%</span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleReplay}
-                    className="p-2 text-zinc-500 hover:text-[var(--text)] transition-colors rounded-full hover:bg-rose-50 cursor-pointer"
+                    className="w-9 h-9 rounded-full bg-white border border-[#F5CAD6] text-zinc-600 hover:text-[var(--text)] hover:bg-rose-50/50 flex items-center justify-center transition-transform active:scale-95 cursor-pointer shadow-xs"
                     title="Replay from start"
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -391,7 +428,7 @@ function WhisperContent() {
 
                   <button
                     onClick={handleTogglePlay}
-                    className="w-11 h-11 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white flex items-center justify-center transition-transform active:scale-95 shadow-md cursor-pointer"
+                    className="w-12 h-12 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white flex items-center justify-center transition-transform active:scale-95 shadow-md shadow-rose-300/40 cursor-pointer"
                     title={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
@@ -400,26 +437,27 @@ function WhisperContent() {
 
                 <button
                   onClick={() => setIsRecorderOpen(true)}
-                  className="flex items-center gap-1 text-xs font-semibold text-[var(--burgundy)] hover:underline cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100/70 border border-rose-200 text-xs font-semibold text-[var(--burgundy)] transition-all cursor-pointer"
                 >
+                  <Mic className="w-3.5 h-3.5" />
                   <span>Reply</span>
-                  <Mic className="w-3 h-3" />
                 </button>
               </div>
             </div>
           ) : (
-            <div className="p-4 sm:p-5 rounded-3xl bg-white/80 border border-[var(--border)] text-center text-xs sm:text-sm text-[var(--text-soft)] shadow-xs">
-              <p className="font-semibold text-[var(--text)]">
-                {frequency.toFixed(1)} FM: {currentStation ? currentStation.name : "Open Airwave"}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Soft static hums on this frequency. Drop a whisper here for your partner to find!
+            <div className="p-6 rounded-[28px] bg-white/90 backdrop-blur-md border border-[#F5CAD6] text-center shadow-xs">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-xs font-mono font-bold text-[var(--burgundy)] mb-2">
+                <Radio className="w-3.5 h-3.5" />
+                <span>{frequency.toFixed(1)} FM: {currentStation ? currentStation.name : "Open Airwave"}</span>
+              </span>
+              <p className="text-xs text-[var(--text-soft)] max-w-sm mx-auto mt-1 font-medium">
+                Soft static hums on this frequency. Drop a private audio whisper here for your partner to find!
               </p>
               <button
                 onClick={() => setIsRecorderOpen(true)}
-                className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white text-xs font-semibold shadow-xs transition-transform active:scale-95 cursor-pointer"
+                className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white text-xs font-semibold shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>Record on {frequency.toFixed(1)} FM</span>
               </button>
             </div>

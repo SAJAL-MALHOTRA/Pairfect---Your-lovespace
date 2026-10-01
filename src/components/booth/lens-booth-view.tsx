@@ -24,6 +24,9 @@ import {
   Loader2,
   Users,
   User,
+  Volume2,
+  VolumeX,
+  ChevronLeft,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -1169,9 +1172,9 @@ export default function LensBoothView({
           ) : (
             <>
               {isPartnerConnected ? (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-mono font-medium">
+                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-medium shadow-xs">
+                  <span>{profile?.display_name ? `${profile.display_name} & ${partnerDisplayName}` : partnerDisplayName} • Live Connected</span>
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>{partnerDisplayName} Connected</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-mono font-medium">
@@ -1364,37 +1367,16 @@ export default function LensBoothView({
         </main>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════════════
-          SCREEN 1: CAPTURE SCREEN (When boothMode === "solo" or "duo")
-          ════════════════════════════════════════════════════════════════════════ */}
+      {/* SCREEN 1: CAPTURE SCREEN (When boothMode === "solo" or "duo") */}
       {screen === "capture" && boothMode !== "lobby" && (
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-2">
-          {/* Main Viewfinder Container */}
-          <div className="relative w-full max-w-2xl sm:max-w-3xl aspect-[16/10] bg-zinc-900 rounded-[28px] sm:rounded-[32px] overflow-hidden border border-black/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] flex items-center justify-center">
-            {boothMode === "solo" ? (
-              /* SOLO SINGLE CAMERA VIEWFINDER */
-              <div className="relative w-full h-full overflow-hidden bg-zinc-900 flex items-center justify-center">
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{
-                    transform: `${isMirrored ? "scaleX(-1)" : "none"} scale(${getZoomScale()})`,
-                    filter: currentFilterObj.css,
-                  }}
-                  className="w-full h-full object-cover transition-transform duration-300"
-                />
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/50 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5">
-                  <User className="w-3 h-3 text-red-400" />
-                  <span>Solo Studio</span>
-                </div>
-              </div>
-            ) : (
-              /* DUO 50/50 DUAL-SPLIT VIEWFINDER */
-              <div className="w-full h-full grid grid-cols-2">
-                {/* Left Pane: You */}
-                <div className="relative w-full h-full overflow-hidden bg-zinc-900 border-r border-black/20 flex items-center justify-center">
+        <main className="flex-1 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 sm:gap-8 px-4 py-2 max-w-6xl mx-auto w-full">
+          {/* Left / Center Viewfinder & Controls */}
+          <div className="flex-1 flex flex-col items-center w-full max-w-2xl sm:max-w-3xl">
+            {/* Main Viewfinder Container */}
+            <div className="relative w-full aspect-[16/10] bg-zinc-900 rounded-[28px] sm:rounded-[32px] overflow-hidden border border-black/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] flex items-center justify-center">
+              {boothMode === "solo" ? (
+                /* SOLO SINGLE CAMERA VIEWFINDER */
+                <div className="relative w-full h-full overflow-hidden bg-zinc-900 flex items-center justify-center">
                   <video
                     ref={localVideoRef}
                     autoPlay
@@ -1406,281 +1388,328 @@ export default function LensBoothView({
                     }}
                     className="w-full h-full object-cover transition-transform duration-300"
                   />
-                  <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90">
-                    You
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/50 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5">
+                    <User className="w-3 h-3 text-red-400" />
+                    <span>Solo Studio</span>
                   </div>
                 </div>
-
-                {/* Right Pane: Partner or Friendly Waiting State */}
-                <div className="relative w-full h-full overflow-hidden bg-zinc-850 flex items-center justify-center">
-                  {/* P2P WebRTC Video Stream */}
-                  <video
-                    ref={remoteVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={{
-                      transform: `scale(${getZoomScale()})`,
-                      filter: currentFilterObj.css,
-                    }}
-                    className={`w-full h-full object-cover transition-transform duration-300 ${
-                      isPartnerConnected ? "block" : "hidden"
-                    }`}
-                  />
-
-                  {/* Low-FPS Relay Fallback */}
-                  {partnerFallbackUrl && !remoteVideoRef.current?.srcObject && (
-                    <img
-                      src={partnerFallbackUrl}
-                      alt="Partner Relay"
-                      className="w-full h-full object-cover"
+              ) : (
+                /* DUO 50/50 DUAL-SPLIT VIEWFINDER */
+                <div className="w-full h-full grid grid-cols-2">
+                  {/* Left Pane: You */}
+                  <div className="relative w-full h-full overflow-hidden bg-zinc-900 border-r border-black/20 flex items-center justify-center">
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      style={{
+                        transform: `${isMirrored ? "scaleX(-1)" : "none"} scale(${getZoomScale()})`,
+                        filter: currentFilterObj.css,
+                      }}
+                      className="w-full h-full object-cover transition-transform duration-300"
                     />
-                  )}
-
-                  {/* Friendly Waiting Card when partner not connected yet */}
-                  {!isPartnerConnected && !partnerFallbackUrl && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-b from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 text-white">
-                      <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center mb-2.5 animate-pulse">
-                        <Heart className="w-6 h-6 text-red-400 fill-red-400" />
-                      </div>
-                      <p className="text-xs sm:text-sm font-semibold text-white/95">
-                        Waiting for {partnerDisplayName}...
-                      </p>
-                      <div className="mt-2 px-3 py-1 rounded-lg bg-white/10 border border-white/20 text-xs font-mono font-bold tracking-widest text-amber-300">
-                        Code: {boothCode}
-                      </div>
-                      <div className="mt-2.5 flex items-center gap-2">
-                        <button
-                          onClick={handleCopyShareLink}
-                          className="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
-                        >
-                          {isCopied ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" /> Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5 text-zinc-700" /> Copy Link
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <button
-                        onClick={handleStartSolo}
-                        className="mt-2.5 text-[11px] text-zinc-400 hover:text-white underline cursor-pointer"
-                      >
-                        Switch to Solo Photobooth
-                      </button>
+                    <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90">
+                      You
                     </div>
-                  )}
+                  </div>
 
-                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5 z-10">
-                    <span>{partnerDisplayName}</span>
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        isPartnerConnected ? "bg-emerald-400" : "bg-amber-400 animate-pulse"
+                  {/* Right Pane: Partner or Friendly Waiting State */}
+                  <div className="relative w-full h-full overflow-hidden bg-zinc-850 flex items-center justify-center">
+                    {/* P2P WebRTC Video Stream */}
+                    <video
+                      ref={remoteVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      style={{
+                        transform: `scale(${getZoomScale()})`,
+                        filter: currentFilterObj.css,
+                      }}
+                      className={`w-full h-full object-cover transition-transform duration-300 ${
+                        isPartnerConnected ? "block" : "hidden"
                       }`}
                     />
+
+                    {/* Low-FPS Relay Fallback */}
+                    {partnerFallbackUrl && !remoteVideoRef.current?.srcObject && (
+                      <img
+                        src={partnerFallbackUrl}
+                        alt="Partner Relay"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+
+                    {/* Friendly Waiting Card when partner not connected yet */}
+                    {!isPartnerConnected && !partnerFallbackUrl && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-b from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 text-white">
+                        <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center mb-2.5 animate-pulse">
+                          <Heart className="w-6 h-6 text-red-400 fill-red-400" />
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-white/95">
+                          Waiting for {partnerDisplayName}...
+                        </p>
+                        <div className="mt-2 px-3 py-1 rounded-lg bg-white/10 border border-white/20 text-xs font-mono font-bold tracking-widest text-amber-300">
+                          Code: {boothCode}
+                        </div>
+                        <div className="mt-2.5 flex items-center gap-2">
+                          <button
+                            onClick={handleCopyShareLink}
+                            className="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+                          >
+                            {isCopied ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" /> Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5 text-zinc-700" /> Copy Link
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <button
+                          onClick={handleStartSolo}
+                          className="mt-2.5 text-[11px] text-zinc-400 hover:text-white underline cursor-pointer"
+                        >
+                          Switch to Solo Photobooth
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5 z-10">
+                      <span>{partnerDisplayName}</span>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          isPartnerConnected ? "bg-emerald-400" : "bg-amber-400 animate-pulse"
+                        }`}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Countdown Overlay during capture sequence */}
-            <AnimatePresence>
-              {countdownNumber !== null && (
-                <motion.div
-                  key={countdownNumber}
-                  initial={{ scale: 2, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.5, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 450, damping: 25 }}
-                  className="absolute inset-0 bg-black/35 backdrop-blur-xs flex flex-col items-center justify-center z-30 pointer-events-none"
-                >
-                  <span className="font-display font-extrabold text-7xl sm:text-8xl text-white drop-shadow-lg">
-                    {countdownNumber === 0 ? "♡" : countdownNumber}
-                  </span>
-                  <span className="text-white/90 font-mono text-xs uppercase tracking-widest mt-3">
-                    Shot {currentShotIndex + 1} of 3
-                  </span>
-                </motion.div>
               )}
-            </AnimatePresence>
 
-            {/* Floating Zoom Pill (Bottom-Center inside viewfinder) */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md rounded-full p-1 flex items-center gap-1 z-20 shadow-md">
-              {([0.5, 1, 2] as const).map((z) => (
-                <button
-                  key={z}
-                  onClick={() => setZoom(z)}
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer transition-all ${
-                    zoom === z
-                      ? "bg-white text-zinc-900 shadow-xs"
-                      : "text-white/80 hover:text-white"
-                  }`}
-                >
-                  {z}x
-                </button>
-              ))}
-            </div>
+              {/* Countdown Overlay during capture sequence */}
+              <AnimatePresence>
+                {countdownNumber !== null && (
+                  <motion.div
+                    key={countdownNumber}
+                    initial={{ scale: 2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                    className="absolute inset-0 bg-black/35 backdrop-blur-xs flex flex-col items-center justify-center z-30 pointer-events-none"
+                  >
+                    <span className="font-display font-extrabold text-7xl sm:text-8xl text-white drop-shadow-lg">
+                      {countdownNumber === 0 ? "♡" : countdownNumber}
+                    </span>
+                    <span className="text-white/90 font-mono text-xs uppercase tracking-widest mt-3">
+                      Shot {currentShotIndex + 1} of 3
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Floating Expand Button (Bottom-Right inside viewfinder) */}
-            <button
-              onClick={toggleFullscreen}
-              className="absolute bottom-3 right-3 bg-white hover:bg-zinc-100 text-zinc-900 p-2 rounded-xl shadow-md z-20 cursor-pointer transition-transform hover:scale-105 active:scale-95"
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            >
-              {isFullscreen ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-
-          {/* Inline Filter Tray Drawer when opened */}
-          <AnimatePresence>
-            {showFilterTray && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="w-full max-w-md mt-4 p-3 bg-white border border-zinc-200 rounded-2xl shadow-lg flex items-center justify-around gap-2"
+              {/* Floating Expand Button (Bottom-Right inside viewfinder) */}
+              <button
+                onClick={toggleFullscreen}
+                className="absolute bottom-3 right-3 bg-white hover:bg-zinc-100 text-zinc-900 p-2 rounded-xl shadow-md z-20 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               >
-                {BOOTH_FILTERS.map((f) => (
-                  <button
-                    key={f.key}
-                    onClick={() => setActiveFilter(f.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-                      activeFilter === f.key
-                        ? "bg-black text-white shadow-xs"
-                        : "text-zinc-600 hover:bg-zinc-100"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Controls Below Viewfinder Matching media_1790804984346.png */}
-          <div className="w-full max-w-md flex flex-col items-center mt-6 gap-5">
-            {/* Upper Row: Filters and Background Circular Buttons */}
-            <div className="flex items-center justify-center gap-6">
-              {/* Filters Button with 3 overlapping circles icon */}
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={() => {
-                    setShowFilterTray(!showFilterTray);
-                    setShowBgTray(false);
-                  }}
-                  className={`w-14 h-14 rounded-full bg-white border shadow-sm flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 ${
-                    showFilterTray
-                      ? "border-zinc-900 ring-2 ring-zinc-900/10"
-                      : "border-zinc-300 hover:border-zinc-400"
-                  }`}
-                  title="Choose visual filter"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#18181B"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="9" cy="9" r="4.5" />
-                    <circle cx="15" cy="9" r="4.5" />
-                    <circle cx="12" cy="15" r="4.5" />
-                  </svg>
-                </button>
-                <span className="text-xs font-medium text-zinc-700 mt-1.5">
-                  Filters
-                </span>
-              </div>
-
-              {/* Background Button with portrait backdrop icon */}
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={() => {
-                    setShowBgTray(!showBgTray);
-                    setShowFilterTray(false);
-                  }}
-                  className={`w-14 h-14 rounded-full bg-white border shadow-sm flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 ${
-                    showBgTray
-                      ? "border-zinc-900 ring-2 ring-zinc-900/10"
-                      : "border-zinc-300 hover:border-zinc-400"
-                  }`}
-                  title="Canvas background"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#18181B"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <circle cx="12" cy="10" r="3" />
-                    <path d="M7 19c0-2.5 2.2-4 5-4s5 1.5 5 4" />
-                  </svg>
-                </button>
-                <span className="text-xs font-medium text-zinc-700 mt-1.5">
-                  Background
-                </span>
-              </div>
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </button>
             </div>
 
-            {/* Lower Row: Mic Mute, Capture Pill Button, Flash Button */}
-            <div className="flex items-center justify-center gap-4">
+            {/* Floating Frosted Glass Dock matching photobooth_studio_redesign */}
+            <div className="w-auto mx-auto mt-4 px-4 sm:px-6 py-2.5 rounded-full bg-white/85 backdrop-blur-md border border-white/80 shadow-[0_8px_30px_rgba(232,82,125,0.12)] flex items-center justify-center gap-2.5 sm:gap-3.5 z-20">
+              {/* Speaker / Volume Button */}
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="w-10 h-10 rounded-full bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-700 flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
+                title={isMuted ? "Unmute sound" : "Mute sound"}
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 text-zinc-400" /> : <Volume2 className="w-4 h-4 text-zinc-700" />}
+              </button>
+
               {/* Mic / Mute Button */}
               <button
                 onClick={toggleMute}
-                className={`w-16 h-14 rounded-2xl bg-white border shadow-sm flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 ${
-                  isMuted
-                    ? "border-red-300 text-red-500 bg-red-50/50"
-                    : "border-zinc-300 hover:border-zinc-400 text-zinc-800"
+                className={`w-10 h-10 rounded-full bg-white hover:bg-zinc-50 border text-zinc-700 flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer ${
+                  isMuted ? "border-red-300 text-red-500 bg-red-50/50" : "border-zinc-200"
                 }`}
                 title={isMuted ? "Unmute mic" : "Mute mic"}
               >
-                {isMuted ? (
-                  <MicOff className="w-5 h-5 text-red-500" />
-                ) : (
-                  <Mic className="w-5 h-5 text-zinc-800" />
-                )}
+                {isMuted ? <MicOff className="w-4 h-4 text-red-500" /> : <Mic className="w-4 h-4 text-zinc-700" />}
               </button>
 
-              {/* Prominent Black Pill Capture Button */}
+              {/* Centerpiece Burgundy Capture Button */}
               <button
                 disabled={isCapturing}
                 onClick={startCaptureSequence}
-                className="h-14 px-10 rounded-2xl bg-black hover:bg-zinc-800 text-white font-semibold text-base shadow-lg flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:scale-102 active:scale-95 disabled:opacity-50"
+                className="h-12 px-6 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white font-bold text-xs sm:text-sm tracking-wide shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 ring-4 ring-[#E8527D]/20 disabled:opacity-50"
               >
-                <Camera className="w-5 h-5" />
-                <span>Capture</span>
+                <Camera className="w-4 h-4" />
+                <span>Capture (3 Snaps)</span>
               </button>
 
               {/* Flash Button */}
               <button
                 onClick={() => setFlashEnabled(!flashEnabled)}
-                className={`w-16 h-14 rounded-2xl bg-white border shadow-sm flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 ${
-                  flashEnabled
-                    ? "border-zinc-300 hover:border-zinc-400 text-zinc-800"
-                    : "border-zinc-300 text-zinc-400"
-                }`}
+                className="w-10 h-10 rounded-full bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-700 flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
                 title={flashEnabled ? "Screen flash enabled" : "Screen flash disabled"}
               >
                 {flashEnabled ? (
-                  <Zap className="w-5 h-5 text-zinc-800 fill-zinc-800" />
+                  <Zap className="w-4 h-4 fill-amber-400 text-amber-500" />
                 ) : (
-                  <ZapOff className="w-5 h-5 text-zinc-400" />
+                  <ZapOff className="w-4 h-4 text-zinc-400" />
                 )}
+              </button>
+
+              {/* Zoom Selector Inside Dock */}
+              <div className="flex items-center gap-0.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200/80">
+                {([0.5, 1, 2] as const).map((z) => (
+                  <button
+                    key={z}
+                    onClick={() => setZoom(z)}
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-semibold cursor-pointer transition-all ${
+                      zoom === z
+                        ? "bg-white text-zinc-900 shadow-xs font-bold"
+                        : "text-zinc-600 hover:text-zinc-900"
+                    }`}
+                  >
+                    {z}x
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Circular Filter Carousel directly underneath the dock */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3 w-full overflow-x-auto pb-1">
+              <button
+                onClick={() => {
+                  const idx = BOOTH_FILTERS.findIndex((f) => f.key === activeFilter);
+                  const prevIdx = (idx - 1 + BOOTH_FILTERS.length) % BOOTH_FILTERS.length;
+                  setActiveFilter(BOOTH_FILTERS[prevIdx].key);
+                }}
+                className="p-1.5 rounded-full text-zinc-400 hover:text-zinc-700 hover:bg-white/60 transition-colors cursor-pointer"
+                title="Previous look"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-2.5 sm:gap-3.5">
+                {BOOTH_FILTERS.map((f) => {
+                  const isActive = activeFilter === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => setActiveFilter(f.key)}
+                      className="flex flex-col items-center gap-1 group cursor-pointer"
+                    >
+                      <div
+                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 transition-all ${
+                          isActive
+                            ? "border-2 border-[var(--burgundy)] scale-105 ring-2 ring-[#E8527D]/30 shadow-xs"
+                            : "border-2 border-white hover:border-zinc-300 opacity-80 group-hover:opacity-100"
+                        }`}
+                      >
+                        <div
+                          className="w-full h-full rounded-full bg-gradient-to-tr from-rose-300 via-amber-100 to-rose-200 shadow-inner flex items-center justify-center text-[10px] font-bold text-zinc-800"
+                          style={{ filter: f.css }}
+                        >
+                          <span className="text-[9px] uppercase font-mono tracking-tight">Look</span>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-[10px] font-medium transition-colors whitespace-nowrap ${
+                          isActive
+                            ? "text-[var(--burgundy)] font-bold"
+                            : "text-zinc-600 group-hover:text-zinc-900"
+                        }`}
+                      >
+                        {f.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => {
+                  const idx = BOOTH_FILTERS.findIndex((f) => f.key === activeFilter);
+                  const nextIdx = (idx + 1) % BOOTH_FILTERS.length;
+                  setActiveFilter(BOOTH_FILTERS[nextIdx].key);
+                }}
+                className="p-1.5 rounded-full text-zinc-400 hover:text-zinc-700 hover:bg-white/60 transition-colors cursor-pointer"
+                title="Next look"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Realistic 3D Film Strip Dispenser matching mockup */}
+          <div className="hidden lg:flex flex-col items-center w-60 shrink-0">
+            <div className="w-full bg-white/95 backdrop-blur-md rounded-3xl p-3.5 border border-[var(--border)] shadow-[0_12px_36px_rgba(232,82,125,0.08)] flex flex-col items-center">
+              {/* Dispenser Slot Frame */}
+              <div className="w-full h-5 rounded-full bg-zinc-800 border-2 border-zinc-700 shadow-inner mb-3 flex items-center justify-center">
+                <span className="w-20 h-1 rounded-full bg-zinc-600/50" />
+              </div>
+
+              {/* 3-Shot Photostrip Sliding Out */}
+              <div className="w-full bg-[#18181B] rounded-xl p-2.5 shadow-md flex flex-col items-center gap-2 border border-zinc-700">
+                {/* 3 Photostrip Frame Windows */}
+                {[0, 1, 2].map((idx) => {
+                  const frame = capturedFrames[idx];
+                  return (
+                    <div
+                      key={idx}
+                      className="w-full aspect-[16/10] rounded-xs bg-zinc-900 border border-white/20 overflow-hidden relative flex items-center justify-center"
+                    >
+                      {frame ? (
+                        <img
+                          src={frame}
+                          alt={`Snap ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-zinc-500">
+                          <Camera className="w-4 h-4 text-zinc-600" />
+                          <span className="text-[9px] font-mono uppercase tracking-wider">
+                            Frame #{idx + 1}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Date & Film Branding */}
+                <div className="text-center pt-1">
+                  <p className="font-mono text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                    {new Date().toLocaleDateString(undefined, {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <p className="text-[9px] font-pixel text-rose-400/90 tracking-widest mt-0.5">
+                    PAIRFECT 400
+                  </p>
+                </div>
+              </div>
+
+              {/* Save & Print Button */}
+              <button
+                disabled={capturedFrames.length === 0}
+                onClick={() => setScreen("result")}
+                className="mt-3.5 w-full py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Download className="w-3.5 h-3.5 text-rose-300" />
+                <span>Save & Print Strip</span>
               </button>
             </div>
           </div>

@@ -493,43 +493,40 @@ function MixtapeContent() {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <main className="max-w-3xl mx-auto px-4 pt-6 sm:pt-8">
-        {/* Stepper Navigation (1 - 2 - 3 - 4) */}
+      <main className="max-w-5xl mx-auto px-4 pt-6 sm:pt-8">
+        {/* Stepper Navigation: Labeled Pill Buttons */}
         <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center gap-2 sm:gap-4">
-            {[1, 2, 3, 4].map((stepNum) => {
-              const isPassed = currentStep > stepNum;
-              const isActive = currentStep === stepNum;
+          <div className="inline-flex items-center gap-1.5 sm:gap-2.5 p-1.5 rounded-full bg-white/80 backdrop-blur-md border border-[#F5CAD6]/80 shadow-xs max-w-full overflow-x-auto">
+            {[
+              { num: 1, label: "1. Cassette Style" },
+              { num: 2, label: "2. Tracklist" },
+              { num: 3, label: "3. Note" },
+              { num: 4, label: "4. Case" },
+            ].map((step) => {
+              const isPassed = currentStep > step.num;
+              const isActive = currentStep === step.num;
 
               return (
-                <React.Fragment key={stepNum}>
-                  <button
-                    onClick={() => {
-                      if (stepNum <= currentStep || activeMixtape) {
-                        setCurrentStep(stepNum as 1 | 2 | 3 | 4);
-                      }
-                    }}
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all shadow-xs ${
-                      isPassed
-                        ? "bg-emerald-500 text-white"
-                        : isActive
-                        ? "bg-[var(--burgundy)] text-white ring-4 ring-[#E8527D]/25 scale-105 shadow-md"
-                        : "bg-white/80 text-[var(--text-soft)] border border-[var(--border)]"
-                    }`}
-                  >
-                    {isPassed ? <Check className="w-4 h-4 stroke-[3]" /> : stepNum}
-                  </button>
-
-                  {stepNum < 4 && (
-                    <div
-                      className={`w-8 sm:w-14 h-0.5 border-t-2 border-dashed transition-colors ${
-                        currentStep > stepNum
-                          ? "border-emerald-500"
-                          : "border-[var(--border)]"
-                      }`}
-                    />
-                  )}
-                </React.Fragment>
+                <button
+                  key={step.num}
+                  onClick={() => {
+                    if (step.num <= currentStep || activeMixtape) {
+                      setCurrentStep(step.num as 1 | 2 | 3 | 4);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-mono text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-[var(--burgundy)] text-white shadow-md shadow-rose-200/50"
+                      : isPassed
+                      ? "bg-rose-50 text-[var(--burgundy)] border border-rose-200/60 hover:bg-rose-100/50"
+                      : "text-[var(--text-soft)] hover:text-[var(--text)] hover:bg-white/60"
+                  }`}
+                >
+                  {isPassed ? (
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold">✓</span>
+                  ) : null}
+                  <span>{step.label}</span>
+                </button>
               );
             })}
           </div>
@@ -556,91 +553,206 @@ function MixtapeContent() {
           </p>
         </div>
 
-        {/* ── STEP 1: PICK CASSETTE COLOR ─────────────────────────────────── */}
+        {/* ── STEP 1: PICK CASSETTE COLOR & STUDIO DESK ── */}
         {currentStep === 1 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             className="space-y-6"
           >
-            {/* Mixtape Title & Recipient Inputs */}
-            <div className="max-w-md mx-auto bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-[var(--border)] shadow-xs flex flex-col gap-3">
-              <div>
-                <label className="text-[11px] font-mono uppercase text-[var(--text-soft)] font-semibold tracking-wider">
-                  Mixtape Name
-                </label>
-                <input
-                  type="text"
-                  value={tapeTitle}
-                  onChange={(e) => setTapeTitle(e.target.value)}
-                  placeholder="e.g. Late Night Drives"
-                  maxLength={40}
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-white border border-[var(--border)] text-sm font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)] transition-colors"
-                />
+            {/* Studio Layout: 2 Columns on desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Cassette Shell Preview & Patterns Palette (lg:col-span-7) */}
+              <div className="lg:col-span-7 space-y-4">
+                {/* Title & Recipient Bar */}
+                <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-[var(--border)] shadow-xs grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-mono uppercase text-[var(--text-soft)] font-bold tracking-wider">
+                      Mixtape Name
+                    </label>
+                    <input
+                      type="text"
+                      value={tapeTitle}
+                      onChange={(e) => setTapeTitle(e.target.value)}
+                      placeholder="e.g. Late Night Drives"
+                      maxLength={40}
+                      className="w-full mt-1 px-3 py-1.5 rounded-xl bg-white border border-[var(--border)] text-xs sm:text-sm font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)] transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono uppercase text-[var(--text-soft)] font-bold tracking-wider">
+                      For (Recipient)
+                    </label>
+                    <input
+                      type="text"
+                      value={recipientName}
+                      onChange={(e) => setRecipientName(e.target.value)}
+                      placeholder="e.g. My Favorite Person"
+                      maxLength={30}
+                      className="w-full mt-1 px-3 py-1.5 rounded-xl bg-white border border-[var(--border)] text-xs sm:text-sm font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Cassette Shell Preview */}
+                <div className="py-2 flex justify-center">
+                  <CassetteShell
+                    patternId={selectedPatternId}
+                    tapeTitle={tapeTitle}
+                    recipientName={recipientName}
+                    isPlaying={isPlaying}
+                    size="md"
+                  />
+                </div>
+
+                {/* 18 Circular Swatches Grid */}
+                <div className="bg-white/90 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[var(--border)] shadow-xs">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-mono font-semibold uppercase text-[var(--text-soft)] tracking-wider">
+                      Selected Style: <span className="text-[var(--text)] font-bold">{selectedPattern.name}</span>
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-50 text-[var(--burgundy)] border border-rose-200 font-bold">
+                      18 PATTERNS
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-6 sm:grid-cols-9 gap-2.5 sm:gap-3 place-items-center">
+                    {CASSETTE_PATTERNS.map((pattern) => {
+                      const isSelected = pattern.id === selectedPatternId;
+
+                      return (
+                        <button
+                          key={pattern.id}
+                          onClick={() => setSelectedPatternId(pattern.id)}
+                          title={pattern.name}
+                          style={{
+                            backgroundColor: pattern.swatchBg,
+                            borderColor: isSelected ? "var(--burgundy)" : pattern.swatchBorder,
+                          }}
+                          className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 transition-transform shadow-xs hover:scale-110 active:scale-95 cursor-pointer ${
+                            isSelected
+                              ? "ring-2 ring-[var(--burgundy)] ring-offset-2 scale-110 shadow-md"
+                              : ""
+                          }`}
+                        >
+                          {isSelected && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-2.5 h-2.5 rounded-full bg-[var(--burgundy)]" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-mono uppercase text-[var(--text-soft)] font-semibold tracking-wider">
-                  For (Recipient)
-                </label>
-                <input
-                  type="text"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                  placeholder="e.g. My Favorite Person"
-                  maxLength={30}
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-white border border-[var(--border)] text-sm font-medium text-[var(--text)] outline-none focus:border-[var(--burgundy)] transition-colors"
-                />
-              </div>
-            </div>
+              {/* Right Column: Lined Stationery Tracklist Notepad Preview (lg:col-span-5) */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="relative rounded-2xl bg-[#FCFAF2] border-2 border-[#E9DFCE] shadow-[0_12px_32px_rgba(0,0,0,0.06)] p-5 overflow-hidden">
+                  {/* Binder holes */}
+                  <div className="absolute top-0 bottom-0 left-2.5 w-4 flex flex-col justify-around py-5 pointer-events-none">
+                    {[0, 1, 2, 3].map((idx) => (
+                      <div
+                        key={idx}
+                        className="w-3 h-3 rounded-full bg-[#E3D9C6] border border-[#CFC3AE]"
+                      />
+                    ))}
+                  </div>
+                  {/* Red margin line */}
+                  <div className="absolute top-0 bottom-0 left-9 w-0.5 bg-red-300/80 pointer-events-none" />
 
-            {/* Realistic Physical Cassette Shell Preview */}
-            <div className="py-2">
-              <CassetteShell
-                patternId={selectedPatternId}
-                tapeTitle={tapeTitle}
-                recipientName={recipientName}
-                isPlaying={isPlaying}
-                size="md"
-              />
-            </div>
+                  <div className="pl-6">
+                    <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+                      <div>
+                        <span className="text-[10px] font-mono tracking-widest uppercase text-stone-500 font-bold block">
+                          MIXTAPE TRACKLIST
+                        </span>
+                        <h4 className="font-heading font-bold text-sm text-stone-800 truncate">
+                          {tapeTitle || "Late Night Drives"}
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100/70 text-amber-800 font-bold">
+                        {draftTracks.length} / 4 TRACKS
+                      </span>
+                    </div>
 
-            {/* 18 Circular Swatches Grid */}
-            <div className="max-w-lg mx-auto bg-white/85 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[var(--border)] shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-semibold uppercase text-[var(--text-soft)] tracking-wider">
-                  Selected: <span className="text-[var(--text)]">{selectedPattern.name}</span>
-                </span>
-                <span className="text-[11px] font-mono text-[var(--text-soft)]">18 PATTERNS</span>
-              </div>
-
-              <div className="grid grid-cols-6 sm:grid-cols-9 gap-2.5 sm:gap-3 place-items-center">
-                {CASSETTE_PATTERNS.map((pattern) => {
-                  const isSelected = pattern.id === selectedPatternId;
-
-                  return (
-                    <button
-                      key={pattern.id}
-                      onClick={() => setSelectedPatternId(pattern.id)}
-                      title={pattern.name}
-                      style={{
-                        backgroundColor: pattern.swatchBg,
-                        borderColor: isSelected ? "var(--burgundy)" : pattern.swatchBorder,
-                      }}
-                      className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-transform shadow-xs hover:scale-110 active:scale-95 ${
-                        isSelected
-                          ? "ring-2 ring-[var(--burgundy)] ring-offset-2 scale-110 shadow-md"
-                          : ""
-                      }`}
-                    >
-                      {isSelected && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[var(--burgundy)]" />
-                        </div>
+                    {/* Tracklist Items */}
+                    <div className="mt-3 space-y-2.5 text-xs">
+                      {draftTracks.length > 0 ? (
+                        draftTracks.map((tr, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between py-1 border-b border-dashed border-stone-200"
+                          >
+                            <div className="flex items-center gap-2 truncate pr-2">
+                              <span className="font-mono font-bold text-[var(--burgundy)]">
+                                {i < 2 ? `A${i + 1}.` : `B${i - 1}.`}
+                              </span>
+                              <span className="font-medium text-stone-800 truncate">{tr.title}</span>
+                            </div>
+                            <span className="text-[10px] font-mono text-stone-400 shrink-0">
+                              {tr.artist || "3:30"}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between py-1 border-b border-dashed border-stone-200 text-stone-400 italic">
+                            <span className="font-mono text-stone-400">A1.</span>
+                            <span>(First Song - click below)</span>
+                            <span className="font-mono text-[10px]">--:--</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-dashed border-stone-200 text-stone-400 italic">
+                            <span className="font-mono text-stone-400">A2.</span>
+                            <span>(Second Song)</span>
+                            <span className="font-mono text-[10px]">--:--</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-dashed border-stone-200 text-stone-400 italic">
+                            <span className="font-mono text-stone-400">B1.</span>
+                            <span>(Third Song)</span>
+                            <span className="font-mono text-[10px]">--:--</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-dashed border-stone-200 text-stone-400 italic">
+                            <span className="font-mono text-stone-400">B2.</span>
+                            <span>(Fourth Song)</span>
+                            <span className="font-mono text-[10px]">--:--</span>
+                          </div>
+                        </>
                       )}
-                    </button>
-                  );
-                })}
+                    </div>
+
+                    {/* Quick Button to Step 2 */}
+                    <div className="mt-4 pt-2">
+                      <button
+                        onClick={() => setCurrentStep(2)}
+                        className="w-full py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                        <span>{draftTracks.length > 0 ? "Edit Tracklist" : "Add Songs to Tracklist"}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hand-written Note Preview snippet */}
+                <div className="p-3.5 rounded-2xl bg-white/70 backdrop-blur-sm border border-[var(--border)] text-xs flex items-center justify-between">
+                  <div className="truncate pr-2">
+                    <span className="text-[10px] font-mono text-[var(--text-soft)] uppercase block font-bold">
+                      Attached Note
+                    </span>
+                    <p className="font-script text-base text-[var(--text)] truncate">
+                      &quot;{noteContent}&quot;
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setCurrentStep(3)}
+                    className="text-xs font-semibold text-[var(--burgundy)] hover:underline shrink-0 cursor-pointer"
+                  >
+                    Edit Note
+                  </button>
+                </div>
               </div>
             </div>
 
