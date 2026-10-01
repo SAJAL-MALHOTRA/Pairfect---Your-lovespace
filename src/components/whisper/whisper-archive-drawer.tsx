@@ -90,9 +90,11 @@ export function WhisperArchiveDrawer({
               </div>
             ) : (
               whispers.map((w) => {
-                const isTunedIn = Math.abs(w.frequency - currentFrequency) < 0.05;
-                const moodInfo = MOOD_TAG_LABELS[w.mood_tag] || MOOD_TAG_LABELS.romantic;
+                const noteFreq = typeof w.frequency === "number" && !isNaN(w.frequency) ? w.frequency : parseFloat(String(w.frequency)) || 91.7;
+                const isTunedIn = Math.abs(noteFreq - currentFrequency) < 0.05;
+                const moodInfo = (w.mood_tag && MOOD_TAG_LABELS[w.mood_tag]) ? MOOD_TAG_LABELS[w.mood_tag] : MOOD_TAG_LABELS.romantic;
                 const isOwn = currentUserId && w.sender_id === currentUserId;
+                const formattedDate = w.created_at ? new Date(w.created_at).toLocaleDateString() : "Recent";
 
                 return (
                   <div
@@ -107,7 +109,7 @@ export function WhisperArchiveDrawer({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-mono font-bold text-xs bg-[#1A1F24] text-emerald-400 px-2 py-0.5 rounded-md">
-                            {w.frequency.toFixed(1)} FM
+                            {noteFreq.toFixed(1)} FM
                           </span>
 
                           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${moodInfo.color}`}>
@@ -127,11 +129,11 @@ export function WhisperArchiveDrawer({
                         </h4>
 
                         <div className="flex items-center gap-2 text-[11px] text-[var(--text-soft)] mt-0.5">
-                          <span>By {w.sender_name}</span>
+                          <span>By {w.sender_name || "Partner"}</span>
                           <span>•</span>
-                          <span>{w.duration ? `${Math.floor(w.duration)}s` : "Voice Note"}</span>
+                          <span>{w.duration ? `${Math.floor(Number(w.duration))}s` : "Voice Note"}</span>
                           <span>•</span>
-                          <span>{new Date(w.created_at).toLocaleDateString()}</span>
+                          <span>{formattedDate}</span>
                         </div>
                       </div>
 
@@ -140,7 +142,7 @@ export function WhisperArchiveDrawer({
                         <button
                           onClick={() => {
                             playRadioClick();
-                            onTuneToFrequency(w.frequency);
+                            onTuneToFrequency(noteFreq);
                             onClose();
                           }}
                           className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer ${

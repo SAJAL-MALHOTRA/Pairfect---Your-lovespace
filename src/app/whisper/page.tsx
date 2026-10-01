@@ -26,6 +26,28 @@ import { playRadioClick, playStaticNoise, playStationLockChime } from "@/lib/whi
 
 const WAVEFORM_BARS = [32, 48, 70, 42, 65, 88, 62, 78, 48, 72, 94, 82, 58, 42, 72, 88, 98, 74, 52, 82, 64, 84, 62, 46, 68, 54, 38, 28];
 
+function sanitizeWhisper(raw: any): WhisperNote {
+  const freq = typeof raw?.frequency === "number" && !isNaN(raw.frequency)
+    ? raw.frequency
+    : parseFloat(String(raw?.frequency)) || 91.7;
+  const dur = typeof raw?.duration === "number" && !isNaN(raw.duration)
+    ? raw.duration
+    : parseFloat(String(raw?.duration)) || 0;
+  return {
+    id: String(raw?.id || `whisper-${Date.now()}`),
+    pair_id: String(raw?.pair_id || ""),
+    sender_id: String(raw?.sender_id || ""),
+    sender_name: String(raw?.sender_name || "Partner"),
+    frequency: Math.round(freq * 10) / 10,
+    title: String(raw?.title || "Sweet Whisper"),
+    audio_url: String(raw?.audio_url || "/whisper-chime.wav"),
+    duration: dur,
+    mood_tag: (raw?.mood_tag && MOOD_TAG_LABELS[raw.mood_tag as keyof typeof MOOD_TAG_LABELS]) ? raw.mood_tag : "romantic",
+    listened_at: raw?.listened_at || null,
+    created_at: raw?.created_at || new Date().toISOString(),
+  };
+}
+
 function WhisperContent() {
   const { user, profile, pair, partner } = useAuth();
 
@@ -45,6 +67,7 @@ function WhisperContent() {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isFirstMountRef = useRef(true);
 
   // Fetch whispers
   const fetchWhispers = useCallback(async () => {
@@ -54,7 +77,7 @@ function WhisperContent() {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setWhispers(data);
+          setWhispers(data.map(sanitizeWhisper));
           return;
         }
       }
@@ -65,7 +88,7 @@ function WhisperContent() {
         try {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setWhispers(parsed);
+            setWhispers(parsed.map(sanitizeWhisper));
             return;
           }
         } catch {
@@ -82,15 +105,17 @@ function WhisperContent() {
           sender_name: partner?.display_name || "Your Partner",
           frequency: 91.7,
           title: "Welcome to our private frequency ♡",
-          audio_url: "https://actions.google.com/sounds/v1/ambiences/humming_music_box.ogg",
-          duration: 14,
+          audio_url: "/whisper-chime.wav",
+          duration: 3,
           mood_tag: "romantic",
           listened_at: null,
           created_at: new Date().toISOString(),
         },
       ];
       setWhispers(initialSeed);
-      localStorage.setItem("pairfect_whispers", JSON.stringify(initialSeed));
+      try {
+        localStorage.setItem("pairfect_whispers", JSON.stringify(initialSeed));
+      } catch {}
     } catch (err) {
       console.error("Fetch whispers error:", err);
     } finally {
@@ -104,7 +129,12 @@ function WhisperContent() {
 
   // Find whisper exactly matching or very close to current frequency
   const activeWhisper = useMemo(() => {
-    return whispers.find((w) => Math.abs(w.frequency - frequency) < 0.05) || null;
+    return (
+      whispers.find((w) => {
+        const noteFreq = typeof w.frequency === "number" && !isNaN(w.frequency) ? w.frequency : parseFloat(String(w.frequency)) || 91.7;
+        return Math.abs(noteFreq - frequency) < 0.05;
+      }) || null
+    );
   }, [whispers, frequency]);
 
   // Station info if tuned to a known preset
@@ -114,7 +144,8 @@ function WhisperContent() {
 
   // Handle tuning changes
   const handleFrequencyChange = (newFreq: number) => {
-    setFrequency(newFreq);
+    const safe = typeof newFreq === "number" && !isNaN(newFreq) ? newFreq : parseFloat(String(newFreq)) || 91.7;
+    setFrequency(safe);
     // Pause existing audio when turning dial
     if (audioRef.current) {
       audioRef.current.pause();
@@ -134,7 +165,12 @@ function WhisperContent() {
       audio.src = activeWhisper.audio_url;
       audio.load();
       setHasHearted(Boolean(activeWhisper.listened_at));
-      playStationLockChime();
+
+      if (isFirstMountRef.current) {
+        isFirstMountRef.current = false;
+      } else {
+        playStationLockChime();
+      }
 
       // Immediately initialize duration from activeWhisper metadata
       setCurrentTime(0);
@@ -256,7 +292,9 @@ function WhisperContent() {
       await fetch(`/api/whisper?id=${whisperId}`, { method: "DELETE" });
       setWhispers((prev) => {
         const next = prev.filter((w) => w.id !== whisperId);
-        localStorage.setItem("pairfect_whispers", JSON.stringify(next));
+        try {
+          localStorage.setItem("pairfect_whispers", JSON.stringify(next));
+        } catch {}
         return next;
       });
     } catch {
@@ -266,13 +304,16 @@ function WhisperContent() {
 
   // Broadcast success
   const handleBroadcastSuccess = (newWhisper: WhisperNote) => {
+    const safe = sanitizeWhisper(newWhisper);
     setWhispers((prev) => {
-      const next = [newWhisper, ...prev];
-      localStorage.setItem("pairfect_whispers", JSON.stringify(next));
+      const next = [safe, ...prev];
+      try {
+        localStorage.setItem("pairfect_whispers", JSON.stringify(next));
+      } catch {}
       return next;
     });
     // Tune radio directly to the new broadcast frequency
-    setFrequency(newWhisper.frequency);
+    setFrequency(safe.frequency);
   };
 
   const formatTime = (seconds: number) => {
@@ -369,10 +410,10 @@ function WhisperContent() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <span className="font-mono font-bold text-xs bg-[var(--burgundy)] text-white px-3 py-0.5 rounded-full shadow-xs">
-                      {frequency.toFixed(1)} FM
+                      {(Number(frequency) || 91.7).toFixed(1)} FM
                     </span>
                     <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-[var(--burgundy)] border border-rose-200/80 flex items-center gap-1">
-                      {MOOD_TAG_LABELS[activeWhisper.mood_tag]?.icon || "♡"} {MOOD_TAG_LABELS[activeWhisper.mood_tag]?.label || "Romantic Vibe"}
+                      {(activeWhisper.mood_tag && MOOD_TAG_LABELS[activeWhisper.mood_tag]?.icon) || "♡"} {(activeWhisper.mood_tag && MOOD_TAG_LABELS[activeWhisper.mood_tag]?.label) || "Romantic Vibe"}
                     </span>
                   </div>
 
@@ -381,9 +422,9 @@ function WhisperContent() {
                   </h3>
 
                   <p className="text-xs text-[var(--text-soft)] mt-1 flex items-center gap-2">
-                    <span>From <strong className="font-semibold text-[var(--text)]">{activeWhisper.sender_name}</strong></span>
+                    <span>From <strong className="font-semibold text-[var(--text)]">{activeWhisper.sender_name || "Partner"}</strong></span>
                     <span>•</span>
-                    <span>{new Date(activeWhisper.created_at).toLocaleDateString()}</span>
+                    <span>{activeWhisper.created_at ? new Date(activeWhisper.created_at).toLocaleDateString() : "Recent"}</span>
                   </p>
                 </div>
 
@@ -487,7 +528,7 @@ function WhisperContent() {
             <div className="p-6 rounded-[28px] bg-white/90 backdrop-blur-md border border-[#F5CAD6] text-center shadow-xs">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-xs font-mono font-bold text-[var(--burgundy)] mb-2">
                 <Radio className="w-3.5 h-3.5" />
-                <span>{frequency.toFixed(1)} FM: {currentStation ? currentStation.name : "Open Airwave"}</span>
+                <span>{(Number(frequency) || 91.7).toFixed(1)} FM: {currentStation ? currentStation.name : "Open Airwave"}</span>
               </span>
               <p className="text-xs text-[var(--text-soft)] max-w-sm mx-auto mt-1 font-medium">
                 Soft static hums on this frequency. Drop a private audio whisper here for your partner to find!
@@ -497,7 +538,7 @@ function WhisperContent() {
                 className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white text-xs font-semibold shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>Record on {frequency.toFixed(1)} FM</span>
+                <span>Record on {(Number(frequency) || 91.7).toFixed(1)} FM</span>
               </button>
             </div>
           )}
@@ -527,16 +568,78 @@ function WhisperContent() {
   );
 }
 
+class WhisperErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Whisper error caught by boundary:", error, errorInfo);
+  }
+
+  handleReset = () => {
+    try {
+      localStorage.removeItem("pairfect_whispers");
+    } catch {}
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-8 rounded-3xl bg-white border border-[#F5CAD6] shadow-xl text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-[var(--burgundy)] mx-auto">
+              <Radio className="w-6 h-6" />
+            </div>
+            <h2 className="font-heading font-bold text-xl text-[var(--text)]">
+              Radio Tuner Recalibrating
+            </h2>
+            <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+              We encountered a minor static blip while scanning the airwaves. Click below to recalibrate and reset your radio frequency.
+            </p>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <button
+                onClick={this.handleReset}
+                className="btn-journal py-2.5 px-6 text-xs font-mono font-bold cursor-pointer"
+              >
+                Reset & Tune In
+              </button>
+              <Link
+                href="/dashboard"
+                className="btn-journal-ghost py-2.5 px-5 text-xs font-mono font-bold"
+              >
+                Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function WhisperPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-[var(--burgundy)]" />
-        </div>
-      }
-    >
-      <WhisperContent />
-    </Suspense>
+    <WhisperErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--burgundy)]" />
+          </div>
+        }
+      >
+        <WhisperContent />
+      </Suspense>
+    </WhisperErrorBoundary>
   );
 }

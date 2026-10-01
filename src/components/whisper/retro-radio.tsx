@@ -28,49 +28,54 @@ export function RetroRadio({
   whispers = [],
   className = "",
 }: RetroRadioProps) {
+  const safeFrequency = typeof frequency === "number" && !isNaN(frequency) ? frequency : parseFloat(String(frequency)) || 91.7;
+
   const [isMuted, setIsMuted] = useState(false);
   const [isDraggingKnob, setIsDraggingKnob] = useState(false);
   const knobRef = useRef<HTMLDivElement>(null);
-  const dragStartRef = useRef<{ startX: number; startFreq: number }>({ startX: 0, startFreq: frequency });
+  const dragStartRef = useRef<{ startX: number; startFreq: number }>({ startX: 0, startFreq: safeFrequency });
 
   // Map frequency to rotary knob rotation angle (-120deg to +120deg)
   const knobAngle = useMemo(() => {
     const range = MAX_FREQUENCY - MIN_FREQUENCY;
-    const ratio = Math.max(0, Math.min(1, (frequency - MIN_FREQUENCY) / range));
+    const ratio = Math.max(0, Math.min(1, (safeFrequency - MIN_FREQUENCY) / range));
     return ratio * 240 - 120;
-  }, [frequency]);
+  }, [safeFrequency]);
 
   // Map frequency to needle position percentage (0% to 100%)
   const needlePercent = useMemo(() => {
     const range = MAX_FREQUENCY - MIN_FREQUENCY;
-    const ratio = Math.max(0, Math.min(1, (frequency - MIN_FREQUENCY) / range));
+    const ratio = Math.max(0, Math.min(1, (safeFrequency - MIN_FREQUENCY) / range));
     return ratio * 100;
-  }, [frequency]);
+  }, [safeFrequency]);
 
   // Signal strength calculation (0 to 4 bars)
   const signalStrength = useMemo(() => {
     if (activeWhisper) return 4;
     // Check if close to any whisper frequency
-    const closestWhisper = whispers.find((w) => Math.abs(w.frequency - frequency) < 0.25);
+    const closestWhisper = whispers.find((w) => {
+      const noteFreq = typeof w.frequency === "number" && !isNaN(w.frequency) ? w.frequency : parseFloat(String(w.frequency)) || 91.7;
+      return Math.abs(noteFreq - safeFrequency) < 0.25;
+    });
     if (closestWhisper) return 3;
     // Check if close to a preset station
-    const isCloseToPreset = PRESET_STATIONS.some((st) => Math.abs(st.frequency - frequency) < 0.2);
+    const isCloseToPreset = PRESET_STATIONS.some((st) => Math.abs(st.frequency - safeFrequency) < 0.2);
     if (isCloseToPreset) return 2;
     return 1;
-  }, [activeWhisper, whispers, frequency]);
+  }, [activeWhisper, whispers, safeFrequency]);
 
   // Stepper handlers
   const handleStepDown = () => {
     playRadioClick();
     playStaticNoise(0.18, 0.1);
-    const nextFreq = Math.round((Math.max(MIN_FREQUENCY, frequency - 0.5)) * 10) / 10;
+    const nextFreq = Math.round((Math.max(MIN_FREQUENCY, safeFrequency - 0.5)) * 10) / 10;
     onFrequencyChange(nextFreq);
   };
 
   const handleStepUp = () => {
     playRadioClick();
     playStaticNoise(0.18, 0.1);
-    const nextFreq = Math.round((Math.min(MAX_FREQUENCY, frequency + 0.5)) * 10) / 10;
+    const nextFreq = Math.round((Math.min(MAX_FREQUENCY, safeFrequency + 0.5)) * 10) / 10;
     onFrequencyChange(nextFreq);
   };
 
@@ -80,20 +85,29 @@ export function RetroRadio({
     playStaticNoise(0.3, 0.14);
     if (whispers.length === 0) {
       // cycle preset stations
-      const currentIndex = PRESET_STATIONS.findIndex((s) => Math.abs(s.frequency - frequency) < 0.1);
+      const currentIndex = PRESET_STATIONS.findIndex((s) => Math.abs(s.frequency - safeFrequency) < 0.1);
       const nextIndex = (currentIndex + 1) % PRESET_STATIONS.length;
       onFrequencyChange(PRESET_STATIONS[nextIndex].frequency);
       return;
     }
 
     // find next whisper with frequency higher than current, or loop
-    const sorted = [...whispers].sort((a, b) => a.frequency - b.frequency);
-    const higher = sorted.find((w) => w.frequency > frequency + 0.05);
+    const sorted = [...whispers].sort((a, b) => {
+      const freqA = typeof a.frequency === "number" && !isNaN(a.frequency) ? a.frequency : parseFloat(String(a.frequency)) || 91.7;
+      const freqB = typeof b.frequency === "number" && !isNaN(b.frequency) ? b.frequency : parseFloat(String(b.frequency)) || 91.7;
+      return freqA - freqB;
+    });
+    const higher = sorted.find((w) => {
+      const noteFreq = typeof w.frequency === "number" && !isNaN(w.frequency) ? w.frequency : parseFloat(String(w.frequency)) || 91.7;
+      return noteFreq > safeFrequency + 0.05;
+    });
     if (higher) {
-      onFrequencyChange(higher.frequency);
+      const noteFreq = typeof higher.frequency === "number" && !isNaN(higher.frequency) ? higher.frequency : parseFloat(String(higher.frequency)) || 91.7;
+      onFrequencyChange(noteFreq);
       playStationLockChime();
-    } else {
-      onFrequencyChange(sorted[0].frequency);
+    } else if (sorted.length > 0) {
+      const noteFreq = typeof sorted[0].frequency === "number" && !isNaN(sorted[0].frequency) ? sorted[0].frequency : parseFloat(String(sorted[0].frequency)) || 91.7;
+      onFrequencyChange(noteFreq);
       playStationLockChime();
     }
   };
@@ -102,14 +116,14 @@ export function RetroRadio({
   const handleKnobMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDraggingKnob(true);
-    dragStartRef.current = { startX: e.clientX, startFreq: frequency };
+    dragStartRef.current = { startX: e.clientX, startFreq: safeFrequency };
     playRadioClick();
   };
 
   const handleKnobTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length > 0) {
       setIsDraggingKnob(true);
-      dragStartRef.current = { startX: e.touches[0].clientX, startFreq: frequency };
+      dragStartRef.current = { startX: e.touches[0].clientX, startFreq: safeFrequency };
       playRadioClick();
     }
   };
@@ -287,7 +301,7 @@ export function RetroRadio({
                   </div>
 
                   <div className="flex items-center gap-1.5 font-mono font-bold text-base sm:text-xl tracking-wider text-white">
-                    <span>{frequency.toFixed(1)}</span>
+                    <span>{safeFrequency.toFixed(1)}</span>
                     <span className="text-[11px] sm:text-xs text-zinc-400">FM</span>
                   </div>
 
@@ -404,7 +418,7 @@ export function RetroRadio({
         {/* Step Down Button */}
         <button
           onClick={handleStepDown}
-          disabled={frequency <= MIN_FREQUENCY}
+          disabled={safeFrequency <= MIN_FREQUENCY}
           title="Tune Down"
           className="w-9 h-9 rounded-full bg-white/90 hover:bg-white disabled:opacity-40 text-zinc-700 shadow-sm border border-[var(--border)] flex items-center justify-center transition-transform active:scale-95 cursor-pointer"
         >
@@ -418,7 +432,7 @@ export function RetroRadio({
           className="px-4 py-1.5 rounded-full bg-[#181C20] border border-black/60 shadow-md text-white font-mono font-bold text-xs sm:text-sm tracking-wider flex items-center gap-2 cursor-pointer hover:bg-zinc-800 transition-colors"
         >
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>{frequency.toFixed(1)} FM</span>
+          <span>{safeFrequency.toFixed(1)} FM</span>
           {activeWhisper && (
             <span className="text-[10px] text-rose-300 font-sans font-semibold truncate max-w-[120px]">
               • {activeWhisper.title}
@@ -429,7 +443,7 @@ export function RetroRadio({
         {/* Step Up Button */}
         <button
           onClick={handleStepUp}
-          disabled={frequency >= MAX_FREQUENCY}
+          disabled={safeFrequency >= MAX_FREQUENCY}
           title="Tune Up"
           className="w-9 h-9 rounded-full bg-white/90 hover:bg-white disabled:opacity-40 text-zinc-700 shadow-sm border border-[var(--border)] flex items-center justify-center transition-transform active:scale-95 cursor-pointer"
         >

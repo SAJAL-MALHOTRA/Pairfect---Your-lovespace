@@ -5,16 +5,20 @@ let sharedAudioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  if (!sharedAudioCtx) {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (AudioCtx) {
-      sharedAudioCtx = new AudioCtx();
+  try {
+    if (!sharedAudioCtx) {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx) {
+        sharedAudioCtx = new AudioCtx();
+      }
     }
+    if (sharedAudioCtx && sharedAudioCtx.state === "suspended") {
+      sharedAudioCtx.resume().catch(() => {});
+    }
+    return sharedAudioCtx;
+  } catch (err) {
+    return null;
   }
-  if (sharedAudioCtx && sharedAudioCtx.state === "suspended") {
-    sharedAudioCtx.resume().catch(() => {});
-  }
-  return sharedAudioCtx;
 }
 
 /**

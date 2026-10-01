@@ -46,7 +46,13 @@ export async function GET(request: Request) {
         return NextResponse.json([]);
       }
 
-      return NextResponse.json(whispers || []);
+      const sanitized = (whispers || []).map((w: any) => ({
+        ...w,
+        frequency: typeof w.frequency === "number" && !isNaN(w.frequency) ? w.frequency : parseFloat(String(w.frequency)) || 91.7,
+        duration: typeof w.duration === "number" && !isNaN(w.duration) ? w.duration : parseFloat(String(w.duration)) || 0,
+      }));
+
+      return NextResponse.json(sanitized);
     } catch {
       return NextResponse.json([]);
     }
@@ -165,7 +171,13 @@ export async function POST(request: Request) {
         });
       }
 
-      return NextResponse.json({ success: true, whisper: newWhisper });
+      const sanitizedWhisper = newWhisper ? {
+        ...newWhisper,
+        frequency: typeof newWhisper.frequency === "number" && !isNaN(newWhisper.frequency) ? newWhisper.frequency : parseFloat(String(newWhisper.frequency)) || 91.7,
+        duration: typeof newWhisper.duration === "number" && !isNaN(newWhisper.duration) ? newWhisper.duration : parseFloat(String(newWhisper.duration)) || 0,
+      } : null;
+
+      return NextResponse.json({ success: true, whisper: sanitizedWhisper });
     } catch {
       return NextResponse.json({
         success: true,

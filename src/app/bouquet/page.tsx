@@ -18,12 +18,10 @@ import {
   DigitalBouquet,
 } from "@/lib/bouquet/flowers-data";
 import { RenderFlowerIcon } from "@/components/bouquet/flower-illustrations";
-import { exportBouquetToPNG } from "@/lib/bouquet/export-bouquet";
 import {
   Sparkles,
   Flower2,
   Mail,
-  Download,
   Share2,
   Check,
   ArrowRight,
@@ -61,7 +59,6 @@ export default function BouquetPage() {
   const [activeTab, setActiveTab] = useState<"create" | "received">("create");
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isRevealMode, setIsRevealMode] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isSendingToPartner, setIsSendingToPartner] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
@@ -336,26 +333,6 @@ export default function BouquetPage() {
     }
   };
 
-  // Download PNG Keepsake
-  const handleDownloadPNG = async () => {
-    setIsExporting(true);
-    try {
-      await exportBouquetToPNG({
-        flowers: selectedFlowers,
-        wrappingId,
-        ribbonId,
-        greeneryId,
-        toName: toName.trim() || "My Favorite Person",
-        fromName: fromName.trim() || "Always Yours",
-        message: message.trim(),
-      });
-    } catch (e) {
-      console.error("Bouquet export error:", e);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   // Send to Connected Partner in Pairfect
   const handleSendToPartner = async () => {
     if (!pair || !user || isSendingToPartner) return;
@@ -540,19 +517,10 @@ export default function BouquetPage() {
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <button
-              onClick={handleDownloadPNG}
-              disabled={isExporting}
-              className="btn-journal py-2.5 px-6 text-xs font-mono font-bold flex items-center gap-2 cursor-pointer shadow-sm"
-            >
-              <Download className="w-4 h-4" />
-              <span>{isExporting ? "Saving..." : "Download Keepsake Image"}</span>
-            </button>
-
-            <button
               onClick={handleMakeBouquetInReturn}
-              className="btn-journal-ghost py-2.5 px-6 text-xs font-mono font-bold flex items-center gap-2 cursor-pointer"
+              className="btn-journal py-3 px-8 text-xs font-mono font-bold flex items-center gap-2 cursor-pointer shadow-sm hover:scale-105 transition-all"
             >
-              <Flower2 className="w-4 h-4 text-rose-600" />
+              <Flower2 className="w-4 h-4 text-white" />
               <span>Make a Bouquet in Return</span>
             </button>
           </div>
@@ -1147,11 +1115,11 @@ export default function BouquetPage() {
                         Share & Keepsake Options
                       </p>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
                         {/* Copy Shareable Link */}
                         <button
                           onClick={handleCopyShareLink}
-                          className="p-3 rounded-xl border border-[var(--border)] hover:border-rose-400 bg-white dark:bg-zinc-800 text-left cursor-pointer transition-all flex items-center justify-between"
+                          className="w-full p-3 rounded-xl border border-[var(--border)] hover:border-rose-400 bg-white dark:bg-zinc-800 text-left cursor-pointer transition-all flex items-center justify-between"
                         >
                           <div className="space-y-0.5">
                             <p className="font-sans font-bold text-xs text-[var(--text)]">
@@ -1162,23 +1130,6 @@ export default function BouquetPage() {
                             </p>
                           </div>
                           <Share2 className="w-4 h-4 text-rose-600" />
-                        </button>
-
-                        {/* Download High-Res Image */}
-                        <button
-                          disabled={isExporting}
-                          onClick={handleDownloadPNG}
-                          className="p-3 rounded-xl border border-[var(--border)] hover:border-rose-400 bg-white dark:bg-zinc-800 text-left cursor-pointer transition-all flex items-center justify-between"
-                        >
-                          <div className="space-y-0.5">
-                            <p className="font-sans font-bold text-xs text-[var(--text)]">
-                              {isExporting ? "Exporting..." : "Download Keepsake PNG"}
-                            </p>
-                            <p className="text-[10px] text-[var(--text-soft)] font-mono">
-                              High-res 300 DPI image
-                            </p>
-                          </div>
-                          <Download className="w-4 h-4 text-rose-600" />
                         </button>
                       </div>
 
