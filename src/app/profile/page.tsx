@@ -5,14 +5,14 @@ import { useAuth } from "@/components/providers/auth-provider";
 import Navigation from "@/components/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { calculateStreak } from "@/lib/utils/streak";
-import { Check, Plus, Loader2, Edit3, Trash2, X } from "lucide-react";
+import { Check, Plus, Loader2, Edit3, Trash2, X, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { PairfectPortrait } from "@/components/cozy-illustrations";
 import Link from "next/link";
 import { ChibiAvatar, parseAvatarConfig } from "@/components/chibi-avatar";
 
 export default function ProfilePage() {
-  const { user, profile, pair, partner, loading } = useAuth();
+  const { user, profile, pair, partner, loading, signOut } = useAuth();
   const supabase = createClient();
   const [streak, setStreak] = useState(0);
   const [bucketList, setBucketList] = useState<any[]>([
@@ -198,7 +198,7 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* The Couple — side by side polaroid portraits */}
+        {/* The Couple: side by side polaroid portraits */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -253,14 +253,14 @@ export default function ProfilePage() {
               {/* Caption */}
               <div className="pt-2.5 text-center">
                 <p className="font-handwriting text-xs text-[#3A2E22] dark:text-[#D4C8B8] truncate">
-                  {person.displayName || "—"}
+                  {person.displayName || "-"}
                 </p>
               </div>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Bucket list — on a physical notebook pad */}
+        {/* Bucket list on a physical notebook pad */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -383,6 +383,26 @@ export default function ProfilePage() {
                 style={{ fontFamily: "var(--font-handwriting),cursive", color: "#3A2E22", lineHeight: "36px" }}
               />
             </form>
+          </div>
+
+          {/* Account & Session Card */}
+          <div className="rounded-3xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xs p-5 flex items-center justify-between mt-6 paper-grain">
+            <div>
+              <p className="text-xs font-semibold text-[var(--text)]">Account Session</p>
+              <p className="text-[11px] text-[var(--text-soft)]">
+                Logged in as <span className="font-mono text-[var(--text)] font-medium">{user?.email}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Log Out</span>
+            </button>
           </div>
         </motion.div>
       </main>

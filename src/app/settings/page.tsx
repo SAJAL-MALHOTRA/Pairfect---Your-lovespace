@@ -7,7 +7,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import {
-  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight, MapPin, Trash2, Sparkles, Heart, Crown, Calendar
+  Check, Loader2, AlertCircle, ShieldAlert, ChevronRight, MapPin, Trash2, Sparkles, Heart, Crown, Calendar, LogOut
 } from "lucide-react";
 import CitySelectorModal from "@/components/city-selector-modal";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -20,7 +20,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
-// Settings row component — clean, iOS-like
+// Settings row component: clean, iOS-like
 function SettingsRow({
   label,
   description,
@@ -290,7 +290,7 @@ export default function SettingsPage() {
 
       <main className="max-w-md mx-auto px-5 py-16 pb-36 space-y-8">
 
-        {/* Header — the simplicity IS the hero */}
+        {/* Header: the simplicity IS the hero */}
         <div>
           <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--text-soft)]">Account</p>
           <h1 className="font-display italic text-3xl font-black text-[var(--text)] mt-0.5">Settings</h1>
@@ -562,6 +562,27 @@ export default function SettingsPage() {
             </div>
           </Section>
         )}
+
+        {/* Session & Account */}
+        <Section title="Session">
+          <div className="py-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-[var(--text)]">Sign out of Pairfect</p>
+              <p className="text-[11px] text-[var(--text-soft)]">
+                Logged in as <span className="font-mono text-[var(--text)] font-medium">{user?.email}</span>
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                await signOut();
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </Section>
 
         {/* Danger zone */}
         <Section title="Danger zone">

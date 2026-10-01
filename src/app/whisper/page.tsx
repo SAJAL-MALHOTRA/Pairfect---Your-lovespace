@@ -136,15 +136,35 @@ function WhisperContent() {
       setHasHearted(Boolean(activeWhisper.listened_at));
       playStationLockChime();
 
+      // Immediately initialize duration from activeWhisper metadata
+      setCurrentTime(0);
+      setDuration(activeWhisper.duration || 0);
+
+      audio.onloadedmetadata = () => {
+        if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+          setDuration(audio.duration);
+        }
+      };
+
       audio.ontimeupdate = () => {
         setCurrentTime(audio.currentTime);
-        setDuration(audio.duration || activeWhisper.duration || 0);
+        if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+          setDuration(audio.duration);
+        } else if (activeWhisper.duration) {
+          setDuration(activeWhisper.duration);
+        }
       };
 
       audio.onended = () => {
         setIsPlaying(false);
+        setCurrentTime(0);
         // Mark listened
         handleMarkListened(activeWhisper.id);
+      };
+
+      audio.onerror = (e) => {
+        console.error("Audio element error on frequency:", frequency, e, audio.error);
+        setIsPlaying(false);
       };
     } else {
       audio.pause();
@@ -168,8 +188,17 @@ function WhisperContent() {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((err) => {
+            console.error("Audio playback error:", err);
+            setIsPlaying(false);
+          });
+      }
     }
   };
 
@@ -187,8 +216,18 @@ function WhisperContent() {
     playRadioClick();
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
+      setCurrentTime(0);
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((err) => {
+            console.error("Audio replay error:", err);
+            setIsPlaying(false);
+          });
+      }
     }
   };
 

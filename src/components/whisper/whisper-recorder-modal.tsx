@@ -153,6 +153,11 @@ export function WhisperRecorderModal({
       };
 
       recorder.onstop = () => {
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+        }
+
         const mime = recorder.mimeType || "audio/webm";
         const blob = new Blob(audioChunksRef.current, { type: mime });
         recordedBlobRef.current = blob;
@@ -162,7 +167,7 @@ export function WhisperRecorderModal({
         previewAudioRef.current = audio;
 
         audio.ontimeupdate = () => {
-          if (audio.duration) {
+          if (audio.duration && isFinite(audio.duration)) {
             setPreviewProgress((audio.currentTime / audio.duration) * 100);
           }
         };
@@ -228,11 +233,6 @@ export function WhisperRecorderModal({
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
-
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    }
   };
 
   // Discard and re-record
@@ -253,8 +253,15 @@ export function WhisperRecorderModal({
       previewAudioRef.current.pause();
       setIsPreviewPlaying(false);
     } else {
-      previewAudioRef.current.play().catch(() => {});
-      setIsPreviewPlaying(true);
+      previewAudioRef.current
+        .play()
+        .then(() => {
+          setIsPreviewPlaying(true);
+        })
+        .catch((err) => {
+          console.error("Preview play failed:", err);
+          setIsPreviewPlaying(false);
+        });
     }
   };
 

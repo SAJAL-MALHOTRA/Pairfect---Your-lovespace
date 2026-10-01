@@ -25,6 +25,7 @@ import {
   BookOpen,
   Flower2,
   Radio,
+  LogOut,
 } from "lucide-react";
 
 /* Navigation Items */
@@ -51,18 +52,20 @@ const PING_PHRASES = [
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { profile, pair, partner } = useAuth();
+  const { user, profile, pair, partner, signOut } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, sendPing } = useNotifications();
 
   const [visible, setVisible] = useState(true);
   const [hoveredHref, setHoveredHref] = useState<string | null>(null);
   const [showPingMenu, setShowPingMenu] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [pingStatus, setPingStatus] = useState<string | null>(null);
   const [lastPingTime, setLastPingTime] = useState<number>(0);
 
   const pingMenuRef = useRef<HTMLDivElement>(null);
   const notifPanelRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onHide = () => setVisible(false);
@@ -76,6 +79,9 @@ export default function Navigation() {
       }
       if (notifPanelRef.current && !notifPanelRef.current.contains(e.target as Node)) {
         setShowNotifPanel(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
       }
     };
 
@@ -268,21 +274,95 @@ export default function Navigation() {
             </AnimatePresence>
           </div>
 
-          {/* Profile Avatar */}
-          <Link
-            href="/profile"
-            className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-white font-sans flex items-center justify-center text-sm font-bold select-none shadow-sm transition-transform hover:scale-105 active:scale-95 border border-[var(--border)]"
+          {/* User Profile Avatar with Dropdown Menu */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-white font-sans flex items-center justify-center text-sm font-bold select-none shadow-sm transition-transform hover:scale-105 active:scale-95 border border-[var(--border)] cursor-pointer"
+              title={profile?.display_name || user?.email || "Account Menu"}
+              aria-label="Account Menu"
+            >
+              {profile?.avatar_url ? (
+                <ChibiAvatar
+                  config={parseAvatarConfig(profile.avatar_url)}
+                  pose="profile"
+                  className="w-full h-full"
+                />
+              ) : (
+                <span>{userInitial}</span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {showUserMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  className="absolute right-0 mt-2 w-64 p-3 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-2xl z-50 space-y-2 paper-grain"
+                >
+                  <div className="px-2 pb-2 border-b border-[var(--border)]">
+                    <p className="font-heading font-bold text-sm text-[var(--text)] truncate">
+                      {profile?.display_name || "Your Account"}
+                    </p>
+                    <p className="text-[11px] text-[var(--text-soft)] truncate font-mono">
+                      {user?.email}
+                    </p>
+                    {partner && (
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-mono text-[var(--burgundy)] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                        Paired with {partner.display_name} ♡
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-secondary)] hover:text-[var(--burgundy)] transition-colors"
+                    >
+                      <User className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                      <span>Profile & Bucket List</span>
+                    </Link>
+
+                    <Link
+                      href="/settings"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-secondary)] hover:text-[var(--burgundy)] transition-colors"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-[var(--text-soft)]" />
+                      <span>Settings & Preferences</span>
+                    </Link>
+                  </div>
+
+                  <div className="pt-1.5 border-t border-[var(--border)]">
+                    <button
+                      onClick={async () => {
+                        setShowUserMenu(false);
+                        await signOut();
+                      }}
+                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-red-500" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Quick Direct Logout Button */}
+          <button
+            onClick={async () => {
+              await signOut();
+            }}
+            title="Log out"
+            aria-label="Log out"
+            className="w-9 h-9 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-red-500 hover:border-red-200 hover:bg-red-50/50 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
           >
-            {profile?.avatar_url ? (
-              <ChibiAvatar
-                config={parseAvatarConfig(profile.avatar_url)}
-                pose="profile"
-                className="w-full h-full"
-              />
-            ) : (
-              <span>{userInitial}</span>
-            )}
-          </Link>
+            <LogOut className="w-4 h-4 ml-0.5" />
+          </button>
         </div>
       </div>
 
@@ -434,6 +514,54 @@ export default function Navigation() {
                     </div>
                   );
                 })}
+
+                {/* Subtle divider */}
+                <div className="w-8 h-px bg-[#FFD0DD]/80 my-1" />
+
+                {/* Logout Button */}
+                <div
+                  className="relative flex flex-col items-center justify-center w-full"
+                  onMouseEnter={() => setHoveredHref("logout")}
+                  onMouseLeave={() => setHoveredHref(null)}
+                >
+                  <button
+                    onClick={() => signOut()}
+                    className="relative flex flex-col items-center justify-center w-12 h-12 rounded-2xl transition-all duration-150 group cursor-pointer hover:bg-red-50"
+                    aria-label="Log out"
+                  >
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150">
+                      <LogOut className="w-4 h-4 stroke-[1.8] text-[#7A4B5D] group-hover:text-red-500" />
+                    </div>
+                    <span className="text-[8.5px] font-mono font-bold tracking-wider uppercase text-[#7A4B5D]/80 group-hover:text-red-500">
+                      LOGOUT
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                    {hoveredHref === "logout" && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10, scale: 0.94 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: -10, scale: 0.94 }}
+                        transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
+                        className="absolute left-full ml-4 px-4 py-3 rounded-2xl bg-white border border-red-200 shadow-xl z-50 pointer-events-none select-none flex items-center gap-3"
+                      >
+                        <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-y-6 border-y-transparent border-r-6 border-r-white" />
+                        <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-500 shrink-0">
+                          <LogOut className="w-4.5 h-4.5 stroke-[2]" />
+                        </div>
+                        <div className="text-left space-y-0.5 whitespace-nowrap">
+                          <p className="font-heading font-bold text-sm text-red-600">
+                            Log Out
+                          </p>
+                          <p className="font-sans text-[11px] text-[var(--text-soft)]">
+                            Sign out of Pairfect
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           </motion.nav>

@@ -90,25 +90,36 @@ export async function POST(request: Request) {
     if (typeof audioData === "string" && audioData.startsWith("data:audio")) {
       try {
         const admin = createAdminClient();
-        const base64Content = audioData.replace(/^data:audio\/\w+;base64,/, "");
+        const base64Content = audioData.includes(",") ? audioData.split(",")[1] : audioData;
         const buffer = Buffer.from(base64Content, "base64");
-        const filePath = `${pairId}/whispers/whisper_${Date.now()}_${user.id.slice(0, 6)}.webm`;
+
+        // Determine content type and appropriate extension
+        let contentType = "audio/webm";
+        const mimeMatch = audioData.match(/^data:([^;]+);base64,/);
+        if (mimeMatch && mimeMatch[1]) {
+          contentType = mimeMatch[1];
+        }
+
+        const ext = contentType.includes("mp4") ? "mp4" : contentType.includes("ogg") ? "ogg" : "webm";
+        const filePath = `${pairId}/whispers/whisper_${Date.now()}_${user.id.slice(0, 6)}.${ext}`;
 
         const { data: uploadData, error: uploadErr } = await admin.storage
           .from("memories")
           .upload(filePath, buffer, {
-            contentType: "audio/webm",
+            contentType,
             upsert: true,
           });
 
         if (!uploadErr && uploadData?.path) {
           const { data: signedData } = await admin.storage
             .from("memories")
-            .createSignedUrl(uploadData.path, 60 * 60 * 24 * 30); // 30 days
+            .createSignedUrl(uploadData.path, 60 * 60 * 24 * 365); // 1 year
 
           if (signedData?.signedUrl) {
             finalAudioUrl = signedData.signedUrl;
           }
+        } else if (uploadErr) {
+          console.warn("Storage upload error:", uploadErr.message);
         }
       } catch (uploadCatch) {
         console.warn("Storage upload fallback to payload:", uploadCatch);
