@@ -21,6 +21,8 @@ import {
   X,
   Sparkles,
   Loader2,
+  Users,
+  User,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -208,17 +210,44 @@ function drawRoundedRect(
   ctx.closePath();
 }
 
+function generateBoothCode(length = 4): string {
+  const charset = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += charset[Math.floor(Math.random() * charset.length)];
+  }
+  return code;
+}
+
 interface LensBoothViewProps {
   initialSessionId?: string | null;
+  initialMode?: "lobby" | "solo" | "duo" | null;
   onExit?: () => void;
 }
 
 export default function LensBoothView({
   initialSessionId,
+  initialMode,
   onExit,
 }: LensBoothViewProps) {
   const { user, profile, pair, partner } = useAuth();
   const supabase = createClient();
+
+  // Mode: "lobby" | "solo" | "duo"
+  const [boothMode, setBoothMode] = useState<"lobby" | "solo" | "duo">(() => {
+    if (initialSessionId) return "duo";
+    if (initialMode === "solo") return "solo";
+    if (initialMode === "duo") return "duo";
+    return "lobby";
+  });
+
+  const [boothCode, setBoothCode] = useState<string>(() => {
+    if (initialSessionId) return initialSessionId.toUpperCase();
+    return generateBoothCode(4);
+  });
+
+  const [joinCodeInput, setJoinCodeInput] = useState("");
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   // Screen flow: "capture" | "result"
   const [screen, setScreen] = useState<"capture" | "result">("capture");
@@ -251,7 +280,7 @@ export default function LensBoothView({
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Room / WebRTC state
-  const roomId = initialSessionId || pair?.id || "pairfect-booth-room";
+  const roomId = boothCode || initialSessionId || pair?.id || "pairfect-booth-room";
   const [isPartnerConnected, setIsPartnerConnected] = useState(false);
   const [partnerDisplayName, setPartnerDisplayName] = useState<string>(
     partner?.display_name || "Partner"
@@ -268,6 +297,7 @@ export default function LensBoothView({
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<any>(null);
   const isInitiatorRef = useRef(false);
+  const runCaptureFlowRef = useRef<() => void>(() => {});
 
   const currentFilterObj = BOOTH_FILTERS.find((f) => f.key === activeFilter) || BOOTH_FILTERS[0];
   const currentResultFilterObj = BOOTH_FILTERS.find((f) => f.key === resultFilter) || BOOTH_FILTERS[0];
@@ -411,17 +441,17 @@ export default function LensBoothView({
   }, []);
 
   useEffect(() => {
-    if (screen === "capture") {
+    if (boothMode !== "lobby" && screen === "capture") {
       startCamera();
     } else {
       stopCamera();
     }
     return () => stopCamera();
-  }, [screen, startCamera, stopCamera]);
+  }, [boothMode, screen, startCamera, stopCamera]);
 
   // Realtime Supabase Channel for synchronized booth and partner video
   useEffect(() => {
-    if (!roomId) return;
+    if (boothMode !== "duo" || !roomId) return;
 
     const myName =
       profile?.display_name ||
@@ -457,7 +487,7 @@ export default function LensBoothView({
       })
       .on("broadcast", { event: "trigger_capture" }, () => {
         // Partner triggered the capture sequence
-        runCaptureFlow();
+        runCaptureFlowRef.current?.();
       })
       .subscribe((status: string) => {
         if (status === "SUBSCRIBED") {
@@ -478,7 +508,7 @@ export default function LensBoothView({
         pcRef.current = null;
       }
     };
-  }, [roomId, user, profile, partner, makeOffer, handleSignal]);
+  }, [boothMode, roomId, user, profile, partner, makeOffer, handleSignal]);
 
   // Handle Mute toggle
   const toggleMute = () => {
@@ -576,6 +606,31 @@ export default function LensBoothView({
     return canvas.toDataURL("image/jpeg", 0.95);
   }, [isMirrored, partnerDisplayName]);
 
+  // Capture full frame for solo mode
+  const captureSoloFrame = useCallback((): string => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1280;
+    canvas.height = 960;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+
+    const localVid = localVideoRef.current;
+    if (localVid && localVid.readyState >= 2 && localVid.videoWidth > 0) {
+      ctx.save();
+      if (isMirrored) {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      drawImageCover(ctx, localVid, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#18181B";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    return canvas.toDataURL("image/jpeg", 0.95);
+  }, [isMirrored]);
+
   // Execute 3-shot automated sequence
   const runCaptureFlow = useCallback(async () => {
     if (isCapturing) return;
@@ -606,7 +661,7 @@ export default function LensBoothView({
         setTimeout(() => setScreenFlash(false), 240);
       }
 
-      const frameData = captureDualSplitFrame();
+      const frameData = boothMode === "solo" ? captureSoloFrame() : captureDualSplitFrame();
       shots.push(frameData);
       setCapturedFrames([...shots]);
 
@@ -624,11 +679,15 @@ export default function LensBoothView({
     }, 500);
   }, [
     isCapturing,
+    boothMode,
     flashEnabled,
     playShutterSound,
+    captureSoloFrame,
     captureDualSplitFrame,
     activeFilter,
   ]);
+
+  runCaptureFlowRef.current = runCaptureFlow;
 
   // User click trigger: broadcasts to partner and runs locally
   const startCaptureSequence = () => {
@@ -671,7 +730,10 @@ export default function LensBoothView({
       capturedFrames.length >= 3
         ? capturedFrames.slice(0, 3)
         : Array.from({ length: 3 }).map(
-            (_, i) => capturedFrames[i] || capturedFrames[0] || captureDualSplitFrame()
+            (_, i) =>
+              capturedFrames[i] ||
+              capturedFrames[0] ||
+              (boothMode === "solo" ? captureSoloFrame() : captureDualSplitFrame())
           );
 
     const loadedImages = await Promise.all(framesToLoad.map(loadImageAsync));
@@ -928,12 +990,91 @@ export default function LensBoothView({
     setScreen("capture");
   };
 
+  // Mode selection and navigation handlers
+  const handleStartSolo = () => {
+    setBoothMode("solo");
+    setScreen("capture");
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname + "?mode=solo");
+    }
+  };
+
+  const handleStartDuoWithCode = () => {
+    const code = generateBoothCode(4);
+    setBoothCode(code);
+    setBoothMode("duo");
+    setScreen("capture");
+    setShowShareModal(true);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname + `?code=${code}`);
+    }
+  };
+
+  const handleQuickStartDuoWithPartner = () => {
+    const code = pair?.id?.slice(0, 4).toUpperCase() || generateBoothCode(4);
+    setBoothCode(code);
+    setBoothMode("duo");
+    setScreen("capture");
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname + `?code=${code}`);
+    }
+  };
+
+  const handleJoinDuoWithCode = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const clean = joinCodeInput.trim().toUpperCase();
+    if (clean.length < 3) {
+      setJoinError("Please enter a valid booth code.");
+      return;
+    }
+    setJoinError(null);
+    setBoothCode(clean);
+    setBoothMode("duo");
+    setScreen("capture");
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname + `?code=${clean}`);
+    }
+  };
+
+  const handleBackToLobby = () => {
+    stopCamera();
+    setBoothMode("lobby");
+    setScreen("capture");
+    setCapturedFrames([]);
+    setIsCapturing(false);
+    setCountdownNumber(null);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    if (onExit) onExit();
+  };
+
+  // Get full invite URL for Duo mode
+  const getInviteUrl = () => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/photo-booth?code=${boothCode}`;
+  };
+
   // Share room link handler
-  const handleCopyShareLink = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2500);
+  const handleCopyShareLink = async () => {
+    const url = getInviteUrl();
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
+    } catch {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
+    }
   };
 
   // Applied zoom transform style
@@ -968,15 +1109,24 @@ export default function LensBoothView({
       {/* ── TOP HEADER BAR ── */}
       <header className="w-full max-w-5xl mx-auto px-4 py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
-          {onExit && (
+          {boothMode !== "lobby" ? (
+            <button
+              onClick={handleBackToLobby}
+              className="p-2 rounded-xl bg-white/80 hover:bg-white border border-zinc-200 shadow-xs text-zinc-700 hover:text-zinc-900 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium"
+              title="Return to mode selection"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Modes</span>
+            </button>
+          ) : onExit ? (
             <button
               onClick={onExit}
               className="p-2 rounded-xl bg-white/80 hover:bg-white border border-zinc-200 shadow-xs text-zinc-700 hover:text-zinc-900 transition-colors cursor-pointer"
-              title="Return to lobby"
+              title="Return"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-          )}
+          ) : null}
           <span className="font-sans font-bold text-lg text-zinc-900 tracking-tight flex items-center gap-1.5">
             <span>Pairfect</span>
             <span className="text-red-500">❤️</span>
@@ -985,24 +1135,49 @@ export default function LensBoothView({
 
         {/* Room / Partner Indicator & Invite Button */}
         <div className="flex items-center gap-2">
-          {isPartnerConnected ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-mono font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{partnerDisplayName} Connected</span>
-            </div>
-          ) : partner?.display_name ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-mono font-medium">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span>{partner.display_name} • In Pair</span>
-            </div>
+          {boothMode === "lobby" ? (
+            partner?.display_name ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-700 text-xs font-mono font-medium">
+                <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
+                <span>{partner.display_name} • In Pair</span>
+              </div>
+            ) : null
+          ) : boothMode === "solo" ? (
+            <>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-800 text-xs font-mono font-medium">
+                <User className="w-3.5 h-3.5 text-zinc-600" />
+                <span>Solo Mode</span>
+              </div>
+              <button
+                onClick={handleStartDuoWithCode}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-zinc-300 text-xs font-semibold text-zinc-800 shadow-xs cursor-pointer transition-all hover:scale-102"
+              >
+                <Users className="w-3.5 h-3.5 text-red-500" />
+                <span>Switch to Duo</span>
+              </button>
+            </>
           ) : (
-            <button
-              onClick={() => setShowShareModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-zinc-300 text-xs font-semibold text-zinc-800 shadow-xs cursor-pointer transition-all hover:scale-102"
-            >
-              <Share2 className="w-3.5 h-3.5 text-zinc-600" />
-              <span>Invite Partner</span>
-            </button>
+            <>
+              {isPartnerConnected ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-mono font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{partnerDisplayName} Connected</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs font-mono font-medium">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span>Code: {boothCode}</span>
+                </div>
+              )}
+
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-zinc-300 text-xs font-semibold text-zinc-800 shadow-xs cursor-pointer transition-all hover:scale-102"
+              >
+                <Share2 className="w-3.5 h-3.5 text-zinc-600" />
+                <span>Invite Duo</span>
+              </button>
+            </>
           )}
 
           {/* Background switcher trigger */}
@@ -1060,16 +1235,135 @@ export default function LensBoothView({
       </AnimatePresence>
 
       {/* ════════════════════════════════════════════════════════════════════════
-          SCREEN 1: CAPTURE SCREEN (Matching media_1790804984346.png)
+          SCREEN 1: LOBBY VIEW (When boothMode === "lobby")
           ════════════════════════════════════════════════════════════════════════ */}
-      {screen === "capture" && (
+      {screen === "capture" && boothMode === "lobby" && (
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12 max-w-4xl mx-auto w-full">
+          {/* Tagline & Badge */}
+          <div className="text-center mb-8 sm:mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 text-xs font-mono font-bold uppercase tracking-wider mb-4">
+              <Sparkles className="w-3.5 h-3.5 text-red-500" />
+              <span>Instant Virtual Photobooth</span>
+            </div>
+            <h1 className="text-3xl sm:text-5xl font-heading font-extrabold text-zinc-900 tracking-tight">
+              Capture moments together, or solo.
+            </h1>
+            <p className="mt-3 text-sm sm:text-base text-zinc-600 max-w-xl mx-auto font-sans leading-relaxed">
+              Authentic countdown snaps with vintage film styles, instant 3D photo strip dispenser, and real-time live sync.
+            </p>
+          </div>
+
+          {/* Mode Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+            {/* CARD 1: SOLO PHOTOBOOTH */}
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="p-6 rounded-3xl bg-white border-2 border-zinc-200/80 hover:border-zinc-900 transition-all shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-900 mb-4">
+                  <Camera className="w-6 h-6" />
+                </div>
+                <div className="inline-block px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700 text-[10px] font-mono font-semibold uppercase tracking-wider mb-2">
+                  Personal Keepsake
+                </div>
+                <h3 className="font-heading font-bold text-xl text-zinc-900">
+                  Solo Photobooth
+                </h3>
+                <p className="text-xs text-zinc-600 font-sans mt-2 leading-relaxed">
+                  Take 3 studio portraits by yourself. Test live visual looks, custom backgrounds, and print your personal photostrip.
+                </p>
+              </div>
+
+              <button
+                onClick={handleStartSolo}
+                className="mt-6 w-full py-3.5 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all hover:scale-101 active:scale-99"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Launch Solo Photobooth →</span>
+              </button>
+            </motion.div>
+
+            {/* CARD 2: DUO PHOTOBOOTH */}
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="p-6 rounded-3xl bg-white border-2 border-zinc-200/80 hover:border-red-500/80 transition-all shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-4">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div className="inline-block px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-600 text-[10px] font-mono font-semibold uppercase tracking-wider mb-2">
+                  Live Synchronized
+                </div>
+                <h3 className="font-heading font-bold text-xl text-zinc-900">
+                  Duo Photobooth
+                </h3>
+                <p className="text-xs text-zinc-600 font-sans mt-2 leading-relaxed">
+                  50/50 dual split camera. Captures both partners at the exact same millisecond across any distance.
+                </p>
+
+                {/* Quick paired partner option if available */}
+                {partner?.display_name && (
+                  <button
+                    onClick={handleQuickStartDuoWithPartner}
+                    className="mt-3 w-full py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
+                    <span>Quick Start with {partner.display_name}</span>
+                  </button>
+                )}
+
+                {/* Join with Code input */}
+                <form onSubmit={handleJoinDuoWithCode} className="mt-4 pt-3 border-t border-zinc-100">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={joinCodeInput}
+                      onChange={(e) => {
+                        setJoinCodeInput(e.target.value.toUpperCase());
+                        setJoinError(null);
+                      }}
+                      placeholder="Enter Code (e.g. P7K4)"
+                      className="flex-1 px-3 py-2 text-xs font-mono uppercase rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500/30"
+                    />
+                    <button
+                      type="submit"
+                      disabled={joinCodeInput.trim().length < 3}
+                      className="px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer transition-colors"
+                    >
+                      Join
+                    </button>
+                  </div>
+                  {joinError && (
+                    <p className="text-[11px] text-red-500 mt-1">{joinError}</p>
+                  )}
+                </form>
+              </div>
+
+              <button
+                onClick={handleStartDuoWithCode}
+                className="mt-5 w-full py-3.5 px-4 rounded-2xl bg-red-500 hover:bg-red-600 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all hover:scale-101 active:scale-99"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Invite Duo with Code →</span>
+              </button>
+            </motion.div>
+          </div>
+        </main>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          SCREEN 1: CAPTURE SCREEN (When boothMode === "solo" or "duo")
+          ════════════════════════════════════════════════════════════════════════ */}
+      {screen === "capture" && boothMode !== "lobby" && (
         <main className="flex-1 flex flex-col items-center justify-center px-4 py-2">
-          {/* Main 50/50 Dual-Split Viewfinder Container */}
+          {/* Main Viewfinder Container */}
           <div className="relative w-full max-w-2xl sm:max-w-3xl aspect-[16/10] bg-zinc-900 rounded-[28px] sm:rounded-[32px] overflow-hidden border border-black/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] flex items-center justify-center">
-            {/* Viewfinder Split Content (Left: You, Right: Partner) */}
-            <div className="w-full h-full grid grid-cols-2">
-              {/* Left Pane: You */}
-              <div className="relative w-full h-full overflow-hidden bg-zinc-900 border-r border-black/20 flex items-center justify-center">
+            {boothMode === "solo" ? (
+              /* SOLO SINGLE CAMERA VIEWFINDER */
+              <div className="relative w-full h-full overflow-hidden bg-zinc-900 flex items-center justify-center">
                 <video
                   ref={localVideoRef}
                   autoPlay
@@ -1081,66 +1375,106 @@ export default function LensBoothView({
                   }}
                   className="w-full h-full object-cover transition-transform duration-300"
                 />
-                <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90">
-                  You
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/50 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5">
+                  <User className="w-3 h-3 text-red-400" />
+                  <span>Solo Studio</span>
                 </div>
               </div>
-
-              {/* Right Pane: Partner or Local Duo Split */}
-              <div className="relative w-full h-full overflow-hidden bg-zinc-850 flex items-center justify-center">
-                {/* P2P WebRTC Video Stream */}
-                <video
-                  ref={remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{
-                    transform: `scale(${getZoomScale()})`,
-                    filter: currentFilterObj.css,
-                  }}
-                  className={`w-full h-full object-cover transition-transform duration-300 ${
-                    isPartnerConnected ? "block" : "hidden"
-                  }`}
-                />
-
-                {/* Low-FPS Relay Fallback */}
-                {partnerFallbackUrl && !remoteVideoRef.current?.srcObject && (
-                  <img
-                    src={partnerFallbackUrl}
-                    alt="Partner Relay"
-                    className="w-full h-full object-cover"
-                  />
-                )}
-
-                {/* Local Duo Mirror if partner not connected yet */}
-                {!isPartnerConnected && !partnerFallbackUrl && (
+            ) : (
+              /* DUO 50/50 DUAL-SPLIT VIEWFINDER */
+              <div className="w-full h-full grid grid-cols-2">
+                {/* Left Pane: You */}
+                <div className="relative w-full h-full overflow-hidden bg-zinc-900 border-r border-black/20 flex items-center justify-center">
                   <video
+                    ref={localVideoRef}
                     autoPlay
                     playsInline
                     muted
-                    ref={(el) => {
-                      if (el && localStreamRef.current && el.srcObject !== localStreamRef.current) {
-                        el.srcObject = localStreamRef.current;
-                      }
+                    style={{
+                      transform: `${isMirrored ? "scaleX(-1)" : "none"} scale(${getZoomScale()})`,
+                      filter: currentFilterObj.css,
                     }}
+                    className="w-full h-full object-cover transition-transform duration-300"
+                  />
+                  <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90">
+                    You
+                  </div>
+                </div>
+
+                {/* Right Pane: Partner or Friendly Waiting State */}
+                <div className="relative w-full h-full overflow-hidden bg-zinc-850 flex items-center justify-center">
+                  {/* P2P WebRTC Video Stream */}
+                  <video
+                    ref={remoteVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
                     style={{
                       transform: `scale(${getZoomScale()})`,
                       filter: currentFilterObj.css,
                     }}
-                    className="w-full h-full object-cover transition-transform duration-300 opacity-90"
-                  />
-                )}
-
-                <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5">
-                  <span>{partnerDisplayName}</span>
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      isPartnerConnected ? "bg-emerald-400" : "bg-amber-400 animate-pulse"
+                    className={`w-full h-full object-cover transition-transform duration-300 ${
+                      isPartnerConnected ? "block" : "hidden"
                     }`}
                   />
+
+                  {/* Low-FPS Relay Fallback */}
+                  {partnerFallbackUrl && !remoteVideoRef.current?.srcObject && (
+                    <img
+                      src={partnerFallbackUrl}
+                      alt="Partner Relay"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+
+                  {/* Friendly Waiting Card when partner not connected yet */}
+                  {!isPartnerConnected && !partnerFallbackUrl && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-b from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 text-white">
+                      <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center mb-2.5 animate-pulse">
+                        <Heart className="w-6 h-6 text-red-400 fill-red-400" />
+                      </div>
+                      <p className="text-xs sm:text-sm font-semibold text-white/95">
+                        Waiting for {partnerDisplayName}...
+                      </p>
+                      <div className="mt-2 px-3 py-1 rounded-lg bg-white/10 border border-white/20 text-xs font-mono font-bold tracking-widest text-amber-300">
+                        Code: {boothCode}
+                      </div>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <button
+                          onClick={handleCopyShareLink}
+                          className="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+                        >
+                          {isCopied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" /> Copied
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5 text-zinc-700" /> Copy Link
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <button
+                        onClick={handleStartSolo}
+                        className="mt-2.5 text-[11px] text-zinc-400 hover:text-white underline cursor-pointer"
+                      >
+                        Switch to Solo Photobooth
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs text-[10px] font-mono text-white/90 flex items-center gap-1.5 z-10">
+                    <span>{partnerDisplayName}</span>
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isPartnerConnected ? "bg-emerald-400" : "bg-amber-400 animate-pulse"
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Countdown Overlay during capture sequence */}
             <AnimatePresence>
@@ -1703,13 +2037,21 @@ export default function LensBoothView({
                 </div>
               )}
 
-              <div className="flex justify-center pt-1">
+              <div className="flex items-center justify-center gap-4 pt-1">
                 <button
                   onClick={handleRetake}
                   className="text-xs font-medium text-zinc-500 hover:text-zinc-900 flex items-center gap-1.5 cursor-pointer py-1.5 transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Retake Snaps</span>
+                </button>
+                <span className="text-zinc-300">•</span>
+                <button
+                  onClick={handleBackToLobby}
+                  className="text-xs font-medium text-zinc-500 hover:text-zinc-900 flex items-center gap-1.5 cursor-pointer py-1.5 transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Change Mode</span>
                 </button>
               </div>
             </div>
@@ -1728,26 +2070,40 @@ export default function LensBoothView({
               className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-zinc-200 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base text-zinc-900">
-                  Invite Partner to Booth
-                </h3>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-500">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-base text-zinc-900">
+                    Invite Duo to Booth
+                  </h3>
+                </div>
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="p-1 rounded-full text-zinc-400 hover:text-zinc-600"
+                  className="p-1 rounded-full text-zinc-400 hover:text-zinc-600 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <p className="text-xs text-zinc-600 leading-relaxed">
-                Send this link to your partner. When they open it, their live camera feed will instantly connect side by side with yours!
+              <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 text-center">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">
+                  4-Letter Booth Code
+                </span>
+                <span className="font-mono text-3xl font-extrabold text-zinc-900 tracking-widest">
+                  {boothCode}
+                </span>
+              </div>
+
+              <p className="text-xs text-zinc-600 leading-relaxed text-center">
+                Share this code or link with your partner. When they open it, their live camera will link side by side with yours!
               </p>
 
               <div className="flex items-center gap-2 p-2 rounded-xl bg-zinc-50 border border-zinc-200">
                 <input
                   type="text"
                   readOnly
-                  value={typeof window !== "undefined" ? window.location.href : ""}
+                  value={getInviteUrl()}
                   className="flex-1 bg-transparent text-xs text-zinc-700 outline-none truncate font-mono"
                 />
                 <button
@@ -1768,7 +2124,7 @@ export default function LensBoothView({
 
               <button
                 onClick={() => setShowShareModal(false)}
-                className="w-full py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold cursor-pointer transition-colors"
               >
                 Close
               </button>

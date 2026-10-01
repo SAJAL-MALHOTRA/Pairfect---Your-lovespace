@@ -8,8 +8,9 @@ import { Loader2 } from "lucide-react";
 function PhotoBoothContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session") || searchParams.get("code");
+  const mode = searchParams.get("mode") as "solo" | "duo" | "lobby" | null;
 
-  return <LensBoothView initialSessionId={sessionId} />;
+  return <LensBoothView initialSessionId={sessionId} initialMode={mode} />;
 }
 
 export default function PhotoBoothPage() {
