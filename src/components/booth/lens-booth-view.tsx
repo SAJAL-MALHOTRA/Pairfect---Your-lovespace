@@ -87,7 +87,7 @@ const STRIP_STYLES: StripStyleOption[] = [
 ];
 
 // Background textures
-export type BackgroundTheme = "grid" | "dark_grid" | "parchment" | "pastel";
+export type BackgroundTheme = "grid" | "parchment" | "blush" | "pastel";
 
 interface BackgroundOption {
   key: BackgroundTheme;
@@ -98,7 +98,7 @@ interface BackgroundOption {
 const BACKGROUND_OPTIONS: BackgroundOption[] = [
   { key: "grid", label: "Pairfect Grid", className: "booth-grid-canvas paper-grain" },
   { key: "parchment", label: "Cozy Paper", className: "bg-[var(--bg)] paper-grain" },
-  { key: "dark_grid", label: "Studio Noir", className: "booth-grid-canvas-dark" },
+  { key: "blush", label: "Rose Sanctuary", className: "bg-[#FFEBF0] paper-grain" },
   { key: "pastel", label: "Candy Pink", className: "bg-[#FFF0F4] paper-grain" },
 ];
 
