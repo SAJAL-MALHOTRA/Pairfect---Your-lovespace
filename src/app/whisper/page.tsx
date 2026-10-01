@@ -242,22 +242,22 @@ function WhisperContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FFF5F8] via-[#FFEBF1] to-[#FFF0F4] text-[var(--text)] pb-36 sm:pb-40 paper-grain">
-      {/* ─── TOP STICKY HEADER ─── */}
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] pb-36 sm:pb-40 paper-grain">
+      {/* Top Sticky Header */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-white/80 border-b border-[var(--border)] px-4 py-3 sm:px-8">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
-              className="p-2 rounded-full bg-white/90 hover:bg-white text-[var(--text)] shadow-xs border border-[var(--border)] transition-transform active:scale-95"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-[#F5CAD6] hover:border-pink-300 text-[var(--text)] flex items-center justify-center shadow-xs transition-transform active:scale-95"
               title="Back to Dashboard"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <span className="font-pixel text-[11px] sm:text-xs tracking-wider bg-[var(--burgundy)] text-white px-2.5 py-1 rounded shadow-xs">
+            <span className="font-pixel text-[11px] sm:text-xs tracking-wider bg-[var(--burgundy)] text-white px-2.5 sm:px-3 py-1 rounded-md sm:rounded-lg font-bold shadow-xs select-none">
               PAIRFECT
             </span>
-            <h1 className="font-pixel text-sm sm:text-lg tracking-wide text-[var(--text)] uppercase">
+            <h1 className="font-pixel text-sm sm:text-lg tracking-wider text-[var(--text)] uppercase">
               WHISPER RADIO
             </h1>
           </div>

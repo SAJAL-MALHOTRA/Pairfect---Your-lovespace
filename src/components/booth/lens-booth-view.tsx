@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Camera,
@@ -95,10 +96,10 @@ interface BackgroundOption {
 }
 
 const BACKGROUND_OPTIONS: BackgroundOption[] = [
-  { key: "grid", label: "Classic Grid", className: "booth-grid-canvas" },
+  { key: "grid", label: "Pairfect Grid", className: "booth-grid-canvas paper-grain" },
+  { key: "parchment", label: "Cozy Paper", className: "bg-[var(--bg)] paper-grain" },
   { key: "dark_grid", label: "Studio Noir", className: "booth-grid-canvas-dark" },
-  { key: "parchment", label: "Warm Paper", className: "bg-[#F7F2E9]" },
-  { key: "pastel", label: "Candy Pink", className: "bg-[#FFF0F4]" },
+  { key: "pastel", label: "Candy Pink", className: "bg-[#FFF0F4] paper-grain" },
 ];
 
 // Festive Decorative SVGs for Web Rush Candy Love Style
@@ -1106,31 +1107,40 @@ export default function LensBoothView({
         )}
       </AnimatePresence>
 
-      {/* ── TOP HEADER BAR ── */}
+      {/* Top Header Bar */}
       <header className="w-full max-w-5xl mx-auto px-4 py-4 flex items-center justify-between z-30">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {boothMode !== "lobby" ? (
             <button
               onClick={handleBackToLobby}
-              className="p-2 rounded-xl bg-white/80 hover:bg-white border border-zinc-200 shadow-xs text-zinc-700 hover:text-zinc-900 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-[#F5CAD6] hover:border-pink-300 text-[var(--text)] flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
               title="Return to mode selection"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Modes</span>
+              <ArrowLeft className="w-4 h-4" />
             </button>
           ) : onExit ? (
             <button
               onClick={onExit}
-              className="p-2 rounded-xl bg-white/80 hover:bg-white border border-zinc-200 shadow-xs text-zinc-700 hover:text-zinc-900 transition-colors cursor-pointer"
-              title="Return"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-[#F5CAD6] hover:border-pink-300 text-[var(--text)] flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
+              title="Back to Dashboard"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-          ) : null}
-          <span className="font-sans font-bold text-lg text-zinc-900 tracking-tight flex items-center gap-1.5">
-            <span>Pairfect</span>
-            <span className="text-red-500">❤️</span>
+          ) : (
+            <Link
+              href="/dashboard"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-[#F5CAD6] hover:border-pink-300 text-[var(--text)] flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
+              title="Back to Dashboard"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          )}
+          <span className="font-pixel text-[11px] sm:text-xs tracking-wider bg-[var(--burgundy)] text-white px-2.5 sm:px-3 py-1 rounded-md sm:rounded-lg font-bold shadow-xs select-none">
+            PAIRFECT
           </span>
+          <h1 className="font-pixel text-sm sm:text-lg tracking-wider text-[var(--text)] uppercase">
+            PHOTO BOOTH
+          </h1>
         </div>
 
         {/* Room / Partner Indicator & Invite Button */}

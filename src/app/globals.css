@@ -244,12 +244,12 @@ body {
   background-size: 100% 32px;
 }
 
-/* Photobooth Grid Canvas matching LensBooth reference */
+/* Photobooth Grid Canvas matching Pairfect theme */
 .booth-grid-canvas {
-  background-color: #F8F8FA;
+  background-color: var(--bg);
   background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(232, 82, 125, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(232, 82, 125, 0.08) 1px, transparent 1px);
   background-size: 26px 26px;
 }
 

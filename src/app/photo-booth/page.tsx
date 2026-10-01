@@ -17,7 +17,7 @@ export default function PhotoBoothPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8F8FA] booth-grid-canvas">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] booth-grid-canvas paper-grain">
           <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
         </div>
       }
