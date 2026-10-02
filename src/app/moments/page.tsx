@@ -5,12 +5,13 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import { UnpairedPrompt } from "@/components/unpaired-prompt";
-import { Loader2, Search, Heart, Camera, Mail, Plus, Sparkles } from "lucide-react";
+import { Loader2, Search, Heart, Camera, Mail, Plus, Sparkles, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useSubscription } from "@/hooks/use-subscription";
 import PlusPaywallModal from "@/components/plus-paywall-modal";
+import { EncryptedMemoryImage } from "@/components/ui/encrypted-memory-image";
 
 // Helper to extract plain text from letter content
 function getLetterExcerpt(text: any, maxLen = 60): string {
@@ -124,6 +125,10 @@ export default function MomentsPage() {
     };
   }, [pair?.id, loading, supabase]);
 
+  const handleRemoveItem = (id: string) => {
+    setMemories((prev) => prev.filter((m) => m.data?.id !== id));
+  };
+
   const filteredMemories = useMemo(() => {
     return memories.filter((m) => {
       if (activeFilter === "photos" && m.type !== "photo") return false;
@@ -186,6 +191,9 @@ export default function MomentsPage() {
           </h1>
           <p className="text-sm md:text-base text-[var(--text-soft)] max-w-xl mx-auto md:mx-0 font-sans">
             Every letter you've written, photostrip you've taken, and moment you've shared.
+          </p>
+          <p className="text-[10px] text-[var(--text-soft)] font-mono max-w-xl mx-auto md:mx-0 leading-relaxed">
+            New photo strips are end-to-end encrypted on your device. Photos taken before encryption was enabled remain in standard couple cloud storage.
           </p>
         </div>
 
@@ -287,7 +295,7 @@ export default function MomentsPage() {
                     if (memory.type === "photo") {
                       return (
                         <motion.div key={memory.id} variants={itemVariants} layout className="break-inside-avoid">
-                          <PhotoStripCard data={memory.data} />
+                          <PhotoStripCard data={memory.data} onDelete={handleRemoveItem} />
                         </motion.div>
                       );
                     }
@@ -326,9 +334,35 @@ export default function MomentsPage() {
 
 // --- Cards ---
 
-function PhotoStripCard({ data }: { data: any }) {
+function PhotoStripCard({ data, onDelete }: { data: any; onDelete?: (id: string) => void }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const supabase = createClient();
   const images = data.photo_strip_images || [];
   const firstImg = images.sort((a: any, b: any) => a.position - b.position)[0];
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const confirmed = window.confirm("Delete this photo strip and its encrypted files permanently?");
+    if (!confirmed) return;
+    setIsDeleting(true);
+    try {
+      // 1. Delete encrypted storage objects
+      const storagePaths = images
+        .map((img: any) => img.url)
+        .filter((u: string) => u && !u.startsWith("data:") && !u.startsWith("http"));
+      if (storagePaths.length > 0) {
+        await supabase.storage.from("memories").remove(storagePaths);
+      }
+      // 2. Delete database records
+      await supabase.from("photo_strips").delete().eq("id", data.id);
+      onDelete?.(data.id);
+    } catch (err) {
+      console.error("Failed to delete photo strip:", err);
+      alert("Failed to delete photo strip.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   return (
     <div 
@@ -341,7 +375,15 @@ function PhotoStripCard({ data }: { data: any }) {
       
       {firstImg ? (
         <div className="w-full aspect-[3/4] relative bg-black/10 overflow-hidden shadow-inner">
-          <Image src={firstImg.url} alt="Photo strip preview" fill className="object-cover" unoptimized />
+          <EncryptedMemoryImage
+            src={firstImg.url}
+            pairId={data.pair_id}
+            stripId={data.id}
+            position={firstImg.position ?? 0}
+            alt="Photo strip preview"
+            className="w-full h-full object-cover"
+            containerClassName="w-full h-full relative"
+          />
           <div className="absolute inset-0 bg-black/10 pointer-events-none" />
         </div>
       ) : (
@@ -359,10 +401,18 @@ function PhotoStripCard({ data }: { data: any }) {
         </p>
       </div>
 
-      <div className="mt-2 text-center">
+      <div className="mt-2 text-center flex items-center justify-between px-2 pt-1 border-t border-black/5">
         <Link href={`/photo-booth`} className="text-[10px] font-mono uppercase tracking-wider text-black/50 hover:text-black/80 font-bold transition-colors">
           View Strip ▷
         </Link>
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="text-black/30 hover:text-red-500 transition-colors p-1 cursor-pointer disabled:opacity-40"
+          title="Delete photo strip and encrypted files"
+        >
+          {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+        </button>
       </div>
     </div>
   );
@@ -413,12 +463,14 @@ function MomentCard({ data }: { data: any }) {
     <div className="bg-[var(--paper-warm)] rounded-3xl border border-[var(--border)] overflow-hidden shadow-xl material-cotton group">
       {data.photo_url && (
         <div className="w-full aspect-[4/3] relative overflow-hidden">
-          <Image 
+          <EncryptedMemoryImage 
             src={data.photo_url} 
+            pairId={data.pair_id}
+            stripId={data.id}
+            position={0}
             alt={data.title || "Memory"} 
-            fill 
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            unoptimized 
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            containerClassName="w-full h-full relative"
           />
         </div>
       )}

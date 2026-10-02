@@ -31,11 +31,32 @@ export async function POST() {
     }
 
     for (const p of pairsList) {
-      // 1. Try calling the SECURITY DEFINER RPC first
+      // 1. Clean up encrypted files in memories bucket for this pair
+      try {
+        const { data: stripFolders } = await dbClient.storage.from("memories").list(`${p.id}/strips`);
+        if (stripFolders && stripFolders.length > 0) {
+          for (const folder of stripFolders) {
+            const { data: stripFiles } = await dbClient.storage.from("memories").list(`${p.id}/strips/${folder.name}`);
+            if (stripFiles && stripFiles.length > 0) {
+              const paths = stripFiles.map((f: any) => `${p.id}/strips/${folder.name}/${f.name}`);
+              await dbClient.storage.from("memories").remove(paths);
+            }
+          }
+        }
+        const { data: rootFiles } = await dbClient.storage.from("memories").list(p.id);
+        if (rootFiles && rootFiles.length > 0) {
+          const rootPaths = rootFiles.map((f: any) => `${p.id}/${f.name}`);
+          await dbClient.storage.from("memories").remove(rootPaths);
+        }
+      } catch (storageCleanupErr) {
+        console.warn("[Unlink] Storage cleanup warning:", storageCleanupErr);
+      }
+
+      // 2. Try calling the SECURITY DEFINER RPC first
       const { data: rpcData, error: rpcErr } = await supabase.rpc("unlink_and_delete_pair", { p_pair_id: p.id });
 
       if (rpcErr || !rpcData?.success) {
-        // Fallback: Delete storage objects then pair row
+        // Fallback: Delete pair row
         await dbClient.from("pairs").delete().eq("id", p.id);
       }
     }
