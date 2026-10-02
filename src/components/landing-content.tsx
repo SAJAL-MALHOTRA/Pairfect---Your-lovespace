@@ -3092,34 +3092,6 @@ export default function LandingContent() {
               </Link>
             </div>
 
-            {/* Verified Couple Quote Card */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-stone-50 via-white to-stone-50 border border-stone-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-1.5 flex-1">
-                <div className="flex items-center gap-1 text-amber-400">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  ))}
-                  <span className="text-[10px] font-mono font-bold text-stone-600 ml-1.5">
-                    5.0 from 840+ long distance couples
-                  </span>
-                </div>
-                <p className="font-sans text-xs sm:text-sm text-stone-700 italic leading-snug">
-                  &ldquo;Pairfect makes our 1,420 km distance feel small. The live photobooth and midnight radio frequencies make our evenings feel like we are in the same room.&rdquo;
-                </p>
-                <div className="flex items-center gap-2 pt-0.5 text-[11px] font-mono text-stone-500">
-                  <span className="font-bold text-stone-900">Alex &amp; Mia</span>
-                  <span>·</span>
-                  <span>Mumbai &amp; Delhi (2.5 years LDR)</span>
-                </div>
-              </div>
-              <div className="shrink-0 flex sm:flex-col items-center sm:items-end gap-1 text-[10px] font-mono text-rose-600 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-                  LIVE SYNCED
-                </span>
-                <span className="text-stone-500 text-[9px] font-normal">1,420 km apart</span>
-              </div>
-            </div>
 
           </div>
 
