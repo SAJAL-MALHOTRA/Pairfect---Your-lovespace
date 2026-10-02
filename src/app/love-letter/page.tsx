@@ -209,6 +209,64 @@ function EnvelopeFolds({ dark = false }: { dark?: boolean }) {
   );
 }
 
+// Physical envelope pocket (sides and bottom)
+function EnvelopePocketFolds({ dark = false }: { dark?: boolean }) {
+  const stroke = dark ? "rgba(255,255,255,0.08)" : "rgba(160,130,90,0.3)";
+  const fillSide = dark ? "rgba(255,255,255,0.04)" : "rgba(200,175,135,0.18)";
+  const fillBottom = dark ? "rgba(255,255,255,0.07)" : "rgba(215,190,150,0.28)";
+  return (
+    <svg
+      viewBox="0 0 400 260"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      preserveAspectRatio="none"
+      fill="none"
+    >
+      {/* Left pocket flap */}
+      <path
+        d="M0,0 L180,140 L0,260 Z"
+        fill={fillSide}
+        stroke={stroke}
+        strokeWidth="1"
+      />
+      {/* Right pocket flap */}
+      <path
+        d="M400,0 L220,140 L400,260 Z"
+        fill={fillSide}
+        stroke={stroke}
+        strokeWidth="1"
+      />
+      {/* Bottom pocket fold */}
+      <path
+        d="M0,260 L200,125 L400,260 Z"
+        fill={fillBottom}
+        stroke={stroke}
+        strokeWidth="1.2"
+      />
+    </svg>
+  );
+}
+
+// Physical envelope top triangular flap
+function EnvelopeTopFlap({ dark = false }: { dark?: boolean }) {
+  const stroke = dark ? "rgba(255,255,255,0.12)" : "rgba(160,130,90,0.35)";
+  const fill = dark ? "rgba(42,32,24,0.95)" : "rgba(242,228,204,0.96)";
+  return (
+    <svg
+      viewBox="0 0 400 130"
+      className="w-full h-full pointer-events-none drop-shadow-sm"
+      preserveAspectRatio="none"
+      fill="none"
+    >
+      <path
+        d="M0,0 L200,126 L400,0 Z"
+        fill={fill}
+        stroke={stroke}
+        strokeWidth="1.4"
+      />
+    </svg>
+  );
+}
+
 // Botanical corner sprig
 function Sprig({ className = "" }: { className?: string }) {
   return (
@@ -252,7 +310,7 @@ function Sprig({ className = "" }: { className?: string }) {
   );
 }
 
-// WaxSeal button: animated
+// WaxSeal button: animated with physical fragment shatter
 function WaxSealButton({
   onPress,
   shattering,
@@ -261,15 +319,74 @@ function WaxSealButton({
   shattering: boolean;
 }) {
   return (
-    <AnimatePresence>
-      {!shattering ? (
+    <div className="relative flex items-center justify-center">
+      {/* Golden sparkle dust burst on crack */}
+      {shattering && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-30">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <motion.div
+              key={`dust-${i}`}
+              className="absolute w-2 h-2 rounded-full bg-amber-300 shadow-xs"
+              initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+              animate={{
+                scale: [0, 1.4, 0],
+                x: Math.cos((i / 14) * Math.PI * 2) * 80,
+                y: Math.sin((i / 14) * Math.PI * 2) * 80,
+                opacity: [1, 1, 0],
+              }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Wax seal body: fractures into 4 flying shards when shattering */}
+      {shattering ? (
+        <div className="relative w-18 h-18 pointer-events-none">
+          {/* Top-Left Shard */}
+          <motion.div
+            className="absolute top-0 left-0 w-9 h-9 overflow-hidden"
+            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={{ x: -28, y: -28, rotate: -25, opacity: 0 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+          >
+            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] shadow-md" />
+          </motion.div>
+          {/* Top-Right Shard */}
+          <motion.div
+            className="absolute top-0 right-0 w-9 h-9 overflow-hidden"
+            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={{ x: 28, y: -28, rotate: 25, opacity: 0 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+          >
+            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] -ml-9 shadow-md" />
+          </motion.div>
+          {/* Bottom-Left Shard */}
+          <motion.div
+            className="absolute bottom-0 left-0 w-9 h-9 overflow-hidden"
+            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={{ x: -28, y: 28, rotate: -35, opacity: 0 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+          >
+            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] -mt-9 shadow-md" />
+          </motion.div>
+          {/* Bottom-Right Shard */}
+          <motion.div
+            className="absolute bottom-0 right-0 w-9 h-9 overflow-hidden"
+            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={{ x: 28, y: 28, rotate: 35, opacity: 0 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+          >
+            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] -ml-9 -mt-9 shadow-md" />
+          </motion.div>
+        </div>
+      ) : (
         <motion.button
           key="seal"
           aria-label="Break the seal to read the letter"
           onClick={onPress}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
-          exit={{ scale: 0, opacity: 0, filter: "blur(8px)" }}
           transition={{ type: "spring", stiffness: 500, damping: 28 }}
           style={{
             filter: "drop-shadow(0 4px 14px rgba(128,32,48,0.38))",
@@ -305,8 +422,8 @@ function WaxSealButton({
             />
           </svg>
         </motion.button>
-      ) : null}
-    </AnimatePresence>
+      )}
+    </div>
   );
 }
 
@@ -711,7 +828,7 @@ export default function LoveLetterPage() {
     setReadPhase("shattering");
     await new Promise((r) => setTimeout(r, 650));
     setReadPhase("unsealing");
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((r) => setTimeout(r, 1100));
     setReadPhase("open");
     // Reveal blocks one at a time
     const count = activeLetter.content?.length || 0;
@@ -1388,13 +1505,15 @@ export default function LoveLetterPage() {
         <main className="flex items-start justify-center min-h-screen pt-14 px-5 pb-24">
           <div className="w-full max-w-md">
             <AnimatePresence mode="wait">
-              {/* SEALED: The physical wax seal envelope */}
-              {(readPhase === "sealed" || readPhase === "shattering") && (
+              {/* SEALED, SHATTERING & UNSEALING: Physical Envelope Flap & Paper Rise */}
+              {(readPhase === "sealed" ||
+                readPhase === "shattering" ||
+                readPhase === "unsealing") && (
                 <motion.div
-                  key="sealed"
+                  key="sealed-stage"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -12 }}
+                  exit={{ opacity: 0, scale: 0.96, y: -16 }}
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   className="flex flex-col items-center justify-center min-h-[75vh] gap-8"
                 >
@@ -1407,116 +1526,182 @@ export default function LoveLetterPage() {
                     A handwritten letter awaits you
                   </motion.p>
 
-                  {/* Physical envelope */}
-                  <motion.div
-                    className="relative w-full rounded-3xl overflow-hidden paper-grain"
-                    style={{
-                      background: cfg.bg,
-                      aspectRatio: "1.42 / 1",
-                      boxShadow:
-                        "0 24px 64px -8px rgba(60,38,18,0.24),0 4px 12px rgba(60,38,18,0.1)",
-                      border: "1px solid rgba(196,168,130,0.3)",
-                    }}
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{
-                      delay: 0.15,
-                      duration: 0.6,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                  >
-                    <EnvelopeFolds dark={cfg.foldDark} />
-                    <Sprig className="absolute -top-2 right-4 w-10 h-14 opacity-60 pointer-events-none" />
+                  {/* 3D Envelope Container with Perspective */}
+                  <div className="relative w-full" style={{ perspective: 1200 }}>
+                    <motion.div
+                      className="relative w-full rounded-3xl paper-grain"
+                      style={{
+                        background: cfg.bg,
+                        aspectRatio: "1.42 / 1",
+                        boxShadow:
+                          "0 24px 64px -8px rgba(60,38,18,0.24),0 4px 12px rgba(60,38,18,0.1)",
+                        border: "1px solid rgba(196,168,130,0.3)",
+                      }}
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{
+                        delay: 0.15,
+                        duration: 0.6,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    >
+                      {/* 1. Folded Parchment Letter Sheet rising out of the envelope */}
+                      <motion.div
+                        className="absolute inset-x-5 top-5 bottom-5 rounded-2xl paper-grain p-5 shadow-md border border-[rgba(196,168,130,0.4)] flex flex-col justify-between overflow-hidden"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, #FFFDF7 0%, #F8F2E4 100%)",
+                          zIndex: 12,
+                        }}
+                        initial={{ y: 0, opacity: 0.9 }}
+                        animate={
+                          readPhase === "unsealing"
+                            ? {
+                                y: -125,
+                                scale: 1.03,
+                                opacity: 1,
+                                boxShadow:
+                                  "0 24px 48px -6px rgba(60,38,18,0.32)",
+                              }
+                            : { y: 0, opacity: 0.9 }
+                        }
+                        transition={{ duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between border-b border-[rgba(196,168,130,0.3)] pb-1.5">
+                            <span className="text-[8px] font-mono uppercase tracking-widest text-[#9A876A]">
+                              Personal & Confidential
+                            </span>
+                            <span className="text-xs">💌</span>
+                          </div>
+                          <p className="font-handwriting text-lg font-bold text-[#4A3A28]">
+                            Dearest {activeLetter.recipient_name},
+                          </p>
+                          <div className="space-y-2 pt-1">
+                            <div className="h-1.5 w-3/4 rounded-full bg-[rgba(196,168,130,0.35)]" />
+                            <div className="h-1.5 w-5/6 rounded-full bg-[rgba(196,168,130,0.25)]" />
+                            <div className="h-1.5 w-2/3 rounded-full bg-[rgba(196,168,130,0.2)]" />
+                          </div>
+                        </div>
+                        <div className="text-right pt-2 border-t border-[rgba(196,168,130,0.2)]">
+                          <span className="font-handwriting text-sm text-[#6B573E]">
+                            With love, {activeLetter.sender_name}
+                          </span>
+                        </div>
+                      </motion.div>
 
-                    {/* To address */}
-                    <div className="absolute top-5 left-6 z-10 space-y-0.5">
-                      <p
-                        className="text-[7px] font-mono uppercase tracking-widest"
-                        style={{
-                          color: cfg.foldDark
-                            ? "rgba(255,255,255,0.35)"
-                            : "#9A876A",
-                        }}
+                      {/* 2. Physical Envelope Pocket Folds (sides and bottom) */}
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{ zIndex: 18 }}
                       >
-                        To
-                      </p>
-                      <p
-                        className="font-handwriting text-lg font-semibold"
-                        style={{
-                          color: cfg.foldDark
-                            ? "rgba(255,255,255,0.8)"
-                            : "#4A3A28",
-                        }}
-                      >
-                        {activeLetter.recipient_name}
-                      </p>
-                    </div>
+                        <EnvelopePocketFolds dark={cfg.foldDark} />
+                      </div>
 
-                    {/* The wax seal */}
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <WaxSealButton
-                        onPress={breakSeal}
-                        shattering={readPhase === "shattering"}
-                      />
-                    </div>
+                      <Sprig className="absolute -top-2 right-4 w-10 h-14 opacity-60 pointer-events-none z-20" />
 
-                    {/* From address */}
-                    <div className="absolute bottom-5 right-6 z-10 space-y-0.5 text-right">
-                      <p
-                        className="text-[7px] font-mono uppercase tracking-widest"
+                      {/* 3. To address */}
+                      <div
+                        className="absolute top-5 left-6 space-y-0.5"
+                        style={{ zIndex: 22 }}
+                      >
+                        <p
+                          className="text-[7px] font-mono uppercase tracking-widest"
+                          style={{
+                            color: cfg.foldDark
+                              ? "rgba(255,255,255,0.35)"
+                              : "#9A876A",
+                          }}
+                        >
+                          To
+                        </p>
+                        <p
+                          className="font-handwriting text-lg font-semibold"
+                          style={{
+                            color: cfg.foldDark
+                              ? "rgba(255,255,255,0.8)"
+                              : "#4A3A28",
+                          }}
+                        >
+                          {activeLetter.recipient_name}
+                        </p>
+                      </div>
+
+                      {/* 4. From address */}
+                      <div
+                        className="absolute bottom-5 right-6 space-y-0.5 text-right"
+                        style={{ zIndex: 22 }}
+                      >
+                        <p
+                          className="text-[7px] font-mono uppercase tracking-widest"
+                          style={{
+                            color: cfg.foldDark
+                              ? "rgba(255,255,255,0.35)"
+                              : "#9A876A",
+                          }}
+                        >
+                          From
+                        </p>
+                        <p
+                          className="font-handwriting text-base font-semibold"
+                          style={{
+                            color: cfg.foldDark
+                              ? "rgba(255,255,255,0.8)"
+                              : "#4A3A28",
+                          }}
+                        >
+                          {activeLetter.sender_name}
+                        </p>
+                      </div>
+
+                      {/* 5. 3D Top Triangular Flap */}
+                      <motion.div
+                        className="absolute inset-x-0 top-0 h-[50%] pointer-events-none"
                         style={{
-                          color: cfg.foldDark
-                            ? "rgba(255,255,255,0.35)"
-                            : "#9A876A",
+                          transformOrigin: "top center",
+                          transformStyle: "preserve-3d",
+                          zIndex: readPhase === "unsealing" ? 8 : 26,
+                        }}
+                        initial={{ rotateX: 0 }}
+                        animate={
+                          readPhase === "unsealing"
+                            ? { rotateX: 180 }
+                            : { rotateX: 0 }
+                        }
+                        transition={{
+                          duration: 0.8,
+                          ease: [0.22, 1, 0.36, 1],
                         }}
                       >
-                        From
-                      </p>
-                      <p
-                        className="font-handwriting text-base font-semibold"
-                        style={{
-                          color: cfg.foldDark
-                            ? "rgba(255,255,255,0.8)"
-                            : "#4A3A28",
-                        }}
-                      >
-                        {activeLetter.sender_name}
-                      </p>
-                    </div>
-                  </motion.div>
+                        <EnvelopeTopFlap dark={cfg.foldDark} />
+                      </motion.div>
+
+                      {/* 6. Wax Seal Button */}
+                      {readPhase !== "unsealing" && (
+                        <div
+                          className="absolute inset-0 flex items-center justify-center"
+                          style={{ zIndex: 30 }}
+                        >
+                          <WaxSealButton
+                            onPress={breakSeal}
+                            shattering={readPhase === "shattering"}
+                          />
+                        </div>
+                      )}
+                    </motion.div>
+                  </div>
 
                   <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: [0, 1, 0, 1] }}
-                    transition={{ delay: 0.8, duration: 1.5 }}
-                    className="text-[9px] font-mono text-[var(--ink-light)]"
+                    key={readPhase}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]"
                   >
-                    Tap the seal to break and open
+                    {readPhase === "sealed" && "Tap the seal to break and open"}
+                    {readPhase === "shattering" && "Breaking wax seal..."}
+                    {readPhase === "unsealing" && "Unfolding letter..."}
                   </motion.p>
-                </motion.div>
-              )}
-
-              {/* UNSEALING: Transitional beat */}
-              {readPhase === "unsealing" && (
-                <motion.div
-                  key="unsealing"
-                  className="flex items-center justify-center min-h-[75vh]"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <div className="space-y-3 text-center">
-                    <div className="w-12 h-12 rounded-full border border-[var(--border-warm)] mx-auto flex items-center justify-center">
-                      <motion.div
-                        className="w-2 h-2 rounded-full bg-[var(--seal-red)]"
-                        animate={{ scale: [1, 1.4, 1] }}
-                        transition={{ duration: 0.6, repeat: Infinity }}
-                      />
-                    </div>
-                    <p className="text-[9px] font-mono text-[var(--ink-light)] uppercase tracking-widest">
-                      Opening...
-                    </p>
-                  </div>
                 </motion.div>
               )}
 

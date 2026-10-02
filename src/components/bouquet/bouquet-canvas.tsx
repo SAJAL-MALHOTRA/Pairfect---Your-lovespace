@@ -79,6 +79,7 @@ export default function BouquetCanvas({
   className = "",
 }: BouquetCanvasProps) {
   const [isOpened, setIsOpened] = useState(!isRevealMode);
+  const [isUntying, setIsUntying] = useState(false);
   const [cardFocused, setCardFocused] = useState(false);
 
   const wrap = WRAPPING_STYLES[wrappingId] || WRAPPING_STYLES.kraft;
@@ -88,9 +89,13 @@ export default function BouquetCanvas({
   const arrangement = getFlowerArrangement(validFlowers.length);
 
   const handleOpenClick = () => {
-    setIsOpened(true);
-    setCardFocused(true);
-    onUntie?.();
+    setIsUntying(true);
+    setTimeout(() => {
+      setIsOpened(true);
+      setCardFocused(true);
+      setIsUntying(false);
+      onUntie?.();
+    }, 650);
   };
 
   return (
@@ -100,29 +105,51 @@ export default function BouquetCanvas({
         background: "linear-gradient(155deg, #FBF8F3 0%, #F5ECE0 60%, #EFE3D3 100%)",
       }}
     >
+      {/* ── Untying Golden Sparkle Burst ── */}
+      {isUntying && (
+        <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <motion.div
+              key={`burst-${i}`}
+              className="absolute w-2.5 h-2.5 rounded-full bg-gradient-to-r from-amber-300 to-rose-300 shadow-md"
+              initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+              animate={{
+                scale: [0, 1.6, 0],
+                x: Math.cos((i / 18) * Math.PI * 2) * 140,
+                y: Math.sin((i / 18) * Math.PI * 2) * 140,
+                opacity: [1, 1, 0],
+              }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* ── Atmosphere Particles ── */}
       {atmosphereId === "petals" && (
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
-          {Array.from({ length: 9 }).map((_, i) => (
+          {Array.from({ length: 10 }).map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-3 h-4 bg-rose-300/80 rounded-full"
+              className="absolute w-3.5 h-4.5 bg-gradient-to-br from-rose-200 via-rose-300 to-rose-400/80 rounded-full"
               style={{
                 borderRadius: "60% 40% 70% 30%",
-                left: `${(i * 12 + 6) % 100}%`,
+                left: `${(i * 11 + 4) % 100}%`,
                 top: "-10%",
-                boxShadow: "0 2px 6px rgba(225,29,72,0.15)",
+                boxShadow: "0 2px 8px rgba(225,29,72,0.18)",
               }}
               animate={{
                 y: ["0%", "1200%"],
-                x: [0, (i % 2 === 0 ? 30 : -30), 0],
-                rotate: [0, 360],
-                opacity: [0, 0.9, 0],
+                x: [0, (i % 2 === 0 ? 35 : -35), 0],
+                rotateZ: [0, 360],
+                rotateX: [0, 180, 360],
+                rotateY: [0, 180, 360],
+                opacity: [0, 0.95, 0],
               }}
               transition={{
                 duration: 6 + (i % 4),
                 repeat: Infinity,
-                delay: i * 0.7,
+                delay: i * 0.6,
                 ease: "linear",
               }}
             />
@@ -249,16 +276,20 @@ export default function BouquetCanvas({
                 top: `${pos.y}%`,
                 zIndex: pos.z,
               }}
-              initial={isRevealMode ? { scale: 0.6, opacity: 0 } : false}
+              initial={{ scale: 0.15, opacity: 0, rotate: pos.rot - 16 }}
               animate={{
                 scale: pos.scale,
                 rotate: pos.rot,
                 opacity: 1,
               }}
+              whileHover={{
+                scale: pos.scale * 1.08,
+                rotate: pos.rot + 3,
+              }}
               transition={{
                 type: "spring",
-                stiffness: 260,
-                damping: 20,
+                stiffness: 240,
+                damping: 18,
                 delay: idx * 0.08,
               }}
             >
@@ -388,32 +419,58 @@ export default function BouquetCanvas({
       </motion.div>
 
       {/* ── Tied Ribbon Bow ── */}
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-[8%] z-[30] pointer-events-none filter drop-shadow-md">
+      <motion.div
+        className="absolute left-1/2 -translate-x-1/2 bottom-[8%] z-[30] pointer-events-none filter drop-shadow-md"
+        animate={
+          isUntying
+            ? {
+                scale: [1, 1.4, 0],
+                opacity: [1, 0.8, 0],
+                rotate: [0, 20, -25],
+                y: [0, -10, 30],
+              }
+            : { scale: 1, opacity: 1, rotate: 0, y: 0 }
+        }
+        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+      >
         <RibbonBow color={ribbon.color} size={110} />
-      </div>
+      </motion.div>
 
       {/* ── Recipient Interactive Untie Overlay ── */}
-      {isRevealMode && !isOpened && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 z-50 bg-black/35 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleOpenClick}
-            className="px-6 py-4 rounded-full bg-white text-rose-900 font-serif font-bold text-sm sm:text-base shadow-2xl flex items-center gap-2 cursor-pointer border border-rose-200"
+      <AnimatePresence>
+        {isRevealMode && !isOpened && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.4 }}
+            className="absolute inset-0 z-50 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center"
           >
-            <span>Untie Ribbon & Unwrap Bouquet</span>
-            <span className="text-lg">🎀</span>
-          </motion.button>
-          <p className="text-white/80 font-mono text-xs mt-3">
-            Handcrafted for you with love
-          </p>
-        </motion.div>
-      )}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              disabled={isUntying}
+              onClick={handleOpenClick}
+              className="px-6 py-4 rounded-full bg-white text-rose-900 font-sans font-bold text-sm sm:text-base shadow-2xl flex items-center gap-2.5 cursor-pointer border border-rose-200 transition-all active:scale-95 disabled:opacity-70"
+            >
+              {isUntying ? (
+                <>
+                  <Sparkles className="w-5 h-5 text-amber-500 animate-spin" />
+                  <span>Untying with love...</span>
+                </>
+              ) : (
+                <>
+                  <span>Untie Ribbon & Unwrap Bouquet</span>
+                  <span className="text-lg">🎀</span>
+                </>
+              )}
+            </motion.button>
+            <p className="text-white/90 font-mono text-xs mt-3 drop-shadow-sm">
+              Handcrafted for you with love
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

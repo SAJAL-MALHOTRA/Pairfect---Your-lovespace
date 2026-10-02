@@ -27,6 +27,7 @@ import {
   Volume2,
   VolumeX,
   ChevronLeft,
+  Printer,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -283,6 +284,10 @@ export default function LensBoothView({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Photostrip printing animation state
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printStep, setPrintStep] = useState<number>(4); // 0: slit retracted, 1: inch 1, 2: inch 2, 3: inch 3, 4: settled
+
   // Room / WebRTC state
   const roomId = boothCode || initialSessionId || pair?.id || "pairfect-booth-room";
   const [isPartnerConnected, setIsPartnerConnected] = useState(false);
@@ -330,6 +335,68 @@ export default function LensBoothView({
       // Audio autoplay policy
     }
   }, []);
+
+  // Synthesize photobooth mechanical roller click & stepper motor pulse
+  const playPrinterSound = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(155, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(135, ctx.currentTime + 0.15);
+
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch {
+      // Audio autoplay policy
+    }
+  }, []);
+
+  // Stepped mechanical printer feed animation
+  const triggerPrintAnimation = useCallback(async () => {
+    setIsPrinting(true);
+    setPrintStep(0);
+    playPrinterSound();
+    await new Promise((r) => setTimeout(r, 300));
+    setPrintStep(1);
+    playPrinterSound();
+    await new Promise((r) => setTimeout(r, 700));
+    setPrintStep(2);
+    playPrinterSound();
+    await new Promise((r) => setTimeout(r, 700));
+    setPrintStep(3);
+    playPrinterSound();
+    await new Promise((r) => setTimeout(r, 750));
+    setPrintStep(4);
+    setIsPrinting(false);
+  }, [playPrinterSound]);
+
+  // Auto-trigger print animation upon entering result screen
+  useEffect(() => {
+    if (screen === "result") {
+      triggerPrintAnimation();
+    }
+  }, [screen, triggerPrintAnimation]);
+
+  // Chemical photo developing filter transition
+  const getFrameFilter = useCallback(
+    (idx: number) => {
+      if (isPrinting && printStep < (idx === 0 ? 2 : idx === 1 ? 3 : 4)) {
+        return "sepia(0.85) contrast(0.65) brightness(1.2) blur(1.5px)";
+      }
+      return currentResultFilterObj.css;
+    },
+    [isPrinting, printStep, currentResultFilterObj.css]
+  );
 
   // WebRTC Peer Connection Helper
   const createPeerConnection = useCallback(() => {
@@ -1723,19 +1790,71 @@ export default function LensBoothView({
         <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center md:items-start justify-center gap-10 sm:gap-14">
           {/* ── LEFT COLUMN: 3D Molded Dispenser Mouth & Sliding Photo Strip ── */}
           <div className="flex flex-col items-center relative">
+            {/* Dispenser Status Indicator Badge */}
+            <div className="absolute -top-3.5 z-30 flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-zinc-900 border border-zinc-700 shadow-md">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isPrinting
+                    ? "bg-amber-400 animate-ping"
+                    : "bg-emerald-400 shadow-[0_0_6px_#34D399]"
+                }`}
+              />
+              <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-zinc-300">
+                {isPrinting ? "PRINTING STRIP..." : "DISPENSER READY"}
+              </span>
+            </div>
+
             {/* 3D Molded Photobooth Dispenser Slot Mouth */}
             <div className="w-72 sm:w-84 h-16 sm:h-20 bg-gradient-to-b from-[#FFFFFF] via-[#F3F3F5] to-[#DFDFE3] border border-zinc-200/90 rounded-full shadow-[0_16px_36px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.06),inset_0_2px_4px_rgba(255,255,255,0.9),inset_0_-2px_4px_rgba(0,0,0,0.06)] relative z-20 flex items-center justify-center px-6">
               {/* Recessed dark printer slot mouth slit */}
-              <div className="w-full h-7 sm:h-8 bg-[#09090B] rounded-full shadow-[inset_0_4px_10px_rgba(0,0,0,0.95),inset_0_-1px_2px_rgba(255,255,255,0.12)] relative overflow-hidden" />
+              <div className="w-full h-7 sm:h-8 bg-[#09090B] rounded-full shadow-[inset_0_4px_10px_rgba(0,0,0,0.95),inset_0_-1px_2px_rgba(255,255,255,0.12)] relative overflow-hidden flex items-center justify-center">
+                {/* Internal printhead roller glow during printing */}
+                {isPrinting && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-cyan-400/35 to-amber-400/20"
+                    animate={{ opacity: [0.35, 0.9, 0.35] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                  />
+                )}
+              </div>
             </div>
 
-            {/* Emerging Photo Strip sliding down out of the slit */}
+            {/* Emerging Photo Strip sliding down out of the slit with stepped mechanical feed */}
             <motion.div
-              initial={{ y: -70, opacity: 0 }}
-              animate={{ y: -26, opacity: 1 }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+              initial={false}
+              animate={{
+                y:
+                  printStep === 0
+                    ? -140
+                    : printStep === 1
+                    ? -95
+                    : printStep === 2
+                    ? -60
+                    : -26,
+                opacity: printStep === 0 ? 0 : 1,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 280,
+                damping: 24,
+              }}
               className="relative z-10 w-[240px] sm:w-[260px] shadow-[0_18px_40px_rgba(0,0,0,0.15)] rounded-b-2xl overflow-hidden transition-all duration-300"
             >
+              {/* Thermal / Printhead Laser Scanline Shimmer */}
+              {isPrinting && (
+                <motion.div
+                  className="absolute inset-x-0 h-3 bg-gradient-to-b from-transparent via-cyan-300/60 to-transparent pointer-events-none z-40 shadow-[0_0_14px_rgba(34,211,238,0.9)]"
+                  animate={{
+                    top: ["0%", "100%"],
+                  }}
+                  transition={{
+                    duration: 1.8,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+              )}
+
               {/* Strip Style: Web Rush / Candy Love */}
               {selectedStripStyle === "web_rush" && (
                 <div className="bg-white p-3.5 pt-7 pb-5 flex flex-col items-center relative border border-red-100">
@@ -1776,7 +1895,7 @@ export default function LensBoothView({
                     </span>
                   </div>
 
-                  {/* 3 Stacked Photo Frames */}
+                  {/* 3 Stacked Photo Frames with Chemical Developing Transition */}
                   <div className="w-full space-y-2.5">
                     {capturedFrames.map((frameSrc, idx) => (
                       <div
@@ -1786,8 +1905,12 @@ export default function LensBoothView({
                         <img
                           src={frameSrc}
                           alt={`Shot ${idx + 1}`}
-                          style={{ filter: currentResultFilterObj.css }}
-                          className="w-full h-full object-cover transition-all duration-200"
+                          style={{
+                            filter: getFrameFilter(idx),
+                            transition:
+                              "filter 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                          }}
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     ))}
@@ -1829,8 +1952,12 @@ export default function LensBoothView({
                         <img
                           src={frameSrc}
                           alt={`Shot ${idx + 1}`}
-                          style={{ filter: currentResultFilterObj.css }}
-                          className="w-full h-full object-cover transition-all duration-200"
+                          style={{
+                            filter: getFrameFilter(idx),
+                            transition:
+                              "filter 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                          }}
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     ))}
@@ -1850,12 +1977,18 @@ export default function LensBoothView({
                   {/* Sprocket cuts on sides */}
                   <div className="absolute top-0 bottom-0 left-1 w-2 flex flex-col justify-around py-4">
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="w-1.5 h-2.5 rounded-xs bg-[#E4E4E7]" />
+                      <div
+                        key={i}
+                        className="w-1.5 h-2.5 rounded-xs bg-[#E4E4E7]"
+                      />
                     ))}
                   </div>
                   <div className="absolute top-0 bottom-0 right-1 w-2 flex flex-col justify-around py-4">
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="w-1.5 h-2.5 rounded-xs bg-[#E4E4E7]" />
+                      <div
+                        key={i}
+                        className="w-1.5 h-2.5 rounded-xs bg-[#E4E4E7]"
+                      />
                     ))}
                   </div>
 
@@ -1875,8 +2008,12 @@ export default function LensBoothView({
                         <img
                           src={frameSrc}
                           alt={`Shot ${idx + 1}`}
-                          style={{ filter: currentResultFilterObj.css }}
-                          className="w-full h-full object-cover transition-all duration-200"
+                          style={{
+                            filter: getFrameFilter(idx),
+                            transition:
+                              "filter 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                          }}
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     ))}
@@ -2067,6 +2204,19 @@ export default function LensBoothView({
               >
                 <Heart className="w-4 h-4 text-red-500" />
                 <span>{isSaving ? "Saving…" : "Save to Scrapbook"}</span>
+              </button>
+
+              <button
+                disabled={isPrinting}
+                onClick={triggerPrintAnimation}
+                className="w-full py-2.5 px-6 rounded-2xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-300/80 text-zinc-700 font-semibold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
+              >
+                <Printer className="w-3.5 h-3.5 text-zinc-600" />
+                <span>
+                  {isPrinting
+                    ? "Printing Strip In Progress..."
+                    : "Watch Print Animation Again"}
+                </span>
               </button>
 
               {saveSuccess && (

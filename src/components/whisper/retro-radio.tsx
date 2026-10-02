@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Mic, Radio, Volume2, VolumeX, ListMusic, Sparkles } from "lucide-react";
 import { MIN_FREQUENCY, MAX_FREQUENCY, PRESET_STATIONS, RadioStation, WhisperNote } from "@/lib/whisper/types";
 import { playStaticNoise, playRadioClick, playStationLockChime } from "@/lib/whisper/audio-fx";
@@ -242,6 +243,56 @@ export function RetroRadio({
         {/* Ambient Warm Vacuum Glow */}
         <div className="absolute -inset-2 bg-gradient-to-r from-amber-300/20 via-rose-300/25 to-amber-200/20 rounded-[40px] blur-xl pointer-events-none" />
 
+        {/* ─── TWIN VINTAGE VACUUM TUBES (Breathing Filament Coils) ─── */}
+        <div className="absolute top-[-10px] right-12 sm:right-20 flex items-end gap-3 z-10 pointer-events-none">
+          {[0, 1].map((tubeIdx) => (
+            <div
+              key={tubeIdx}
+              className="relative w-7 sm:w-8 h-10 sm:h-11 rounded-t-xl bg-gradient-to-b from-white/25 via-amber-100/10 to-transparent border-t border-l border-r border-white/50 shadow-md backdrop-blur-[0.5px] flex flex-col items-center justify-end pb-1 overflow-hidden"
+            >
+              {/* Glass tube internal reflection highlights */}
+              <div className="absolute top-1 left-1 w-1.5 h-6 rounded-full bg-white/35 blur-[0.5px]" />
+              <div className="absolute top-1 right-1 w-0.5 h-4 rounded-full bg-white/20 blur-[0.5px]" />
+
+              {/* Coiled Glowing Tungsten Filament */}
+              <motion.div
+                className="relative flex flex-col items-center"
+                animate={{
+                  filter: isPlaying
+                    ? [
+                        "drop-shadow(0 0 6px #FF8800) brightness(1.2)",
+                        "drop-shadow(0 0 14px #FFAA00) brightness(1.45)",
+                        "drop-shadow(0 0 7px #FF8800) brightness(1.25)",
+                      ]
+                    : [
+                        "drop-shadow(0 0 4px #FF7700) brightness(1.0)",
+                        "drop-shadow(0 0 8px #FFA500) brightness(1.2)",
+                        "drop-shadow(0 0 4px #FF7700) brightness(1.0)",
+                      ],
+                }}
+                transition={{
+                  duration: isPlaying ? 0.9 + tubeIdx * 0.2 : 2.6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                {/* Dual Filament internal support posts */}
+                <div className="flex gap-2">
+                  <div className="w-0.5 h-3.5 bg-zinc-400" />
+                  <div className="w-0.5 h-3.5 bg-zinc-400" />
+                </div>
+                {/* Incandescent hot wire filament ring */}
+                <div className="w-3.5 h-3 -mt-2.5 rounded-t-sm border-t-2 border-l border-r border-amber-300 bg-amber-500/40 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-200 animate-pulse" />
+                </div>
+              </motion.div>
+
+              {/* Tube Bakelite base collar */}
+              <div className="w-full h-1.5 bg-gradient-to-r from-zinc-800 via-zinc-600 to-zinc-800 border-t border-zinc-500/70" />
+            </div>
+          ))}
+        </div>
+
         {/* ─── MAIN RADIO BODY CHASSIS ─── */}
         <div className="relative rounded-[30px] sm:rounded-[38px] bg-gradient-to-b from-[#609E8F] via-[#468677] to-[#2E6B5D] border-[3px] border-[#7FBDAE] shadow-[0_24px_50px_rgba(30,70,60,0.25),inset_0_3px_6px_rgba(255,255,255,0.45),inset_0_-4px_10px_rgba(0,0,0,0.3)] p-4 sm:p-6 overflow-hidden">
           {/* Subtle Vintage Radiance Texture */}
@@ -252,28 +303,66 @@ export function RetroRadio({
             {/* ─── LEFT: SPEAKER GRILLE & BRANDING (5 Cols) ─── */}
             <div className="col-span-5 flex flex-col justify-between h-full min-h-[170px] sm:min-h-[200px]">
               {/* Slotted Speaker Louvers with Acoustic Glow Behind */}
-              <div className="relative py-2 flex flex-col justify-center gap-1.5 sm:gap-2 flex-1">
+              <div className="relative py-2 flex flex-col justify-center gap-1.5 sm:gap-2 flex-1 overflow-hidden">
                 {/* Acoustic Diaphragm Ambient Glow */}
                 <div
-                  className={`absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-300/30 via-emerald-100/40 to-transparent blur-md pointer-events-none transition-opacity duration-300 ${
+                  className={`absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-300/35 via-emerald-100/45 to-transparent blur-md pointer-events-none transition-opacity duration-300 ${
                     isPlaying ? "opacity-100 scale-105" : "opacity-30"
                   }`}
                 />
 
-                {/* 9 Horizontal Grille Louver Slots */}
+                {/* Acoustic Pressure Soundwave Ripples when playing */}
+                {isPlaying && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    {[0, 1, 2].map((ring) => (
+                      <motion.div
+                        key={`ring-${ring}`}
+                        className="absolute rounded-full border border-emerald-300/40 bg-emerald-300/5"
+                        initial={{ width: 20, height: 20, opacity: 0.8 }}
+                        animate={{
+                          width: [20, 130, 200],
+                          height: [20, 130, 200],
+                          opacity: [0.8, 0.3, 0],
+                        }}
+                        transition={{
+                          duration: 2.2,
+                          repeat: Infinity,
+                          delay: ring * 0.7,
+                          ease: "easeOut",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* 9 Horizontal Grille Louver Slots with Dynamic Acoustic Equalizer Waves */}
                 {Array.from({ length: 9 }).map((_, idx) => (
                   <div
                     key={idx}
                     className="relative h-2 sm:h-2.5 rounded-full bg-[#184239] shadow-[inset_0_2px_3px_rgba(0,0,0,0.7),0_1px_1px_rgba(255,255,255,0.2)] overflow-hidden"
                   >
-                    {/* Glowing audio wave ripple behind slat when playing */}
-                    {isPlaying && (
-                      <div
-                        className="h-full bg-gradient-to-r from-emerald-200/50 to-emerald-400/20 rounded-full animate-pulse"
-                        style={{
-                          width: `${50 + (idx % 4) * 15}%`,
-                          animationDelay: `${idx * 0.08}s`,
+                    {isPlaying ? (
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-200/60 rounded-full"
+                        animate={{
+                          width: [
+                            `${35 + ((idx * 8) % 45)}%`,
+                            `${78 + ((idx * 6) % 22)}%`,
+                            `${42 + ((idx * 9) % 40)}%`,
+                          ],
+                          opacity: [0.7, 1, 0.75],
                         }}
+                        transition={{
+                          duration: 0.55 + (idx % 4) * 0.14,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="h-full bg-emerald-500/10 rounded-full"
+                        style={{ width: `${20 + (idx % 3) * 10}%` }}
                       />
                     )}
                   </div>
@@ -295,9 +384,27 @@ export function RetroRadio({
             <div className="col-span-7">
               <div className="rounded-2xl sm:rounded-[24px] bg-gradient-to-b from-[#FFFDF8] via-[#FAF3E6] to-[#F1E6D0] border-2 border-[#D4AF37]/50 shadow-[inset_0_2px_8px_rgba(180,140,50,0.15),0_6px_16px_rgba(0,0,0,0.1)] p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
                 {/* ─── TOP LCD FREQUENCY SCREEN ─── */}
-                <div className="rounded-xl bg-[#13171B] border border-black/40 shadow-inner px-3 py-2 flex items-center justify-between text-white">
-                  <div className="text-[10px] sm:text-xs font-mono font-bold tracking-widest text-zinc-400 uppercase">
-                    FM
+                <div className="relative rounded-xl bg-[#13171B] border border-black/40 shadow-inner px-3 py-2 flex items-center justify-between text-white overflow-hidden">
+                  {/* Station Lock Phosphor Flash */}
+                  {signalStrength === 4 && (
+                    <motion.div
+                      key={`lock-flash-${safeFrequency}`}
+                      initial={{ opacity: 0.85, scale: 0.96 }}
+                      animate={{ opacity: 0, scale: 1.04 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="absolute inset-0 bg-emerald-400/25 pointer-events-none"
+                    />
+                  )}
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] sm:text-xs font-mono font-bold tracking-widest text-zinc-400 uppercase">
+                      FM
+                    </span>
+                    {signalStrength === 4 && (
+                      <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-1 rounded-xs animate-pulse">
+                        LOCKED
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5 font-mono font-bold text-base sm:text-xl tracking-wider text-white">
@@ -368,8 +475,8 @@ export function RetroRadio({
                   </div>
                 </div>
 
-                {/* ─── ANALOG TUNER SCALE SLIDER (With Red Needle) ─── */}
-                <div className="rounded-xl bg-[#141618] border border-black/50 p-2 text-white shadow-inner flex flex-col justify-between">
+                {/* ─── ANALOG TUNER SCALE SLIDER (With Red Needle & Mechanical Inertia) ─── */}
+                <div className="relative rounded-xl bg-[#141618] border border-black/50 p-2 text-white shadow-inner flex flex-col justify-between overflow-hidden">
                   {/* Calibrated Ticks */}
                   <div className="relative h-6 flex items-center overflow-hidden">
                     {/* Tick Lines */}
@@ -384,14 +491,29 @@ export function RetroRadio({
                       ))}
                     </div>
 
-                    {/* Sliding Fluorescent Red Needle */}
-                    <div
-                      className="absolute top-0 bottom-0 w-1 bg-[#D70D08] shadow-[0_0_6px_rgba(215,13,8,0.9)] transition-[left] duration-150 rounded-full"
+                    {/* Sliding Fluorescent Red Needle with Mechanical Spring Inertia */}
+                    <motion.div
+                      className="absolute top-0 bottom-0 w-1 rounded-full z-10"
                       style={{
                         left: `${needlePercent}%`,
                         transform: "translateX(-50%)",
+                        boxShadow: "0 0 10px rgba(239,68,68,1), 0 0 3px #FFFFFF",
+                        background:
+                          "linear-gradient(180deg, #FF6B6B 0%, #E51E2B 50%, #B80F18 100%)",
                       }}
-                    />
+                      animate={{
+                        scaleY: [1, 1.06, 0.98, 1],
+                      }}
+                      transition={{
+                        left: { duration: 0.38, ease: [0.16, 1, 0.3, 1] },
+                        scaleY: { duration: 0.2 },
+                      }}
+                    >
+                      {/* Needle Top Indicator Triangle */}
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-t-[5px] border-t-red-500" />
+                      {/* Glowing tip */}
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_#FF2E3B]" />
+                    </motion.div>
                   </div>
 
                   {/* Frequency Labels */}
