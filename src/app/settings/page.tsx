@@ -333,12 +333,23 @@ export default function SettingsPage() {
     if (confirmText !== "DELETE") return;
     setDeletingAccount(true); setError(null);
     try {
-      const { error: deleteErr } = await supabase.functions.invoke("delete-account");
-      if (deleteErr) throw deleteErr;
+      if (pair?.id) {
+        await deletePairKey(pair.id);
+      }
+
+      const res = await fetch("/api/auth/delete-account", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to delete account");
+      }
+
       await signOut();
+      setShowDeleteModal(false);
+      router.push("/login");
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to delete account."));
-      setDeletingAccount(false); setShowDeleteModal(false);
+      setDeletingAccount(false);
+      setShowDeleteModal(false);
     }
   };
 

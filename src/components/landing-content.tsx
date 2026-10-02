@@ -696,6 +696,16 @@ function ClotheslineGallery() {
 /* ═══════════════════════════════════════════════════════════════
    DYNAMIC INTERACTIVE GAME ARENA: LIVE MULTIPLAYER PREVIEWS
    ═══════════════════════════════════════════════════════════════ */
+
+const LANDING_ROULETTE_OPTIONS = [
+  { label: "Tacos", emoji: "🌮", full: "Late Night Tacos 🌮", bg: "#FFE4E6", text: "#9F1239" },
+  { label: "Movie", emoji: "🍿", full: "Horror Movie Marathon 🍿", bg: "#FEF3C7", text: "#92400E" },
+  { label: "Face Mask", emoji: "🧖‍♀️", full: "Face Mask & Gossip Night 🧖‍♀️", bg: "#FCE7F3", text: "#831843" },
+  { label: "Cook Call", emoji: "🍝", full: "Cook Same Recipe on Call 🍝", bg: "#EDE9FE", text: "#5B21B6" },
+  { label: "Truth/Dare", emoji: "🔥", full: "Truth or Dare Duel 🔥", bg: "#FFEDD5", text: "#9A3412" },
+  { label: "Stargaze", emoji: "✨", full: "Stargazing on FaceTime ✨", bg: "#E0F2FE", text: "#0369A1" },
+];
+
 function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }) {
   const [activeTab, setActiveTab] = useState<"quiz" | "whisper" | "bouquet" | "roulette" | "watch" | "letter">("quiz");
   
@@ -728,7 +738,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
   /* Roulette state */
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
-  const [rouletteWinner, setRouletteWinner] = useState("Late Night Tacos 🌮");
+  const [rouletteWinner, setRouletteWinner] = useState("Face Mask & Gossip Night 🧖‍♀️");
 
   /* Watch Together state */
   const [isPlaying, setIsPlaying] = useState(true);
@@ -772,28 +782,29 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
     }, 1000);
   };
 
-  /* Spin Roulette */
+  /* Spin Roulette with deterministic angle landing */
   const spinRoulette = () => {
     if (isSpinning) return;
     setIsSpinning(true);
     playTactileSound("spin", soundEnabled);
-    const options = [
-      "Late Night Tacos 🌮",
-      "Horror Movie Marathon 🍿",
-      "Cook Same Recipe on Call 🍝",
-      "Truth or Dare Duel 🔥",
-      "Stargazing on FaceTime ✨",
-      "Face Mask & Gossip Night 🧖‍♀️",
-    ];
-    const extraRotations = 1440 + Math.floor(Math.random() * 360);
-    setWheelRotation((prev) => prev + extraRotations);
+
+    const winningIdx = Math.floor(Math.random() * LANDING_ROULETTE_OPTIONS.length);
+    const chosen = LANDING_ROULETTE_OPTIONS[winningIdx];
+
+    const sliceAngle = 360 / LANDING_ROULETTE_OPTIONS.length;
+    const targetNormalized = (360 - ((winningIdx * sliceAngle) % 360)) % 360;
+    const currentNormalized = ((wheelRotation % 360) + 360) % 360;
+    const delta = (targetNormalized - currentNormalized + 360) % 360;
+    const extraSpins = (5 + Math.floor(Math.random() * 2)) * 360;
+    const nextRotation = wheelRotation + extraSpins + delta;
+
+    setWheelRotation(nextRotation);
 
     setTimeout(() => {
       setIsSpinning(false);
-      const picked = options[Math.floor(Math.random() * options.length)];
-      setRouletteWinner(picked);
+      setRouletteWinner(chosen.full);
       playTactileSound("pop", soundEnabled);
-    }, 2400);
+    }, 2800);
   };
 
   /* Spawn Watch Reaction */
@@ -1445,23 +1456,158 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                 </h3>
               </div>
 
-              {/* Animated Interactive Wheel Graphic */}
-              <div className="relative w-48 h-48 mx-auto flex items-center justify-center my-4">
-                {/* Pointer marker */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[14px] border-t-stone-900 shadow-md" />
-                
-                {/* Spinning Disc */}
+              {/* Animated Interactive Wheel Graphic (Realistic Physical Carnival Wheel) */}
+              <div className="relative w-56 h-56 sm:w-64 sm:h-64 mx-auto flex items-center justify-center my-4">
+                {/* Pointer needle with mechanical chattering animation */}
+                <motion.div
+                  animate={
+                    isSpinning
+                      ? { rotate: [0, -16, 9, -13, 7, -5, 0] }
+                      : { rotate: 0 }
+                  }
+                  transition={
+                    isSpinning
+                      ? { repeat: Infinity, duration: 0.14, ease: "easeInOut" }
+                      : { duration: 0.35, type: "spring", stiffness: 400, damping: 15 }
+                  }
+                  style={{ transformOrigin: "15px 4px" }}
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 drop-shadow-md pointer-events-none"
+                >
+                  <svg width="30" height="38" viewBox="0 0 30 38" fill="none">
+                    <path
+                      d="M15 38L2 10C-1 5 2 0 8 0H22C28 0 31 5 28 10L15 38Z"
+                      fill="url(#landing-brass-needle-grad)"
+                      stroke="#78350F"
+                      strokeWidth="1.8"
+                    />
+                    <circle cx="15" cy="10" r="4.5" fill="#FFFBEB" stroke="#92400E" strokeWidth="1.2" />
+                    <defs>
+                      <linearGradient id="landing-brass-needle-grad" x1="0" y1="0" x2="30" y2="38" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#FDE68A" />
+                        <stop offset="0.5" stopColor="#F59E0B" />
+                        <stop offset="1" stopColor="#B45309" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </motion.div>
+
+                {/* Outer Brass/Wood Bezel Shadow Frame (stationary) */}
+                <div
+                  className="absolute -inset-2.5 rounded-full pointer-events-none"
+                  style={{
+                    boxShadow: "0 12px 28px -4px rgba(68, 40, 20, 0.22), 0 2px 8px rgba(68, 40, 20, 0.12)",
+                  }}
+                />
+
+                {/* Spinning Disc (Physical Carnival Wheel) */}
                 <motion.div
                   animate={{ rotate: wheelRotation }}
-                  transition={{ duration: isSpinning ? 2.4 : 0, ease: [0.15, 0.9, 0.25, 1] }}
-                  className="w-full h-full rounded-full border-6 border-stone-900 shadow-2xl relative overflow-hidden bg-conic from-rose-400 via-amber-400 via-blue-400 via-purple-400 via-emerald-400 to-rose-400 flex items-center justify-center"
+                  transition={{ duration: isSpinning ? 2.8 : 0, ease: [0.15, 0.9, 0.25, 1] }}
+                  onClick={!isSpinning ? spinRoulette : undefined}
+                  className="w-full h-full rounded-full cursor-pointer select-none relative"
                 >
-                  <div className="absolute inset-0 bg-radial from-transparent via-black/10 to-black/30" />
-                  
-                  {/* Wheel Hub */}
-                  <div className="w-14 h-14 rounded-full bg-stone-900 text-white flex items-center justify-center font-mono text-[10px] font-black shadow-lg z-10 border-2 border-white/50">
-                    <Image src="/logo-book.png" alt="Logo" width={24} height={24} className="rounded-xs" />
-                  </div>
+                  <svg viewBox="0 0 280 280" className="w-full h-full select-none overflow-visible">
+                    {/* Definitions */}
+                    <defs>
+                      <radialGradient id="landing-hub-grad" cx="45%" cy="40%" r="55%">
+                        <stop offset="0%" stopColor="#FDE68A" />
+                        <stop offset="60%" stopColor="#F59E0B" />
+                        <stop offset="100%" stopColor="#92400E" />
+                      </radialGradient>
+                    </defs>
+
+                    {/* Outer Deep Rim Base */}
+                    <circle cx="140" cy="140" r="137" fill="#1C1917" />
+                    <circle cx="140" cy="140" r="134" fill="#292524" stroke="#78350F" strokeWidth="1.5" />
+                    <circle cx="140" cy="140" r="130" fill="none" stroke="#D97706" strokeWidth="1" strokeDasharray="3 5" />
+
+                    {/* 6 Wheel Wedges */}
+                    {LANDING_ROULETTE_OPTIONS.map((opt, idx) => {
+                      const sliceAngle = 60;
+                      const midAngle = idx * sliceAngle;
+                      const startAngle = midAngle - sliceAngle / 2;
+                      const endAngle = midAngle + sliceAngle / 2;
+
+                      const radStart = ((startAngle - 90) * Math.PI) / 180;
+                      const radEnd = ((endAngle - 90) * Math.PI) / 180;
+                      const r = 126;
+
+                      const x1 = 140 + r * Math.cos(radStart);
+                      const y1 = 140 + r * Math.sin(radStart);
+                      const x2 = 140 + r * Math.cos(radEnd);
+                      const y2 = 140 + r * Math.sin(radEnd);
+
+                      const pathData = `M 140 140 L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`;
+
+                      const isFlipped = midAngle >= 90 && midAngle <= 270;
+
+                      return (
+                        <g key={idx}>
+                          {/* Wedge Body */}
+                          <path
+                            d={pathData}
+                            fill={opt.bg}
+                            stroke="#1C1917"
+                            strokeWidth="2.5"
+                          />
+
+                          {/* Wedge Contents */}
+                          <g transform={`rotate(${midAngle}, 140, 140)`}>
+                            <g transform="translate(140, 54)">
+                              <g transform={isFlipped ? "rotate(180)" : "rotate(0)"}>
+                                <text
+                                  x="0"
+                                  y={isFlipped ? "12" : "-12"}
+                                  textAnchor="middle"
+                                  fontSize="20"
+                                  dominantBaseline="central"
+                                >
+                                  {opt.emoji}
+                                </text>
+                                <text
+                                  x="0"
+                                  y={isFlipped ? "-8" : "10"}
+                                  textAnchor="middle"
+                                  fill={opt.text}
+                                  fontSize="10"
+                                  fontWeight="900"
+                                  fontFamily="sans-serif"
+                                  letterSpacing="0.02em"
+                                  dominantBaseline="central"
+                                >
+                                  {opt.label}
+                                </text>
+                              </g>
+                            </g>
+                          </g>
+                        </g>
+                      );
+                    })}
+
+                    {/* Outer Perimeter Brass Rivets / Pegs */}
+                    {LANDING_ROULETTE_OPTIONS.map((_, pIdx) => {
+                      const sliceAngle = 60;
+                      const pAngle = pIdx * sliceAngle - sliceAngle / 2;
+                      const pRad = ((pAngle - 90) * Math.PI) / 180;
+                      const pegR = 126;
+                      const px = 140 + pegR * Math.cos(pRad);
+                      const py = 140 + pegR * Math.sin(pRad);
+
+                      return (
+                        <g key={`peg-${pIdx}`}>
+                          <circle cx={px} cy={py} r="4" fill="#F59E0B" stroke="#78350F" strokeWidth="1.2" />
+                          <circle cx={px - 0.8} cy={py - 0.8} r="1.3" fill="#FFFBEB" />
+                        </g>
+                      );
+                    })}
+
+                    {/* Center Brass Hub */}
+                    <circle cx="140" cy="140" r="28" fill="#F59E0B" stroke="#78350F" strokeWidth="2.5" />
+                    <circle cx="140" cy="140" r="23" fill="#1C1917" />
+                    <circle cx="140" cy="140" r="18" fill="url(#landing-hub-grad)" />
+                    <circle cx="140" cy="140" r="8" fill="#78350F" />
+                    <circle cx="138" cy="138" r="2" fill="#FEF3C7" />
+                  </svg>
                 </motion.div>
               </div>
 
@@ -1478,12 +1624,18 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                   <span>{isSpinning ? "Spinning..." : "SPIN THE WHEEL 🎲"}</span>
                 </button>
 
-                <div className="p-3 bg-amber-50 border-2 border-amber-200 rounded-2xl max-w-sm mx-auto shadow-xs">
+                <motion.div
+                  key={rouletteWinner}
+                  initial={{ scale: 0.95, opacity: 0.85 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.25 }}
+                  className="p-3 bg-amber-50 border-2 border-amber-200 rounded-2xl max-w-sm mx-auto shadow-xs"
+                >
                   <span className="text-[10px] font-mono font-bold text-amber-700 uppercase">Selected Date Night:</span>
                   <p className="font-sans font-black text-stone-900 text-sm mt-0.5">
                     {rouletteWinner}
                   </p>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
