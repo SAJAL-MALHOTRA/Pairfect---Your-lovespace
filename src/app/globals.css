@@ -2,10 +2,10 @@
 @custom-variant dark (&:where([data-never-dark]));
 
 @theme {
-  --font-sans: var(--font-sans), sans-serif;
-  --font-display: var(--font-pixel), "Courier New", monospace;
-  --font-heading: var(--font-pixel), "Courier New", monospace;
-  --font-quote: var(--font-pixel), "Courier New", monospace;
+  --font-sans: var(--font-outfit), sans-serif;
+  --font-display: var(--font-outfit), sans-serif;
+  --font-heading: var(--font-outfit), sans-serif;
+  --font-quote: var(--font-outfit), sans-serif;
   --font-handwriting: var(--font-handwriting), cursive;
 
   --color-background: var(--background);
@@ -170,13 +170,21 @@ body {
 
 /* ── Typography helpers ── */
 :root, html, body {
-  --font-display: var(--font-pixel), "Courier New", monospace !important;
+  --font-sans: var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  --font-display: var(--font-outfit), sans-serif !important;
+  --font-heading: var(--font-outfit), sans-serif !important;
 }
 
+body {
+  font-family: var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+}
+
+.font-sans        { font-family: var(--font-outfit), sans-serif; }
+.font-display     { font-family: var(--font-outfit), sans-serif !important; font-weight: 700; font-style: normal !important; }
+.font-heading     { font-family: var(--font-outfit), sans-serif !important; font-weight: 700; font-style: normal !important; }
+.font-quote       { font-family: var(--font-outfit), sans-serif !important; }
 .font-handwriting { font-family: var(--font-handwriting), var(--font-display), Georgia, serif; font-style: italic; }
-.font-display     { font-family: var(--font-pixel), "Courier New", monospace !important; font-style: normal !important; }
-.font-heading     { font-family: var(--font-pixel), "Courier New", monospace !important; font-style: normal !important; }
-.font-quote       { font-family: var(--font-pixel), "Courier New", monospace !important; font-style: normal !important; }
 
 .font-display.italic,
 .italic.font-display,
@@ -502,11 +510,11 @@ em.font-display {
   color: var(--ink-light);
 }
 .typo-display {
-  font-family: var(--font-pixel), "Courier New", monospace !important;
+  font-family: var(--font-outfit), sans-serif !important;
   font-style: normal !important;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   color: var(--ink-dark);
 }
 .typo-supporting {

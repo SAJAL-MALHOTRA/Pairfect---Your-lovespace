@@ -181,7 +181,7 @@ export default function MeanwhileCard({ userProfile, partnerProfile, onOpenCityS
         </div>
 
         <div className="space-y-2 max-w-md">
-          <p className="typo-chapter">Meanwhile Proximity</p>
+          <p className="font-pixel text-[10px] uppercase tracking-widest text-[var(--burgundy)] font-bold">Meanwhile Proximity</p>
           <h2 className="typo-display text-2xl sm:text-3xl text-[var(--text)]">
             Where in the world are you two? ♥
           </h2>
@@ -216,7 +216,7 @@ export default function MeanwhileCard({ userProfile, partnerProfile, onOpenCityS
         </div>
 
         <div className="space-y-2 max-w-md">
-          <p className="typo-chapter">Meanwhile Proximity</p>
+          <p className="font-pixel text-[10px] uppercase tracking-widest text-[var(--burgundy)] font-bold">Meanwhile Proximity</p>
           <h2 className="typo-display text-2xl sm:text-3xl text-[var(--text)]">
             You're in {myCityName} ♥
           </h2>
@@ -260,7 +260,7 @@ export default function MeanwhileCard({ userProfile, partnerProfile, onOpenCityS
       {/* ── 1. HEADER & DISTANCE ── */}
       <div className="relative z-10 flex flex-col items-center text-center space-y-2">
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--burgundy)] font-bold">
+          <div className="flex items-center gap-1.5 text-[10px] font-pixel uppercase tracking-[0.2em] text-[var(--burgundy)] font-bold">
             <Heart className="w-3.5 h-3.5 fill-current" />
             <span>MEANWHILE</span>
           </div>
@@ -275,8 +275,8 @@ export default function MeanwhileCard({ userProfile, partnerProfile, onOpenCityS
           </button>
         </div>
 
-        {/* Large Pixel Distance Display */}
-        <h2 className="font-pixel text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--text)] tracking-wider pt-1">
+        {/* Large Outfit 700 Distance Display */}
+        <h2 className="font-display font-bold text-4xl sm:text-5xl text-[var(--text)] tracking-tight pt-1">
           {distanceLabel}
         </h2>
       </div>

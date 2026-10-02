@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Lora, Silkscreen, Caveat } from "next/font/google";
+import { Outfit, Lora, Silkscreen, Caveat } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
@@ -7,17 +7,10 @@ import AmbientHearts from "@/components/ambient-hearts";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-sans",
+const outfit = Outfit({
   subsets: ["latin"],
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
+  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -68,7 +61,7 @@ export default function RootLayout({
       lang="en"
       data-theme="light"
       style={{ colorScheme: "light" }}
-      className={`${inter.variable} ${playfair.variable} ${lora.variable} ${silkscreen.variable} ${caveat.variable} h-full antialiased`}
+      className={`${outfit.variable} ${silkscreen.variable} ${lora.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider>

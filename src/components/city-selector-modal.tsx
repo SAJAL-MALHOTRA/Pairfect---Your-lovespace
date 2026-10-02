@@ -178,11 +178,11 @@ export default function CitySelectorModal({
 
           {/* Header */}
           <div className="space-y-1.5 text-center sm:text-left pr-8 shrink-0">
-            <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--burgundy)] font-bold">
+            <div className="flex items-center gap-2 text-[10px] font-pixel uppercase tracking-widest text-[var(--burgundy)] font-bold">
               <MapPin className="w-3.5 h-3.5" />
               <span>Meanwhile Proximity</span>
             </div>
-            <h2 className="font-pixel text-xl sm:text-2xl font-bold text-[var(--text)] leading-tight tracking-wide">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-[var(--text)] leading-tight tracking-tight">
               Where are you right now?
             </h2>
             <p className="font-sans text-xs text-[var(--text-soft)] leading-relaxed">
