@@ -307,7 +307,7 @@ export default function SettingsPage() {
   };
 
   const handleUnlinkPair = async () => {
-    if (!pair || unlinkConfirmText !== "UNLINK") return;
+    if (!pair || unlinkConfirmText.trim().toUpperCase() !== "UNLINK") return;
     setUnlinkingPair(true); setError(null);
     try {
       const { error: rpcErr } = await supabase.rpc("unlink_and_delete_pair", { p_pair_id: pair.id });
@@ -330,7 +330,7 @@ export default function SettingsPage() {
 
 
   const handleDeleteAccount = async () => {
-    if (confirmText !== "DELETE") return;
+    if (confirmText.trim().toUpperCase() !== "DELETE") return;
     setDeletingAccount(true); setError(null);
     try {
       if (pair?.id) {
@@ -740,12 +740,19 @@ export default function SettingsPage() {
               <input
                 type="text"
                 value={confirmText}
-                onChange={e => setConfirmText(e.target.value)}
+                onChange={e => setConfirmText(e.target.value.toUpperCase())}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && confirmText.trim().toUpperCase() === "DELETE" && !deletingAccount) {
+                    handleDeleteAccount();
+                  }
+                }}
                 placeholder="DELETE"
+                autoFocus
                 className="w-full text-center px-4 py-2.5 border border-red-200 dark:border-red-900/30 rounded-xl bg-transparent text-sm font-bold tracking-widest text-red-500 uppercase placeholder:opacity-30 focus:outline-none focus:ring-1 focus:ring-red-500"
               />
               <div className="flex gap-3">
                 <button
+                  type="button"
                   onClick={() => { setShowDeleteModal(false); setConfirmText(""); }}
                   disabled={deletingAccount}
                   className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--text-soft)] border border-[var(--border)] bg-transparent hover:bg-[var(--bg-secondary)] cursor-pointer transition-all"
@@ -753,8 +760,9 @@ export default function SettingsPage() {
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handleDeleteAccount}
-                  disabled={confirmText !== "DELETE" || deletingAccount}
+                  disabled={confirmText.trim().toUpperCase() !== "DELETE" || deletingAccount}
                   className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center"
                 >
                   {deletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete forever"}
@@ -825,8 +833,9 @@ export default function SettingsPage() {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleUnlinkPair}
-                disabled={unlinkConfirmText !== "UNLINK" || unlinkingPair}
+                disabled={unlinkConfirmText.trim().toUpperCase() !== "UNLINK" || unlinkingPair}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center"
               >
                 {unlinkingPair ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlink & Delete Everything"}
