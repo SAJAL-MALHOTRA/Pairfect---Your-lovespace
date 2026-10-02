@@ -9,7 +9,7 @@ import {
   Volume2, VolumeX, ArrowRight, Lock, Shield, Zap, Play, Pause, Flame,
   Gift, Mail, Clock, Download, Star, HelpCircle, X,
   CheckCircle2, Award, Smartphone, Brain, Disc, Archive,
-  Tv, Sparkles, RotateCw, Mic, Send
+  Tv, Sparkles, RotateCw, Mic, Send, Radio, Flower2, Printer
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,7 +17,10 @@ import { motion, AnimatePresence } from "framer-motion";
 const EASE_CUBIC = [0.22, 0.61, 0.36, 1] as const;
 
 /* ─── Audio Sound Effects Engine ─── */
-function playTactileSound(type: "tap" | "paper" | "click" | "pop" | "shutter" | "spin" | "crack" | "seal" = "tap", enabled: boolean = true) {
+function playTactileSound(
+  type: "tap" | "paper" | "click" | "pop" | "shutter" | "spin" | "crack" | "seal" | "static" | "chime" | "roller" = "tap",
+  enabled: boolean = true
+) {
   if (!enabled || typeof window === "undefined") return;
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -76,8 +79,25 @@ function playTactileSound(type: "tap" | "paper" | "click" | "pop" | "shutter" | 
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
       osc.start(now);
       osc.stop(now + 0.15);
-    } else if (type === "paper") {
-      const bufferSize = ctx.sampleRate * 0.05;
+    } else if (type === "chime") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.2);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } else if (type === "roller") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(110, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.06);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } else if (type === "paper" || type === "static") {
+      const duration = type === "static" ? 0.12 : 0.05;
+      const bufferSize = Math.floor(ctx.sampleRate * duration);
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -87,13 +107,13 @@ function playTactileSound(type: "tap" | "paper" | "click" | "pop" | "shutter" | 
       noise.buffer = buffer;
       const filter = ctx.createBiquadFilter();
       filter.type = "bandpass";
-      filter.frequency.value = 1400;
+      filter.frequency.value = type === "static" ? 2200 : 1400;
       noise.connect(filter);
       filter.connect(gain);
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      gain.gain.setValueAtTime(type === "static" ? 0.05 : 0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
       noise.start(now);
-      noise.stop(now + 0.05);
+      noise.stop(now + duration);
     }
   } catch (e) {
     // audio fallback
@@ -105,7 +125,8 @@ function playTactileSound(type: "tap" | "paper" | "click" | "pop" | "shutter" | 
    ═══════════════════════════════════════════════════════════════ */
 function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
   const [isFlashing, setIsFlashing] = useState(false);
-  const [stripPushed, setStripPushed] = useState(true);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printStep, setPrintStep] = useState(4); // 0: retract, 1: inch 1, 2: inch 2, 3: inch 3, 4: settled
   const [currentPose, setCurrentPose] = useState(1);
 
   const poses = [
@@ -140,20 +161,48 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
   ];
 
   const triggerSnap = () => {
+    if (isPrinting || isFlashing) return;
     setIsFlashing(true);
     playTactileSound("shutter", soundEnabled);
+
     setTimeout(() => {
       setIsFlashing(false);
       setCurrentPose((prev) => (prev % poses.length) + 1);
-      setStripPushed(false);
+      setIsPrinting(true);
+      setPrintStep(0);
+      playTactileSound("roller", soundEnabled);
+
       setTimeout(() => {
-        setStripPushed(true);
+        setPrintStep(1);
+        playTactileSound("roller", soundEnabled);
+      }, 260);
+
+      setTimeout(() => {
+        setPrintStep(2);
+        playTactileSound("roller", soundEnabled);
+      }, 520);
+
+      setTimeout(() => {
+        setPrintStep(3);
+        playTactileSound("roller", soundEnabled);
+      }, 780);
+
+      setTimeout(() => {
+        setPrintStep(4);
+        setIsPrinting(false);
         playTactileSound("paper", soundEnabled);
-      }, 120);
+      }, 1080);
     }, 220);
   };
 
   const activePose = poses[currentPose - 1];
+
+  const getDevelopingFilter = (frameIdx: number) => {
+    if (isPrinting && printStep < (frameIdx === 0 ? 2 : frameIdx === 1 ? 3 : 4)) {
+      return "sepia(0.85) contrast(0.65) brightness(1.2) blur(1.5px)";
+    }
+    return "none";
+  };
 
   return (
     <div className="relative w-full max-w-[440px] mx-auto select-none">
@@ -236,23 +285,65 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
             </span>
             <button
               onClick={triggerSnap}
-              className="px-3.5 py-1.5 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-mono text-xs font-black rounded-full transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
+              disabled={isPrinting || isFlashing}
+              className="px-3.5 py-1.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-60 active:scale-95 text-white font-mono text-xs font-black rounded-full transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>Snap Pose ▷</span>
+              <span>{isPrinting ? "Printing... ▷" : "Snap Pose ▷"}</span>
             </button>
           </div>
 
         </div>
 
-        {/* Machine Output Slot */}
+        {/* Machine Output Dispenser Slot */}
         <div className="mt-5 relative">
-          <div className="photobooth-slot w-full relative z-20" />
+          {/* Dispenser Status Indicator Badge */}
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-stone-900 border border-stone-700 shadow-md">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isPrinting
+                  ? "bg-amber-400 animate-ping"
+                  : "bg-emerald-400 shadow-[0_0_6px_#34D399]"
+              }`}
+            />
+            <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-stone-200">
+              {isPrinting ? "PRINTING STRIP..." : "DISPENSER READY"}
+            </span>
+          </div>
 
-          {/* Rolling Out Developed Photostrip with REAL Photos */}
-          <div className={`pt-2 transition-transform duration-700 ${stripPushed ? "strip-rollout-anim" : "opacity-0"}`}>
-            <div className="w-[230px] sm:w-[250px] mx-auto bg-white p-3.5 border-2 border-stone-900 rounded-2xl shadow-2xl relative space-y-2.5">
-              
+          {/* 3D Molded Photobooth Dispenser Slot Mouth */}
+          <div className="w-full h-12 sm:h-14 bg-gradient-to-b from-[#FFFFFF] via-[#F3F3F5] to-[#DFDFE3] border border-stone-300 rounded-2xl shadow-[0_12px_28px_rgba(0,0,0,0.12),inset_0_2px_4px_rgba(255,255,255,0.9),inset_0_-2px_4px_rgba(0,0,0,0.06)] relative z-20 flex items-center justify-center px-4">
+            <div className="w-full h-5 sm:h-6 bg-[#09090B] rounded-full shadow-[inset_0_4px_10px_rgba(0,0,0,0.95)] relative overflow-hidden flex items-center justify-center">
+              {/* Internal printhead roller glow during printing */}
+              {isPrinting && (
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-cyan-400/35 to-amber-400/20"
+                  animate={{ opacity: [0.35, 0.9, 0.35] }}
+                  transition={{ duration: 0.35, repeat: Infinity }}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Rolling Out Developed Photostrip with Mechanical Stepped Extrusion */}
+          <div className="pt-2 relative z-10 overflow-hidden">
+            <motion.div
+              animate={{
+                y: printStep === 0 ? -180 : printStep === 1 ? -120 : printStep === 2 ? -60 : 0,
+                opacity: 1,
+              }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              className="w-[230px] sm:w-[250px] mx-auto bg-white p-3.5 border-2 border-stone-900 rounded-2xl shadow-2xl relative space-y-2.5"
+            >
+              {/* Thermal / Printhead Laser Scanline Shimmer */}
+              {isPrinting && (
+                <motion.div
+                  className="absolute inset-x-0 h-2.5 bg-gradient-to-b from-transparent via-cyan-300/70 to-transparent pointer-events-none z-40 shadow-[0_0_12px_rgba(34,211,238,0.9)]"
+                  animate={{ top: ["0%", "100%"] }}
+                  transition={{ duration: 0.65, repeat: Infinity, ease: "linear" }}
+                />
+              )}
+
               {/* Partner 1 (Alex - Blue) Cursor Tag */}
               <div className="partner-cursor partner-cursor-blue -top-3 -left-5">
                 <svg className="w-5 h-5 cursor-pointer-arrow fill-current transform -rotate-12" viewBox="0 0 24 24">
@@ -273,7 +364,7 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
                 </span>
               </div>
 
-              {/* 4 Strip Frames with Real Couple Photos */}
+              {/* 4 Strip Frames with Real Couple Photos & Chemical Developing */}
               <div className="space-y-2 bg-[#FFF9FA] p-2 rounded-xl border border-rose-100">
                 
                 {/* Pose 1: Heart Hands */}
@@ -284,6 +375,7 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
                     fill
                     className="object-cover"
                     sizes="220px"
+                    style={{ filter: getDevelopingFilter(0), transition: "filter 0.7s ease" }}
                   />
                   <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
                     POSE 01
@@ -298,6 +390,7 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
                     fill
                     className="object-cover"
                     sizes="220px"
+                    style={{ filter: getDevelopingFilter(1), transition: "filter 0.7s ease" }}
                   />
                   <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
                     POSE 02
@@ -312,6 +405,7 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
                     fill
                     className="object-cover"
                     sizes="220px"
+                    style={{ filter: getDevelopingFilter(2), transition: "filter 0.7s ease" }}
                   />
                   <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
                     POSE 03
@@ -326,6 +420,7 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
                     fill
                     className="object-cover object-top scale-110"
                     sizes="220px"
+                    style={{ filter: getDevelopingFilter(3), transition: "filter 0.7s ease" }}
                   />
                   <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
                     POSE 04
@@ -342,7 +437,7 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
                 </span>
                 <span className="text-rose-500 font-bold">1,420 KM APART</span>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
 
@@ -524,11 +619,65 @@ function ClotheslineGallery() {
    DYNAMIC INTERACTIVE GAME ARENA: LIVE MULTIPLAYER PREVIEWS
    ═══════════════════════════════════════════════════════════════ */
 function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }) {
-  const [activeTab, setActiveTab] = useState<"quiz" | "roulette" | "watch" | "letter">("quiz");
+  const [activeTab, setActiveTab] = useState<"quiz" | "whisper" | "bouquet" | "roulette" | "watch" | "letter">("quiz");
   
   /* Quiz state */
   const [quizStep, setQuizStep] = useState<"picking" | "locked" | "revealed">("picking");
   const [quizSelection, setQuizSelection] = useState<string>("Midnight Drive");
+
+  /* Whisper FM state */
+  const [whisperFreq, setWhisperFreq] = useState<number>(91.7);
+  const [isRadioPlaying, setIsRadioPlaying] = useState<boolean>(false);
+  const [isRadioMuted, setIsRadioMuted] = useState<boolean>(false);
+  const whisperStations = [
+    { freq: 91.7, sender: "Alex (Mumbai)", title: "Morning coffee & rain", duration: "0:42", note: "Sent 8:15 AM · Private couple frequency" },
+    { freq: 102.4, sender: "Mia (Delhi)", title: "Goodnight whisper note", duration: "1:14", note: "Sent 11:30 PM · Verified stereo sync" },
+    { freq: 107.1, sender: "Together", title: "Lo-Fi sunset acoustic", duration: "Loop", note: "Ambient Room Broadcast · 1,420 km" },
+  ];
+
+  const handleTuneStation = (freq: number) => {
+    setWhisperFreq(freq);
+    playTactileSound("static", soundEnabled);
+    setTimeout(() => {
+      playTactileSound("chime", soundEnabled);
+      setIsRadioPlaying(true);
+    }, 240);
+  };
+
+  /* Botanical Bouquet state */
+  const [isBouquetRevealed, setIsBouquetRevealed] = useState(false);
+  const [isUntyingRibbon, setIsUntyingRibbon] = useState(false);
+  const [sparkleDust, setSparkleDust] = useState<{ id: number; x: number; y: number }[]>([]);
+
+  const handleUntieBouquet = () => {
+    if (isUntyingRibbon) return;
+    setIsUntyingRibbon(true);
+    playTactileSound("paper", soundEnabled);
+    
+    // Spawn 18 sparkling radial burst dust particles
+    const dust = Array.from({ length: 18 }).map((_, i) => {
+      const angle = (i / 18) * 2 * Math.PI;
+      const dist = 55 + Math.random() * 85;
+      return {
+        id: Date.now() + i,
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+      };
+    });
+    setSparkleDust(dust);
+
+    setTimeout(() => {
+      setIsBouquetRevealed(true);
+      setIsUntyingRibbon(false);
+      setSparkleDust([]);
+      playTactileSound("pop", soundEnabled);
+    }, 650);
+  };
+
+  const handleFoldBouquet = () => {
+    playTactileSound("paper", soundEnabled);
+    setIsBouquetRevealed(false);
+  };
 
   /* Roulette state */
   const [isSpinning, setIsSpinning] = useState(false);
@@ -613,21 +762,27 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
     if (isWaxBreaking || isWaxPacking) return;
 
     if (!isLetterUnsealed) {
-      // BREAK SEAL ANIMATION
+      // BREAK SEAL ANIMATION: 4 primary physical shards + radial dust
       setIsWaxBreaking(true);
       playTactileSound("crack", soundEnabled);
 
-      const shards = Array.from({ length: 16 }).map((_, i) => {
-        const angle = (i / 16) * 2 * Math.PI + (Math.random() - 0.5) * 0.35;
-        const dist = 50 + Math.random() * 60;
-        return {
-          id: Date.now() + i,
-          x: Math.cos(angle) * dist,
-          y: Math.sin(angle) * dist,
-          rotate: (Math.random() - 0.5) * 360,
-          size: 6 + Math.floor(Math.random() * 8),
-        };
-      });
+      const shards = [
+        { id: 1, x: -65, y: -65, rotate: -45, size: 24 }, // top-left quadrant shard
+        { id: 2, x: 65, y: -65, rotate: 45, size: 24 },   // top-right quadrant shard
+        { id: 3, x: -65, y: 65, rotate: -135, size: 24 }, // bottom-left quadrant shard
+        { id: 4, x: 65, y: 65, rotate: 135, size: 24 },   // bottom-right quadrant shard
+        ...Array.from({ length: 12 }).map((_, i) => {
+          const angle = (i / 12) * 2 * Math.PI;
+          const dist = 40 + Math.random() * 50;
+          return {
+            id: 10 + i,
+            x: Math.cos(angle) * dist,
+            y: Math.sin(angle) * dist,
+            rotate: (Math.random() - 0.5) * 360,
+            size: 4 + Math.floor(Math.random() * 6),
+          };
+        }),
+      ];
       setWaxShards(shards);
 
       setTimeout(() => {
@@ -670,10 +825,10 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
         </div>
 
         {/* Dynamic Mode Switcher Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 p-1.5 bg-stone-100 rounded-2xl max-w-xl mx-auto border border-stone-200">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 p-1.5 bg-stone-100 rounded-2xl max-w-2xl mx-auto border border-stone-200">
           <button
             onClick={() => { setActiveTab("quiz"); playTactileSound("tap", soundEnabled); }}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "quiz"
                 ? "bg-stone-900 text-white shadow-md scale-102"
                 : "text-stone-600 hover:text-stone-900"
@@ -684,8 +839,44 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
           </button>
 
           <button
+            onClick={() => { setActiveTab("whisper"); playTactileSound("tap", soundEnabled); }}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "whisper"
+                ? "bg-stone-900 text-white shadow-md scale-102"
+                : "text-stone-600 hover:text-stone-900"
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Whisper FM</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab("bouquet"); playTactileSound("tap", soundEnabled); }}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "bouquet"
+                ? "bg-stone-900 text-white shadow-md scale-102"
+                : "text-stone-600 hover:text-stone-900"
+            }`}
+          >
+            <Flower2 className="w-3.5 h-3.5 text-rose-400" />
+            <span>Digital Bouquet</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab("letter"); playTactileSound("tap", soundEnabled); }}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "letter"
+                ? "bg-stone-900 text-white shadow-md scale-102"
+                : "text-stone-600 hover:text-stone-900"
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5 text-amber-500" />
+            <span>Wax Letter</span>
+          </button>
+
+          <button
             onClick={() => { setActiveTab("roulette"); playTactileSound("tap", soundEnabled); }}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "roulette"
                 ? "bg-stone-900 text-white shadow-md scale-102"
                 : "text-stone-600 hover:text-stone-900"
@@ -697,7 +888,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
 
           <button
             onClick={() => { setActiveTab("watch"); playTactileSound("tap", soundEnabled); }}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "watch"
                 ? "bg-stone-900 text-white shadow-md scale-102"
                 : "text-stone-600 hover:text-stone-900"
@@ -705,18 +896,6 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
           >
             <Tv className="w-3.5 h-3.5" />
             <span>Watch Together</span>
-          </button>
-
-          <button
-            onClick={() => { setActiveTab("letter"); playTactileSound("tap", soundEnabled); }}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "letter"
-                ? "bg-stone-900 text-white shadow-md scale-102"
-                : "text-stone-600 hover:text-stone-900"
-            }`}
-          >
-            <Mail className="w-3.5 h-3.5" />
-            <span>Wax Letter</span>
           </button>
         </div>
 
@@ -839,7 +1018,521 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
             </motion.div>
           )}
 
-          {/* TAB 2: DATE NIGHT ROULETTE */}
+          {/* TAB 2: WHISPER FM RETRO RADIO */}
+          {activeTab === "whisper" && (
+            <motion.div
+              key="whisper"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-[720px] space-y-6"
+            >
+              {/* Header */}
+              <div className="text-center space-y-1">
+                <span className="text-[11px] font-mono font-bold text-emerald-700 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                  <Radio className="w-3.5 h-3.5" />
+                  VOICE BROADCAST · 1,420 KM APART
+                </span>
+                <h3 className="text-xl sm:text-2xl font-sans font-black text-stone-900">
+                  Private frequency radio for two
+                </h3>
+                <p className="text-xs text-stone-500 font-mono">
+                  Drag the dial or tap preset stations to listen to warm whispered notes with analog static.
+                </p>
+              </div>
+
+              {/* Retro Radio Enclosure with Twin Vacuum Tubes */}
+              <div className="relative pt-6 max-w-[620px] mx-auto">
+                {/* Twin Vacuum Tubes on top right */}
+                <div className="absolute top-0 right-10 sm:right-16 flex items-end gap-3 z-20 pointer-events-none">
+                  {[0, 1].map((tubeIdx) => (
+                    <div
+                      key={tubeIdx}
+                      className="relative w-7 sm:w-8 h-10 sm:h-11 rounded-t-xl bg-gradient-to-b from-white/30 via-amber-100/10 to-transparent border-t border-l border-r border-white/50 shadow-md backdrop-blur-[0.5px] flex flex-col items-center justify-end pb-1 overflow-hidden"
+                    >
+                      <div className="absolute top-1 left-1 w-1.5 h-5 rounded-full bg-white/40 blur-[0.5px]" />
+                      {/* Coiled Glowing Tungsten Filament */}
+                      <motion.div
+                        className="relative flex flex-col items-center"
+                        animate={{
+                          filter: isRadioPlaying
+                            ? [
+                                "drop-shadow(0 0 6px #FF8800) brightness(1.2)",
+                                "drop-shadow(0 0 14px #FFAA00) brightness(1.45)",
+                                "drop-shadow(0 0 7px #FF8800) brightness(1.25)",
+                              ]
+                            : [
+                                "drop-shadow(0 0 4px #FF7700) brightness(1.0)",
+                                "drop-shadow(0 0 8px #FFA500) brightness(1.2)",
+                                "drop-shadow(0 0 4px #FF7700) brightness(1.0)",
+                              ],
+                        }}
+                        transition={{
+                          duration: isRadioPlaying ? 0.9 + tubeIdx * 0.2 : 2.6,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <div className="flex gap-2">
+                          <div className="w-0.5 h-3 bg-zinc-400" />
+                          <div className="w-0.5 h-3 bg-zinc-400" />
+                        </div>
+                        <div className="w-3.5 h-2.5 -mt-2 rounded-t-sm border-t-2 border-l border-r border-amber-300 bg-amber-500/40 flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-200 animate-pulse" />
+                        </div>
+                      </motion.div>
+                      <div className="w-full h-1.5 bg-gradient-to-r from-zinc-800 via-zinc-600 to-zinc-800 border-t border-zinc-500/70" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Main Radio Cabinet Body */}
+                <div className="relative rounded-[28px] sm:rounded-[36px] bg-gradient-to-b from-[#609E8F] via-[#468677] to-[#2E6B5D] border-[3px] border-[#7FBDAE] shadow-[0_20px_40px_rgba(30,70,60,0.25),inset_0_2px_4px_rgba(255,255,255,0.45)] p-4 sm:p-6 overflow-hidden">
+                  <div className="relative grid grid-cols-12 gap-3 sm:gap-5 items-center">
+                    
+                    {/* Left: Speaker Louvers with Acoustic Glow & Soundwaves */}
+                    <div className="col-span-12 sm:col-span-5 flex flex-col justify-between h-full min-h-[160px]">
+                      <div className="relative py-2 flex flex-col justify-center gap-1.5 flex-1 overflow-hidden">
+                        {/* Acoustic Pressure Soundwave Ripples */}
+                        {isRadioPlaying && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            {[0, 1, 2].map((ring) => (
+                              <motion.div
+                                key={`ring-${ring}`}
+                                className="absolute rounded-full border border-emerald-300/40 bg-emerald-300/5"
+                                initial={{ width: 16, height: 16, opacity: 0.8 }}
+                                animate={{
+                                  width: [16, 110, 170],
+                                  height: [16, 110, 170],
+                                  opacity: [0.8, 0.3, 0],
+                                }}
+                                transition={{
+                                  duration: 2.2,
+                                  repeat: Infinity,
+                                  delay: ring * 0.7,
+                                  ease: "easeOut",
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Speaker Grille Louvers */}
+                        {Array.from({ length: 8 }).map((_, idx) => (
+                          <div
+                            key={idx}
+                            className="relative h-2 sm:h-2.5 rounded-full bg-[#184239] shadow-[inset_0_2px_3px_rgba(0,0,0,0.7)] overflow-hidden"
+                          >
+                            {isRadioPlaying ? (
+                              <motion.div
+                                className="h-full bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-200/60 rounded-full"
+                                animate={{
+                                  width: [
+                                    `${30 + ((idx * 8) % 40)}%`,
+                                    `${75 + ((idx * 5) % 25)}%`,
+                                    `${40 + ((idx * 7) % 35)}%`,
+                                  ],
+                                  opacity: [0.7, 1, 0.75],
+                                }}
+                                transition={{
+                                  duration: 0.55 + (idx % 3) * 0.15,
+                                  repeat: Infinity,
+                                  repeatType: "reverse",
+                                  ease: "easeInOut",
+                                }}
+                              />
+                            ) : (
+                              <div
+                                className="h-full bg-emerald-500/10 rounded-full"
+                                style={{ width: `${20 + (idx % 3) * 10}%` }}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Brand Typography */}
+                      <div className="pt-2 flex items-center justify-between">
+                        <span className="font-extrabold text-sm text-white tracking-wide flex items-center gap-1.5">
+                          <span>Pairfect</span>
+                          <span className="font-mono text-[10px] tracking-widest text-[#BDE7DC] uppercase font-bold">
+                            WHISPER FM
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => {
+                            setIsRadioPlaying(!isRadioPlaying);
+                            playTactileSound("tap", soundEnabled);
+                          }}
+                          className="px-2.5 py-1 rounded-full bg-[#184239] hover:bg-[#11312a] text-white font-mono text-[10px] font-bold flex items-center gap-1 border border-emerald-400/30 transition-all cursor-pointer"
+                        >
+                          {isRadioPlaying ? <Pause className="w-3 h-3 fill-white" /> : <Play className="w-3 h-3 fill-white" />}
+                          <span>{isRadioPlaying ? "PAUSE" : "LISTEN"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Right: Recessed Tuning Console */}
+                    <div className="col-span-12 sm:col-span-7 space-y-3">
+                      <div className="rounded-2xl bg-gradient-to-b from-[#FFFDF8] via-[#FAF3E6] to-[#F1E6D0] border-2 border-[#D4AF37]/50 shadow-inner p-3 flex flex-col gap-2.5">
+                        
+                        {/* LCD Display */}
+                        <div className="relative rounded-xl bg-[#13171B] border border-black/40 px-3 py-2 flex items-center justify-between text-white overflow-hidden shadow-inner">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono font-bold tracking-widest text-zinc-400">FM</span>
+                            <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-1 rounded-xs animate-pulse">
+                              LOCKED
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1 font-mono font-bold text-lg text-white">
+                            <span>{whisperFreq.toFixed(1)}</span>
+                            <span className="text-[10px] text-zinc-400">MHz</span>
+                          </div>
+
+                          {/* 4 Green LED Signal Bars */}
+                          <div className="flex items-end gap-1 h-3.5">
+                            {[1, 2, 3, 4].map((bar) => (
+                              <span
+                                key={bar}
+                                className="w-1 rounded-xs bg-[#2DF312] shadow-[0_0_6px_rgba(45,243,18,0.7)]"
+                                style={{ height: `${bar * 25}%` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Analog Needle Tuning Scale Slider */}
+                        <div className="relative rounded-xl bg-[#141618] border border-black/50 p-2 text-white shadow-inner flex flex-col justify-between overflow-hidden">
+                          <div className="relative h-6 flex items-center">
+                            {/* Tick Marks */}
+                            <div className="absolute inset-0 flex justify-between px-1">
+                              {Array.from({ length: 25 }).map((_, i) => (
+                                <span
+                                  key={i}
+                                  className={`w-px ${
+                                    i % 6 === 0 ? "h-3.5 bg-zinc-300" : "h-1.5 bg-zinc-600"
+                                  } self-start`}
+                                />
+                              ))}
+                            </div>
+
+                            {/* Sliding Red Needle with Spring Inertia */}
+                            <motion.div
+                              className="absolute top-0 bottom-0 w-1 rounded-full z-10"
+                              style={{
+                                left: `${((whisperFreq - 88) / (108 - 88)) * 100}%`,
+                                transform: "translateX(-50%)",
+                                boxShadow: "0 0 10px rgba(239,68,68,1), 0 0 3px #FFFFFF",
+                                background: "linear-gradient(180deg, #FF6B6B 0%, #E51E2B 50%, #B80F18 100%)",
+                              }}
+                              animate={{ scaleY: [1, 1.08, 1] }}
+                              transition={{
+                                left: { duration: 0.38, ease: [0.16, 1, 0.3, 1] },
+                              }}
+                            >
+                              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-t-[5px] border-t-red-500" />
+                              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_#FF2E3B]" />
+                            </motion.div>
+                          </div>
+
+                          <div className="flex justify-between px-0.5 pt-1 text-[9px] font-mono text-zinc-400">
+                            <span>88.0</span>
+                            <span>94.0</span>
+                            <span>100.0</span>
+                            <span>108.0</span>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Station Preset Quick-Pick Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                {whisperStations.map((st) => {
+                  const isCurrent = Math.abs(whisperFreq - st.freq) < 0.2;
+                  return (
+                    <button
+                      key={st.freq}
+                      onClick={() => handleTuneStation(st.freq)}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer space-y-1 ${
+                        isCurrent
+                          ? "bg-emerald-50/80 border-emerald-400 shadow-md ring-2 ring-emerald-500/20"
+                          : "bg-white border-stone-200 hover:border-emerald-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-[10px] font-mono">
+                        <span className={`font-bold ${isCurrent ? "text-emerald-700" : "text-stone-500"}`}>
+                          {st.freq} FM
+                        </span>
+                        <span className="text-[9px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded font-bold">
+                          {st.duration}
+                        </span>
+                      </div>
+                      <p className="text-xs font-sans font-bold text-stone-900 truncate">
+                        {st.title}
+                      </p>
+                      <p className="text-[10px] font-mono text-stone-500 truncate">
+                        {st.sender} · {st.note}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Voice Note Player Preview Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white border border-emerald-200 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Mic className="w-4 h-4" />
+                  </div>
+                  <div className="text-left space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-sans font-bold text-stone-900">
+                        {whisperFreq === 91.7 ? "Alex: Morning coffee voice note" : whisperFreq === 102.4 ? "Mia: Goodnight whisper note" : "Lo-Fi sunset acoustic"}
+                      </span>
+                      <span className="text-[9px] font-mono bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full">
+                        STEREO
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-mono text-stone-500">
+                      {isRadioPlaying ? "Broadcasting through vintage audio tube filter..." : "Station tuned in. Tap Listen or choose a frequency above."}
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/whisper"
+                  className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-emerald-600 text-white font-mono text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <span>Open Whisper FM</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 3: BOTANICAL BOUQUET & UNWRAP REVEAL */}
+          {activeTab === "bouquet" && (
+            <motion.div
+              key="bouquet"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-[620px] text-center space-y-6"
+            >
+              {/* Header */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-mono font-bold text-rose-700 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                  <Flower2 className="w-3.5 h-3.5" />
+                  BOTANICAL KEEPSAKE · NEVER WITHERS
+                </span>
+                <h3 className="text-xl sm:text-2xl font-sans font-black text-stone-900">
+                  Flowers handcrafted for your partner
+                </h3>
+                <p className="text-xs text-stone-500 font-mono">
+                  Tap to untie the satin ribbon and watch the handpicked flowers bloom across the screen.
+                </p>
+              </div>
+
+              {/* Bouquet Interactive Unwrap Station */}
+              <div className="relative p-5 sm:p-8 rounded-3xl bg-gradient-to-b from-[#FBF8F3] via-[#F7EFE4] to-[#EFE3D3] border-2 border-[#E2D2C0] shadow-xl overflow-hidden min-h-[380px] flex flex-col justify-between">
+                
+                {/* 18-Particle Golden Sparkle Burst Overlay */}
+                {isUntyingRibbon && (
+                  <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+                    {sparkleDust.map((p) => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                        animate={{
+                          scale: [0, 1.5, 0],
+                          x: p.x,
+                          y: p.y,
+                          opacity: [1, 1, 0],
+                        }}
+                        transition={{ duration: 0.65, ease: "easeOut" }}
+                        className="absolute w-2.5 h-2.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-300 to-amber-200 shadow-md"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Tumbling Rose Petals when unwrapped */}
+                {isBouquetRevealed && (
+                  <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-3 h-4 bg-gradient-to-br from-rose-200 via-rose-300 to-rose-400/80 rounded-full"
+                        style={{
+                          borderRadius: "60% 40% 70% 30%",
+                          left: `${(i * 9 + 4) % 95}%`,
+                          top: "-8%",
+                          boxShadow: "0 2px 6px rgba(225,29,72,0.15)",
+                        }}
+                        animate={{
+                          y: [0, 420],
+                          x: [0, (i % 2 === 0 ? 1 : -1) * 28],
+                          rotateZ: [0, 360],
+                          rotateX: [0, 180],
+                          opacity: [0, 0.85, 0],
+                        }}
+                        transition={{
+                          duration: 4.5 + (i % 3) * 1.2,
+                          repeat: Infinity,
+                          delay: i * 0.35,
+                          ease: "linear",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <AnimatePresence mode="wait">
+                  {!isBouquetRevealed ? (
+                    /* Wrapped Presentation State */
+                    <motion.div
+                      key="wrapped"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                      className="my-auto space-y-6 py-4"
+                    >
+                      {/* Kraft Wrapped Bouquet Illustration with Ribbon */}
+                      <div className="relative w-48 sm:w-56 h-48 sm:h-56 mx-auto flex items-center justify-center">
+                        {/* Peeking Flower Buds */}
+                        <div className="absolute top-2 flex items-center gap-2 z-10">
+                          <span className="text-3xl transform -rotate-12">🌹</span>
+                          <span className="text-3xl transform -translate-y-2">🌸</span>
+                          <span className="text-3xl transform rotate-12">🪻</span>
+                        </div>
+
+                        {/* Kraft Paper Envelope Fold */}
+                        <div className="w-40 sm:w-44 h-40 sm:h-44 rounded-2xl bg-gradient-to-br from-[#EAD9C2] to-[#D5BEA1] border-2 border-[#BFA483] shadow-lg transform rotate-45 flex items-center justify-center relative overflow-hidden">
+                          <div className="absolute inset-0 bg-stone-900/5" />
+                        </div>
+
+                        {/* Satin Silk Ribbon Knot and Bow */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+                          <motion.div
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2.2, repeat: Infinity }}
+                            className="relative flex items-center justify-center"
+                          >
+                            {/* Ribbon Bow Left Loop */}
+                            <div className="w-8 h-6 rounded-full bg-gradient-to-r from-rose-400 to-rose-500 shadow-md border border-rose-300 transform -rotate-25 origin-right" />
+                            {/* Ribbon Center Golden Ring */}
+                            <div className="w-5 h-5 rounded-full bg-amber-400 border border-amber-300 shadow-sm z-10 flex items-center justify-center text-[10px] text-amber-900 font-bold">
+                              ✦
+                            </div>
+                            {/* Ribbon Bow Right Loop */}
+                            <div className="w-8 h-6 rounded-full bg-gradient-to-l from-rose-400 to-rose-500 shadow-md border border-rose-300 transform rotate-25 origin-left" />
+                          </motion.div>
+                        </div>
+                      </div>
+
+                      {/* Recipient Gift Tag */}
+                      <div className="space-y-1">
+                        <div className="inline-block px-3 py-1 rounded-full bg-white/80 border border-stone-300 text-stone-700 text-xs font-mono font-bold shadow-2xs">
+                          For Mia · With all my love, Alex ♡
+                        </div>
+                        <p className="text-xs text-stone-600 font-sans italic">
+                          &ldquo;A bundle of memories tied with pink silk ribbon...&rdquo;
+                        </p>
+                      </div>
+
+                      {/* Untie Button */}
+                      <div>
+                        <button
+                          onClick={handleUntieBouquet}
+                          disabled={isUntyingRibbon}
+                          className="px-6 py-3 rounded-2xl bg-stone-900 hover:bg-rose-600 active:scale-95 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-2 mx-auto disabled:opacity-60"
+                        >
+                          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                          <span>{isUntyingRibbon ? "Untying Ribbon..." : "Untie Ribbon & Unwrap Bouquet ▷"}</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    /* Unwrapped Blooming Bouquet & Card State */
+                    <motion.div
+                      key="unwrapped"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.4, ease: EASE_CUBIC }}
+                      className="space-y-5 py-2 relative z-20 text-left"
+                    >
+                      {/* Blooming Bouquet Arrangement */}
+                      <div className="p-4 rounded-2xl bg-white/90 border border-[#E2D2C0] shadow-sm flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-gradient-to-b from-rose-50 to-pink-50 border border-rose-200 text-3xl shadow-inner shrink-0">
+                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: "spring" }}>🌹</motion.span>
+                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}>🌸</motion.span>
+                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: "spring" }}>🪻</motion.span>
+                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4, type: "spring" }}>💐</motion.span>
+                        </div>
+                        <div className="space-y-1 text-center sm:text-left">
+                          <div className="flex items-center gap-2 justify-center sm:justify-start">
+                            <span className="font-sans font-bold text-stone-900 text-sm">
+                              Velvet Roses &amp; Spring Peonies
+                            </span>
+                            <span className="text-[9px] font-mono bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full font-bold">
+                              BLOOMED
+                            </span>
+                          </div>
+                          <p className="text-xs text-stone-600 font-sans">
+                            Artisanal kraft wrapping folded open · Tied with pink silk satin
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Handwritten Romantic Note Card */}
+                      <div className="p-5 rounded-2xl bg-[#FFFDF9] border border-amber-200/90 shadow-sm space-y-3 relative overflow-hidden">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-stone-500 border-b border-amber-100 pb-2">
+                          <span className="font-bold text-stone-700">From Alex to Mia</span>
+                          <span>1,420 km apart · Verified Bouquet</span>
+                        </div>
+                        <p className="font-sans text-sm sm:text-base leading-relaxed text-stone-800 font-medium italic">
+                          &ldquo;Every single flower in this arrangement is a memory of our favorite laughter. Thank you for making distance feel like nothing. I love you.&rdquo;
+                        </p>
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="font-display italic text-sm text-rose-700 font-bold">Always yours, Alex ♡</span>
+                          <span className="text-[10px] font-mono text-stone-400">Keepsake Vault #142</span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                        <button
+                          onClick={handleFoldBouquet}
+                          className="w-full sm:w-auto px-4 py-2.5 rounded-xl border-2 border-stone-800 bg-white hover:bg-stone-100 text-stone-900 font-mono text-xs font-bold uppercase transition-all cursor-pointer"
+                        >
+                          Fold &amp; Tie Ribbon Again
+                        </button>
+
+                        <Link
+                          href="/bouquet"
+                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-rose-600 text-white font-mono text-xs font-bold uppercase transition-all shadow-md flex items-center justify-center gap-1.5"
+                        >
+                          <span>Build a Bouquet ▷</span>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 4: DATE NIGHT ROULETTE */}
           {activeTab === "roulette" && (
             <motion.div
               key="roulette"
@@ -1021,9 +1714,20 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
               </div>
 
               {/* Parchment Letter Mockup with 3D Wax Seal & Pack Animation */}
-              <div className="relative p-5 sm:p-8 rounded-3xl bg-[#FDFBF7] border-2 border-amber-200/80 shadow-2xl space-y-4 text-left overflow-hidden">
-                {/* Envelope Flap Accent Border */}
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-200 via-rose-300 to-amber-200 opacity-70" />
+              <div
+                className="relative p-5 sm:p-8 rounded-3xl bg-[#FDFBF7] border-2 border-amber-200/80 shadow-2xl space-y-4 text-left overflow-hidden"
+                style={{ perspective: 1000 }}
+              >
+                {/* 3D Envelope Top Flap */}
+                <motion.div
+                  animate={{
+                    rotateX: isLetterUnsealed ? 180 : 0,
+                    opacity: isLetterUnsealed ? 0.35 : 1,
+                  }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ transformOrigin: "top", transformStyle: "preserve-3d" }}
+                  className="absolute top-0 inset-x-0 h-10 bg-gradient-to-b from-[#F5E6CC] to-[#E8D4B4] rounded-t-2xl border-t border-[#D9C099] shadow-sm z-20 pointer-events-none"
+                />
 
                 {/* Mobile Responsive Header Wrapping */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/60 pb-3">
@@ -1047,7 +1751,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.25 }}
-                      className="space-y-4 py-2"
+                      className="space-y-4 py-2 relative z-10"
                     >
                       <div className="space-y-2">
                         <p className="font-sans font-bold text-sm text-stone-900">
@@ -1072,9 +1776,9 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                             <motion.span
                               key={s.id}
                               initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
-                              animate={{ x: s.x, y: s.y, scale: 0.2, opacity: 0, rotate: s.rotate }}
-                              transition={{ duration: 0.5, ease: "easeOut" }}
-                              className="absolute rounded-full bg-[#B31D3F] pointer-events-none z-30"
+                              animate={{ x: s.x, y: s.y, scale: 0.3, opacity: 0, rotate: s.rotate }}
+                              transition={{ duration: 0.52, ease: "easeOut" }}
+                              className="absolute rounded-md bg-gradient-to-br from-[#C41C44] via-[#941332] to-[#5C0A1E] border border-rose-300 pointer-events-none z-30 shadow-md"
                               style={{ width: `${s.size}px`, height: `${s.size}px` }}
                             />
                           ))}
@@ -1096,7 +1800,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                           </motion.div>
 
                           <span className="text-[10px] font-mono font-bold text-rose-800 mt-2.5 uppercase tracking-wider group-hover:text-rose-900 group-hover:underline flex items-center gap-1">
-                            {isWaxBreaking ? "Breaking Seal..." : "Tap Seal to Break Wax ▷"}
+                            {isWaxBreaking ? "Breaking Wax Seal..." : "Tap Seal to Break Wax ▷"}
                           </span>
                         </button>
                       </div>
@@ -1104,11 +1808,11 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                   ) : (
                     <motion.div
                       key="unsealed"
-                      initial={{ opacity: 0, y: 15 }}
+                      initial={{ opacity: 0, y: 22 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.4, ease: EASE_CUBIC }}
-                      className="space-y-4 py-2"
+                      transition={{ duration: 0.45, ease: EASE_CUBIC }}
+                      className="space-y-4 py-2 relative z-10"
                     >
                       {/* Full Unsealed Letter Note */}
                       <div className="p-4 sm:p-5 rounded-2xl bg-white/90 border border-amber-300/70 shadow-sm space-y-3">
@@ -1304,6 +2008,62 @@ function ActivitiesShowcase() {
         </div>
       ),
       link: "/bouquet",
+    },
+    {
+      id: "whisper-fm",
+      title: "Whisper FM Retro Radio",
+      tag: "VOICE BROADCAST",
+      desc: "Tune into your private analog couple frequency. Leave whispered voice notes that play over warm vacuum-tube radio with authentic static and chimes.",
+      screenTheme: "from-[#203630] to-[#12221E] text-white",
+      mockupContent: (
+        <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#203630] to-[#142621] text-white rounded-2xl select-none border border-emerald-500/20">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between text-[10px] font-mono border-b border-white/10 pb-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-emerald-300 font-bold">FM 91.7 MHz</span>
+            </div>
+            <span className="text-[9px] bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold">
+              LOCKED
+            </span>
+          </div>
+
+          {/* Radio Dial & Tubes Graphic */}
+          <div className="py-1 space-y-2 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-4 h-6 rounded-t-md bg-amber-400/20 border border-amber-300/40 flex items-center justify-center">
+                <span className="w-1 h-3 rounded-full bg-amber-300 animate-pulse" />
+              </span>
+              <span className="w-4 h-6 rounded-t-md bg-amber-400/20 border border-amber-300/40 flex items-center justify-center">
+                <span className="w-1 h-3 rounded-full bg-amber-300 animate-pulse" />
+              </span>
+            </div>
+            <p className="font-sans font-bold text-xs text-emerald-100">
+              Mia: &ldquo;Morning coffee &amp; miss you&rdquo;
+            </p>
+            <p className="text-[9px] font-mono text-emerald-300/70">
+              0:42 · Recorded 8:15 AM
+            </p>
+          </div>
+
+          {/* Acoustic Waveform & Equalizer Bars */}
+          <div className="p-2 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1 flex-1">
+              {[40, 75, 55, 90, 65, 80, 45, 70, 85, 50].map((h, i) => (
+                <span
+                  key={i}
+                  className="w-1 bg-emerald-400 rounded-full"
+                  style={{ height: `${h * 0.22}px` }}
+                />
+              ))}
+            </div>
+            <span className="text-[9px] font-mono text-emerald-400 font-bold">
+              LIVE FM
+            </span>
+          </div>
+        </div>
+      ),
+      link: "/whisper",
     },
     {
       id: "wax-letters",
@@ -1508,7 +2268,7 @@ function ActivitiesShowcase() {
             Pick tonight&apos;s activity
           </h2>
           <p className="text-stone-600 text-sm sm:text-base max-w-xl">
-            Choose from 11+ realtime multiplayer games, synchronized cinema, and keepsakes built specifically for two phones in love.
+            Choose from 12+ realtime multiplayer games, vintage radio, synchronized cinema, and keepsakes built specifically for two phones in love.
           </p>
         </div>
 
@@ -2242,11 +3002,12 @@ export default function LandingContent() {
           </Link>
 
           {/* Navigation Links */}
-          <nav className="hidden xl:flex items-center space-x-7 text-xs font-mono font-semibold text-[#7A5B64] uppercase tracking-wider">
+          <nav className="hidden xl:flex items-center space-x-6 text-xs font-mono font-semibold text-[#7A5B64] uppercase tracking-wider">
             <a href="#why-pairfect" className="hover:text-[#2C1E1A] transition-colors">WHY PAIRFECT</a>
             <a href="#playground" className="hover:text-[#2C1E1A] transition-colors">SEE IN ACTION</a>
+            <Link href="/whisper" className="hover:text-[#2C1E1A] transition-colors">RADIO</Link>
+            <Link href="/bouquet" className="hover:text-[#2C1E1A] transition-colors">BOUQUETS</Link>
             <Link href="/love-letter" className="hover:text-[#2C1E1A] transition-colors">LETTERS</Link>
-            <Link href="/gratitude-jar" className="hover:text-[#2C1E1A] transition-colors">RITUALS</Link>
             <Link href="/photo-booth" className="hover:text-[#2C1E1A] transition-colors">PHOTOBOOTH</Link>
             <a href="#pricing" className="hover:text-[#2C1E1A] transition-colors">PRICING</a>
           </nav>
@@ -2349,7 +3110,7 @@ export default function LandingContent() {
               </span>
               <span>•</span>
               <span className="flex items-center gap-1.5 font-bold text-stone-900">
-                <Check className="w-4 h-4 text-emerald-600" /> 11 free date activities
+                <Check className="w-4 h-4 text-emerald-600" /> 12+ free date activities
               </span>
             </div>
           </div>
