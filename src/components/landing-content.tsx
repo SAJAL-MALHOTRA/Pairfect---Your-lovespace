@@ -12,6 +12,7 @@ import {
   Tv, Sparkles, RotateCw, Mic, Send, Radio, Flower2, Printer
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import BouquetCanvas from "@/components/bouquet/bouquet-canvas";
 
 /* ─── Easing curve for motion system ─── */
 const EASE_CUBIC = [0.22, 0.61, 0.36, 1] as const;
@@ -125,8 +126,8 @@ function playTactileSound(
    ═══════════════════════════════════════════════════════════════ */
 function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
   const [isFlashing, setIsFlashing] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [printStep, setPrintStep] = useState(4); // 0: retract, 1: inch 1, 2: inch 2, 3: inch 3, 4: settled
+  const [isPrinting, setIsPrinting] = useState(true);
+  const [printStep, setPrintStep] = useState(0); // 0: tucked inside slot, 1: pose 1, 2: pose 2, 3: pose 3, 4: settled
   const [currentPose, setCurrentPose] = useState(1);
 
   const poses = [
@@ -160,6 +161,73 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
     },
   ];
 
+  // Auto-play the photostrip extrusion animation shortly after page load
+  useEffect(() => {
+    const mountTimer = setTimeout(() => {
+      setIsPrinting(true);
+      setPrintStep(0);
+      playTactileSound("roller", soundEnabled);
+
+      const s1 = setTimeout(() => {
+        setPrintStep(1);
+        playTactileSound("roller", soundEnabled);
+      }, 350);
+
+      const s2 = setTimeout(() => {
+        setPrintStep(2);
+        playTactileSound("roller", soundEnabled);
+      }, 700);
+
+      const s3 = setTimeout(() => {
+        setPrintStep(3);
+        playTactileSound("roller", soundEnabled);
+      }, 1050);
+
+      const s4 = setTimeout(() => {
+        setPrintStep(4);
+        setIsPrinting(false);
+        playTactileSound("paper", soundEnabled);
+      }, 1450);
+
+      return () => {
+        clearTimeout(s1);
+        clearTimeout(s2);
+        clearTimeout(s3);
+        clearTimeout(s4);
+      };
+    }, 450);
+
+    return () => clearTimeout(mountTimer);
+  }, [soundEnabled]);
+
+  const replayPrintAnimation = () => {
+    if (isPrinting) return;
+    setIsPrinting(true);
+    setPrintStep(0);
+    playTactileSound("roller", soundEnabled);
+
+    setTimeout(() => {
+      setPrintStep(1);
+      playTactileSound("roller", soundEnabled);
+    }, 350);
+
+    setTimeout(() => {
+      setPrintStep(2);
+      playTactileSound("roller", soundEnabled);
+    }, 700);
+
+    setTimeout(() => {
+      setPrintStep(3);
+      playTactileSound("roller", soundEnabled);
+    }, 1050);
+
+    setTimeout(() => {
+      setPrintStep(4);
+      setIsPrinting(false);
+      playTactileSound("paper", soundEnabled);
+    }, 1450);
+  };
+
   const triggerSnap = () => {
     if (isPrinting || isFlashing) return;
     setIsFlashing(true);
@@ -175,30 +243,30 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
       setTimeout(() => {
         setPrintStep(1);
         playTactileSound("roller", soundEnabled);
-      }, 260);
+      }, 350);
 
       setTimeout(() => {
         setPrintStep(2);
         playTactileSound("roller", soundEnabled);
-      }, 520);
+      }, 700);
 
       setTimeout(() => {
         setPrintStep(3);
         playTactileSound("roller", soundEnabled);
-      }, 780);
+      }, 1050);
 
       setTimeout(() => {
         setPrintStep(4);
         setIsPrinting(false);
         playTactileSound("paper", soundEnabled);
-      }, 1080);
+      }, 1450);
     }, 220);
   };
 
   const activePose = poses[currentPose - 1];
 
   const getDevelopingFilter = (frameIdx: number) => {
-    if (isPrinting && printStep < (frameIdx === 0 ? 2 : frameIdx === 1 ? 3 : 4)) {
+    if (isPrinting && printStep < (frameIdx === 0 ? 4 : frameIdx === 1 ? 3 : frameIdx === 2 ? 2 : 1)) {
       return "sepia(0.85) contrast(0.65) brightness(1.2) blur(1.5px)";
     }
     return "none";
@@ -283,14 +351,24 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
             <span className="text-[10px] font-mono text-stone-300 font-bold truncate mr-2">
               Pose {currentPose} of 4: {activePose.title}
             </span>
-            <button
-              onClick={triggerSnap}
-              disabled={isPrinting || isFlashing}
-              className="px-3.5 py-1.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-60 active:scale-95 text-white font-mono text-xs font-black rounded-full transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
-            >
-              <Camera className="w-3.5 h-3.5" />
-              <span>{isPrinting ? "Printing... ▷" : "Snap Pose ▷"}</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={replayPrintAnimation}
+                disabled={isPrinting}
+                title="Replay extrusion print animation"
+                className="p-1.5 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${isPrinting ? "animate-spin" : ""}`} />
+              </button>
+              <button
+                onClick={triggerSnap}
+                disabled={isPrinting || isFlashing}
+                className="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-60 active:scale-95 text-white font-mono text-xs font-black rounded-full transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>{isPrinting ? "Printing... ▷" : "Snap Pose ▷"}</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -324,124 +402,124 @@ function RetroPhotoboothKiosk({ soundEnabled }: { soundEnabled: boolean }) {
               )}
             </div>
           </div>
-
-          {/* Rolling Out Developed Photostrip with Mechanical Stepped Extrusion */}
-          <div className="pt-2 relative z-10 overflow-hidden">
-            <motion.div
-              animate={{
-                y: printStep === 0 ? -180 : printStep === 1 ? -120 : printStep === 2 ? -60 : 0,
-                opacity: 1,
-              }}
-              transition={{ duration: 0.28, ease: "easeOut" }}
-              className="w-[230px] sm:w-[250px] mx-auto bg-white p-3.5 border-2 border-stone-900 rounded-2xl shadow-2xl relative space-y-2.5"
-            >
-              {/* Thermal / Printhead Laser Scanline Shimmer */}
-              {isPrinting && (
-                <motion.div
-                  className="absolute inset-x-0 h-2.5 bg-gradient-to-b from-transparent via-cyan-300/70 to-transparent pointer-events-none z-40 shadow-[0_0_12px_rgba(34,211,238,0.9)]"
-                  animate={{ top: ["0%", "100%"] }}
-                  transition={{ duration: 0.65, repeat: Infinity, ease: "linear" }}
-                />
-              )}
-
-              {/* Partner 1 (Alex - Blue) Cursor Tag */}
-              <div className="partner-cursor partner-cursor-blue -top-3 -left-5">
-                <svg className="w-5 h-5 cursor-pointer-arrow fill-current transform -rotate-12" viewBox="0 0 24 24">
-                  <path d="M4 0l16 12.279-6.951 1.17 4.325 8.817-3.596 1.734-4.35-8.879-5.428 5.129z" />
-                </svg>
-                <span className="cursor-pill text-[9px] font-mono font-black px-2 py-0.5 rounded-md shadow-sm ml-2 -mt-2 inline-block whitespace-nowrap">
-                  Alex: {activePose.Alex}
-                </span>
-              </div>
-
-              {/* Partner 2 (Mia - Pink) Cursor Tag */}
-              <div className="partner-cursor partner-cursor-pink -bottom-3 -right-5">
-                <svg className="w-5 h-5 cursor-pointer-arrow fill-current transform -rotate-45" viewBox="0 0 24 24">
-                  <path d="M4 0l16 12.279-6.951 1.17 4.325 8.817-3.596 1.734-4.35-8.879-5.428 5.129z" />
-                </svg>
-                <span className="cursor-pill text-[9px] font-mono font-black px-2 py-0.5 rounded-md shadow-sm ml-2 -mt-2 inline-block whitespace-nowrap">
-                  Mia: {activePose.Mia}
-                </span>
-              </div>
-
-              {/* 4 Strip Frames with Real Couple Photos & Chemical Developing */}
-              <div className="space-y-2 bg-[#FFF9FA] p-2 rounded-xl border border-rose-100">
-                
-                {/* Pose 1: Heart Hands */}
-                <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-rose-200/80 shadow-xs">
-                  <Image
-                    src="/booth/monkey-heart.jpg"
-                    alt="Pose 01: Heart hands"
-                    fill
-                    className="object-cover"
-                    sizes="220px"
-                    style={{ filter: getDevelopingFilter(0), transition: "filter 0.7s ease" }}
-                  />
-                  <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
-                    POSE 01
-                  </span>
-                </div>
-
-                {/* Pose 2: Wink & Scream */}
-                <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-blue-200/80 shadow-xs">
-                  <Image
-                    src="/booth/monkey-shock.jpg"
-                    alt="Pose 02: Wink & scream"
-                    fill
-                    className="object-cover"
-                    sizes="220px"
-                    style={{ filter: getDevelopingFilter(1), transition: "filter 0.7s ease" }}
-                  />
-                  <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
-                    POSE 02
-                  </span>
-                </div>
-
-                {/* Pose 3: Pointing Up */}
-                <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-amber-200/80 shadow-xs">
-                  <Image
-                    src="/booth/monkey-point.jpg"
-                    alt="Pose 03: Pointing up"
-                    fill
-                    className="object-cover"
-                    sizes="220px"
-                    style={{ filter: getDevelopingFilter(2), transition: "filter 0.7s ease" }}
-                  />
-                  <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
-                    POSE 03
-                  </span>
-                </div>
-
-                {/* Pose 4: Close Up Grin */}
-                <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-purple-200/80 shadow-xs">
-                  <Image
-                    src="/booth/monkey-heart.jpg"
-                    alt="Pose 04: Heart paws zoom"
-                    fill
-                    className="object-cover object-top scale-110"
-                    sizes="220px"
-                    style={{ filter: getDevelopingFilter(3), transition: "filter 0.7s ease" }}
-                  />
-                  <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
-                    POSE 04
-                  </span>
-                </div>
-
-              </div>
-
-              {/* Strip Footer with Pairfect Logo */}
-              <div className="text-center pt-1 border-t-2 border-dashed border-stone-200 flex items-center justify-between text-[10px] font-mono text-stone-600 font-black uppercase">
-                <span className="flex items-center gap-1.5">
-                  <Image src="/logo-book.png" alt="Pairfect Logo" width={14} height={14} className="rounded-xs" />
-                  PAIRFECT STUDIO
-                </span>
-                <span className="text-rose-500 font-bold">1,420 KM APART</span>
-              </div>
-            </motion.div>
-          </div>
         </div>
 
+        {/* Rolling Out Developed Photostrip with Mechanical Stepped Extrusion */}
+        <div className="-mt-3 pt-3 relative z-10 overflow-hidden">
+          <motion.div
+            animate={{
+              y: printStep === 0 ? -440 : printStep === 1 ? -320 : printStep === 2 ? -210 : printStep === 3 ? -100 : 0,
+              opacity: 1,
+            }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="w-[230px] sm:w-[250px] mx-auto bg-white p-3.5 border-2 border-stone-900 rounded-2xl shadow-2xl relative space-y-2.5"
+          >
+            {/* Thermal / Printhead Laser Scanline Shimmer */}
+            {isPrinting && (
+              <motion.div
+                className="absolute inset-x-0 h-2.5 bg-gradient-to-b from-transparent via-cyan-300/70 to-transparent pointer-events-none z-40 shadow-[0_0_12px_rgba(34,211,238,0.9)]"
+                animate={{ top: ["0%", "100%"] }}
+                transition={{ duration: 0.65, repeat: Infinity, ease: "linear" }}
+              />
+            )}
+
+            {/* Partner 1 (Alex - Blue) Cursor Tag */}
+            <div className="partner-cursor partner-cursor-blue -top-3 -left-5">
+              <svg className="w-5 h-5 cursor-pointer-arrow fill-current transform -rotate-12" viewBox="0 0 24 24">
+                <path d="M4 0l16 12.279-6.951 1.17 4.325 8.817-3.596 1.734-4.35-8.879-5.428 5.129z" />
+              </svg>
+              <span className="cursor-pill text-[9px] font-mono font-black px-2 py-0.5 rounded-md shadow-sm ml-2 -mt-2 inline-block whitespace-nowrap">
+                Alex: {activePose.Alex}
+              </span>
+            </div>
+
+            {/* Partner 2 (Mia - Pink) Cursor Tag - Repositioned comfortably above footer */}
+            <div className="partner-cursor partner-cursor-pink bottom-16 -right-4">
+              <svg className="w-5 h-5 cursor-pointer-arrow fill-current transform -rotate-45" viewBox="0 0 24 24">
+                <path d="M4 0l16 12.279-6.951 1.17 4.325 8.817-3.596 1.734-4.35-8.879-5.428 5.129z" />
+              </svg>
+              <span className="cursor-pill text-[9px] font-mono font-black px-2 py-0.5 rounded-md shadow-sm ml-2 -mt-2 inline-block whitespace-nowrap">
+                Mia: {activePose.Mia}
+              </span>
+            </div>
+
+            {/* 4 Strip Frames with Real Couple Photos & Chemical Developing */}
+            <div className="space-y-2 bg-[#FFF9FA] p-2 rounded-xl border border-rose-100">
+              
+              {/* Pose 1: Heart Hands */}
+              <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-rose-200/80 shadow-xs">
+                <Image
+                  src="/booth/monkey-heart.jpg"
+                  alt="Pose 01: Heart hands"
+                  fill
+                  className="object-cover object-center"
+                  sizes="220px"
+                  style={{ filter: getDevelopingFilter(0), transition: "filter 0.7s ease" }}
+                />
+                <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
+                  POSE 01
+                </span>
+              </div>
+
+              {/* Pose 2: Wink & Scream */}
+              <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-blue-200/80 shadow-xs">
+                <Image
+                  src="/booth/monkey-shock.jpg"
+                  alt="Pose 02: Wink & scream"
+                  fill
+                  className="object-cover object-center"
+                  sizes="220px"
+                  style={{ filter: getDevelopingFilter(1), transition: "filter 0.7s ease" }}
+                />
+                <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
+                  POSE 02
+                </span>
+              </div>
+
+              {/* Pose 3: Pointing Up */}
+              <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-amber-200/80 shadow-xs">
+                <Image
+                  src="/booth/monkey-point.jpg"
+                  alt="Pose 03: Pointing up"
+                  fill
+                  className="object-cover object-center"
+                  sizes="220px"
+                  style={{ filter: getDevelopingFilter(2), transition: "filter 0.7s ease" }}
+                />
+                <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
+                  POSE 03
+                </span>
+              </div>
+
+              {/* Pose 4: Close Up Grin - Cleanly Framed & Centered */}
+              <div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-purple-200/80 shadow-xs">
+                <Image
+                  src="/booth/monkey-heart.jpg"
+                  alt="Pose 04: Heart paws zoom"
+                  fill
+                  className="object-cover object-center"
+                  sizes="220px"
+                  style={{ filter: getDevelopingFilter(3), transition: "filter 0.7s ease" }}
+                />
+                <span className="absolute bottom-1 right-1.5 bg-black/65 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
+                  POSE 04
+                </span>
+              </div>
+
+            </div>
+
+            {/* Strip Footer with Pairfect Logo */}
+            <div className="text-center pt-1 border-t-2 border-dashed border-stone-200 flex items-center justify-between text-[10px] font-mono text-stone-600 font-black uppercase">
+              <span className="flex items-center gap-1.5">
+                <Image src="/logo-book.png" alt="Pairfect Logo" width={14} height={14} className="rounded-xs" />
+                PAIRFECT STUDIO
+              </span>
+              <span className="text-rose-500 font-bold">1,420 KM APART</span>
+            </div>
+          </motion.div>
+        </div>
       </div>
+
     </div>
   );
 }
@@ -645,39 +723,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
   };
 
   /* Botanical Bouquet state */
-  const [isBouquetRevealed, setIsBouquetRevealed] = useState(false);
-  const [isUntyingRibbon, setIsUntyingRibbon] = useState(false);
-  const [sparkleDust, setSparkleDust] = useState<{ id: number; x: number; y: number }[]>([]);
-
-  const handleUntieBouquet = () => {
-    if (isUntyingRibbon) return;
-    setIsUntyingRibbon(true);
-    playTactileSound("paper", soundEnabled);
-    
-    // Spawn 18 sparkling radial burst dust particles
-    const dust = Array.from({ length: 18 }).map((_, i) => {
-      const angle = (i / 18) * 2 * Math.PI;
-      const dist = 55 + Math.random() * 85;
-      return {
-        id: Date.now() + i,
-        x: Math.cos(angle) * dist,
-        y: Math.sin(angle) * dist,
-      };
-    });
-    setSparkleDust(dust);
-
-    setTimeout(() => {
-      setIsBouquetRevealed(true);
-      setIsUntyingRibbon(false);
-      setSparkleDust([]);
-      playTactileSound("pop", soundEnabled);
-    }, 650);
-  };
-
-  const handleFoldBouquet = () => {
-    playTactileSound("paper", soundEnabled);
-    setIsBouquetRevealed(false);
-  };
+  const [bouquetKey, setBouquetKey] = useState(0);
 
   /* Roulette state */
   const [isSpinning, setIsSpinning] = useState(false);
@@ -1325,7 +1371,7 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.3 }}
-              className="w-full max-w-[620px] text-center space-y-6"
+              className="w-full max-w-[540px] text-center space-y-6"
             >
               {/* Header */}
               <div className="space-y-1">
@@ -1337,197 +1383,45 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                   Flowers handcrafted for your partner
                 </h3>
                 <p className="text-xs text-stone-500 font-mono">
-                  Tap to untie the satin ribbon and watch the handpicked flowers bloom across the screen.
+                  Tap the ribbon to untie and watch the handpicked flowers bloom across your screen.
                 </p>
               </div>
 
-              {/* Bouquet Interactive Unwrap Station */}
-              <div className="relative p-5 sm:p-8 rounded-3xl bg-gradient-to-b from-[#FBF8F3] via-[#F7EFE4] to-[#EFE3D3] border-2 border-[#E2D2C0] shadow-xl overflow-hidden min-h-[380px] flex flex-col justify-between">
-                
-                {/* 18-Particle Golden Sparkle Burst Overlay */}
-                {isUntyingRibbon && (
-                  <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-                    {sparkleDust.map((p) => (
-                      <motion.div
-                        key={p.id}
-                        initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-                        animate={{
-                          scale: [0, 1.5, 0],
-                          x: p.x,
-                          y: p.y,
-                          opacity: [1, 1, 0],
-                        }}
-                        transition={{ duration: 0.65, ease: "easeOut" }}
-                        className="absolute w-2.5 h-2.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-300 to-amber-200 shadow-md"
-                      />
-                    ))}
-                  </div>
-                )}
+              {/* Authentic Bouquet Canvas Component matching user request */}
+              <div className="relative flex justify-center py-2">
+                <BouquetCanvas
+                  key={bouquetKey}
+                  flowers={["rose", "peony", "tulip", "peony"]}
+                  wrappingId="kraft"
+                  ribbonId="rose"
+                  atmosphereId="petals"
+                  toName="Mia"
+                  fromName="Alex"
+                  message="I wish I could be beside you today. Even with the miles between us, you are the first thought when I wake and the first smile in my day."
+                  isRevealMode={true}
+                  className="w-full max-w-[420px] aspect-[4/5] shadow-2xl"
+                />
+              </div>
 
-                {/* Tumbling Rose Petals when unwrapped */}
-                {isBouquetRevealed && (
-                  <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute w-3 h-4 bg-gradient-to-br from-rose-200 via-rose-300 to-rose-400/80 rounded-full"
-                        style={{
-                          borderRadius: "60% 40% 70% 30%",
-                          left: `${(i * 9 + 4) % 95}%`,
-                          top: "-8%",
-                          boxShadow: "0 2px 6px rgba(225,29,72,0.15)",
-                        }}
-                        animate={{
-                          y: [0, 420],
-                          x: [0, (i % 2 === 0 ? 1 : -1) * 28],
-                          rotateZ: [0, 360],
-                          rotateX: [0, 180],
-                          opacity: [0, 0.85, 0],
-                        }}
-                        transition={{
-                          duration: 4.5 + (i % 3) * 1.2,
-                          repeat: Infinity,
-                          delay: i * 0.35,
-                          ease: "linear",
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <AnimatePresence mode="wait">
-                  {!isBouquetRevealed ? (
-                    /* Wrapped Presentation State */
-                    <motion.div
-                      key="wrapped"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.3 }}
-                      className="my-auto space-y-6 py-4"
-                    >
-                      {/* Kraft Wrapped Bouquet Illustration with Ribbon */}
-                      <div className="relative w-48 sm:w-56 h-48 sm:h-56 mx-auto flex items-center justify-center">
-                        {/* Peeking Flower Buds */}
-                        <div className="absolute top-2 flex items-center gap-2 z-10">
-                          <span className="text-3xl transform -rotate-12">🌹</span>
-                          <span className="text-3xl transform -translate-y-2">🌸</span>
-                          <span className="text-3xl transform rotate-12">🪻</span>
-                        </div>
-
-                        {/* Kraft Paper Envelope Fold */}
-                        <div className="w-40 sm:w-44 h-40 sm:h-44 rounded-2xl bg-gradient-to-br from-[#EAD9C2] to-[#D5BEA1] border-2 border-[#BFA483] shadow-lg transform rotate-45 flex items-center justify-center relative overflow-hidden">
-                          <div className="absolute inset-0 bg-stone-900/5" />
-                        </div>
-
-                        {/* Satin Silk Ribbon Knot and Bow */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                          <motion.div
-                            animate={{ scale: [1, 1.05, 1] }}
-                            transition={{ duration: 2.2, repeat: Infinity }}
-                            className="relative flex items-center justify-center"
-                          >
-                            {/* Ribbon Bow Left Loop */}
-                            <div className="w-8 h-6 rounded-full bg-gradient-to-r from-rose-400 to-rose-500 shadow-md border border-rose-300 transform -rotate-25 origin-right" />
-                            {/* Ribbon Center Golden Ring */}
-                            <div className="w-5 h-5 rounded-full bg-amber-400 border border-amber-300 shadow-sm z-10 flex items-center justify-center text-[10px] text-amber-900 font-bold">
-                              ✦
-                            </div>
-                            {/* Ribbon Bow Right Loop */}
-                            <div className="w-8 h-6 rounded-full bg-gradient-to-l from-rose-400 to-rose-500 shadow-md border border-rose-300 transform rotate-25 origin-left" />
-                          </motion.div>
-                        </div>
-                      </div>
-
-                      {/* Recipient Gift Tag */}
-                      <div className="space-y-1">
-                        <div className="inline-block px-3 py-1 rounded-full bg-white/80 border border-stone-300 text-stone-700 text-xs font-mono font-bold shadow-2xs">
-                          For Mia · With all my love, Alex ♡
-                        </div>
-                        <p className="text-xs text-stone-600 font-sans italic">
-                          &ldquo;A bundle of memories tied with pink silk ribbon...&rdquo;
-                        </p>
-                      </div>
-
-                      {/* Untie Button */}
-                      <div>
-                        <button
-                          onClick={handleUntieBouquet}
-                          disabled={isUntyingRibbon}
-                          className="px-6 py-3 rounded-2xl bg-stone-900 hover:bg-rose-600 active:scale-95 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-2 mx-auto disabled:opacity-60"
-                        >
-                          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-                          <span>{isUntyingRibbon ? "Untying Ribbon..." : "Untie Ribbon & Unwrap Bouquet ▷"}</span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    /* Unwrapped Blooming Bouquet & Card State */
-                    <motion.div
-                      key="unwrapped"
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.4, ease: EASE_CUBIC }}
-                      className="space-y-5 py-2 relative z-20 text-left"
-                    >
-                      {/* Blooming Bouquet Arrangement */}
-                      <div className="p-4 rounded-2xl bg-white/90 border border-[#E2D2C0] shadow-sm flex flex-col sm:flex-row items-center gap-4">
-                        <div className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-gradient-to-b from-rose-50 to-pink-50 border border-rose-200 text-3xl shadow-inner shrink-0">
-                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: "spring" }}>🌹</motion.span>
-                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}>🌸</motion.span>
-                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: "spring" }}>🪻</motion.span>
-                          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4, type: "spring" }}>💐</motion.span>
-                        </div>
-                        <div className="space-y-1 text-center sm:text-left">
-                          <div className="flex items-center gap-2 justify-center sm:justify-start">
-                            <span className="font-sans font-bold text-stone-900 text-sm">
-                              Velvet Roses &amp; Spring Peonies
-                            </span>
-                            <span className="text-[9px] font-mono bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full font-bold">
-                              BLOOMED
-                            </span>
-                          </div>
-                          <p className="text-xs text-stone-600 font-sans">
-                            Artisanal kraft wrapping folded open · Tied with pink silk satin
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Handwritten Romantic Note Card */}
-                      <div className="p-5 rounded-2xl bg-[#FFFDF9] border border-amber-200/90 shadow-sm space-y-3 relative overflow-hidden">
-                        <div className="flex items-center justify-between text-[11px] font-mono text-stone-500 border-b border-amber-100 pb-2">
-                          <span className="font-bold text-stone-700">From Alex to Mia</span>
-                          <span>1,420 km apart · Verified Bouquet</span>
-                        </div>
-                        <p className="font-sans text-sm sm:text-base leading-relaxed text-stone-800 font-medium italic">
-                          &ldquo;Every single flower in this arrangement is a memory of our favorite laughter. Thank you for making distance feel like nothing. I love you.&rdquo;
-                        </p>
-                        <div className="flex items-center justify-between pt-1">
-                          <span className="font-display italic text-sm text-rose-700 font-bold">Always yours, Alex ♡</span>
-                          <span className="text-[10px] font-mono text-stone-400">Keepsake Vault #142</span>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                        <button
-                          onClick={handleFoldBouquet}
-                          className="w-full sm:w-auto px-4 py-2.5 rounded-xl border-2 border-stone-800 bg-white hover:bg-stone-100 text-stone-900 font-mono text-xs font-bold uppercase transition-all cursor-pointer"
-                        >
-                          Fold &amp; Tie Ribbon Again
-                        </button>
-
-                        <Link
-                          href="/bouquet"
-                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-rose-600 text-white font-mono text-xs font-bold uppercase transition-all shadow-md flex items-center justify-center gap-1.5"
-                        >
-                          <span>Build a Bouquet ▷</span>
-                        </Link>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              {/* Action buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <button
+                  onClick={() => {
+                    setBouquetKey((k) => k + 1);
+                    playTactileSound("paper", soundEnabled);
+                  }}
+                  className="px-4 py-2.5 rounded-xl border-2 border-stone-800 bg-white hover:bg-stone-100 text-stone-900 font-mono text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <RotateCw className="w-3.5 h-3.5" />
+                  <span>Rewrap &amp; Tie Ribbon</span>
+                </button>
+                <Link
+                  href="/bouquet"
+                  className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-rose-600 text-white font-mono text-xs font-bold uppercase transition-all shadow-md flex items-center gap-2"
+                >
+                  <Flower2 className="w-3.5 h-3.5" />
+                  <span>Build Your Own Bouquet ▷</span>
+                </Link>
               </div>
             </motion.div>
           )}
@@ -3056,9 +2950,9 @@ export default function LandingContent() {
 
       {/* ── MAIN HERO SECTION (MAJOR PAIRFECT LOGO PRESENCE & ELEGANT COPY) ── */}
       <section id="why-pairfect" className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-16">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-16">
           
-          {/* Left Column: Headline, Mission, CTAs */}
+          {/* Left Column: Headline, Mission, CTAs, Feature Cards, Review */}
           <div className="w-full lg:w-7/12 text-left space-y-6">
             
             {/* Major Pairfect Brand Tag */}
@@ -3113,6 +3007,120 @@ export default function LandingContent() {
                 <Check className="w-4 h-4 text-emerald-600" /> 12+ free date activities
               </span>
             </div>
+
+            {/* Interactive Feature Quick-Launch Trio Cards */}
+            <div className="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Feature 1: Whisper FM */}
+              <Link
+                href="/whisper"
+                className="group p-3.5 rounded-2xl bg-white border border-stone-200 hover:border-emerald-400 hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Radio className="w-4 h-4" />
+                  </span>
+                  <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                    91.7 FM
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-sans font-bold text-xs text-stone-900 group-hover:text-emerald-700 transition-colors">
+                    Whisper FM
+                  </h4>
+                  <p className="text-[10px] font-mono text-stone-500 leading-tight mt-0.5">
+                    Live tube radio for voice notes
+                  </p>
+                </div>
+                <div className="text-[10px] font-mono font-bold text-emerald-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span>Tune in</span>
+                  <span>▷</span>
+                </div>
+              </Link>
+
+              {/* Feature 2: Digital Bouquets */}
+              <Link
+                href="/bouquet"
+                className="group p-3.5 rounded-2xl bg-white border border-stone-200 hover:border-rose-400 hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Flower2 className="w-4 h-4" />
+                  </span>
+                  <span className="text-[9px] font-mono font-bold text-rose-700 bg-rose-100/70 px-1.5 py-0.5 rounded">
+                    Botanical
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-sans font-bold text-xs text-stone-900 group-hover:text-rose-700 transition-colors">
+                    Handmade Bouquets
+                  </h4>
+                  <p className="text-[10px] font-mono text-stone-500 leading-tight mt-0.5">
+                    Paper-wrapped blooms that never wilt
+                  </p>
+                </div>
+                <div className="text-[10px] font-mono font-bold text-rose-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span>Wrap blooms</span>
+                  <span>▷</span>
+                </div>
+              </Link>
+
+              {/* Feature 3: Wax Letters */}
+              <Link
+                href="/love-letter"
+                className="group p-3.5 rounded-2xl bg-white border border-stone-200 hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <span className="text-[9px] font-mono font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded">
+                    Wax Seal
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-sans font-bold text-xs text-stone-900 group-hover:text-amber-700 transition-colors">
+                    Wax Love Letters
+                  </h4>
+                  <p className="text-[10px] font-mono text-stone-500 leading-tight mt-0.5">
+                    Parchment notes with 3D wax break
+                  </p>
+                </div>
+                <div className="text-[10px] font-mono font-bold text-amber-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span>Write note</span>
+                  <span>▷</span>
+                </div>
+              </Link>
+            </div>
+
+            {/* Verified Couple Quote Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-stone-50 via-white to-stone-50 border border-stone-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1.5 flex-1">
+                <div className="flex items-center gap-1 text-amber-400">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  ))}
+                  <span className="text-[10px] font-mono font-bold text-stone-600 ml-1.5">
+                    5.0 from 840+ long distance couples
+                  </span>
+                </div>
+                <p className="font-sans text-xs sm:text-sm text-stone-700 italic leading-snug">
+                  &ldquo;Pairfect makes our 1,420 km distance feel small. The live photobooth and midnight radio frequencies make our evenings feel like we are in the same room.&rdquo;
+                </p>
+                <div className="flex items-center gap-2 pt-0.5 text-[11px] font-mono text-stone-500">
+                  <span className="font-bold text-stone-900">Alex &amp; Mia</span>
+                  <span>·</span>
+                  <span>Mumbai &amp; Delhi (2.5 years LDR)</span>
+                </div>
+              </div>
+              <div className="shrink-0 flex sm:flex-col items-center sm:items-end gap-1 text-[10px] font-mono text-rose-600 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+                  LIVE SYNCED
+                </span>
+                <span className="text-stone-500 text-[9px] font-normal">1,420 km apart</span>
+              </div>
+            </div>
+
           </div>
 
           {/* Right Column: Retro 3D Photobooth Machine with Rolling Strip */}
