@@ -3,9 +3,9 @@
 
 @theme {
   --font-sans: var(--font-sans), sans-serif;
-  --font-display: var(--font-display), serif;
-  --font-heading: var(--font-heading, var(--font-display)), serif;
-  --font-quote: var(--font-quote, var(--font-display)), serif;
+  --font-display: var(--font-pixel), "Courier New", monospace;
+  --font-heading: var(--font-pixel), "Courier New", monospace;
+  --font-quote: var(--font-pixel), "Courier New", monospace;
   --font-handwriting: var(--font-handwriting), cursive;
 
   --color-background: var(--background);
@@ -103,7 +103,7 @@
 
 /* ── Color tokens ── */
 :root {
-  /* Design Tokens — Warm Cozy Sanctuary Palette with High-Contrast Typography */
+  /* Design Tokens - Warm Cozy Sanctuary Palette with High-Contrast Typography */
   --bg:                 #FFF4F7;
   --bg-secondary:       #FFEBF0;
   --text:               #24141E;
@@ -169,10 +169,21 @@ body {
 }
 
 /* ── Typography helpers ── */
+:root, html, body {
+  --font-display: var(--font-pixel), "Courier New", monospace !important;
+}
+
 .font-handwriting { font-family: var(--font-handwriting), var(--font-display), Georgia, serif; font-style: italic; }
-.font-display     { font-family: var(--font-display), Georgia, serif; }
-.font-heading     { font-family: var(--font-heading), Georgia, serif; }
-.font-quote       { font-family: var(--font-quote), Georgia, serif; }
+.font-display     { font-family: var(--font-pixel), "Courier New", monospace !important; font-style: normal !important; }
+.font-heading     { font-family: var(--font-pixel), "Courier New", monospace !important; font-style: normal !important; }
+.font-quote       { font-family: var(--font-pixel), "Courier New", monospace !important; font-style: normal !important; }
+
+.font-display.italic,
+.italic.font-display,
+.font-display em,
+em.font-display {
+  font-style: normal !important;
+}
 
 /* ── Animation utilities ── */
 .animate-drift-up       { animation: drift-up 9s ease-in-out infinite; }
@@ -204,7 +215,7 @@ body {
 .delay-800 { animation-delay: 800ms; }
 .delay-900 { animation-delay: 900ms; }
 
-/* Card gradient — warm top-left to bottom-right, makes cards feel cozy */
+/* Card gradient - warm top-left to bottom-right, makes cards feel cozy */
 .card-gradient {
   background: linear-gradient(135deg, #FFFFFF 0%, var(--bg-secondary) 100%);
 }
@@ -491,10 +502,10 @@ body {
   color: var(--ink-light);
 }
 .typo-display {
-  font-family: var(--font-display), Georgia, serif;
-  font-style: italic;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-family: var(--font-pixel), "Courier New", monospace !important;
+  font-style: normal !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1.1;
   color: var(--ink-dark);
 }
@@ -673,7 +684,7 @@ textarea.input-warm {
 
 
 /* ══════════════════════════════════════════════
-   LANDING PAGE — Journal Experience Scope
+   LANDING PAGE - Journal Experience Scope
    Forces light warm palette regardless of theme
    ══════════════════════════════════════════════ */
 
@@ -892,7 +903,7 @@ textarea.input-warm {
   transform: translateY(-2px);
 }
 
-/* Section divider — stitched line */
+/* Section divider - stitched line */
 .landing-journal .stitch-line {
   border: none;
   height: 1px;

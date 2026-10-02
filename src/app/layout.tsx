@@ -15,7 +15,7 @@ const inter = Inter({
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-playfair",
   weight: ["400", "700"],
   style: ["normal", "italic"],
   display: "swap",
@@ -44,7 +44,7 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Pairfect — Private Relationship Sanctuary",
+  title: "Pairfect - Private Relationship Sanctuary",
   description: "A private digital sanctuary & living archive for two.",
   icons: {
     icon: [

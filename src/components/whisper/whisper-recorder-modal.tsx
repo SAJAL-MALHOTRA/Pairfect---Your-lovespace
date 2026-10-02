@@ -129,6 +129,9 @@ export function WhisperRecorderModal({
       // Setup audio analyzer
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioCtx();
+      if (ctx.state === "suspended") {
+        await ctx.resume().catch(() => {});
+      }
       audioContextRef.current = ctx;
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
@@ -160,6 +163,15 @@ export function WhisperRecorderModal({
 
         const mime = recorder.mimeType || "audio/webm";
         const blob = new Blob(audioChunksRef.current, { type: mime });
+
+        if (!blob || blob.size < 500) {
+          console.error("Audio recording blob is empty or too small:", blob?.size);
+          setErrorMessage("No audio was captured. Please speak into your microphone and try again.");
+          setRecordState("idle");
+          setSeconds(0);
+          return;
+        }
+
         recordedBlobRef.current = blob;
 
         const audioUrl = URL.createObjectURL(blob);
@@ -167,7 +179,7 @@ export function WhisperRecorderModal({
         previewAudioRef.current = audio;
 
         audio.ontimeupdate = () => {
-          if (audio.duration && isFinite(audio.duration)) {
+          if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
             setPreviewProgress((audio.currentTime / audio.duration) * 100);
           }
         };
@@ -231,6 +243,11 @@ export function WhisperRecorderModal({
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try {
+        mediaRecorderRef.current.requestData();
+      } catch (err) {
+        console.warn("requestData error:", err);
+      }
       mediaRecorderRef.current.stop();
     }
   };
@@ -267,7 +284,10 @@ export function WhisperRecorderModal({
 
   // Final Broadcast Submission
   const handleBroadcast = async () => {
-    if (!recordedBlobRef.current) return;
+    if (!recordedBlobRef.current || recordedBlobRef.current.size < 500) {
+      setErrorMessage("No audio captured. Please speak into the mic and try again.");
+      return;
+    }
     playRadioClick();
     setRecordState("broadcasting");
     setErrorMessage(null);

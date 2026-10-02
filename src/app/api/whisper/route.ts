@@ -33,9 +33,10 @@ export async function GET(request: Request) {
       return NextResponse.json([]);
     }
 
-    // Try selecting from whispers table
+    // Try selecting from whispers table using admin client to ensure active pair members can read all whispers
     try {
-      const { data: whispers, error: selectErr } = await supabase
+      const admin = createAdminClient();
+      const { data: whispers, error: selectErr } = await admin
         .from("whispers")
         .select("*")
         .eq("pair_id", pairId)
@@ -96,12 +97,20 @@ export async function POST(request: Request) {
     if (typeof audioData === "string" && audioData.startsWith("data:audio")) {
       try {
         const admin = createAdminClient();
-        const base64Content = audioData.includes(",") ? audioData.split(",")[1] : audioData;
+        const commaIdx = audioData.indexOf(",");
+        const base64Content = commaIdx !== -1 ? audioData.slice(commaIdx + 1) : audioData;
         const buffer = Buffer.from(base64Content, "base64");
+
+        if (buffer.length < 200) {
+          return NextResponse.json(
+            { error: "Audio data is too small or corrupt. Please re-record." },
+            { status: 400 }
+          );
+        }
 
         // Determine content type and appropriate extension
         let contentType = "audio/webm";
-        const mimeMatch = audioData.match(/^data:([^;]+);base64,/);
+        const mimeMatch = audioData.match(/^data:([^;]+)/);
         if (mimeMatch && mimeMatch[1]) {
           contentType = mimeMatch[1];
         }
@@ -132,9 +141,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Insert into whispers table
+    // Insert into whispers table with admin client
     try {
-      const { data: newWhisper, error: insertErr } = await supabase
+      const admin = createAdminClient();
+      const { data: newWhisper, error: insertErr } = await admin
         .from("whispers")
         .insert({
           pair_id: pairId,
@@ -151,24 +161,8 @@ export async function POST(request: Request) {
         .single();
 
       if (insertErr) {
-        console.warn("Whispers DB insert error:", insertErr.message);
-        // Fallback response with synthetic ID so UX continues smoothly
-        return NextResponse.json({
-          success: true,
-          whisper: {
-            id: `whisper-${Date.now()}`,
-            pair_id: pairId,
-            sender_id: user.id,
-            sender_name: senderName,
-            frequency: Number(frequency),
-            title: title.trim().slice(0, 80),
-            audio_url: finalAudioUrl,
-            duration: Number(duration) || 0,
-            mood_tag: moodTag,
-            listened_at: null,
-            created_at: new Date().toISOString(),
-          },
-        });
+        console.error("Whispers DB insert error:", insertErr.message);
+        return NextResponse.json({ error: "Failed to save whisper: " + insertErr.message }, { status: 500 });
       }
 
       const sanitizedWhisper = newWhisper ? {
@@ -178,23 +172,8 @@ export async function POST(request: Request) {
       } : null;
 
       return NextResponse.json({ success: true, whisper: sanitizedWhisper });
-    } catch {
-      return NextResponse.json({
-        success: true,
-        whisper: {
-          id: `whisper-${Date.now()}`,
-          pair_id: pairId,
-          sender_id: user.id,
-          sender_name: senderName,
-          frequency: Number(frequency),
-          title: title.trim().slice(0, 80),
-          audio_url: finalAudioUrl,
-          duration: Number(duration) || 0,
-          mood_tag: moodTag,
-          listened_at: null,
-          created_at: new Date().toISOString(),
-        },
-      });
+    } catch (insertCatch: unknown) {
+      const msg = insertCatch instanceof Error ? insertCatch.message : "Failed to broadcast voice note";
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to broadcast whisper";
@@ -219,7 +198,8 @@ export async function PATCH(request: Request) {
     }
 
     try {
-      const { data, error } = await supabase
+      const admin = createAdminClient();
+      const { data, error } = await admin
         .from("whispers")
         .update({ listened_at: listened ? new Date().toISOString() : null })
         .eq("id", id)
@@ -254,7 +234,8 @@ export async function DELETE(request: Request) {
     }
 
     try {
-      await supabase
+      const admin = createAdminClient();
+      await admin
         .from("whispers")
         .delete()
         .eq("id", id)

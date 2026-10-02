@@ -717,6 +717,13 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* City Selector Modal */}
+      <CitySelectorModal
+        isOpen={isCityModalOpen}
+        onClose={() => setIsCityModalOpen(false)}
+        onCitySelected={() => refreshSession()}
+      />
     </div>
   );
 }

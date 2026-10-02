@@ -275,8 +275,8 @@ export default function MeanwhileCard({ userProfile, partnerProfile, onOpenCityS
           </button>
         </div>
 
-        {/* Large Serif Distance Display */}
-        <h2 className="font-display italic text-4xl sm:text-5xl font-black text-[var(--text)] tracking-tight pt-1">
+        {/* Large Pixel Distance Display */}
+        <h2 className="font-pixel text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--text)] tracking-wider pt-1">
           {distanceLabel}
         </h2>
       </div>
