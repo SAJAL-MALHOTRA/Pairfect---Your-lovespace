@@ -1,18 +1,17 @@
 /**
- * BouquetNote Botanical Floral Arrangement Engine.
- * 
- * Provides 12 handcrafted botanical flower varieties, 4 greenery foliage types,
- * 7 artisanal wrapping styles, 5 ribbon ties, 4 atmosphere effects,
- * and curated romantic occasion message starters.
+ * Botanical Floral Arrangement Engine.
+ * Powered by high-resolution botanical illustrations from Digibouquet.
  */
 
 export interface FlowerType {
   id: string;
   name: string;
   symbolism: string;
+  meaning: string;
+  image: string;
+  monoImage: string;
   primaryColor: string;
   accentColor: string;
-  petalPath: string;
   description: string;
 }
 
@@ -20,19 +19,22 @@ export interface GreeneryType {
   id: string;
   name: string;
   description: string;
-  color: string;
+  baseImage: string;
+  topImage: string;
+  monoBaseImage: string;
+  monoTopImage: string;
 }
 
 export interface WrappingStyle {
   id: string;
   name: string;
   description: string;
+  cssClass: string;
   bgGradient: string;
   borderColor: string;
   shadowColor: string;
-  lapelFill: string;
-  texturePattern?: string;
   textColor: string;
+  isVase?: boolean;
 }
 
 export interface RibbonStyle {
@@ -58,16 +60,26 @@ export interface OccasionStarter {
   defaultMessage: string;
 }
 
-export interface BouquetItemConfig {
+export interface BouquetTemplate {
   id: string;
+  name: string;
+  emoji: string;
+  flowers: string[];
+  wrappingId: string;
+}
+
+export interface ArrangementPosition {
   flowerId: string;
-  scale?: number;
-  rotation?: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  zIndex: number;
 }
 
 export interface DigitalBouquet {
   id: string;
-  flowers: string[]; // flower IDs (3 to 6 items)
+  flowers: string[];
   wrapping: string;
   ribbon: string;
   greenery: string;
@@ -75,254 +87,384 @@ export interface DigitalBouquet {
   toName: string;
   fromName: string;
   message: string;
-  cardStyle: string;
   createdAt: number;
 }
 
-// ── 12 Botanical Flower Varieties ──────────────────────────────────────────
+// 12 Authentic Botanical Flower Varieties
 export const BOTANICAL_FLOWERS: Record<string, FlowerType> = {
   rose: {
     id: "rose",
-    name: "Classic Rose",
-    symbolism: "Deep Love & Passion",
+    name: "Rose",
+    symbolism: "Passion & True Love",
+    meaning: "Passion and true love",
+    image: "/bouquet/color/flowers/rose.png",
+    monoImage: "/bouquet/mono/flowers/rose.png",
     primaryColor: "#E11D48",
     accentColor: "#BE123C",
-    petalPath: "rose",
-    description: "Velvety crimson petals wound in a romantic spiral",
+    description: "Deep velvety crimson petals radiating romance and lifelong devotion",
   },
   peony: {
     id: "peony",
-    name: "Blush Peony",
+    name: "Peony",
     symbolism: "Romance & Prosperity",
+    meaning: "Romance and prosperity",
+    image: "/bouquet/color/flowers/peony.png",
+    monoImage: "/bouquet/mono/flowers/peony.png",
     primaryColor: "#FB7185",
     accentColor: "#F43F5E",
-    petalPath: "peony",
-    description: "Lush layered ruffles with golden sunburst stamens",
+    description: "Lush layered blush ruffles evoking gentle affection and happiness",
   },
   tulip: {
     id: "tulip",
-    name: "Golden Tulip",
-    symbolism: "Devoted Affection",
+    name: "Tulip",
+    symbolism: "Perfect Deep Love",
+    meaning: "Perfect deep love",
+    image: "/bouquet/color/flowers/tulip.png",
+    monoImage: "/bouquet/mono/flowers/tulip.png",
     primaryColor: "#FBBF24",
     accentColor: "#F59E0B",
-    petalPath: "tulip",
-    description: "Graceful cup blossom in warm honey and amber hues",
+    description: "Graceful sculpted bloom expressing unconditional warmth",
   },
   daisy: {
     id: "daisy",
-    name: "Meadow Daisy",
+    name: "Daisy",
     symbolism: "Innocence & Pure Joy",
+    meaning: "Innocence and purity",
+    image: "/bouquet/color/flowers/daisy.png",
+    monoImage: "/bouquet/mono/flowers/daisy.png",
     primaryColor: "#FFFFFF",
     accentColor: "#FCD34D",
-    petalPath: "daisy",
-    description: "Crisp white radiating petals with sunny yellow heart",
-  },
-  poppy: {
-    id: "poppy",
-    name: "Scarlet Poppy",
-    symbolism: "Sweet Remembrance",
-    primaryColor: "#EA580C",
-    accentColor: "#C2410C",
-    petalPath: "poppy",
-    description: "Delicate papery crimson petals with midnight core",
-  },
-  lavender: {
-    id: "lavender",
-    name: "French Lavender",
-    symbolism: "Serenity & Calm Devotion",
-    primaryColor: "#A855F7",
-    accentColor: "#7E22CE",
-    petalPath: "lavender",
-    description: "Clustered purple buds radiating calming fragrance",
+    description: "Crisp radiating petals with sunny golden heart celebrating cheerful love",
   },
   lily: {
     id: "lily",
-    name: "White Lily",
-    symbolism: "Elegance & Purity",
+    name: "Lily",
+    symbolism: "Pure Love & Devotion",
+    meaning: "Pure love and devotion",
+    image: "/bouquet/color/flowers/lily.png",
+    monoImage: "/bouquet/mono/flowers/lily.png",
     primaryColor: "#F8FAFC",
-    accentColor: "#E2E8F0",
-    petalPath: "lily",
-    description: "Majestic alabaster trumpet with delicate star contours",
-  },
-  orchid: {
-    id: "orchid",
-    name: "Exotic Orchid",
-    symbolism: "Refined Rare Beauty",
-    primaryColor: "#C084FC",
-    accentColor: "#9333EA",
-    petalPath: "orchid",
-    description: "Butterfly petals with vivid fuchsia labellum throat",
-  },
-  camellia: {
-    id: "camellia",
-    name: "Porcelain Camellia",
-    symbolism: "Longing & Adoration",
-    primaryColor: "#FDA4AF",
-    accentColor: "#FB7185",
-    petalPath: "camellia",
-    description: "Geometric concentric spirals of vintage blush silk",
+    accentColor: "#CBD5E1",
+    description: "Majestic alabaster blossom carrying elegance and peaceful presence",
   },
   sunflower: {
     id: "sunflower",
-    name: "Sunny Sunburst",
-    symbolism: "Warmth & Eternal Loyalty",
+    name: "Sunflower",
+    symbolism: "Adoration & Loyalty",
+    meaning: "Adoration and loyalty",
+    image: "/bouquet/color/flowers/sunflower.png",
+    monoImage: "/bouquet/mono/flowers/sunflower.png",
     primaryColor: "#F59E0B",
     accentColor: "#78350F",
-    petalPath: "sunflower",
-    description: "Radiant golden ray petals surrounding rich cocoa disc",
+    description: "Bright golden ray florets bringing sunshine and unwavering faith",
+  },
+  orchid: {
+    id: "orchid",
+    name: "Orchid",
+    symbolism: "Refinement & Rare Beauty",
+    meaning: "Refinement and rare beauty",
+    image: "/bouquet/color/flowers/orchid.png",
+    monoImage: "/bouquet/mono/flowers/orchid.png",
+    primaryColor: "#C084FC",
+    accentColor: "#9333EA",
+    description: "Exotic delicate petals capturing precious unique admiration",
+  },
+  carnation: {
+    id: "carnation",
+    name: "Carnation",
+    symbolism: "Fascination & Love",
+    meaning: "Fascination and love",
+    image: "/bouquet/color/flowers/carnation.png",
+    monoImage: "/bouquet/mono/flowers/carnation.png",
+    primaryColor: "#FB7185",
+    accentColor: "#E11D48",
+    description: "Soft ruffled lace petals symbolising tender fascination",
+  },
+  dahlia: {
+    id: "dahlia",
+    name: "Dahlia",
+    symbolism: "Elegance & Inner Strength",
+    meaning: "Elegance and inner strength",
+    image: "/bouquet/color/flowers/dahlia.png",
+    monoImage: "/bouquet/mono/flowers/dahlia.png",
+    primaryColor: "#BE185D",
+    accentColor: "#831843",
+    description: "Geometric concentric layers expressing dignity and grace",
+  },
+  ranunculus: {
+    id: "ranunculus",
+    name: "Ranunculus",
+    symbolism: "Charm & Radiant Attraction",
+    meaning: "Charm and attractiveness",
+    image: "/bouquet/color/flowers/ranunculus.png",
+    monoImage: "/bouquet/mono/flowers/ranunculus.png",
+    primaryColor: "#F472B6",
+    accentColor: "#BE185D",
+    description: "Tissue-thin swirl petals radiating charming elegance",
+  },
+  anemone: {
+    id: "anemone",
+    name: "Anemone",
+    symbolism: "Anticipation & Excitement",
+    meaning: "Anticipation and excitement",
+    image: "/bouquet/color/flowers/anemone.png",
+    monoImage: "/bouquet/mono/flowers/anemone.png",
+    primaryColor: "#9333EA",
+    accentColor: "#18181B",
+    description: "Velvety petals with dramatic midnight core anticipating sweet moments",
+  },
+  zinnia: {
+    id: "zinnia",
+    name: "Zinnia",
+    symbolism: "Lasting Affection & Endurance",
+    meaning: "Endurance and lasting affection",
+    image: "/bouquet/color/flowers/zinnia.png",
+    monoImage: "/bouquet/mono/flowers/zinnia.png",
+    primaryColor: "#EA580C",
+    accentColor: "#C2410C",
+    description: "Bold vibrant petals celebrating timeless bond across time and distance",
+  },
+
+  // Graceful fallbacks for legacy flower IDs
+  poppy: {
+    id: "poppy",
+    name: "Scarlet Anemone",
+    symbolism: "Sweet Remembrance",
+    meaning: "Anticipation and excitement",
+    image: "/bouquet/color/flowers/anemone.png",
+    monoImage: "/bouquet/mono/flowers/anemone.png",
+    primaryColor: "#EA580C",
+    accentColor: "#C2410C",
+    description: "Delicate papery crimson bloom with midnight core",
+  },
+  lavender: {
+    id: "lavender",
+    name: "Violet Dahlia",
+    symbolism: "Serenity & Calm Devotion",
+    meaning: "Elegance and inner strength",
+    image: "/bouquet/color/flowers/dahlia.png",
+    monoImage: "/bouquet/mono/flowers/dahlia.png",
+    primaryColor: "#A855F7",
+    accentColor: "#7E22CE",
+    description: "Layered purple petals radiating calming comfort",
+  },
+  camellia: {
+    id: "camellia",
+    name: "Blush Carnation",
+    symbolism: "Longing & Adoration",
+    meaning: "Fascination and love",
+    image: "/bouquet/color/flowers/carnation.png",
+    monoImage: "/bouquet/mono/flowers/carnation.png",
+    primaryColor: "#FDA4AF",
+    accentColor: "#FB7185",
+    description: "Silk blush petals expressing tender adoration",
   },
   lotus: {
     id: "lotus",
-    name: "Zen Lotus",
+    name: "Water Lily",
     symbolism: "Pure Soul Connection",
+    meaning: "Pure love and devotion",
+    image: "/bouquet/color/flowers/lily.png",
+    monoImage: "/bouquet/mono/flowers/lily.png",
     primaryColor: "#F472B6",
     accentColor: "#DB2777",
-    petalPath: "lotus",
-    description: "Gentle unfolding waterlily with sacred petal harmony",
+    description: "Gentle unfolding petals with serene harmony",
   },
   baby_breath: {
     id: "baby_breath",
-    name: "Baby's Breath",
+    name: "Ranunculus Cloud",
     symbolism: "Everlasting Romance",
+    meaning: "Charm and attractiveness",
+    image: "/bouquet/color/flowers/ranunculus.png",
+    monoImage: "/bouquet/mono/flowers/ranunculus.png",
     primaryColor: "#F1F5F9",
     accentColor: "#94A3B8",
-    petalPath: "baby_breath",
-    description: "Delicate cloud of tiny white blossoms adding airy wonder",
+    description: "Delicate layered bloom adding airy elegance",
   },
 };
 
-export const FLOWER_LIST = Object.values(BOTANICAL_FLOWERS);
+// 12 primary flowers for picking
+export const FLOWER_LIST = [
+  BOTANICAL_FLOWERS.rose,
+  BOTANICAL_FLOWERS.peony,
+  BOTANICAL_FLOWERS.tulip,
+  BOTANICAL_FLOWERS.daisy,
+  BOTANICAL_FLOWERS.lily,
+  BOTANICAL_FLOWERS.sunflower,
+  BOTANICAL_FLOWERS.orchid,
+  BOTANICAL_FLOWERS.carnation,
+  BOTANICAL_FLOWERS.dahlia,
+  BOTANICAL_FLOWERS.ranunculus,
+  BOTANICAL_FLOWERS.anemone,
+  BOTANICAL_FLOWERS.zinnia,
+];
 
-// ── 4 Greenery Foliage Types ───────────────────────────────────────────────
+export function getFlowerById(id: string): FlowerType {
+  const norm = (id || "rose").toLowerCase().replace("-", "_");
+  return BOTANICAL_FLOWERS[norm] || BOTANICAL_FLOWERS.rose;
+}
+
+// 3 Botanical Greenery Foliage Bush Varieties
 export const GREENERY_OPTIONS: Record<string, GreeneryType> = {
   eucalyptus: {
     id: "eucalyptus",
-    name: "Silver Dollar Eucalyptus",
-    description: "Circular sage-blue leaves with aromatic rustic charm",
-    color: "#4D7C5B",
+    name: "Lush Eucalyptus Meadow",
+    description: "Sage rounded leaves offering botanical balance",
+    baseImage: "/bouquet/color/bush/bush-1.png",
+    topImage: "/bouquet/color/bush/bush-1-top.png",
+    monoBaseImage: "/bouquet/mono/bush/bush-2.png",
+    monoTopImage: "/bouquet/mono/bush/bush-2-top.png",
   },
   fern: {
     id: "fern",
-    name: "Feathered Emerald Fern",
-    description: "Lush arching fronds with intricate leaf texture",
-    color: "#2D6A4F",
+    name: "Forest Fern Grove",
+    description: "Deep emerald arching fronds with rich texture",
+    baseImage: "/bouquet/color/bush/bush-2.png",
+    topImage: "/bouquet/color/bush/bush-2-top.png",
+    monoBaseImage: "/bouquet/mono/bush/bush-2.png",
+    monoTopImage: "/bouquet/mono/bush/bush-2-top.png",
   },
-  olive: {
-    id: "olive",
-    name: "Tuscan Olive Sprigs",
-    description: "Slender silvery Mediterranean leaves",
-    color: "#588157",
-  },
-  ruscus: {
-    id: "ruscus",
-    name: "Italian Ruscus",
-    description: "Glossy deep forest green oval foliage",
-    color: "#1B4332",
+  sprigs: {
+    id: "sprigs",
+    name: "Wild Botanical Sprigs",
+    description: "Airy herbal branches giving an organic garden touch",
+    baseImage: "/bouquet/color/bush/bush-3.png",
+    topImage: "/bouquet/color/bush/bush-3-top.png",
+    monoBaseImage: "/bouquet/mono/bush/bush-2.png",
+    monoTopImage: "/bouquet/mono/bush/bush-2-top.png",
   },
 };
 
-// ── 7 Artisanal Wrapping Styles ────────────────────────────────────────────
+export const GREENERY_KEYS = ["eucalyptus", "fern", "sprigs"] as const;
+
+export function getGreeneryData(idOrIndex: string | number, isMono = false) {
+  let key: string;
+  if (typeof idOrIndex === "number") {
+    key = GREENERY_KEYS[Math.abs(idOrIndex) % GREENERY_KEYS.length];
+  } else {
+    key = idOrIndex && GREENERY_OPTIONS[idOrIndex] ? idOrIndex : "eucalyptus";
+  }
+  const option = GREENERY_OPTIONS[key] || GREENERY_OPTIONS.eucalyptus;
+
+  return {
+    base: isMono ? option.monoBaseImage : option.baseImage,
+    top: isMono ? option.monoTopImage : option.topImage,
+    key,
+    name: option.name,
+  };
+}
+
+// 7 Artisanal Wrapping Styles (wraps and vases)
 export const WRAPPING_STYLES: Record<string, WrappingStyle> = {
-  kraft: {
-    id: "kraft",
-    name: "Artisan Kraft",
-    description: "Natural earthy brown craft paper with rustic folds",
-    bgGradient: "linear-gradient(145deg, #DECCA6 0%, #CDB388 100%)",
-    borderColor: "#A98E65",
-    shadowColor: "rgba(92, 70, 43, 0.22)",
-    lapelFill: "#DFCEAA",
-    textColor: "#422810",
+  classic: {
+    id: "classic",
+    name: "Classic Cream",
+    description: "Warm linen cream wrap with soft natural folds",
+    cssClass: "wrap-classic",
+    bgGradient: "linear-gradient(175deg, #FAF7EE 0%, #E6DFD1 100%)",
+    borderColor: "#D2C5B0",
+    shadowColor: "rgba(180, 160, 130, 0.25)",
+    textColor: "#44392E",
   },
-  blush: {
-    id: "blush",
-    name: "Silk Blush",
-    description: "Soft romantic pink paper with gentle sheen",
-    bgGradient: "linear-gradient(145deg, #FCE7EB 0%, #F8D3DA 100%)",
-    borderColor: "#E59BA8",
-    shadowColor: "rgba(180, 80, 105, 0.18)",
-    lapelFill: "#FDEDF0",
-    textColor: "#881337",
-  },
-  burgundy: {
-    id: "burgundy",
-    name: "Velvet Burgundy",
-    description: "Deep cabernet paper with gold stitch edge",
-    bgGradient: "linear-gradient(145deg, #4A1521 0%, #2A0911 100%)",
-    borderColor: "#881337",
-    shadowColor: "rgba(30, 5, 10, 0.35)",
-    lapelFill: "#5B1B29",
-    textColor: "#FFF1F2",
-  },
-  gazette: {
-    id: "gazette",
-    name: "Vintage Gazette",
-    description: "Parisian antique newsprint with romantic script",
-    bgGradient: "linear-gradient(145deg, #FAF4E6 0%, #ECE0CA 100%)",
-    borderColor: "#B8A382",
-    shadowColor: "rgba(80, 65, 45, 0.2)",
-    lapelFill: "#FDFCFA",
-    textColor: "#292524",
-  },
-  satin: {
-    id: "satin",
-    name: "Ivory Satin",
-    description: "Lustrous cream bridal wrap with pearlescent tone",
-    bgGradient: "linear-gradient(145deg, #FAF8F5 0%, #EFE9DE 100%)",
-    borderColor: "#D6CCC0",
-    shadowColor: "rgba(120, 110, 95, 0.15)",
-    lapelFill: "#FFFFFF",
-    textColor: "#44403C",
+  rose: {
+    id: "rose",
+    name: "Blushing Rose",
+    description: "Dusty petal pink wrap with romantic pastel sheen",
+    cssClass: "wrap-rose",
+    bgGradient: "linear-gradient(175deg, #FDECEF 0%, #DCB3B3 100%)",
+    borderColor: "#CCA0A0",
+    shadowColor: "rgba(220, 140, 150, 0.25)",
+    textColor: "#5A252B",
   },
   sage: {
     id: "sage",
-    name: "Sage Linen",
-    description: "Calm organic botanical herbal green texture",
-    bgGradient: "linear-gradient(145deg, #E2EBDE 0%, #CAD8C3 100%)",
-    borderColor: "#9BB392",
-    shadowColor: "rgba(45, 75, 40, 0.18)",
-    lapelFill: "#EDF3EA",
-    textColor: "#14532D",
+    name: "Sage Garden",
+    description: "Calm organic herbal sage texture",
+    cssClass: "wrap-sage",
+    bgGradient: "linear-gradient(175deg, #EDF2E8 0%, #C1C8BA 100%)",
+    borderColor: "#AAB3A2",
+    shadowColor: "rgba(120, 150, 120, 0.22)",
+    textColor: "#2B3A28",
   },
-  midnight: {
-    id: "midnight",
-    name: "Midnight Noir",
-    description: "Moody celestial wrap with starlight glints",
-    bgGradient: "linear-gradient(145deg, #181E2E 0%, #0F131D 100%)",
-    borderColor: "#2D3748",
-    shadowColor: "rgba(5, 8, 15, 0.4)",
-    lapelFill: "#222B40",
-    textColor: "#F1F5F9",
+  slate: {
+    id: "slate",
+    name: "Midnight Slate",
+    description: "Moody charcoal slate paper with gold contrast",
+    cssClass: "wrap-slate",
+    bgGradient: "linear-gradient(175deg, #4A5568 0%, #2D3748 100%)",
+    borderColor: "#718096",
+    shadowColor: "rgba(30, 41, 59, 0.35)",
+    textColor: "#F7FAFC",
+  },
+  kraft: {
+    id: "kraft",
+    name: "Artisan Kraft",
+    description: "Rustic earthy brown craft paper with handcrafted charm",
+    cssClass: "wrap-kraft",
+    bgGradient: "linear-gradient(175deg, #E6D3B3 0%, #CDB388 100%)",
+    borderColor: "#A98E65",
+    shadowColor: "rgba(110, 80, 45, 0.24)",
+    textColor: "#3F2A14",
+  },
+  glass: {
+    id: "glass",
+    name: "Glass Vase",
+    description: "Translucent crystal glass with soft water refraction",
+    cssClass: "vase-glass",
+    bgGradient: "linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 100%)",
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    shadowColor: "rgba(100, 120, 140, 0.2)",
+    textColor: "#1E293B",
+    isVase: true,
+  },
+  ceramic: {
+    id: "ceramic",
+    name: "Ceramic Pot",
+    description: "Warm artisanal ceramic pot with glazed pottery rim",
+    cssClass: "vase-ceramic",
+    bgGradient: "linear-gradient(175deg, #F3ECE0 0%, #E0D5C1 100%)",
+    borderColor: "#BFAFA0",
+    shadowColor: "rgba(140, 120, 100, 0.25)",
+    textColor: "#3E3024",
+    isVase: true,
   },
 };
 
-// ── 5 Ribbon Ties ──────────────────────────────────────────────────────────
+export function getWrappingStyle(id?: string): WrappingStyle {
+  if (!id) return WRAPPING_STYLES.classic;
+  // Handle legacy naming like "wrap-classic", "wrap-rose", etc.
+  const cleanId = id.replace("wrap-", "").replace("vase-", "");
+  return WRAPPING_STYLES[cleanId] || WRAPPING_STYLES.classic;
+}
+
+// 5 Ribbon Ties
 export const RIBBON_STYLES: Record<string, RibbonStyle> = {
-  rose: {
-    id: "rose",
-    name: "Dusty Rose Satin",
-    color: "#E11D48",
-    accentColor: "#BE123C",
-    knotStyle: "double-bow",
-  },
   gold: {
     id: "gold",
     name: "Golden Twine",
     color: "#D97706",
-    accentColor: "#B45309",
+    accentColor: "#F59E0B",
     knotStyle: "cord-tie",
+  },
+  rose: {
+    id: "rose",
+    name: "Dusty Rose",
+    color: "#E11D48",
+    accentColor: "#FB7185",
+    knotStyle: "double-bow",
   },
   burgundy: {
     id: "burgundy",
     name: "Velvet Crimson",
     color: "#881337",
-    accentColor: "#4C0519",
+    accentColor: "#BE123C",
     knotStyle: "wide-ribbon",
   },
   forest: {
     id: "forest",
     name: "Forest Silk",
     color: "#166534",
-    accentColor: "#14532D",
+    accentColor: "#22C55E",
     knotStyle: "double-bow",
   },
   ivory: {
@@ -334,11 +476,11 @@ export const RIBBON_STYLES: Record<string, RibbonStyle> = {
   },
 };
 
-// ── 4 Atmosphere Effects ───────────────────────────────────────────────────
+// 4 Atmosphere Effects
 export const ATMOSPHERE_EFFECTS: Record<string, AtmosphereEffect> = {
   petals: {
     id: "petals",
-    name: "Floating Rose Petals",
+    name: "Floating Petals",
     description: "Soft velvety petals drifting gently across the screen",
     icon: "🌸",
   },
@@ -362,7 +504,39 @@ export const ATMOSPHERE_EFFECTS: Record<string, AtmosphereEffect> = {
   },
 };
 
-// ── 6 Occasion Starters (with curated romantic templates) ───────────────────
+// Curated Bouquet Templates
+export const BOUQUET_TEMPLATES: BouquetTemplate[] = [
+  {
+    id: "anniversary",
+    name: "Anniversary Love",
+    emoji: "💕",
+    flowers: ["rose", "rose", "peony", "tulip", "tulip", "carnation"],
+    wrappingId: "rose",
+  },
+  {
+    id: "birthday",
+    name: "Golden Birthday",
+    emoji: "🎂",
+    flowers: ["sunflower", "sunflower", "daisy", "dahlia", "zinnia", "tulip"],
+    wrappingId: "sage",
+  },
+  {
+    id: "thinking",
+    name: "Thinking of You",
+    emoji: "💭",
+    flowers: ["orchid", "ranunculus", "anemone", "peony", "carnation", "daisy"],
+    wrappingId: "classic",
+  },
+  {
+    id: "gratitude",
+    name: "Pure Gratitude",
+    emoji: "🕊️",
+    flowers: ["lily", "lily", "daisy", "carnation", "rose", "anemone"],
+    wrappingId: "slate",
+  },
+];
+
+// Occasion Starters for Personalized Letters
 export const OCCASION_STARTERS: OccasionStarter[] = [
   {
     id: "anniversary",
@@ -370,7 +544,7 @@ export const OCCASION_STARTERS: OccasionStarter[] = [
     title: "Another Year of Us",
     recipientTag: "To My Forever",
     defaultMessage:
-      "Happy anniversary. I still think about that ordinary evening when we talked until we forgot about time. I love the life we keep building together in those small hours: the quiet laughs, the familiar rituals, and the way you make home feel like a person.",
+      "Happy anniversary. I still think about that ordinary evening when we talked until we forgot about time. I love the life we keep building together: the quiet laughs, the familiar rituals, and the way you make home feel like a person.",
   },
   {
     id: "birthday",
@@ -383,7 +557,7 @@ export const OCCASION_STARTERS: OccasionStarter[] = [
   {
     id: "distance",
     occasion: "Missing You",
-    title: "Miles Can't Dim Us",
+    title: "Miles Cannot Dim Us",
     recipientTag: "Across the Distance",
     defaultMessage:
       "A handpicked bouquet to sit beside you today. Even with the miles between us, you are the first thought when I wake and the quiet comfort when the day settles down. Counting down the moments until these blooms can be real and in your hands.",
@@ -413,3 +587,49 @@ export const OCCASION_STARTERS: OccasionStarter[] = [
       "I am truly sorry for how I spoke. You mean far too much to me for words to get in the way of our kindness. I want to listen, understand you better, and hold your hand through this. Let us take a breath together.",
   },
 ];
+
+// Organic Golden-Angle Phyllotaxis Arrangement Engine
+export function generateArrangement(
+  flowerList: string[],
+  seed = 0.5,
+  canvasWidth = 460,
+  canvasHeight = 540
+): ArrangementPosition[] {
+  let s = Math.floor(seed * 100000) || 12345;
+  const rand = () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+
+  const positions: ArrangementPosition[] = [];
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight * 0.38;
+
+  const count = flowerList.length;
+
+  flowerList.forEach((flowerId, i) => {
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const angle = i * goldenAngle + rand() * 0.65;
+    const t = i / Math.max(count - 1, 1);
+    const radius = 24 + t * 105 + rand() * 32;
+
+    const x = centerX + Math.cos(angle) * radius * 0.95 - 55;
+    const y = centerY + Math.sin(angle) * radius * 0.72 - 55;
+    const rotation = (rand() - 0.5) * 28;
+    const scale = 0.76 + rand() * 0.32;
+    const zIndex = 3 + Math.floor(rand() * 10);
+
+    positions.push({
+      flowerId,
+      x: Math.max(canvasWidth * 0.05, Math.min(canvasWidth * 0.76, x)),
+      y: Math.max(canvasHeight * 0.05, Math.min(canvasHeight * 0.58, y)),
+      rotation,
+      scale,
+      zIndex,
+    });
+  });
+
+  // Sort by Y so lower flowers naturally layer in front
+  positions.sort((a, b) => a.y - b.y);
+  return positions;
+}

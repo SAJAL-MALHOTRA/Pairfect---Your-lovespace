@@ -1406,8 +1406,8 @@ function DynamicInteractiveGameArena({ soundEnabled }: { soundEnabled: boolean }
                   wrappingId="kraft"
                   ribbonId="rose"
                   atmosphereId="petals"
-                  toName="Mia"
-                  fromName="Alex"
+                  toName="My Favorite Person"
+                  fromName="Always Yours"
                   message="I wish I could be beside you today. Even with the miles between us, you are the first thought when I wake and the first smile in my day."
                   isRevealMode={true}
                   className="w-full max-w-[420px] aspect-[4/5] shadow-2xl"

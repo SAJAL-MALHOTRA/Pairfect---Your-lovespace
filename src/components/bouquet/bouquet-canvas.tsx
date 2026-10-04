@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  RenderFlowerIcon,
-  GreeneryBranch,
-  RibbonBow,
-} from "./flower-illustrations";
-import {
-  WRAPPING_STYLES,
+  getFlowerById,
+  getWrappingStyle,
+  getGreeneryData,
   RIBBON_STYLES,
-  ATMOSPHERE_EFFECTS,
+  generateArrangement,
+  ArrangementPosition,
 } from "@/lib/bouquet/flowers-data";
+import { RibbonBow } from "./flower-illustrations";
+import { playChimeSound } from "@/lib/bouquet/audio";
+import { celebrateBouquet } from "@/lib/bouquet/confetti";
 import { Sparkles, Heart } from "lucide-react";
 
 interface BouquetCanvasProps {
@@ -20,6 +21,11 @@ interface BouquetCanvasProps {
   ribbonId?: string;
   greeneryId?: string;
   atmosphereId?: string;
+  seed?: number;
+  positions?: ArrangementPosition[];
+  onPositionsChange?: (positions: ArrangementPosition[]) => void;
+  allowDrag?: boolean;
+  isMono?: boolean;
   toName?: string;
   fromName?: string;
   message?: string;
@@ -28,49 +34,17 @@ interface BouquetCanvasProps {
   className?: string;
 }
 
-// Organic arrangement coordinates for 3 to 6 flowers
-function getFlowerArrangement(count: number) {
-  if (count === 3) {
-    return [
-      { x: 50, y: 22, rot: 0, scale: 1.15, z: 12 },
-      { x: 32, y: 34, rot: -16, scale: 1.05, z: 10 },
-      { x: 68, y: 34, rot: 16, scale: 1.05, z: 10 },
-    ];
-  }
-  if (count === 4) {
-    return [
-      { x: 40, y: 24, rot: -8, scale: 1.08, z: 12 },
-      { x: 60, y: 24, rot: 8, scale: 1.08, z: 12 },
-      { x: 26, y: 36, rot: -20, scale: 1.0, z: 10 },
-      { x: 74, y: 36, rot: 20, scale: 1.0, z: 10 },
-    ];
-  }
-  if (count === 5) {
-    return [
-      { x: 50, y: 18, rot: 0, scale: 1.15, z: 14 },
-      { x: 34, y: 28, rot: -15, scale: 1.05, z: 12 },
-      { x: 66, y: 28, rot: 15, scale: 1.05, z: 12 },
-      { x: 24, y: 40, rot: -24, scale: 0.95, z: 10 },
-      { x: 76, y: 40, rot: 24, scale: 0.95, z: 10 },
-    ];
-  }
-  // 6 flowers
-  return [
-    { x: 36, y: 20, rot: -12, scale: 1.08, z: 14 },
-    { x: 50, y: 16, rot: 0, scale: 1.15, z: 15 },
-    { x: 64, y: 20, rot: 12, scale: 1.08, z: 14 },
-    { x: 24, y: 36, rot: -24, scale: 0.95, z: 11 },
-    { x: 50, y: 32, rot: 0, scale: 1.05, z: 12 },
-    { x: 76, y: 36, rot: 24, scale: 0.95, z: 11 },
-  ];
-}
-
 export default function BouquetCanvas({
   flowers,
-  wrappingId = "kraft",
-  ribbonId = "rose",
+  wrappingId = "classic",
+  ribbonId = "gold",
   greeneryId = "eucalyptus",
   atmosphereId = "petals",
+  seed = 0.42,
+  positions: externalPositions,
+  onPositionsChange,
+  allowDrag = false,
+  isMono = false,
   toName = "Someone Special",
   fromName = "With Love",
   message = "A handpicked digital bouquet for you.",
@@ -81,31 +55,51 @@ export default function BouquetCanvas({
   const [isOpened, setIsOpened] = useState(!isRevealMode);
   const [isUntying, setIsUntying] = useState(false);
   const [cardFocused, setCardFocused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const wrap = WRAPPING_STYLES[wrappingId] || WRAPPING_STYLES.kraft;
-  const ribbon = RIBBON_STYLES[ribbonId] || RIBBON_STYLES.rose;
+  const wrap = getWrappingStyle(wrappingId);
+  const ribbon = RIBBON_STYLES[ribbonId] || RIBBON_STYLES.gold;
+  const greenery = getGreeneryData(greeneryId, isMono);
 
-  const validFlowers = flowers.length > 0 ? flowers.slice(0, 6) : ["rose", "peony", "tulip"];
-  const arrangement = getFlowerArrangement(validFlowers.length);
+  // Filter or fallback flowers
+  const validFlowers = useMemo(() => {
+    return Array.isArray(flowers) && flowers.length > 0
+      ? flowers.slice(0, 10)
+      : ["rose", "peony", "tulip", "daisy"];
+  }, [flowers]);
+
+  // Generate organic phyllotaxis layout if external positions are not supplied
+  const defaultPositions = useMemo(() => {
+    return generateArrangement(validFlowers, seed, 460, 540);
+  }, [validFlowers, seed]);
+
+  const currentPositions = externalPositions && externalPositions.length === validFlowers.length
+    ? externalPositions
+    : defaultPositions;
 
   const handleOpenClick = () => {
     setIsUntying(true);
+    playChimeSound();
     setTimeout(() => {
       setIsOpened(true);
       setCardFocused(true);
       setIsUntying(false);
+      celebrateBouquet();
       onUntie?.();
-    }, 650);
+    }, 600);
   };
 
   return (
     <div
+      ref={containerRef}
       className={`relative w-full max-w-[460px] aspect-[4/5] mx-auto select-none overflow-hidden rounded-3xl shadow-2xl transition-all duration-500 ${className}`}
       style={{
-        background: "linear-gradient(155deg, #FBF8F3 0%, #F5ECE0 60%, #EFE3D3 100%)",
+        background: isMono
+          ? "linear-gradient(155deg, #27272A 0%, #18181B 100%)"
+          : "linear-gradient(155deg, #FBF8F3 0%, #F5ECE0 60%, #EFE3D3 100%)",
       }}
     >
-      {/* ── Untying Golden Sparkle Burst ── */}
+      {/* Untying Golden Sparkle Burst */}
       {isUntying && (
         <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
           {Array.from({ length: 18 }).map((_, i) => (
@@ -114,9 +108,9 @@ export default function BouquetCanvas({
               className="absolute w-2.5 h-2.5 rounded-full bg-gradient-to-r from-amber-300 to-rose-300 shadow-md"
               initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
               animate={{
-                scale: [0, 1.6, 0],
-                x: Math.cos((i / 18) * Math.PI * 2) * 140,
-                y: Math.sin((i / 18) * Math.PI * 2) * 140,
+                scale: [0, 1.8, 0],
+                x: Math.cos((i / 18) * Math.PI * 2) * 150,
+                y: Math.sin((i / 18) * Math.PI * 2) * 150,
                 opacity: [1, 1, 0],
               }}
               transition={{ duration: 0.7, ease: "easeOut" }}
@@ -125,12 +119,12 @@ export default function BouquetCanvas({
         </div>
       )}
 
-      {/* ── Atmosphere Particles ── */}
+      {/* Atmosphere Particles: Floating Rose Petals */}
       {atmosphereId === "petals" && (
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
           {Array.from({ length: 10 }).map((_, i) => (
             <motion.div
-              key={i}
+              key={`petal-${i}`}
               className="absolute w-3.5 h-4.5 bg-gradient-to-br from-rose-200 via-rose-300 to-rose-400/80 rounded-full"
               style={{
                 borderRadius: "60% 40% 70% 30%",
@@ -140,10 +134,8 @@ export default function BouquetCanvas({
               }}
               animate={{
                 y: ["0%", "1200%"],
-                x: [0, (i % 2 === 0 ? 35 : -35), 0],
+                x: [0, i % 2 === 0 ? 35 : -35, 0],
                 rotateZ: [0, 360],
-                rotateX: [0, 180, 360],
-                rotateY: [0, 180, 360],
                 opacity: [0, 0.95, 0],
               }}
               transition={{
@@ -157,18 +149,19 @@ export default function BouquetCanvas({
         </div>
       )}
 
+      {/* Atmosphere Particles: Golden Stardust */}
       {atmosphereId === "sparkles" && (
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
           {Array.from({ length: 12 }).map((_, i) => (
             <motion.div
-              key={i}
+              key={`sparkle-${i}`}
               className="absolute text-amber-400"
               style={{
                 left: `${(i * 9 + 4) % 94}%`,
                 top: `${(i * 14 + 10) % 85}%`,
               }}
               animate={{
-                scale: [0, 1.2, 0],
+                scale: [0, 1.25, 0],
                 opacity: [0, 0.9, 0],
               }}
               transition={{
@@ -183,20 +176,21 @@ export default function BouquetCanvas({
         </div>
       )}
 
+      {/* Atmosphere Particles: Tender Hearts */}
       {atmosphereId === "hearts" && (
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
           {Array.from({ length: 8 }).map((_, i) => (
             <motion.div
-              key={i}
+              key={`heart-${i}`}
               className="absolute text-rose-400"
               style={{
                 left: `${(i * 13 + 5) % 92}%`,
                 bottom: "5%",
               }}
               animate={{
-                y: [0, -400],
-                opacity: [0, 0.8, 0],
-                scale: [0.6, 1.1, 0.8],
+                y: [0, -420],
+                opacity: [0, 0.85, 0],
+                scale: [0.6, 1.15, 0.8],
               }}
               transition={{
                 duration: 5 + (i % 3),
@@ -211,183 +205,202 @@ export default function BouquetCanvas({
         </div>
       )}
 
-      {/* ── Background Subtle Vignette ── */}
-      <div className="absolute inset-0 pointer-events-none opacity-40 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(60,40,30,0.15)_100%)]" />
+      {/* Background Soft Vignette */}
+      <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(60,40,30,0.18)_100%)]" />
 
-      {/* ── Back Paper Wrapping Flap ── */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[84%] h-[68%] z-[4] transition-all duration-500"
-        style={{
-          background: wrap.bgGradient,
-          clipPath: "polygon(0% 18%, 18% 0%, 82% 0%, 100% 18%, 68% 100%, 32% 100%)",
-          boxShadow: `0 16px 36px ${wrap.shadowColor}`,
-          borderTop: `1px solid ${wrap.borderColor}`,
-        }}
-      >
-        {/* Paper texture overlay */}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:8px_8px]" />
+      {/* LAYER 1: Back Wrapping Paper Cone or Back Wall */}
+      {!wrap.isVase && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[62%] h-[64%] z-[2] transition-all duration-500"
+          style={{
+            background: wrap.bgGradient,
+            clipPath: "polygon(14% 0%, 86% 0%, 100% 100%, 0% 100%)",
+            boxShadow: `0 16px 36px ${wrap.shadowColor}`,
+            borderTop: `1px solid ${wrap.borderColor}`,
+          }}
+        />
+      )}
+
+      {/* LAYER 2: Foliage Bush Base (Behind Flowers) */}
+      <div className="absolute inset-x-0 bottom-[6%] h-[74%] z-[3] pointer-events-none flex items-center justify-center">
+        <img
+          src={greenery.base}
+          alt={greenery.name}
+          className="w-[84%] h-[74%] object-contain select-none pointer-events-none filter drop-shadow-[0_4px_14px_rgba(0,0,0,0.32)]"
+          loading="eager"
+        />
       </div>
 
-      {/* ── Greenery Foliage Layer (Behind Flowers) ── */}
-      <div className="absolute inset-x-0 bottom-[14%] h-[75%] z-[6] pointer-events-none">
-        {/* Left greenery arch */}
-        <div className="absolute left-[14%] top-[14%] -rotate-25 origin-bottom opacity-85">
-          <GreeneryBranch type={greeneryId} size={170} />
-        </div>
-        {/* Right greenery arch */}
-        <div className="absolute right-[14%] top-[14%] rotate-25 origin-bottom opacity-85">
-          <GreeneryBranch type={greeneryId} size={170} flip />
-        </div>
-        {/* Center backdrop greenery */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-[4%] opacity-70">
-          <GreeneryBranch type={greeneryId} size={180} />
-        </div>
-      </div>
+      {/* LAYER 3: Arranged Botanical Flowers */}
+      <div className="absolute inset-0 z-[10] overflow-hidden">
+        {currentPositions.map((p, idx) => {
+          const flower = getFlowerById(p.flowerId);
+          const imgSrc = isMono ? flower.monoImage : flower.image;
 
-      {/* ── Flower Stems Layer ── */}
-      <svg
-        viewBox="0 0 100 100"
-        className="absolute inset-0 w-full h-full pointer-events-none z-[8]"
-        preserveAspectRatio="none"
-      >
-        {arrangement.map((pos, idx) => (
-          <path
-            key={idx}
-            d={`M${pos.x} ${pos.y + 16} Q50 68 50 82`}
-            stroke="#2D6A4F"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            fill="none"
-            opacity="0.85"
-          />
-        ))}
-      </svg>
+          // Scaled coordinates relative to container percentage
+          const pctLeft = (p.x / 460) * 100;
+          const pctTop = (p.y / 540) * 100;
 
-      {/* ── Arranged Flowers Layer ── */}
-      <div className="absolute inset-0 pointer-events-none">
-        {validFlowers.map((flowerId, idx) => {
-          const pos = arrangement[idx] || { x: 50, y: 30, rot: 0, scale: 1, z: 10 };
           return (
             <motion.div
-              key={`${flowerId}-${idx}`}
-              className="absolute -translate-x-1/2 -translate-y-1/2 filter drop-shadow-md"
+              key={`${p.flowerId}-${idx}`}
+              className="absolute select-none"
               style={{
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                zIndex: pos.z,
+                left: `${pctLeft}%`,
+                top: `${pctTop}%`,
+                zIndex: p.zIndex,
+                width: 120,
+                height: 120,
+                cursor: allowDrag ? "grab" : "default",
               }}
-              initial={{ scale: 0.15, opacity: 0, rotate: pos.rot - 16 }}
+              drag={allowDrag}
+              dragConstraints={containerRef}
+              dragElastic={0.1}
+              whileDrag={{
+                scale: p.scale * 1.15,
+                zIndex: 60,
+                cursor: "grabbing",
+                filter: "drop-shadow(0 12px 24px rgba(225, 29, 72, 0.45))",
+              }}
+              onDragEnd={(_, info) => {
+                if (onPositionsChange && containerRef.current) {
+                  const rect = containerRef.current.getBoundingClientRect();
+                  const newX = Math.max(20, Math.min(380, p.x + (info.offset.x / rect.width) * 460));
+                  const newY = Math.max(20, Math.min(320, p.y + (info.offset.y / rect.height) * 540));
+                  const updated = [...currentPositions];
+                  updated[idx] = { ...p, x: newX, y: newY };
+                  onPositionsChange(updated);
+                }
+              }}
+              initial={{ scale: 0.2, opacity: 0, rotate: p.rotation - 15 }}
               animate={{
-                scale: pos.scale,
-                rotate: pos.rot,
+                scale: p.scale,
+                rotate: p.rotation,
                 opacity: 1,
               }}
               whileHover={{
-                scale: pos.scale * 1.08,
-                rotate: pos.rot + 3,
+                scale: p.scale * 1.08,
+                rotate: p.rotation + 2,
+                filter: "drop-shadow(0 8px 18px rgba(225, 29, 72, 0.35))",
               }}
               transition={{
                 type: "spring",
-                stiffness: 240,
-                damping: 18,
-                delay: idx * 0.08,
+                stiffness: 260,
+                damping: 20,
+                delay: idx * 0.06,
               }}
             >
-              <RenderFlowerIcon flowerId={flowerId} size={120} />
+              <img
+                src={imgSrc}
+                alt={flower.name}
+                width={120}
+                height={120}
+                className="w-full h-full object-contain pointer-events-none filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.36)]"
+                loading="eager"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/bouquet/color/flowers/rose.png";
+                }}
+              />
             </motion.div>
           );
         })}
       </div>
 
-      {/* ── Front Paper Wrapping (Sleeve & Folded Lapels) ── */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[78%] h-[52%] z-[20] transition-all duration-500"
-        style={{
-          filter: `drop-shadow(0 -6px 16px ${wrap.shadowColor})`,
-        }}
-      >
-        <svg
-          viewBox="0 0 400 320"
-          className="w-full h-full"
-          preserveAspectRatio="none"
-          fill="none"
-        >
-          <defs>
-            <linearGradient id={`front-wrap-${wrappingId}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={wrap.lapelFill} />
-              <stop offset="60%" stopColor={wrap.borderColor} />
-              <stop offset="100%" stopColor={wrap.lapelFill} />
-            </linearGradient>
-          </defs>
-
-          {/* Left Lapel Fold */}
-          <path
-            d="M20 40 Q130 90 200 130 L160 310 Q70 240 20 40 Z"
-            fill={`url(#front-wrap-${wrappingId})`}
-            stroke={wrap.borderColor}
-            strokeWidth="1.5"
-            opacity="0.95"
-          />
-
-          {/* Right Lapel Fold (overlapping) */}
-          <path
-            d="M380 40 Q270 90 200 130 L240 310 Q330 240 380 40 Z"
-            fill={wrap.lapelFill}
-            stroke={wrap.borderColor}
-            strokeWidth="1.5"
-          />
-
-          {/* Center Cone Body */}
-          <path
-            d="M90 100 Q200 130 310 100 L240 316 Q200 320 160 316 Z"
-            fill={wrap.lapelFill}
-            stroke={wrap.borderColor}
-            strokeWidth="1.2"
-            opacity="0.98"
-          />
-
-          {/* Fold crease highlight lines */}
-          <path d="M20 40 L200 130" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.4" />
-          <path d="M380 40 L200 130" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.4" />
-        </svg>
+      {/* LAYER 4: Foliage Top Bush Overlay (Subtle 3D Depth) */}
+      <div className="absolute inset-x-0 bottom-[6%] h-[74%] z-[15] pointer-events-none flex items-center justify-center opacity-65">
+        <img
+          src={greenery.top}
+          alt=""
+          className="w-[84%] h-[74%] object-contain select-none pointer-events-none filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)]"
+          loading="eager"
+        />
       </div>
 
-      {/* ── Tucked Personal Card (Interactive) ── */}
+      {/* LAYER 5: Front Wrapping Paper or Vase */}
+      {wrap.isVase ? (
+        // Glass or Ceramic Vase
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 bottom-[3%] z-[20] transition-all duration-500 ${
+            wrap.id === "glass" ? "w-[124px] h-[210px] rounded-[24px_24px_44px_44px] backdrop-blur-md border border-white/50 shadow-xl" : "w-[134px] h-[200px] rounded-[36px_36px_56px_56px] border border-stone-300 shadow-xl"
+          }`}
+          style={{
+            background: wrap.bgGradient,
+            boxShadow: `0 18px 36px ${wrap.shadowColor}`,
+          }}
+        >
+          {wrap.id === "glass" && (
+            <div className="absolute inset-y-2 left-3 w-2.5 rounded-full bg-white/40 blur-[1px]" />
+          )}
+        </div>
+      ) : (
+        // Origami Wrapping Sleeve
+        <div
+          className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[54%] h-[48%] z-[20] transition-all duration-500"
+          style={{
+            background: wrap.bgGradient,
+            clipPath: "polygon(0 0, 100% 0, 78% 100%, 22% 100%)",
+            boxShadow: `inset 0 -20px 40px rgba(0,0,0,0.08), 0 -8px 24px ${wrap.shadowColor}`,
+          }}
+        >
+          {/* Subtle paper fold texture lines */}
+          <div className="absolute inset-0 opacity-15 bg-[linear-gradient(45deg,transparent_45%,#000_50%,transparent_55%)] [background-size:12px_12px]" />
+        </div>
+      )}
+
+      {/* LAYER 6: Ribbon Tie & Bow */}
       <motion.div
-        className="absolute z-[25] cursor-pointer"
+        className="absolute left-1/2 -translate-x-1/2 bottom-[14%] z-[24] pointer-events-none filter drop-shadow-md"
+        animate={
+          isUntying
+            ? {
+                scale: [1, 1.4, 0],
+                opacity: [1, 0.8, 0],
+                rotate: [0, 20, -25],
+                y: [0, -10, 30],
+              }
+            : { scale: 1, opacity: 1, rotate: 0, y: 0 }
+        }
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <RibbonBow color={ribbon.color} size={100} />
+      </motion.div>
+
+      {/* LAYER 7: Tucked Personal Gift Card (Interactive) */}
+      <motion.div
+        className="absolute z-[28] cursor-pointer"
         style={{
-          right: "10%",
+          right: "8%",
           bottom: "16%",
-          width: "56%",
+          width: "58%",
         }}
         animate={
           cardFocused
             ? {
-                x: "-38%",
-                y: "-50%",
+                x: "-35%",
+                y: "-45%",
                 scale: 1.18,
                 rotate: 0,
-                zIndex: 40,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
+                zIndex: 42,
+                boxShadow: "0 22px 45px rgba(0,0,0,0.28)",
               }
             : {
                 x: 0,
                 y: 0,
                 scale: 1,
                 rotate: 4,
-                zIndex: 25,
+                zIndex: 28,
                 boxShadow: "0 8px 20px rgba(80,60,40,0.18)",
               }
         }
-        transition={{ type: "spring", stiffness: 350, damping: 26 }}
+        transition={{ type: "spring", stiffness: 340, damping: 25 }}
         onClick={() => setCardFocused(!cardFocused)}
-        title={cardFocused ? "Tap to tuck card back into bouquet" : "Tap to focus & read card"}
+        title={cardFocused ? "Tap to tuck card back into bouquet" : "Tap to focus and read card"}
       >
         <div
           className="p-4 sm:p-5 rounded-2xl border transition-all"
           style={{
             background: "#FFFDF9",
-            borderColor: "rgba(180, 140, 100, 0.35)",
+            borderColor: "rgba(180, 140, 100, 0.38)",
             color: "#382923",
           }}
         >
@@ -395,8 +408,8 @@ export default function BouquetCanvas({
             <span className="font-serif font-bold text-xs sm:text-sm text-rose-900 truncate">
               To: {toName || "My Favorite Person"}
             </span>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-rose-400">
-              ♡ Bouquet
+            <span className="text-[10px] font-mono uppercase tracking-wider text-rose-500">
+              Floral Note
             </span>
           </div>
 
@@ -418,25 +431,7 @@ export default function BouquetCanvas({
         </div>
       </motion.div>
 
-      {/* ── Tied Ribbon Bow ── */}
-      <motion.div
-        className="absolute left-1/2 -translate-x-1/2 bottom-[8%] z-[30] pointer-events-none filter drop-shadow-md"
-        animate={
-          isUntying
-            ? {
-                scale: [1, 1.4, 0],
-                opacity: [1, 0.8, 0],
-                rotate: [0, 20, -25],
-                y: [0, -10, 30],
-              }
-            : { scale: 1, opacity: 1, rotate: 0, y: 0 }
-        }
-        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <RibbonBow color={ribbon.color} size={110} />
-      </motion.div>
-
-      {/* ── Recipient Interactive Untie Overlay ── */}
+      {/* LAYER 8: Recipient Interactive Untie Overlay */}
       <AnimatePresence>
         {isRevealMode && !isOpened && (
           <motion.div
@@ -444,7 +439,7 @@ export default function BouquetCanvas({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.4 }}
-            className="absolute inset-0 z-50 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center"
+            className="absolute inset-0 z-50 bg-black/45 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center"
           >
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -460,13 +455,13 @@ export default function BouquetCanvas({
                 </>
               ) : (
                 <>
-                  <span>Untie Ribbon & Unwrap Bouquet</span>
+                  <span>Untie Ribbon and Unwrap Bouquet</span>
                   <span className="text-lg">🎀</span>
                 </>
               )}
             </motion.button>
             <p className="text-white/90 font-mono text-xs mt-3 drop-shadow-sm">
-              Handcrafted for you with love
+              Handcrafted for you with botanical love
             </p>
           </motion.div>
         )}
