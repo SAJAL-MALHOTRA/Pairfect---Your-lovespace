@@ -28,18 +28,9 @@ import {
   VolumeX,
   ChevronLeft,
   Printer,
-  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/auth-provider";
-import {
-  getPairKey,
-  savePairKey,
-  savePendingKey,
-  generateCoupleKey,
-  encryptPhotoBlob,
-  dataUrlToBlob,
-} from "@/lib/crypto/e2ee";
 
 // Filter definitions matching LensBooth looks
 export type BoothFilterKey =
@@ -290,8 +281,6 @@ export default function LensBoothView({
   const [selectedStripStyle, setSelectedStripStyle] = useState<StripStyleKey>("web_rush");
   const [resultFilter, setResultFilter] = useState<BoothFilterKey>("none");
   const [isExporting, setIsExporting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Photostrip printing animation state
   const [isPrinting, setIsPrinting] = useState(false);
@@ -1020,111 +1009,6 @@ export default function LensBoothView({
       console.error("Export error:", e);
     } finally {
       setIsExporting(false);
-    }
-  };
-
-  // Save to couple scrapbook in Supabase with client-side Zero-Knowledge Encryption
-  const handleSaveToScrapbook = async () => {
-    if (!pair) {
-      alert("Sign in and link with your partner to save directly to your shared scrapbook!");
-      return;
-    }
-    setIsSaving(true);
-    const uploadedPaths: string[] = [];
-    const stripId = crypto.randomUUID();
-    let stripRecordCreated = false;
-
-    try {
-      // 1. Retrieve or initialize the client-side AES-GCM pair encryption key
-      let key = await getPairKey(pair.id);
-      if (!key) {
-        key = await generateCoupleKey();
-        await savePairKey(pair.id, key);
-        if (pair.invite_code) {
-          await savePendingKey(pair.invite_code, key);
-        }
-      }
-
-      // 2. Encrypt each frame and upload binary .enc file BEFORE creating DB records
-      const imageRows = [];
-      for (let pos = 0; pos < capturedFrames.length; pos++) {
-        const frameDataUrl = capturedFrames[pos];
-        const blob = dataUrlToBlob(frameDataUrl);
-
-        // Encrypt using AES-256-GCM with AAD context binding: pairId:stripId:position
-        const encryptedBlob = await encryptPhotoBlob(blob, key, {
-          pairId: pair.id,
-          stripId,
-          position: pos,
-        });
-
-        const storagePath = `${pair.id}/strips/${stripId}/frame_${pos}.enc`;
-        const { error: uploadErr } = await supabase.storage
-          .from("memories")
-          .upload(storagePath, encryptedBlob, {
-            contentType: "application/octet-stream",
-            upsert: true,
-          });
-
-        if (uploadErr) {
-          throw new Error(`Upload failed for frame ${pos}: ${uploadErr.message}`);
-        }
-
-        uploadedPaths.push(storagePath);
-        imageRows.push({
-          strip_id: stripId,
-          url: storagePath,
-          position: pos,
-        });
-      }
-
-      // 3. Insert parent photo_strips record with client-generated UUID
-      const { error: stripErr } = await supabase
-        .from("photo_strips")
-        .insert({
-          id: stripId,
-          pair_id: pair.id,
-          layout: selectedStripStyle,
-          title: "LensBooth Memory Snap",
-          caption: "Picture perfect!",
-          frame_color: selectedStripStyle === "retro_film" ? "warm_brown" : "white",
-          paper_texture: "plain",
-          filter: resultFilter,
-        });
-
-      if (stripErr) throw stripErr;
-      stripRecordCreated = true;
-
-      // 4. Insert photo_strip_images rows
-      const { error: imgErr } = await supabase
-        .from("photo_strip_images")
-        .insert(imageRows);
-
-      if (imgErr) throw imgErr;
-
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 4000);
-    } catch (e: any) {
-      console.error("[Scrapbook Save] Transaction error, rolling back:", e);
-      // Clean rollback: remove any uploaded files
-      if (uploadedPaths.length > 0) {
-        try {
-          await supabase.storage.from("memories").remove(uploadedPaths);
-        } catch (cleanupErr) {
-          console.warn("[Scrapbook Save] Storage rollback warning:", cleanupErr);
-        }
-      }
-      // If photo_strips was inserted before image insert failed, delete it
-      if (stripRecordCreated) {
-        try {
-          await supabase.from("photo_strips").delete().eq("id", stripId);
-        } catch (cleanupDbErr) {
-          console.warn("[Scrapbook Save] DB rollback warning:", cleanupDbErr);
-        }
-      }
-      alert("Could not save photo strip: " + (e?.message || "Storage error. No partial files were kept."));
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -2272,20 +2156,6 @@ export default function LensBoothView({
               </button>
 
               <button
-                disabled={isSaving}
-                onClick={handleSaveToScrapbook}
-                className="w-full py-3 px-6 rounded-2xl bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-800 font-semibold text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
-              >
-                <Heart className="w-4 h-4 text-red-500" />
-                <span>{isSaving ? "Saving..." : "Save to Scrapbook"}</span>
-              </button>
-
-              <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-500 font-mono">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Zero-Knowledge Encrypted (Client-Side AES-256)</span>
-              </div>
-
-              <button
                 disabled={isPrinting}
                 onClick={triggerPrintAnimation}
                 className="w-full py-2.5 px-6 rounded-2xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-300/80 text-zinc-700 font-semibold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
@@ -2297,13 +2167,6 @@ export default function LensBoothView({
                     : "Watch Print Animation Again"}
                 </span>
               </button>
-
-              {saveSuccess && (
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-semibold text-center flex items-center justify-center gap-1.5">
-                  <Check className="w-4 h-4" />
-                  <span>Saved to your shared couple memories!</span>
-                </div>
-              )}
 
               <div className="flex items-center justify-center gap-4 pt-1">
                 <button

@@ -8,7 +8,6 @@ import Navigation from "@/components/navigation";
 import {
   Loader2,
   ArrowLeft,
-  BookOpen,
   Plus,
   Smile,
   Search,
@@ -531,7 +530,6 @@ export default function LoveLetterPage() {
     "sealed" | "shattering" | "unsealing" | "open"
   >("sealed");
   const [revealCount, setRevealCount] = useState(0);
-  const [savingMoment, setSavingMoment] = useState(false);
   const [typewriter, setTypewriter] = useState(false);
   const [typeSound, setTypeSound] = useState(false);
   const [candle, setCandle] = useState(false);
@@ -846,32 +844,6 @@ export default function LoveLetterPage() {
         .from("love_letters")
         .update({ is_opened: true, opened_at: new Date().toISOString() })
         .eq("id", activeLetter.id);
-    }
-  };
-
-  const handleSaveToMoments = async () => {
-    if (!activeLetter || !pair || !user || savingMoment) return;
-    setSavingMoment(true);
-    try {
-      const isMine = activeLetter.sender_id === user.id;
-      const firstText =
-        activeLetter.content.find((b: any) => b.type === "text")?.value || "";
-      await supabase.from("shared_moments").insert({
-        pair_id: pair.id,
-        title: "Love Letter 💌",
-        description: isMine
-          ? `Sent to ${activeLetter.recipient_name}: "${firstText.slice(0, 100)}"`
-          : `Received from ${
-              partner?.display_name || "Partner"
-            }: "${firstText.slice(0, 100)}"`,
-        moment_date: format(new Date(), "yyyy-MM-dd"),
-        photo_url: "canvas-default.png",
-      });
-      alert("Saved to Scrapbook!");
-    } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setSavingMoment(false);
     }
   };
 
@@ -1873,21 +1845,6 @@ export default function LoveLetterPage() {
                               <Heart className="w-3.5 h-3.5" />
                               <span>Write a Reply</span>
                             </button>
-
-                            {pair && !activeLetter.isShared && (
-                              <button
-                                onClick={handleSaveToMoments}
-                                disabled={savingMoment}
-                                className="inline-flex items-center gap-1.5 py-2 px-4 rounded-full text-xs font-mono font-medium border border-[var(--border-warm)] bg-white/80 hover:bg-white text-[var(--ink-dark)] cursor-pointer transition-all shadow-xs"
-                              >
-                                {savingMoment ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <BookOpen className="w-3.5 h-3.5 text-rose-600" />
-                                )}
-                                <span>Save to Scrapbook</span>
-                              </button>
-                            )}
                           </div>
                         </motion.div>
                       )}
