@@ -349,14 +349,20 @@ function generateSecureInviteCode(length = 6): string {
     setImportingKey(true);
     try {
       const text = manualKeyInput.trim();
-      const rawKey = extractKeyFromFragment(text) || text;
+      let rawKey = extractKeyFromFragment(text);
+      if (!rawKey) {
+        if (text.includes("http://") || text.includes("https://") || text.includes("/onboarding")) {
+          throw new Error("This link is missing the secret key fragment (#k=...). Please paste the full secret link.");
+        }
+        rawKey = text;
+      }
       const importedKey = await importKeyFromFragment(rawKey);
       await savePairKey(joinedPairId, importedKey);
       await refreshSession(true);
       router.push("/dashboard");
     } catch (err: any) {
       console.error(err);
-      setError("Could not parse key. Please paste the full secret invite link containing #k=");
+      setError(err?.message || "Could not parse key. Please paste the full secret invite link containing #k=");
     } finally {
       setImportingKey(false);
     }
@@ -574,7 +580,7 @@ function generateSecureInviteCode(length = 6): string {
                       <span>Pair Linked: Encryption Key Missing</span>
                     </div>
                     <p className="text-[11px] leading-relaxed opacity-90">
-                      You joined with the code directly. Without your partner&apos;s secret link fragment, photos in your scrapbook will show a locked placeholder on this device.
+                      You joined with the code directly. Without your partner&apos;s secret link fragment, end-to-end encrypted memories will show a locked placeholder on this device until imported.
                     </p>
                   </div>
 

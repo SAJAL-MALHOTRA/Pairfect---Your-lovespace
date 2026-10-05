@@ -139,6 +139,8 @@ export default function SettingsPage() {
   const [showImportKeyModal, setShowImportKeyModal] = useState(false);
   const [importKeyInput, setImportKeyInput] = useState("");
   const [importingVaultKey, setImportingVaultKey] = useState(false);
+  const [importKeyError, setImportKeyError] = useState<string | null>(null);
+  const [generatingKey, setGeneratingKey] = useState(false);
 
   useEffect(() => {
     if (pair?.id) {
@@ -170,19 +172,47 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!pair?.id || !importKeyInput.trim()) return;
     setImportingVaultKey(true);
+    setImportKeyError(null);
     try {
       const text = importKeyInput.trim();
-      const rawKey = extractKeyFromFragment(text) || text;
+      let rawKey = extractKeyFromFragment(text);
+      if (!rawKey) {
+        if (text.includes("http://") || text.includes("https://") || text.includes("/onboarding")) {
+          throw new Error("This link is missing the secret key fragment. Please make sure the link ends with #k=... (ask your partner to tap 'Re-Share Secret Link' in their Settings).");
+        }
+        rawKey = text;
+      }
       const importedKey = await importKeyFromFragment(rawKey);
       await savePairKey(pair.id, importedKey);
       setVaultKeyExists(true);
       setShowImportKeyModal(false);
       setImportKeyInput("");
-      setSuccessMessage("Encryption key imported successfully! Encrypted photos will now decrypt.");
+      setImportKeyError(null);
+      setSuccessMessage("Encryption key imported successfully! Encrypted items will now decrypt.");
     } catch (e: any) {
-      setError("Invalid encryption key or link. Please paste the full secret invite link containing #k=");
+      const msg = e?.message || "Invalid encryption key or link format. Please check the link.";
+      setImportKeyError(msg);
     } finally {
       setImportingVaultKey(false);
+    }
+  };
+
+  const handleGenerateNewKey = async () => {
+    if (!pair?.id) return;
+    setGeneratingKey(true);
+    setImportKeyError(null);
+    try {
+      const newKey = await generateCoupleKey();
+      await savePairKey(pair.id, newKey);
+      setVaultKeyExists(true);
+      setShowImportKeyModal(false);
+      setImportKeyInput("");
+      setImportKeyError(null);
+      setSuccessMessage("Fresh encryption key generated on this device! You can now re-share it with your partner.");
+    } catch (e: any) {
+      setImportKeyError("Failed to generate key: " + (e?.message || "Unknown error"));
+    } finally {
+      setGeneratingKey(false);
     }
   };
 
@@ -606,15 +636,15 @@ export default function SettingsPage() {
               right={<span className="text-[10px] font-mono font-bold bg-[var(--paper-mid)] text-[var(--text)] px-2 py-1 rounded-lg border border-[var(--border)]">{pair.invite_code}</span>}
             />
 
-            {/* Scrapbook Encryption Key (Zero-Knowledge) */}
+            {/* Vault Encryption Key (Zero-Knowledge) */}
             <SettingsRow
-              label="Scrapbook Encryption Key"
+              label="Vault Encryption Key"
               description={
                 vaultKeyExists === null
                   ? "Checking device vault..."
                   : vaultKeyExists
                   ? "Active on this device (Zero-knowledge AES-256)"
-                  : "Key missing on this device (Photos cannot be decrypted)"
+                  : "Key missing on this device (Tap Import to activate)"
               }
               right={
                 <div className="flex items-center gap-2">
@@ -630,7 +660,11 @@ export default function SettingsPage() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setShowImportKeyModal(true)}
+                      onClick={() => {
+                        setImportKeyError(null);
+                        setImportKeyInput("");
+                        setShowImportKeyModal(true);
+                      }}
                       className="btn-secondary py-1.5 px-3 text-[10px] uppercase font-bold tracking-wider text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <KeyRound className="w-3.5 h-3.5" />
@@ -641,9 +675,9 @@ export default function SettingsPage() {
               }
             />
 
-            {/* Legacy photos notice */}
+            {/* Encryption notice */}
             <p className="text-[10px] text-[var(--text-soft)] font-mono leading-relaxed pb-1">
-              Photos taken before encryption was enabled are stored in standard couple cloud storage and are not end-to-end encrypted.
+              End-to-end zero-knowledge encryption ensures memories stored in your private vault remain readable only on your devices.
             </p>
 
             {/* Anniversary / Start Date */}
@@ -858,20 +892,30 @@ export default function SettingsPage() {
             </div>
 
             <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-              Paste the secret invite link shared by your partner (containing <span className="font-mono text-[var(--burgundy)]">#k=...</span>) to decrypt and view photos on this device.
+              Paste the secret invite link shared by your partner (containing <span className="font-mono text-[var(--burgundy)]">#k=...</span>) to activate encryption on this device.
             </p>
+
+            {importKeyError && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs animate-fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{importKeyError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleImportKeySubmit} className="space-y-3">
               <input
                 type="text"
                 value={importKeyInput}
-                onChange={e => setImportKeyInput(e.target.value)}
+                onChange={e => {
+                  setImportKeyInput(e.target.value);
+                  if (importKeyError) setImportKeyError(null);
+                }}
                 placeholder="https://pairfect.site/onboarding?code=...#k=..."
                 className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-xl bg-[var(--bg-secondary)] text-xs font-mono text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
               />
               <button
                 type="submit"
-                disabled={importingVaultKey || !importKeyInput.trim()}
+                disabled={importingVaultKey || !importKeyInput.trim() || generatingKey}
                 className="w-full btn-primary py-2.5 rounded-xl text-xs uppercase font-mono font-bold tracking-wider cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {importingVaultKey && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -885,7 +929,16 @@ export default function SettingsPage() {
               </p>
               <button
                 type="button"
-                onClick={() => { setShowImportKeyModal(false); setImportKeyInput(""); }}
+                onClick={handleGenerateNewKey}
+                disabled={generatingKey || importingVaultKey}
+                className="w-full py-2 px-3 rounded-xl text-xs font-mono font-bold text-[var(--burgundy)] hover:bg-[var(--burgundy)]/5 border border-[var(--burgundy)]/20 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+              >
+                {generatingKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                <span>Generate Fresh Key on this device</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowImportKeyModal(false); setImportKeyInput(""); setImportKeyError(null); }}
                 className="text-xs text-[var(--text-soft)] hover:text-[var(--text)] font-sans text-center cursor-pointer mt-1"
               >
                 Cancel
