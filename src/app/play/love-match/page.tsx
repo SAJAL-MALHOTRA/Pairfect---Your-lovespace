@@ -244,19 +244,6 @@ export default function LoveMatchGamePage() {
     }
   };
 
-  // ── Share Score ──
-  const handleShare = () => {
-    const total = matchHistory.length;
-    const matches = matchHistory.filter((h) => h.isMatch).length;
-    const text = `We just played Love Match on Pairfect and scored ${animatedPercentage}% in sync (${matches}/${total} matches)! 💕`;
-
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    }
-  };
-
   const isCurrentMatch = myAnswer && partnerAnswer && myAnswer === partnerAnswer;
   const userName = profile?.display_name || "You";
   const partnerName = partner?.display_name || (isSoloMode ? "Alex (Demo)" : "Partner");
@@ -308,7 +295,7 @@ export default function LoveMatchGamePage() {
                 Love Match
               </h1>
               <p className="text-xs sm:text-sm text-[var(--text-soft)] max-w-md mx-auto leading-relaxed">
-                One question, two screens. Both lock in your answers privately — neither can peek — then both choices flip at the exact same second!
+                One question, two screens. Both lock in your answers privately (neither can peek), then both choices flip at the exact same second!
               </p>
             </div>
 
@@ -514,7 +501,7 @@ export default function LoveMatchGamePage() {
                     <p className="text-xs font-mono text-[var(--text-soft)]">
                       {isCurrentMatch
                         ? "Both of you picked the exact same option!"
-                        : "You picked different options — variety keeps things exciting!"}
+                        : "You picked different options: variety keeps things exciting!"}
                     </p>
                   </div>
 
@@ -596,14 +583,6 @@ export default function LoveMatchGamePage() {
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Play Again ▷</span>
-              </button>
-
-              <button
-                onClick={handleShare}
-                className="w-full sm:w-auto btn-journal-ghost py-3 px-6 text-xs font-mono font-bold justify-center"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>{copied ? "Copied to Clipboard!" : "Share Result"}</span>
               </button>
 
               <Link

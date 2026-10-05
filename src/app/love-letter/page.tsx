@@ -210,13 +210,13 @@ function EnvelopeFolds({ dark = false }: { dark?: boolean }) {
 
 // Physical envelope pocket (sides and bottom)
 function EnvelopePocketFolds({ dark = false }: { dark?: boolean }) {
-  const stroke = dark ? "rgba(255,255,255,0.08)" : "rgba(160,130,90,0.3)";
-  const fillSide = dark ? "rgba(255,255,255,0.04)" : "rgba(200,175,135,0.18)";
-  const fillBottom = dark ? "rgba(255,255,255,0.07)" : "rgba(215,190,150,0.28)";
+  const stroke = dark ? "rgba(255,255,255,0.12)" : "rgba(160,130,90,0.35)";
+  const fillSide = dark ? "rgba(22,32,46,0.92)" : "rgba(240,226,204,0.92)";
+  const fillBottom = dark ? "rgba(18,26,38,0.97)" : "rgba(235,218,192,0.97)";
   return (
     <svg
       viewBox="0 0 400 260"
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-sm"
       preserveAspectRatio="none"
       fill="none"
     >
@@ -225,39 +225,39 @@ function EnvelopePocketFolds({ dark = false }: { dark?: boolean }) {
         d="M0,0 L180,140 L0,260 Z"
         fill={fillSide}
         stroke={stroke}
-        strokeWidth="1"
+        strokeWidth="1.2"
       />
       {/* Right pocket flap */}
       <path
         d="M400,0 L220,140 L400,260 Z"
         fill={fillSide}
         stroke={stroke}
-        strokeWidth="1"
+        strokeWidth="1.2"
       />
       {/* Bottom pocket fold */}
       <path
         d="M0,260 L200,125 L400,260 Z"
         fill={fillBottom}
         stroke={stroke}
-        strokeWidth="1.2"
+        strokeWidth="1.4"
       />
     </svg>
   );
 }
 
-// Physical envelope top triangular flap
+// Physical envelope top triangular flap with smooth curved corners matching container
 function EnvelopeTopFlap({ dark = false }: { dark?: boolean }) {
-  const stroke = dark ? "rgba(255,255,255,0.12)" : "rgba(160,130,90,0.35)";
-  const fill = dark ? "rgba(42,32,24,0.95)" : "rgba(242,228,204,0.96)";
+  const stroke = dark ? "rgba(255,255,255,0.16)" : "rgba(160,130,90,0.4)";
+  const fill = dark ? "#1E2B3D" : "#EFE4CD";
   return (
     <svg
       viewBox="0 0 400 130"
-      className="w-full h-full pointer-events-none drop-shadow-sm"
+      className="w-full h-full pointer-events-none drop-shadow-md"
       preserveAspectRatio="none"
       fill="none"
     >
       <path
-        d="M0,0 L200,126 L400,0 Z"
+        d="M24,0 L376,0 Q400,0 398,18 L204,126 Q200,128 196,126 L2,18 Q0,0 24,0 Z"
         fill={fill}
         stroke={stroke}
         strokeWidth="1.4"
@@ -309,7 +309,7 @@ function Sprig({ className = "" }: { className?: string }) {
   );
 }
 
-// WaxSeal button: animated with physical fragment shatter
+// WaxSeal button: 3D realistic wax seal with debossed crest & physical shatter
 function WaxSealButton({
   onPress,
   shattering,
@@ -319,64 +319,89 @@ function WaxSealButton({
 }) {
   return (
     <div className="relative flex items-center justify-center">
-      {/* Golden sparkle dust burst on crack */}
+      {/* Golden & ruby wax particle burst */}
       {shattering && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-30">
-          {Array.from({ length: 14 }).map((_, i) => (
-            <motion.div
-              key={`dust-${i}`}
-              className="absolute w-2 h-2 rounded-full bg-amber-300 shadow-xs"
-              initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-              animate={{
-                scale: [0, 1.4, 0],
-                x: Math.cos((i / 14) * Math.PI * 2) * 80,
-                y: Math.sin((i / 14) * Math.PI * 2) * 80,
-                opacity: [1, 1, 0],
-              }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            />
-          ))}
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-40">
+          {Array.from({ length: 18 }).map((_, i) => {
+            const angle = (i / 18) * Math.PI * 2;
+            const dist = 60 + (i % 3) * 25;
+            const isGold = i % 2 === 0;
+            return (
+              <motion.div
+                key={`sparkle-${i}`}
+                className={`absolute rounded-full ${
+                  isGold ? "w-2 h-2 bg-amber-300" : "w-1.5 h-1.5 bg-rose-400"
+                } shadow-xs`}
+                initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                animate={{
+                  scale: [0, 1.4, 0],
+                  x: Math.cos(angle) * dist,
+                  y: Math.sin(angle) * dist,
+                  opacity: [1, 0.9, 0],
+                }}
+                transition={{ duration: 0.65, ease: "easeOut" }}
+              />
+            );
+          })}
         </div>
       )}
 
-      {/* Wax seal body: fractures into 4 flying shards when shattering */}
+      {/* Wax seal body: Fractures into 6 distinct flying shards */}
       {shattering ? (
-        <div className="relative w-18 h-18 pointer-events-none">
-          {/* Top-Left Shard */}
+        <div className="relative w-20 h-20 pointer-events-none">
+          {/* Shard 1: Top-Left */}
           <motion.div
-            className="absolute top-0 left-0 w-9 h-9 overflow-hidden"
+            className="absolute top-0 left-0 w-10 h-10 overflow-hidden"
             initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: -28, y: -28, rotate: -25, opacity: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
+            animate={{ x: -36, y: -36, rotate: -35, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] shadow-md" />
+            <div className="w-20 h-20 rounded-full bg-[#781121] shadow-lg border border-[#A61C32]" />
           </motion.div>
-          {/* Top-Right Shard */}
+          {/* Shard 2: Top-Right */}
           <motion.div
-            className="absolute top-0 right-0 w-9 h-9 overflow-hidden"
+            className="absolute top-0 right-0 w-10 h-10 overflow-hidden"
             initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: 28, y: -28, rotate: 25, opacity: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
+            animate={{ x: 36, y: -32, rotate: 30, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] -ml-9 shadow-md" />
+            <div className="w-20 h-20 rounded-full bg-[#871325] -ml-10 shadow-lg border border-[#A61C32]" />
           </motion.div>
-          {/* Bottom-Left Shard */}
+          {/* Shard 3: Middle-Left */}
           <motion.div
-            className="absolute bottom-0 left-0 w-9 h-9 overflow-hidden"
+            className="absolute top-3 left-0 w-8 h-8 overflow-hidden"
             initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: -28, y: 28, rotate: -35, opacity: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
+            animate={{ x: -44, y: 4, rotate: -25, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] -mt-9 shadow-md" />
+            <div className="w-20 h-20 rounded-full bg-[#5E0B19] shadow-lg" />
           </motion.div>
-          {/* Bottom-Right Shard */}
+          {/* Shard 4: Middle-Right */}
           <motion.div
-            className="absolute bottom-0 right-0 w-9 h-9 overflow-hidden"
+            className="absolute top-3 right-0 w-8 h-8 overflow-hidden"
             initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: 28, y: 28, rotate: 35, opacity: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
+            animate={{ x: 44, y: 6, rotate: 25, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="w-18 h-18 rounded-full bg-[var(--seal-red)] -ml-9 -mt-9 shadow-md" />
+            <div className="w-20 h-20 rounded-full bg-[#5E0B19] -ml-12 shadow-lg" />
+          </motion.div>
+          {/* Shard 5: Bottom-Left */}
+          <motion.div
+            className="absolute bottom-0 left-0 w-10 h-10 overflow-hidden"
+            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={{ x: -32, y: 36, rotate: -40, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <div className="w-20 h-20 rounded-full bg-[#871325] -mt-10 shadow-lg border border-[#A61C32]" />
+          </motion.div>
+          {/* Shard 6: Bottom-Right */}
+          <motion.div
+            className="absolute bottom-0 right-0 w-10 h-10 overflow-hidden"
+            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={{ x: 34, y: 36, rotate: 40, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <div className="w-20 h-20 rounded-full bg-[#781121] -ml-10 -mt-10 shadow-lg border border-[#A61C32]" />
           </motion.div>
         </div>
       ) : (
@@ -384,40 +409,143 @@ function WaxSealButton({
           key="seal"
           aria-label="Break the seal to read the letter"
           onClick={onPress}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          transition={{ type: "spring", stiffness: 500, damping: 28 }}
+          whileHover={{ scale: 1.07 }}
+          whileTap={{ scale: 0.93 }}
+          transition={{ type: "spring", stiffness: 450, damping: 26 }}
+          className="relative cursor-pointer group select-none focus:outline-none"
           style={{
-            filter: "drop-shadow(0 4px 14px rgba(128,32,48,0.38))",
+            filter:
+              "drop-shadow(0 14px 28px rgba(90, 12, 28, 0.45)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22))",
           }}
         >
-          <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
-            <circle cx="28" cy="28" r="26" fill="var(--seal-red)" />
-            <circle
-              cx="28"
-              cy="28"
-              r="21.5"
-              fill="none"
-              stroke="rgba(255,255,255,0.13)"
-              strokeWidth="1"
-            />
+          {/* Ambient Warm Candle Aura */}
+          <div className="absolute -inset-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-radial from-amber-400/30 via-rose-500/10 to-transparent blur-md" />
+
+          {/* Realistic 3D Wax Seal SVG */}
+          <svg
+            width="82"
+            height="82"
+            viewBox="0 0 84 84"
+            className="w-[82px] h-[82px] block"
+            fill="none"
+          >
+            <defs>
+              {/* Outer wax body radial gradient */}
+              <radialGradient id="waxBase" cx="36%" cy="30%" r="68%">
+                <stop offset="0%" stopColor="#C22941" />
+                <stop offset="35%" stopColor="#96172B" />
+                <stop offset="75%" stopColor="#660C1B" />
+                <stop offset="100%" stopColor="#400510" />
+              </radialGradient>
+
+              {/* Inner stamped well gradient */}
+              <radialGradient id="waxDish" cx="42%" cy="36%" r="58%">
+                <stop offset="0%" stopColor="#801222" />
+                <stop offset="65%" stopColor="#5C0A17" />
+                <stop offset="100%" stopColor="#3E040E" />
+              </radialGradient>
+
+              {/* Specular gloss highlight */}
+              <linearGradient id="waxGloss" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.5" />
+                <stop offset="45%" stopColor="#FFFFFF" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+              </linearGradient>
+
+              {/* Rim bevel light */}
+              <linearGradient id="rimLight" x1="20%" y1="0%" x2="80%" y2="100%">
+                <stop offset="0%" stopColor="#E65870" stopOpacity="0.85" />
+                <stop offset="50%" stopColor="#A31C32" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#250308" stopOpacity="0.9" />
+              </linearGradient>
+            </defs>
+
+            {/* Organic pressed wax rim (realistic melt contours) */}
             <path
-              d="M22 20 L22 36 M22 20 L28 20 C31.3 20 33 21.6 33 24 C33 26.4 31.3 28 28 28 L22 28"
+              d="M42 4.5 C54 4, 64 8.5, 72 16.5 C80 24.5, 82 35.5, 80 47.5 C78 60.5, 71 71, 59 77 C48 82, 34 81, 23 76 C12 71, 4 61, 3 49 C2 36, 6 24, 14 15 C23 6, 31 5, 42 4.5 Z"
+              fill="url(#waxBase)"
+            />
+
+            {/* Bevel rim highlight & shadow stroke */}
+            <path
+              d="M42 5.5 C53.5 5, 63 9.5, 70.5 17.5 C78 25, 80 35.5, 78 47 C76 59, 69.5 69.5, 58 75 C47.5 80, 34.5 79, 24 74 C13.5 69, 6 60, 5 48 C4 36, 8 24.5, 15.5 16 C24 7.5, 32 5.8, 42 5.5 Z"
               fill="none"
-              stroke="rgba(255,255,255,0.55)"
-              strokeWidth="1.4"
+              stroke="url(#rimLight)"
+              strokeWidth="2.2"
+            />
+
+            {/* Inner stamped well / dish (recessed circle) */}
+            <circle cx="42" cy="42" r="27" fill="url(#waxDish)" />
+            {/* Inner shadow rim (carved depth) */}
+            <circle
+              cx="42"
+              cy="42"
+              r="27"
+              fill="none"
+              stroke="#280309"
+              strokeWidth="2.4"
+              strokeOpacity="0.9"
+            />
+            <circle
+              cx="42"
+              cy="42"
+              r="25.5"
+              fill="none"
+              stroke="#E2546D"
+              strokeWidth="0.8"
+              strokeOpacity="0.35"
+            />
+
+            {/* Specular gloss arc across upper rim */}
+            <path
+              d="M19 21 C25 14, 34 10, 46 10 C54 10, 62 13, 67 18"
+              stroke="url(#waxGloss)"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              fill="none"
+            />
+
+            {/* Debossed Heart Crest: shadow pass */}
+            <path
+              d="M42 54.5 C42 54.5, 28 45, 28 35.5 C28 30, 32 26.5, 36.5 26.5 C39.5 26.5, 41.5 28.5, 42 30 C42.5 28.5, 44.5 26.5, 47.5 26.5 C52 26.5, 56 30, 56 35.5 C56 45, 42 54.5, 42 54.5 Z"
+              fill="none"
+              stroke="#200307"
+              strokeWidth="2.6"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <motion.circle
-              cx="28"
-              cy="28"
-              r="26"
+            {/* Debossed Heart Crest: highlight pass */}
+            <path
+              d="M42 53.6 C42 53.6, 28.5 44.2, 28.5 35 C28.5 29.8, 32.2 26.6, 36.5 26.6 C39.3 26.6, 41.2 28.3, 41.8 29.8"
               fill="none"
-              stroke="rgba(255,255,255,0.12)"
-              strokeWidth="2"
-              animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0, 0.5] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              stroke="#EA6B82"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeOpacity="0.75"
+            />
+
+            {/* Central stamped heart fill */}
+            <path
+              d="M42 52.5 C42 52.5, 30 44, 30 35.5 C30 31, 33.2 28, 37 28 C39.6 28, 41.3 29.6, 42 31 C42.7 29.6, 44.4 28, 47 28 C50.8 28, 54 31, 54 35.5 C54 44, 42 52.5, 42 52.5 Z"
+              fill="#6A0D1B"
+              fillOpacity="0.85"
+            />
+
+            {/* Decorative flanking laurel dots */}
+            <circle cx="23" cy="42" r="1.4" fill="#E2546D" fillOpacity="0.8" />
+            <circle cx="61" cy="42" r="1.4" fill="#E2546D" fillOpacity="0.8" />
+            <circle cx="42" cy="20.5" r="1.5" fill="#E2546D" fillOpacity="0.85" />
+
+            {/* Gentle pulse ring */}
+            <motion.circle
+              cx="42"
+              cy="42"
+              r="38"
+              fill="none"
+              stroke="rgba(255,255,255,0.18)"
+              strokeWidth="1.5"
+              animate={{ scale: [1, 1.12, 1], opacity: [0.45, 0, 0.45] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
             />
           </svg>
         </motion.button>
@@ -986,11 +1114,11 @@ export default function LoveLetterPage() {
                             }}
                             placeholder={idx === 0 ? "Dearest..." : "Continue..."}
                             rows={5}
-                            className="input-warm w-full resize-none"
+                            className="input-warm w-full resize-none text-base"
                             style={{
                               lineHeight: "32px",
                               fontFamily:
-                                "var(--font-handwriting),cursive",
+                                "var(--font-handwriting), Georgia, serif",
                               color: "var(--ink-dark)",
                             }}
                           />
@@ -1206,35 +1334,8 @@ export default function LoveLetterPage() {
                   )}
                 </div>
 
-                {/* Delivery Options */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {/* Option 1: Secret Link */}
-                  <button
-                    type="button"
-                    onClick={handleCopyShareLink}
-                    className="p-4 rounded-2xl border border-[var(--border-warm)] bg-white/80 hover:bg-white text-left transition-all shadow-xs cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-mono font-bold text-[var(--ink-dark)] flex items-center gap-1.5">
-                        <Share2 className="w-4 h-4 text-rose-600" />
-                        <span>Copy Secret Link</span>
-                      </span>
-                      {copiedLink ? (
-                        <span className="text-[10px] font-mono text-emerald-600 flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Copied!
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono text-[var(--ink-light)] group-hover:text-[var(--seal-red)]">
-                          Click to copy
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-[var(--ink-mid)] font-sans">
-                      Anyone with this secret link can open, break the wax seal, and read your letter.
-                    </p>
-                  </button>
-
-                  {/* Option 2: Download Keepsake Image */}
+                {/* Keepsake Option */}
+                <div className="grid grid-cols-1 gap-3 pt-2">
                   <button
                     type="button"
                     onClick={handleExportPNG}
@@ -1277,12 +1378,12 @@ export default function LoveLetterPage() {
                       )}
                     </button>
                   ) : (
-                    <button
-                      onClick={handleCopyShareLink}
-                      className="btn-primary py-2.5 px-8 text-[10px] uppercase tracking-widest cursor-pointer"
+                    <Link
+                      href="/onboarding"
+                      className="btn-primary py-2.5 px-8 text-[10px] uppercase tracking-widest cursor-pointer inline-flex items-center justify-center"
                     >
-                      {copiedLink ? "✓ Link Copied!" : "Copy Unlisted Link 💌"}
-                    </button>
+                      Link with Partner to Send 💌
+                    </Link>
                   )}
                 </div>
               </motion.div>
@@ -1519,23 +1620,23 @@ export default function LoveLetterPage() {
                     >
                       {/* 1. Folded Parchment Letter Sheet rising out of the envelope */}
                       <motion.div
-                        className="absolute inset-x-5 top-5 bottom-5 rounded-2xl paper-grain p-5 shadow-md border border-[rgba(196,168,130,0.4)] flex flex-col justify-between overflow-hidden"
+                        className="absolute inset-x-6 top-6 bottom-6 rounded-2xl paper-grain p-5 shadow-md border border-[rgba(196,168,130,0.4)] flex flex-col justify-between overflow-hidden"
                         style={{
                           background:
                             "linear-gradient(180deg, #FFFDF7 0%, #F8F2E4 100%)",
                           zIndex: 12,
                         }}
-                        initial={{ y: 0, opacity: 0.9 }}
+                        initial={{ y: 8, opacity: 0.95 }}
                         animate={
                           readPhase === "unsealing"
                             ? {
-                                y: -125,
+                                y: -130,
                                 scale: 1.03,
                                 opacity: 1,
                                 boxShadow:
                                   "0 24px 48px -6px rgba(60,38,18,0.32)",
                               }
-                            : { y: 0, opacity: 0.9 }
+                            : { y: 8, opacity: 0.95 }
                         }
                         transition={{ duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
                       >
@@ -1570,60 +1671,57 @@ export default function LoveLetterPage() {
                         <EnvelopePocketFolds dark={cfg.foldDark} />
                       </div>
 
-                      <Sprig className="absolute -top-2 right-4 w-10 h-14 opacity-60 pointer-events-none z-20" />
-
-                      {/* 3. To address */}
+                      {/* 3. Vintage Airmail Stamp & Postmark (Top Right) */}
                       <div
-                        className="absolute top-5 left-6 space-y-0.5"
+                        className="absolute top-4 right-5 pointer-events-none flex items-center gap-2 select-none"
                         style={{ zIndex: 22 }}
                       >
-                        <p
-                          className="text-[7px] font-mono uppercase tracking-widest"
+                        <div className="w-11 h-13 rounded-xs border border-dashed border-[#A88B60]/50 bg-[#FDF9F0]/85 p-1 flex flex-col items-center justify-between shadow-2xs rotate-2">
+                          <div className="flex items-center justify-between w-full text-[6px] font-mono text-[#8C6D45] uppercase font-bold">
+                            <span>PAIR</span>
+                            <span>2026</span>
+                          </div>
+                          <span className="text-sm leading-none">💌</span>
+                          <span className="text-[6px] font-mono tracking-widest text-[#8C6D45] uppercase">
+                            AIR MAIL
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 4. Elegant Centered Calligraphy Recipient Nameplate */}
+                      <div
+                        className="absolute inset-x-8 bottom-6 flex flex-col items-center justify-center text-center pointer-events-none select-none"
+                        style={{ zIndex: 22 }}
+                      >
+                        <span
+                          className="text-[8px] font-mono uppercase tracking-[0.25em]"
                           style={{
                             color: cfg.foldDark
-                              ? "rgba(255,255,255,0.35)"
-                              : "#9A876A",
+                              ? "rgba(255,255,255,0.45)"
+                              : "rgba(130,105,75,0.75)",
                           }}
                         >
-                          To
-                        </p>
+                          For
+                        </span>
                         <p
-                          className="font-handwriting text-lg font-semibold"
+                          className="font-handwriting text-2xl font-bold tracking-wide mt-0.5"
                           style={{
-                            color: cfg.foldDark
-                              ? "rgba(255,255,255,0.8)"
-                              : "#4A3A28",
+                            color: cfg.foldDark ? "rgba(255,255,255,0.92)" : "#3D2B1B",
+                            textShadow: cfg.foldDark
+                              ? "0 1px 2px rgba(0,0,0,0.5)"
+                              : "0 1px 1px rgba(255,255,255,0.6)",
                           }}
                         >
                           {activeLetter.recipient_name}
                         </p>
-                      </div>
-
-                      {/* 4. From address */}
-                      <div
-                        className="absolute bottom-5 right-6 space-y-0.5 text-right"
-                        style={{ zIndex: 22 }}
-                      >
-                        <p
-                          className="text-[7px] font-mono uppercase tracking-widest"
+                        <div
+                          className="w-16 h-px mt-1.5"
                           style={{
-                            color: cfg.foldDark
-                              ? "rgba(255,255,255,0.35)"
-                              : "#9A876A",
+                            background: cfg.foldDark
+                              ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)"
+                              : "linear-gradient(90deg, transparent, rgba(160,130,90,0.5), transparent)",
                           }}
-                        >
-                          From
-                        </p>
-                        <p
-                          className="font-handwriting text-base font-semibold"
-                          style={{
-                            color: cfg.foldDark
-                              ? "rgba(255,255,255,0.8)"
-                              : "#4A3A28",
-                          }}
-                        >
-                          {activeLetter.sender_name}
-                        </p>
+                        />
                       </div>
 
                       {/* 5. 3D Top Triangular Flap */}

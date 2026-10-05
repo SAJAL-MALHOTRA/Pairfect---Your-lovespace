@@ -311,15 +311,6 @@ function generateSecureInviteCode(length = 6): string {
         await promotePendingKey(cleanedCode, pairId);
       }
 
-      const hasKey = await hasPairKey(pairId);
-      if (!hasKey) {
-        // User joined manually without secret key fragment
-        setJoinedPairId(pairId);
-        setMissingKeyWarning(true);
-        setLoading(false);
-        return;
-      }
-
       await refreshSession(true);
       router.push("/dashboard");
     } catch (err: any) {
@@ -475,88 +466,47 @@ function generateSecureInviteCode(length = 6): string {
           )}
 
           {mode === "create" && (
-            <div className="text-center space-y-5 my-auto">
+            <div className="text-center space-y-6 my-auto">
               <div className="space-y-1">
                 <p className="text-xs font-mono uppercase font-bold text-[var(--burgundy)] tracking-widest">
-                  Secret Invite Link (E2EE)
+                  Partner Invite Code
                 </p>
                 <p className="text-[11px] text-[var(--text-soft)]">
-                  Contains your shared zero-knowledge encryption key.
+                  Share this 6-character code with your partner to connect your spaces.
                 </p>
               </div>
 
-              {/* Primary action: Copy Secret Invite Link */}
-              <div className="space-y-2">
+              {/* Primary action: Display 6-character code and Copy */}
+              <div className="flex flex-col items-center justify-center gap-3">
+                <div className="bg-[var(--paper-warm)] border border-[var(--border)] rounded-2xl py-3 px-6 select-all font-mono text-3xl font-black tracking-widest text-[var(--text)] shadow-inner">
+                  <span>{inviteCode}</span>
+                </div>
                 <button
                   type="button"
-                  onClick={copySecretLink}
-                  disabled={!secretInviteLink}
-                  className="w-full btn-primary py-3.5 px-4 text-xs font-mono uppercase font-bold tracking-wider inline-flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                  onClick={copyCode}
+                  className="btn-primary py-3 px-8 text-xs font-mono font-bold uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer shadow-md"
                 >
-                  {secretLinkCopied ? (
+                  {copied ? (
                     <>
-                      <Check className="w-4 h-4 text-white" />
-                      <span>Secret Link Copied!</span>
+                      <Check className="w-4 h-4 text-emerald-300" />
+                      <span>Code Copied!</span>
                     </>
                   ) : (
                     <>
-                      <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                      <span>Copy Secret Invite Link</span>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy Invite Code</span>
                     </>
                   )}
                 </button>
-                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-sans font-medium">
-                  Recommended: Partner clicks link to auto-link with encryption key.
-                </p>
               </div>
 
-              {/* Secondary action: Manual 6-character code */}
-              <div className="pt-2 border-t border-[var(--border)]">
-                <p className="text-[10px] font-mono uppercase font-bold text-[var(--text-soft)] mb-2">
-                  Or share 6-character code
-                </p>
-                <div className="flex items-center justify-center gap-3">
-                  <div className="bg-[var(--paper-warm)] border border-[var(--border)] rounded-xl py-2 px-4 select-all font-mono text-xl font-bold tracking-widest text-[var(--text)] shadow-inner">
-                    <span>{inviteCode}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={copyCode}
-                    className="btn-secondary py-2 px-3 text-xs font-mono font-bold inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Code</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Security notice */}
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-left text-[11px] text-[var(--text-soft)] leading-relaxed space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
-                  <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>Zero-Knowledge Notice</span>
-                </div>
-                <p>
-                  Keep this link safe. If both partners lose their devices without this link, encrypted photos cannot be recovered by anyone, including Pairfect support.
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-[var(--border)] flex flex-col items-center">
+              <div className="pt-3 border-t border-[var(--border)] flex flex-col items-center">
                 <Loader2 className="w-5 h-5 text-[var(--burgundy)] animate-spin mb-1.5" />
                 <p className="text-xs font-sans text-[var(--text-soft)] font-medium">
                   Waiting for your partner to join.
                 </p>
-                <p className="text-[11px] text-[var(--text-soft)] opacity-80 mt-0.5 max-w-[240px] leading-relaxed">
-                  This page will automatically update once they link with your code.
+                <p className="text-[11px] text-[var(--text-soft)] opacity-80 mt-0.5 max-w-[260px] leading-relaxed">
+                  Ask your partner to sign in and enter this code on their screen. This page will update automatically.
                 </p>
               </div>
 
@@ -572,50 +522,6 @@ function generateSecureInviteCode(length = 6): string {
 
           {mode === "join" && (
             <div>
-              {missingKeyWarning ? (
-                <div className="space-y-5 my-auto text-left">
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 space-y-1">
-                    <div className="flex items-center gap-2 font-bold text-xs">
-                      <ShieldAlert className="w-4 h-4 flex-shrink-0" />
-                      <span>Pair Linked: Encryption Key Missing</span>
-                    </div>
-                    <p className="text-[11px] leading-relaxed opacity-90">
-                      You joined with the code directly. Without your partner&apos;s secret link fragment, end-to-end encrypted memories will show a locked placeholder on this device until imported.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleImportManualKey} className="space-y-3">
-                    <label className="block text-[11px] font-mono uppercase font-bold text-[var(--text-soft)]">
-                      Paste Partner&apos;s Secret Link to Restore Key
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="https://pairfect.site/onboarding?code=...#k=..."
-                      value={manualKeyInput}
-                      onChange={(e) => setManualKeyInput(e.target.value)}
-                      className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-xl bg-[var(--bg)] text-xs font-mono text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--burgundy)]/30"
-                    />
-                    <button
-                      type="submit"
-                      disabled={importingKey || !manualKeyInput.trim()}
-                      className="w-full btn-primary py-3 text-xs font-mono uppercase font-bold tracking-widest cursor-pointer disabled:opacity-40"
-                    >
-                      {importingKey && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                      <span>Import Key & Enter</span>
-                    </button>
-                  </form>
-
-                  <div className="pt-2 text-center">
-                    <button
-                      type="button"
-                      onClick={handleProceedWithoutKey}
-                      className="text-xs font-mono font-semibold text-[var(--text-soft)] hover:text-[var(--text)] transition-colors cursor-pointer"
-                    >
-                      Skip for now (import later in Settings) →
-                    </button>
-                  </div>
-                </div>
-              ) : (
                 <form onSubmit={handleJoinPair} className="space-y-6 my-auto">
                   <div>
                     <label className="block text-xs font-mono uppercase font-bold text-[var(--text-soft)] mb-1">
@@ -673,7 +579,6 @@ function generateSecureInviteCode(length = 6): string {
                     ← Choose another option
                   </button>
                 </form>
-              )}
             </div>
           )}
         </div>

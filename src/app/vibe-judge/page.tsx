@@ -39,6 +39,7 @@ export default function VibeJudgePage() {
   const [error, setError] = useState<string | null>(null);
 
   const channelRef = useRef<any>(null);
+  const timerDisputeIdRef = useRef<string | null>(null);
 
   // 1. Fetch Disputes List
   const fetchDisputes = async () => {
@@ -98,12 +99,16 @@ export default function VibeJudgePage() {
 
       setActiveDispute(disp);
 
-      // Start argument countdown timer if my argument is not submitted yet
-      if (!myArg) {
-        setTimerSeconds(60);
-        setTimerActive(true);
+      // Start argument countdown timer only once when entering this dispute if my argument is not submitted yet
+      if (!myArg && disp.status !== "judged") {
+        if (timerDisputeIdRef.current !== disputeId) {
+          timerDisputeIdRef.current = disputeId;
+          setTimerSeconds(60);
+          setTimerActive(true);
+        }
       } else {
         setTimerActive(false);
+        timerDisputeIdRef.current = null;
       }
     } catch (e) {
       console.error(e);
@@ -112,20 +117,21 @@ export default function VibeJudgePage() {
 
   // 3. Real-time subscription to active dispute + Auto-polling fallback
   useEffect(() => {
-    if (!activeDispute || !user) return;
+    if (!activeDispute?.id || !user) return;
+    const disputeId = activeDispute.id;
 
     // Clean up previous channel if exists
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
 
-    const channel = supabase.channel(`dispute-${activeDispute.id}`);
+    const channel = supabase.channel(`dispute-${disputeId}`);
     channelRef.current = channel;
 
     channel
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "dispute_arguments", filter: `dispute_id=eq.${activeDispute.id}` },
+        { event: "INSERT", schema: "public", table: "dispute_arguments", filter: `dispute_id=eq.${disputeId}` },
         (payload: any) => {
           const newArg = payload.new;
           if (newArg.user_id === user.id) {
@@ -137,7 +143,7 @@ export default function VibeJudgePage() {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "dispute_verdicts", filter: `dispute_id=eq.${activeDispute.id}` },
+        { event: "INSERT", schema: "public", table: "dispute_verdicts", filter: `dispute_id=eq.${disputeId}` },
         (payload: any) => {
           setVerdict(payload.new);
           setJudging(false);
@@ -146,25 +152,23 @@ export default function VibeJudgePage() {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "vibe_disputes", filter: `id=eq.${activeDispute.id}` },
+        { event: "UPDATE", schema: "public", table: "vibe_disputes", filter: `id=eq.${disputeId}` },
         (payload: any) => {
           setActiveDispute(payload.new);
         }
       )
       .subscribe();
 
-    // Auto-poll active dispute arguments & verdict every 2 seconds to eliminate sync delay
+    // Auto-poll active dispute arguments & verdict every 2.5 seconds to eliminate sync delay
     const pollInterval = setInterval(() => {
-      if (activeDispute.status !== "judged") {
-        loadDisputeDetails(activeDispute.id);
-      }
-    }, 2000);
+      loadDisputeDetails(disputeId);
+    }, 2500);
 
     return () => {
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
-  }, [activeDispute, user]);
+  }, [activeDispute?.id, user?.id]);
 
   // Auto-poll disputes list every 3.5 seconds so partner discovers newly created cases instantly
   useEffect(() => {

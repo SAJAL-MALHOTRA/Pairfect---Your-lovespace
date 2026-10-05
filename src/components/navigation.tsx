@@ -36,7 +36,7 @@ const SIDEBAR_ITEMS = [
   { href: "/love-letter",  icon: Mail,     label: "LETTERS",   title: "Letters",    subtitle: "Sealed with wax, kept forever →" },
   { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Four frames of us →" },
   { href: "/play",         icon: Gamepad2, label: "PLAYROOM",  title: "Playroom",   subtitle: "Play tonight's date night →" },
-  { href: "/gratitude-jar",icon: Gift,     label: "RITUALS",   title: "Rituals",    subtitle: "Daily appreciation jar →" },
+  { href: "/gratitude-jar",icon: Gift,     label: "JAR",       title: "Gratitude Jar", subtitle: "Daily appreciation jar →" },
   { href: "/stories",      icon: BookOpen, label: "STORIES",   title: "Stories & Explore", subtitle: "Stories & community →" },
   { href: "/calendar",     icon: Calendar, label: "DATES",     title: "Dates",      subtitle: "Special milestones →" },
   { href: "/profile",      icon: User,     label: "PROFILE",   title: "Profile",    subtitle: "Your profile & space →" },

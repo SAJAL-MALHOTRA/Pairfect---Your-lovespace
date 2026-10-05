@@ -1288,7 +1288,10 @@ export default function BouquetPage() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Write something heartfelt..."
-                        className="w-full p-3 text-xs rounded-xl border border-[var(--border)] bg-[var(--bg)] outline-none text-[var(--text)] font-script text-base focus:border-rose-400 leading-relaxed"
+                        className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] outline-none text-[var(--text)] focus:border-rose-400 leading-relaxed text-sm"
+                        style={{
+                          fontFamily: "var(--font-handwriting), Georgia, serif",
+                        }}
                       />
                     </div>
 
@@ -1298,28 +1301,12 @@ export default function BouquetPage() {
                         Share & Keepsake Options
                       </p>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {/* Copy Shareable Link */}
-                        <button
-                          onClick={handleCopyShareLink}
-                          className="p-3 rounded-xl border border-[var(--border)] hover:border-rose-400 bg-white dark:bg-zinc-800 text-left cursor-pointer transition-all flex items-center justify-between"
-                        >
-                          <div className="space-y-0.5">
-                            <p className="font-sans font-bold text-xs text-[var(--text)]">
-                              {copiedLink ? "Link Copied ✓" : "Copy Unlisted Link"}
-                            </p>
-                            <p className="text-[10px] text-[var(--text-soft)] font-mono">
-                              WhatsApp, iMessage
-                            </p>
-                          </div>
-                          <Share2 className="w-4 h-4 text-rose-600" />
-                        </button>
-
+                      <div className="grid grid-cols-1 gap-2.5">
                         {/* Download High-Resolution PNG */}
                         <button
                           onClick={handleDownloadPNG}
                           disabled={isDownloading}
-                          className="p-3 rounded-xl border border-[var(--border)] hover:border-rose-400 bg-white dark:bg-zinc-800 text-left cursor-pointer transition-all flex items-center justify-between disabled:opacity-50"
+                          className="p-3.5 rounded-xl border border-[var(--border)] hover:border-rose-400 bg-white dark:bg-zinc-800 text-left cursor-pointer transition-all flex items-center justify-between disabled:opacity-50"
                         >
                           <div className="space-y-0.5">
                             <p className="font-sans font-bold text-xs text-[var(--text)]">

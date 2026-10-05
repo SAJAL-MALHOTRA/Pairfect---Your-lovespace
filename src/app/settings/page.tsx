@@ -11,16 +11,7 @@ import {
 } from "lucide-react";
 import CitySelectorModal from "@/components/city-selector-modal";
 import { useSubscription } from "@/hooks/use-subscription";
-import {
-  hasPairKey,
-  getPairKey,
-  savePairKey,
-  exportKeyToFragment,
-  extractKeyFromFragment,
-  importKeyFromFragment,
-  generateCoupleKey,
-  deletePairKey,
-} from "@/lib/crypto/e2ee";
+import { deletePairKey } from "@/lib/crypto/e2ee";
 
 const APP_VERSION = "0.1.0";
 const DEFAULT_NOTIFICATION_SETTINGS = {
@@ -132,89 +123,6 @@ export default function SettingsPage() {
 
   const [anniversaryDate, setAnniversaryDate] = useState("");
   const [updatingAnniversary, setUpdatingAnniversary] = useState(false);
-
-  // E2EE Vault Key states
-  const [vaultKeyExists, setVaultKeyExists] = useState<boolean | null>(null);
-  const [keyLinkCopied, setKeyLinkCopied] = useState(false);
-  const [showImportKeyModal, setShowImportKeyModal] = useState(false);
-  const [importKeyInput, setImportKeyInput] = useState("");
-  const [importingVaultKey, setImportingVaultKey] = useState(false);
-  const [importKeyError, setImportKeyError] = useState<string | null>(null);
-  const [generatingKey, setGeneratingKey] = useState(false);
-
-  useEffect(() => {
-    if (pair?.id) {
-      hasPairKey(pair.id).then(exists => setVaultKeyExists(exists));
-    }
-  }, [pair?.id]);
-
-  const handleShareKeyLink = async () => {
-    if (!pair?.id) return;
-    try {
-      const key = await getPairKey(pair.id);
-      if (!key) {
-        setError("Vault encryption key is not present on this device.");
-        return;
-      }
-      const frag = await exportKeyToFragment(key);
-      const origin = typeof window !== "undefined" ? window.location.origin : "https://www.pairfect.site";
-      const fullLink = `${origin}/onboarding?code=${pair.invite_code}#k=${frag}`;
-      await navigator.clipboard.writeText(fullLink);
-      setKeyLinkCopied(true);
-      setSuccessMessage("Secret invite link copied! Send it to your partner to restore their encryption key.");
-      setTimeout(() => setKeyLinkCopied(false), 3000);
-    } catch (e: any) {
-      setError("Failed to export encryption key: " + (e?.message || "Unknown error"));
-    }
-  };
-
-  const handleImportKeySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pair?.id || !importKeyInput.trim()) return;
-    setImportingVaultKey(true);
-    setImportKeyError(null);
-    try {
-      const text = importKeyInput.trim();
-      let rawKey = extractKeyFromFragment(text);
-      if (!rawKey) {
-        if (text.includes("http://") || text.includes("https://") || text.includes("/onboarding")) {
-          throw new Error("This link is missing the secret key fragment. Please make sure the link ends with #k=... (ask your partner to tap 'Re-Share Secret Link' in their Settings).");
-        }
-        rawKey = text;
-      }
-      const importedKey = await importKeyFromFragment(rawKey);
-      await savePairKey(pair.id, importedKey);
-      setVaultKeyExists(true);
-      setShowImportKeyModal(false);
-      setImportKeyInput("");
-      setImportKeyError(null);
-      setSuccessMessage("Encryption key imported successfully! Encrypted items will now decrypt.");
-    } catch (e: any) {
-      const msg = e?.message || "Invalid encryption key or link format. Please check the link.";
-      setImportKeyError(msg);
-    } finally {
-      setImportingVaultKey(false);
-    }
-  };
-
-  const handleGenerateNewKey = async () => {
-    if (!pair?.id) return;
-    setGeneratingKey(true);
-    setImportKeyError(null);
-    try {
-      const newKey = await generateCoupleKey();
-      await savePairKey(pair.id, newKey);
-      setVaultKeyExists(true);
-      setShowImportKeyModal(false);
-      setImportKeyInput("");
-      setImportKeyError(null);
-      setSuccessMessage("Fresh encryption key generated on this device! You can now re-share it with your partner.");
-    } catch (e: any) {
-      setImportKeyError("Failed to generate key: " + (e?.message || "Unknown error"));
-    } finally {
-      setGeneratingKey(false);
-    }
-  };
 
   useEffect(() => {
     if (profile) {
@@ -636,50 +544,6 @@ export default function SettingsPage() {
               right={<span className="text-[10px] font-mono font-bold bg-[var(--paper-mid)] text-[var(--text)] px-2 py-1 rounded-lg border border-[var(--border)]">{pair.invite_code}</span>}
             />
 
-            {/* Vault Encryption Key (Zero-Knowledge) */}
-            <SettingsRow
-              label="Vault Encryption Key"
-              description={
-                vaultKeyExists === null
-                  ? "Checking device vault..."
-                  : vaultKeyExists
-                  ? "Active on this device (Zero-knowledge AES-256)"
-                  : "Key missing on this device (Tap Import to activate)"
-              }
-              right={
-                <div className="flex items-center gap-2">
-                  {vaultKeyExists ? (
-                    <button
-                      type="button"
-                      onClick={handleShareKeyLink}
-                      className="btn-secondary py-1.5 px-3 text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{keyLinkCopied ? "Link Copied!" : "Re-Share Secret Link"}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImportKeyError(null);
-                        setImportKeyInput("");
-                        setShowImportKeyModal(true);
-                      }}
-                      className="btn-secondary py-1.5 px-3 text-[10px] uppercase font-bold tracking-wider text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <KeyRound className="w-3.5 h-3.5" />
-                      <span>Import Key</span>
-                    </button>
-                  )}
-                </div>
-              }
-            />
-
-            {/* Encryption notice */}
-            <p className="text-[10px] text-[var(--text-soft)] font-mono leading-relaxed pb-1">
-              End-to-end zero-knowledge encryption ensures memories stored in your private vault remain readable only on your devices.
-            </p>
-
             {/* Anniversary / Start Date */}
             <form onSubmit={handleSaveAnniversary}>
               <SettingsRow
@@ -873,75 +737,6 @@ export default function SettingsPage() {
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center"
               >
                 {unlinkingPair ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlink & Delete Everything"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Import / Restore Encryption Key modal */}
-      {showImportKeyModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[var(--bg)] rounded-3xl max-w-sm w-full border border-[var(--border)] overflow-hidden shadow-2xl p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <KeyRound className="w-6 h-6 text-[var(--burgundy)] shrink-0" />
-              <div>
-                <p className="font-heading font-bold text-base text-[var(--text)]">Vault Encryption Key</p>
-                <p className="text-[11px] text-[var(--text-soft)]">Zero-knowledge device setup</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-              Paste the secret invite link shared by your partner (containing <span className="font-mono text-[var(--burgundy)]">#k=...</span>) to activate encryption on this device.
-            </p>
-
-            {importKeyError && (
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs animate-fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span className="leading-relaxed">{importKeyError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleImportKeySubmit} className="space-y-3">
-              <input
-                type="text"
-                value={importKeyInput}
-                onChange={e => {
-                  setImportKeyInput(e.target.value);
-                  if (importKeyError) setImportKeyError(null);
-                }}
-                placeholder="https://pairfect.site/onboarding?code=...#k=..."
-                className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-xl bg-[var(--bg-secondary)] text-xs font-mono text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[var(--burgundy)]"
-              />
-              <button
-                type="submit"
-                disabled={importingVaultKey || !importKeyInput.trim() || generatingKey}
-                className="w-full btn-primary py-2.5 rounded-xl text-xs uppercase font-mono font-bold tracking-wider cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
-              >
-                {importingVaultKey && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Import & Activate</span>
-              </button>
-            </form>
-
-            <div className="pt-2 border-t border-[var(--border)] flex flex-col gap-2">
-              <p className="text-[10px] text-[var(--text-soft)] text-center leading-relaxed">
-                If your partner has the active key on their device, ask them to tap &ldquo;Re-Share Secret Link&rdquo; in their Settings.
-              </p>
-              <button
-                type="button"
-                onClick={handleGenerateNewKey}
-                disabled={generatingKey || importingVaultKey}
-                className="w-full py-2 px-3 rounded-xl text-xs font-mono font-bold text-[var(--burgundy)] hover:bg-[var(--burgundy)]/5 border border-[var(--burgundy)]/20 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
-              >
-                {generatingKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                <span>Generate Fresh Key on this device</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowImportKeyModal(false); setImportKeyInput(""); setImportKeyError(null); }}
-                className="text-xs text-[var(--text-soft)] hover:text-[var(--text)] font-sans text-center cursor-pointer mt-1"
-              >
-                Cancel
               </button>
             </div>
           </div>
