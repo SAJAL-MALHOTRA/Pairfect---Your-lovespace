@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Navigation from "@/components/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
-import Navigation from "@/components/navigation";
 import {
   Heart, Sparkles, Check, ArrowRight, RotateCcw, Share2, ArrowLeft,
-  Users, Lock, Shield, Trophy, PartyPopper, Smile, Loader2, Play
+  Users, Lock, Shield, Trophy, PartyPopper, Smile, Loader2, Play,
+  Copy, Bot, UserCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MATCH_QUESTIONS, MatchQuestion, getMatchFeedback } from "@/lib/match-game/questions";
@@ -18,7 +17,6 @@ type GamePhase = "lobby" | "playing" | "locked" | "comparing" | "revealed" | "co
 
 export default function LoveMatchGamePage() {
   const { user, pair, partner, profile, loading } = useAuth();
-  const router = useRouter();
   const supabase = createClient();
 
   const [phase, setPhase] = useState<GamePhase>("lobby");
@@ -27,28 +25,90 @@ export default function LoveMatchGamePage() {
   const [partnerAnswer, setPartnerAnswer] = useState<string | null>(null);
   const [partnerLocked, setPartnerLocked] = useState(false);
   const [partnerConnected, setPartnerConnected] = useState(false);
+  const [dynamicPartnerName, setDynamicPartnerName] = useState<string>("");
   const [matchHistory, setMatchHistory] = useState<{ qIndex: number; isMatch: boolean; myAns: string; partnerAns: string }[]>([]);
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
   const [isSoloMode, setIsSoloMode] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Guest & Room Code State
+  const [roomCode, setRoomCode] = useState<string>("");
+  const [guestName, setGuestName] = useState<string>("");
+  const [guestInput, setGuestInput] = useState<string>("");
+  const [isGuestPromptOpen, setIsGuestPromptOpen] = useState(false);
+  const [myEffectiveId, setMyEffectiveId] = useState<string>("");
+
   const channelRef = useRef<any>(null);
   const currentQ = MATCH_QUESTIONS[currentQIndex];
 
-  // ── Setup Realtime Channel ──
+  // ── 1. Initialize Room Code & Identity on Mount ──
   useEffect(() => {
-    if (loading || !pair || !user) return;
+    if (typeof window === "undefined") return;
 
-    const channel = supabase.channel(`match-game-${pair.id}`, {
-      config: { presence: { key: user.id } },
+    // Resolve or generate unique client id
+    let clientId = user?.id;
+    if (!clientId) {
+      let storedGid = sessionStorage.getItem("pairfect_guest_id");
+      if (!storedGid) {
+        storedGid = `guest_${Math.random().toString(36).substring(2, 9)}`;
+        sessionStorage.setItem("pairfect_guest_id", storedGid);
+      }
+      clientId = storedGid;
+    }
+    setMyEffectiveId(clientId);
+
+    // Resolve Guest Name if not logged in
+    const storedName = localStorage.getItem("pairfect_guest_name");
+    if (storedName) {
+      setGuestName(storedName);
+    }
+
+    // Resolve Room Code
+    const params = new URLSearchParams(window.location.search);
+    const queryRoom = params.get("room");
+
+    if (queryRoom) {
+      setRoomCode(queryRoom.trim());
+      if (!user && !storedName) {
+        setIsGuestPromptOpen(true);
+      }
+    } else if (pair?.id) {
+      setRoomCode(pair.id);
+    } else {
+      // Generate clean 5-character short room code
+      const generated = Math.random().toString(36).substring(2, 7).toUpperCase();
+      setRoomCode(generated);
+    }
+  }, [user, pair?.id]);
+
+  const effectiveDisplayName = profile?.display_name || user?.email?.split("@")[0] || guestName || "You";
+
+  // ── 2. Realtime Channel Subscription ──
+  useEffect(() => {
+    if (!roomCode || !myEffectiveId || isGuestPromptOpen) return;
+
+    const channelName = `match-room-${roomCode.toLowerCase()}`;
+    const channel = supabase.channel(channelName, {
+      config: { presence: { key: myEffectiveId } },
     });
     channelRef.current = channel;
 
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
-        const partnerPresent = partner && Object.keys(state).includes(partner.id);
-        setPartnerConnected(!!partnerPresent);
+        const otherEntries = Object.entries(state)
+          .filter(([key]) => key !== myEffectiveId)
+          .flatMap(([_, presences]) => presences);
+
+        if (otherEntries.length > 0) {
+          setPartnerConnected(true);
+          const otherInfo = otherEntries[0] as any;
+          if (otherInfo?.user_name) {
+            setDynamicPartnerName(otherInfo.user_name);
+          }
+        } else {
+          setPartnerConnected(false);
+        }
       })
       .on("broadcast", { event: "game-start" }, ({ payload }: any) => {
         setCurrentQIndex(payload.qIndex || 0);
@@ -56,15 +116,16 @@ export default function LoveMatchGamePage() {
         setPartnerAnswer(null);
         setPartnerLocked(false);
         setMatchHistory([]);
+        setIsSoloMode(false);
         setPhase("playing");
       })
       .on("broadcast", { event: "answer-locked" }, ({ payload }: any) => {
-        if (payload.userId !== user.id) {
+        if (payload.userId !== myEffectiveId) {
           setPartnerLocked(true);
         }
       })
       .on("broadcast", { event: "answer-reveal" }, ({ payload }: any) => {
-        if (payload.userId !== user.id) {
+        if (payload.userId !== myEffectiveId) {
           setPartnerAnswer(payload.answerId);
         }
       })
@@ -87,7 +148,8 @@ export default function LoveMatchGamePage() {
         if (status === "SUBSCRIBED") {
           await channel.track({
             online_at: new Date().toISOString(),
-            user_name: profile?.display_name || "Partner",
+            user_name: effectiveDisplayName,
+            user_id: myEffectiveId,
           });
         }
       });
@@ -95,9 +157,9 @@ export default function LoveMatchGamePage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loading, pair, user, partner, profile]);
+  }, [roomCode, myEffectiveId, isGuestPromptOpen, effectiveDisplayName, supabase]);
 
-  // ── When both users have submitted, trigger the reveal sequence ──
+  // ── 3. Reveal Trigger When Both Lock In ──
   useEffect(() => {
     if (myAnswer && partnerAnswer && phase !== "revealed" && phase !== "completed") {
       setPhase("comparing");
@@ -117,9 +179,9 @@ export default function LoveMatchGamePage() {
 
       return () => clearTimeout(timer);
     }
-  }, [myAnswer, partnerAnswer, currentQIndex, phase]);
+  }, [myAnswer, partnerAnswer, currentQIndex, phase, matchHistory]);
 
-  // ── Animated percentage counter on reveal ──
+  // ── 4. Animated Percentage Meter ──
   useEffect(() => {
     if (phase === "revealed" || phase === "completed") {
       const totalAnswered = matchHistory.length || 1;
@@ -160,7 +222,7 @@ export default function LoveMatchGamePage() {
       channelRef.current.send({
         type: "broadcast",
         event: "game-start",
-        payload: { startedBy: user?.id, qIndex: 0 },
+        payload: { startedBy: myEffectiveId, qIndex: 0 },
       });
     }
   };
@@ -172,10 +234,11 @@ export default function LoveMatchGamePage() {
     setPhase("locked");
 
     if (isSoloMode) {
-      // Simulate partner pick after realistic pause
+      // Simulate realistic partner thinking delay (1.2s to 2.2s)
+      const thinkMs = 1200 + Math.random() * 800;
       setTimeout(() => {
         const currentOptions = currentQ.options;
-        // 70% chance partner picks same for a fun demo feel
+        // 70% chance bot matches for playful positive engagement
         const picksSame = Math.random() < 0.7;
         const simulatedAnswer = picksSame
           ? optionId
@@ -183,23 +246,23 @@ export default function LoveMatchGamePage() {
 
         setPartnerLocked(true);
         setPartnerAnswer(simulatedAnswer);
-      }, 1200);
+      }, thinkMs);
       return;
     }
 
-    // Broadcast to partner that we locked our choice without revealing optionId yet
+    // Broadcast answer-locked without revealing choice
     if (channelRef.current) {
       channelRef.current.send({
         type: "broadcast",
         event: "answer-locked",
-        payload: { userId: user?.id, qIndex: currentQIndex },
+        payload: { userId: myEffectiveId, qIndex: currentQIndex },
       });
 
-      // Send the private answer to reveal channel
+      // Send private answer to reveal payload
       channelRef.current.send({
         type: "broadcast",
         event: "answer-reveal",
-        payload: { userId: user?.id, answerId: optionId, qIndex: currentQIndex },
+        payload: { userId: myEffectiveId, answerId: optionId, qIndex: currentQIndex },
       });
     }
   };
@@ -244,9 +307,35 @@ export default function LoveMatchGamePage() {
     }
   };
 
+  // ── Copy Room Invite Link ──
+  const handleCopyLink = async () => {
+    if (typeof window === "undefined") return;
+    const origin = window.location.origin;
+    const shareUrl = `${origin}/play/love-match?room=${roomCode}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      alert(`Share this room code with your partner: ${roomCode}`);
+    }
+  };
+
+  // ── Handle Guest Join Submit ──
+  const handleGuestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guestInput.trim()) return;
+    const clean = guestInput.trim();
+    setGuestName(clean);
+    localStorage.setItem("pairfect_guest_name", clean);
+    setIsGuestPromptOpen(false);
+  };
+
   const isCurrentMatch = myAnswer && partnerAnswer && myAnswer === partnerAnswer;
-  const userName = profile?.display_name || "You";
-  const partnerName = partner?.display_name || (isSoloMode ? "Alex (Demo)" : "Partner");
+  const userName = effectiveDisplayName;
+  const partnerName = isSoloMode
+    ? "Cupid Bot 🤖"
+    : dynamicPartnerName || partner?.display_name || "Partner";
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] transition-colors paper-grain">
@@ -254,7 +343,53 @@ export default function LoveMatchGamePage() {
 
       <main className="flex-1 max-w-[1140px] w-full mx-auto px-4 sm:px-6 pt-24 md:pl-36 md:pr-12 pb-16 flex flex-col justify-center">
 
-        {/* ── TOP BACK BUTTON & BREADCRUMB ── */}
+        {/* Guest Join Modal */}
+        {isGuestPromptOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="max-w-md w-full p-8 rounded-3xl bg-white border border-[var(--border)] shadow-2xl text-center space-y-6 paper-grain"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 flex items-center justify-center text-2xl mx-auto shadow-xs">
+                💌
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="font-display italic font-bold text-2xl text-[var(--text)]">
+                  You&apos;re Invited to Love Match!
+                </h3>
+                <p className="text-xs text-[var(--text-soft)] font-mono">
+                  Room Code: <span className="text-[var(--burgundy)] font-bold">{roomCode}</span>
+                </p>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Enter your name to jump into the dual-phone game live with zero signup required.
+                </p>
+              </div>
+
+              <form onSubmit={handleGuestSubmit} className="space-y-4">
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="Your Name or Nickname..."
+                  value={guestInput}
+                  onChange={(e) => setGuestInput(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--paper-warm)] text-sm font-medium focus:outline-hidden focus:border-[var(--burgundy)] text-center"
+                />
+
+                <button
+                  type="submit"
+                  className="w-full btn-journal py-3 text-xs font-mono font-bold justify-center cursor-pointer"
+                >
+                  Join Match Room ▷
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Top Back Button & Header Bar */}
         <div className="flex items-center justify-between pb-6">
           <Link
             href="/play"
@@ -273,9 +408,7 @@ export default function LoveMatchGamePage() {
           )}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════
-            PHASE 1: LOBBY SCREEN
-            ══════════════════════════════════════════════════════════ */}
+        {/* PHASE 1: LOBBY SCREEN */}
         {phase === "lobby" && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -299,46 +432,59 @@ export default function LoveMatchGamePage() {
               </p>
             </div>
 
-            {/* Partner Connection Status */}
+            {/* Room Connection Card */}
             <div className="p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-between text-left">
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                <div className={`w-3 h-3 rounded-full ${partnerConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`} />
                 <div>
-                  <p className="text-xs font-bold text-[var(--text)]">{partnerName}</p>
+                  <p className="text-xs font-bold text-[var(--text)]">
+                    {partnerConnected ? partnerName : "Waiting for partner..."}
+                  </p>
                   <p className="text-[10px] font-mono text-[var(--text-soft)]">
-                    {partnerConnected ? "Online & Connected" : "Invite your partner to connect live"}
+                    {partnerConnected ? "Online & Synchronized" : `Room Code: ${roomCode}`}
                   </p>
                 </div>
               </div>
-              <span className={`text-[9px] font-mono font-bold px-2.5 py-1 rounded-full uppercase ${
-                partnerConnected ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
-              }`}>
-                {partnerConnected ? "READY" : "WAITING"}
-              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  title="Copy direct invite link"
+                  className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-white text-[10px] font-mono font-bold hover:border-[var(--burgundy)] transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                  <span>{copied ? "Link Copied!" : "Copy Link"}</span>
+                </button>
+                <span className={`text-[9px] font-mono font-bold px-2.5 py-1 rounded-full uppercase ${
+                  partnerConnected ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                }`}>
+                  {partnerConnected ? "READY" : "WAITING"}
+                </span>
+              </div>
             </div>
 
             {/* Launch Actions */}
             <div className="space-y-3 pt-2">
               <button
                 onClick={() => handleStartGame(false)}
-                className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center"
+                className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center cursor-pointer"
               >
-                <span>Start Match Game ▷</span>
+                <span>Start 2-Player Match ▷</span>
               </button>
 
               <button
                 onClick={() => handleStartGame(true)}
-                className="w-full text-xs font-mono font-bold text-[var(--text-soft)] hover:text-[var(--text)] py-2 transition-colors"
+                className="w-full text-xs font-mono font-bold text-[var(--text-soft)] hover:text-[var(--text)] py-2 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                Play Solo / Practice Mode ▷
+                <Bot className="w-3.5 h-3.5 text-rose-500" />
+                <span>Play vs Cupid Bot (Solo Practice) ▷</span>
               </button>
             </div>
           </motion.div>
         )}
 
-        {/* ══════════════════════════════════════════════════════════
-            PHASE 2, 3, 4, 5: ACTIVE QUESTION & DUAL-PHONE GAME STAGE
-            ══════════════════════════════════════════════════════════ */}
+        {/* ACTIVE QUESTION & DUAL-PHONE GAME STAGE */}
         {(phase === "playing" || phase === "locked" || phase === "comparing" || phase === "revealed") && (
           <div className="space-y-8">
 
@@ -357,14 +503,13 @@ export default function LoveMatchGamePage() {
               )}
             </div>
 
-            {/* ── DUAL PLAYER STAGE (Partner A & Partner B) ── */}
+            {/* Dual Player Stage */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch max-w-4xl mx-auto">
 
-              {/* ── LEFT CARD: PLAYER A (YOU - Rose Accent) ── */}
+              {/* Player A (You) */}
               <div className={`p-6 sm:p-7 rounded-3xl bg-white border-2 shadow-md transition-all flex flex-col justify-between relative paper-grain ${
                 myAnswer ? "border-rose-300 shadow-rose-100" : "border-[var(--border)]"
               }`}>
-                {/* Player Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
@@ -377,7 +522,6 @@ export default function LoveMatchGamePage() {
                   </span>
                 </div>
 
-                {/* Option Choices */}
                 <div className="space-y-2.5 my-5 flex-1 flex flex-col justify-center">
                   {currentQ.options.map((opt) => {
                     const isSelected = myAnswer === opt.id;
@@ -404,7 +548,6 @@ export default function LoveMatchGamePage() {
                   })}
                 </div>
 
-                {/* Status Footer */}
                 <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
                   <span>Choice Privacy: Encrypted 🔒</span>
                   <span className="font-bold text-rose-600">
@@ -413,11 +556,10 @@ export default function LoveMatchGamePage() {
                 </div>
               </div>
 
-              {/* ── RIGHT CARD: PLAYER B (PARTNER - Blue/Indigo Accent) ── */}
+              {/* Player B (Partner / Bot) */}
               <div className={`p-6 sm:p-7 rounded-3xl bg-white border-2 shadow-md transition-all flex flex-col justify-between relative paper-grain ${
                 partnerLocked ? "border-blue-300 shadow-blue-100" : "border-[var(--border)]"
               }`}>
-                {/* Partner Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
@@ -430,10 +572,8 @@ export default function LoveMatchGamePage() {
                   </span>
                 </div>
 
-                {/* Partner Choices / Privacy Blind Box */}
                 <div className="space-y-2.5 my-5 flex-1 flex flex-col justify-center">
                   {phase === "revealed" && partnerAnswer ? (
-                    // Reveal Phase: Show Partner's actual answer
                     currentQ.options.map((opt) => {
                       const isPartnerSelected = partnerAnswer === opt.id;
                       return (
@@ -454,7 +594,6 @@ export default function LoveMatchGamePage() {
                       );
                     })
                   ) : (
-                    // Blind state: Partner choices are completely masked
                     <div className="p-8 rounded-2xl bg-[var(--paper-warm)]/70 border border-dashed border-[var(--border)] text-center space-y-3 my-auto">
                       <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-200 text-blue-500 flex items-center justify-center mx-auto text-lg">
                         {partnerLocked ? "🔒" : "⏳"}
@@ -471,7 +610,6 @@ export default function LoveMatchGamePage() {
                   )}
                 </div>
 
-                {/* Status Footer */}
                 <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between text-[10px] font-mono text-[var(--text-soft)]">
                   <span>Choice Privacy: Encrypted 🔒</span>
                   <span className="font-bold text-blue-600">
@@ -482,7 +620,7 @@ export default function LoveMatchGamePage() {
 
             </div>
 
-            {/* ── REVEAL RESULT & MATCH SCORE OVERLAY ── */}
+            {/* Reveal Result Overlay */}
             <AnimatePresence>
               {phase === "revealed" && (
                 <motion.div
@@ -505,7 +643,6 @@ export default function LoveMatchGamePage() {
                     </p>
                   </div>
 
-                  {/* Running Sync Meter */}
                   <div className="p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-between max-w-sm mx-auto">
                     <span className="text-[10px] font-mono font-bold uppercase text-[var(--text-soft)]">
                       Overall Sync
@@ -515,11 +652,10 @@ export default function LoveMatchGamePage() {
                     </span>
                   </div>
 
-                  {/* Next Question CTA */}
                   <div className="pt-2">
                     <button
                       onClick={handleNextQuestion}
-                      className="btn-journal py-3 px-8 text-xs font-mono font-bold"
+                      className="btn-journal py-3 px-8 text-xs font-mono font-bold cursor-pointer"
                     >
                       <span>
                         {currentQIndex + 1 < MATCH_QUESTIONS.length ? "Next Question ▷" : "See Final Match Score ▷"}
@@ -533,9 +669,7 @@ export default function LoveMatchGamePage() {
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════════════
-            PHASE 6: COMPLETION / FINAL SCORE SCREEN
-            ══════════════════════════════════════════════════════════ */}
+        {/* PHASE 6: COMPLETION / FINAL SCORE SCREEN */}
         {phase === "completed" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -551,7 +685,7 @@ export default function LoveMatchGamePage() {
               </h2>
             </div>
 
-            {/* Big Percentage Score Badge */}
+            {/* Percentage Score */}
             <div className="space-y-2">
               <div className="text-6xl sm:text-7xl font-display italic font-black text-[var(--burgundy)] tracking-tight">
                 {animatedPercentage}%
@@ -564,7 +698,7 @@ export default function LoveMatchGamePage() {
               </p>
             </div>
 
-            {/* Romantic Feedback Verdict */}
+            {/* Verdict Note */}
             <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-1.5 text-left">
               <p className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
                 <span>{getMatchFeedback(animatedPercentage).emoji}</span>
@@ -575,11 +709,29 @@ export default function LoveMatchGamePage() {
               </p>
             </div>
 
+            {/* Soft Conversion Note for Guest Players */}
+            {!user && (
+              <div className="p-5 rounded-2xl border border-rose-200 bg-rose-50/60 text-left space-y-2">
+                <p className="text-xs font-bold text-[var(--burgundy)] flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" /> Save Your Memories Together
+                </p>
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                  Liked playing? Create a free private Lovespace to send 3D wax-sealed love letters, drop notes in a gratitude jar, and record your milestones.
+                </p>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-1"
+                >
+                  Create Free Shared Space ▷
+                </Link>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 onClick={handlePlayAgain}
-                className="w-full sm:w-auto btn-journal py-3 px-6 text-xs font-mono font-bold justify-center"
+                className="w-full sm:w-auto btn-journal py-3 px-6 text-xs font-mono font-bold justify-center cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Play Again ▷</span>
