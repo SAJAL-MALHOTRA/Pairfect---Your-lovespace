@@ -29,6 +29,7 @@ import { WritingLetters } from "@/components/cozy-illustrations";
 import { useSubscription } from "@/hooks/use-subscription";
 import PlusPaywallModal from "@/components/plus-paywall-modal";
 import { exportLetterToPNG } from "@/lib/love-letter/export-letter";
+import { decryptText, encryptText, getPairKey } from "@/lib/crypto/e2ee";
 
 // Giphy block
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
@@ -888,6 +889,9 @@ export default function LoveLetterPage() {
     if (!clean.length || !toName.trim()) return;
     setSending(true);
     try {
+      const vaultKey = await getPairKey(pair.id);
+      if (!vaultKey) throw new Error("Your private key is unavailable on this device. Restore your vault key before sending.");
+      const encryptedContent = `enc:v1:${await encryptText(JSON.stringify(clean), vaultKey)}`;
       const r = await fetch("/api/love-letters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -895,7 +899,7 @@ export default function LoveLetterPage() {
           pairId: pair.id,
           recipientName: toName.trim(),
           senderName: fromName.trim() || "Me",
-          content: clean,
+          content: encryptedContent,
           envelopeStyle: style,
           unseal_at:
             scheduleUnseal && unsealDate
@@ -939,10 +943,23 @@ export default function LoveLetterPage() {
   };
 
   const handleUnseal = async (letter: any) => {
-    setActiveLetter(letter);
-    if (letter.is_opened) {
+    let readableLetter = letter;
+    if (typeof letter.content === "string" && letter.content.startsWith("enc:v1:")) {
+      try {
+        if (!pair?.id) throw new Error("This letter needs its paired vault key.");
+        const key = await getPairKey(pair.id);
+        if (!key) throw new Error("Your private key is unavailable on this device. Restore your vault key to read this letter.");
+        const plaintext = await decryptText(letter.content.slice("enc:v1:".length), key);
+        readableLetter = { ...letter, content: JSON.parse(plaintext) };
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "Could not decrypt this letter.");
+        return;
+      }
+    }
+    setActiveLetter(readableLetter);
+    if (readableLetter.is_opened) {
       setReadPhase("open");
-      setRevealCount((letter.content?.length || 0) + 1);
+      setRevealCount((readableLetter.content?.length || 0) + 1);
       return;
     }
     setReadPhase("sealed");

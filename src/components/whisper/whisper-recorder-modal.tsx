@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { X, Mic, Square, Play, Pause, RotateCcw, Send, Radio, Sparkles, Check, AlertCircle } from "lucide-react";
 import { PRESET_STATIONS, WhisperMoodTag, MOOD_TAG_LABELS } from "@/lib/whisper/types";
 import { playRadioClick } from "@/lib/whisper/audio-fx";
+import { encryptAudioBlob, getPairKey } from "@/lib/crypto/e2ee";
 
 interface WhisperRecorderModalProps {
   isOpen: boolean;
@@ -293,12 +294,17 @@ export function WhisperRecorderModal({
     setErrorMessage(null);
 
     try {
+      if (!pairId) throw new Error("Connect your private space before sending a whisper.");
+      const vaultKey = await getPairKey(pairId);
+      if (!vaultKey) throw new Error("Your private key is unavailable on this device. Restore your vault key before sending.");
+      const encryptedBlob = await encryptAudioBlob(recordedBlobRef.current, vaultKey);
+
       // Convert Blob to base64 Data URL
       const reader = new FileReader();
       const base64Data = await new Promise<string>((resolve, reject) => {
         reader.onloadend = () => resolve(reader.result as string);
         reader.onerror = reject;
-        reader.readAsDataURL(recordedBlobRef.current!);
+        reader.readAsDataURL(encryptedBlob);
       });
 
       const response = await fetch("/api/whisper", {
@@ -309,6 +315,8 @@ export function WhisperRecorderModal({
           frequency: targetFrequency,
           title: title.trim() || `${MOOD_TAG_LABELS[moodTag].label} Whisper`,
           audioData: base64Data,
+          audioMime: recordedBlobRef.current.type || "audio/webm",
+          encrypted: true,
           duration: seconds,
           moodTag,
           senderName,

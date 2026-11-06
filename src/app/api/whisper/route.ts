@@ -79,6 +79,8 @@ export async function POST(request: Request) {
       frequency = 91.7,
       title = "Sweet Whisper",
       audioData,
+      audioMime = "audio/webm",
+      encrypted = false,
       duration = 0,
       moodTag = "romantic",
       senderName = "Partner",
@@ -91,10 +93,12 @@ export async function POST(request: Request) {
       );
     }
 
-    let finalAudioUrl = audioData;
+    let finalAudioUrl = encrypted && typeof audioData === "string" && audioData.startsWith("data:")
+      ? `enc:v1:${audioData.slice(audioData.indexOf(",") + 1)}`
+      : audioData;
 
     // Optional: Upload to Supabase Storage if base64 provided
-    if (typeof audioData === "string" && audioData.startsWith("data:audio")) {
+    if (typeof audioData === "string" && audioData.startsWith("data:")) {
       try {
         const admin = createAdminClient();
         const commaIdx = audioData.indexOf(",");
@@ -115,8 +119,10 @@ export async function POST(request: Request) {
           contentType = mimeMatch[1];
         }
 
-        const ext = contentType.includes("mp4") ? "mp4" : contentType.includes("ogg") ? "ogg" : "webm";
-        const filePath = `${pairId}/whispers/whisper_${Date.now()}_${user.id.slice(0, 6)}.${ext}`;
+        const extensionType = encrypted ? String(audioMime) : contentType;
+        const ext = extensionType.includes("mp4") ? "mp4" : extensionType.includes("ogg") ? "ogg" : "webm";
+        const suffix = encrypted ? ".enc" : "";
+        const filePath = `${pairId}/whispers/whisper_${Date.now()}_${user.id.slice(0, 6)}.${ext}${suffix}`;
 
         const { data: uploadData, error: uploadErr } = await admin.storage
           .from("memories")

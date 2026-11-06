@@ -314,6 +314,82 @@ export async function decryptPhotoBuffer(
 }
 
 /**
+ * Encrypt an audio Blob using AES-256-GCM
+ * Returns binary Blob with structure: [1 byte: 0x01][12 bytes: IV][ciphertext + 16 bytes: tag]
+ */
+export async function encryptAudioBlob(audioBlob: Blob, key: CryptoKey): Promise<Blob> {
+  const iv = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+  const audioBuffer = await audioBlob.arrayBuffer();
+  const ciphertextBuffer = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    audioBuffer
+  );
+  const cipherBytes = new Uint8Array(ciphertextBuffer);
+  const combined = new Uint8Array(1 + IV_LENGTH + cipherBytes.byteLength);
+  combined[0] = FORMAT_VERSION;
+  combined.set(iv, 1);
+  combined.set(cipherBytes, 1 + IV_LENGTH);
+  return new Blob([combined], { type: "application/octet-stream" });
+}
+
+/**
+ * Decrypt an audio ArrayBuffer using AES-256-GCM
+ */
+export async function decryptAudioBuffer(
+  encryptedBuffer: ArrayBuffer,
+  key: CryptoKey
+): Promise<Blob> {
+  const bytes = new Uint8Array(encryptedBuffer);
+  if (bytes.byteLength < 1 + IV_LENGTH + 16) {
+    throw new Error("Ciphertext buffer is too short to be a valid encrypted payload.");
+  }
+  if (bytes[0] !== FORMAT_VERSION) {
+    throw new Error(`Unsupported encryption payload version: ${bytes[0]}`);
+  }
+  const iv = bytes.slice(1, 1 + IV_LENGTH);
+  const ciphertextWithTag = bytes.slice(1 + IV_LENGTH);
+  const decryptedBuffer = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    ciphertextWithTag
+  );
+  return new Blob([decryptedBuffer], { type: "audio/webm" });
+}
+
+/**
+ * Encrypt text using AES-256-GCM and return a Base64 payload
+ * Payload format: [12 bytes: IV][ciphertext + 16 bytes: tag]
+ */
+export async function encryptText(plainText: string, key: CryptoKey): Promise<string> {
+  const iv = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+  const plaintext = new TextEncoder().encode(plainText);
+  const ciphertext = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+  const combined = new Uint8Array(IV_LENGTH + ciphertext.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(ciphertext), IV_LENGTH);
+  let binary = "";
+  for (const byte of combined) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+/**
+ * Decrypt a Base64 AES-256-GCM text payload
+ */
+export async function decryptText(ciphertextPayload: string, key: CryptoKey): Promise<string> {
+  const binary = atob(ciphertextPayload);
+  if (binary.length < IV_LENGTH + 16) {
+    throw new Error("Ciphertext payload is too short to be valid.");
+  }
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const iv = bytes.slice(0, IV_LENGTH);
+  const ciphertext = bytes.slice(IV_LENGTH);
+  const plaintext = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+  return new TextDecoder().decode(plaintext);
+}
+
+/**
  * Helper: Convert a base64 Data URL to a binary Blob
  */
 export function dataUrlToBlob(dataUrl: string): Blob {

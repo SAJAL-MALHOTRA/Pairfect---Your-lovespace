@@ -32,6 +32,9 @@ export async function GET(request: Request) {
       let decryptedContent = letter.content;
 
       if (typeof letter.content === "string") {
+        if (letter.content.startsWith("enc:v1:")) {
+          return { ...letter, content: letter.content };
+        }
         try {
           const decryptedStr = decrypt(letter.content);
           if (typeof decryptedStr === "string" && (decryptedStr.startsWith("[") || decryptedStr.startsWith("{"))) {
@@ -90,7 +93,9 @@ export async function POST(request: Request) {
 
     // Encrypt the JSON structure of content blocks
     const contentString = JSON.stringify(content);
-    const ciphertext = encrypt(contentString);
+    const ciphertext = typeof content === "string" && content.startsWith("enc:v1:")
+      ? content
+      : encrypt(contentString);
 
     const { data, error: insertErr } = await supabase
       .from("love_letters")

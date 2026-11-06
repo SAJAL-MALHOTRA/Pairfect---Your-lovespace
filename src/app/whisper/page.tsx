@@ -23,6 +23,7 @@ import { WhisperRecorderModal } from "@/components/whisper/whisper-recorder-moda
 import { WhisperArchiveDrawer } from "@/components/whisper/whisper-archive-drawer";
 import { WhisperNote, DEFAULT_FREQUENCY, PRESET_STATIONS, MOOD_TAG_LABELS } from "@/lib/whisper/types";
 import { playRadioClick, playStaticNoise, playStationLockChime } from "@/lib/whisper/audio-fx";
+import { decryptAudioBuffer, getPairKey } from "@/lib/crypto/e2ee";
 
 const WAVEFORM_BARS = [32, 48, 70, 42, 65, 88, 62, 78, 48, 72, 94, 82, 58, 42, 72, 88, 98, 74, 52, 82, 64, 84, 62, 46, 68, 54, 38, 28];
 
@@ -160,10 +161,47 @@ function WhisperContent() {
     }
 
     const audio = audioRef.current;
+    let objectUrl: string | null = null;
+    let cancelled = false;
 
     if (activeWhisper && activeWhisper.audio_url) {
-      audio.src = activeWhisper.audio_url;
-      audio.load();
+      const audioUrl = activeWhisper.audio_url;
+      const isEncrypted = audioUrl.startsWith("enc:v1:") || audioUrl.includes(".enc");
+      const loadSource = async () => {
+        try {
+          if (isEncrypted) {
+            if (!pair?.id) throw new Error("This encrypted whisper needs its paired vault key.");
+            const key = await getPairKey(pair.id);
+            if (!key) throw new Error("Your private key is unavailable on this device.");
+            let encryptedBuffer: ArrayBuffer;
+            if (audioUrl.startsWith("enc:v1:")) {
+              const binary = atob(audioUrl.slice("enc:v1:".length));
+              const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+              encryptedBuffer = bytes.buffer;
+            } else {
+              const response = await fetch(audioUrl);
+              if (!response.ok) throw new Error("Could not download the encrypted whisper.");
+              encryptedBuffer = await response.arrayBuffer();
+            }
+            const decryptedBlob = await decryptAudioBuffer(encryptedBuffer, key);
+            if (cancelled) return;
+            const mimeType = audioUrl.includes(".mp4.enc")
+              ? "audio/mp4"
+              : audioUrl.includes(".ogg.enc")
+                ? "audio/ogg"
+                : "audio/webm";
+            objectUrl = URL.createObjectURL(new Blob([decryptedBlob], { type: mimeType }));
+            audio.src = objectUrl;
+          } else {
+            audio.src = audioUrl;
+          }
+          audio.load();
+        } catch (error) {
+          console.error("Whisper decryption error:", error);
+          setIsPlaying(false);
+        }
+      };
+      void loadSource();
       setHasHearted(Boolean(activeWhisper.listened_at));
 
       if (isFirstMountRef.current) {
@@ -211,9 +249,11 @@ function WhisperContent() {
     }
 
     return () => {
+      cancelled = true;
       audio.pause();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [activeWhisper]);
+  }, [activeWhisper, pair?.id]);
 
   // Play / Pause toggle
   const handleTogglePlay = () => {
