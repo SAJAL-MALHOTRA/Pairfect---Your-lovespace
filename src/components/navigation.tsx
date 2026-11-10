@@ -83,7 +83,8 @@ export default function Navigation() {
           ══════════════════════════════════════════════════ */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-b border-stone-200 z-50 px-4 flex items-center justify-between select-none">
         {/* Brand */}
-        <Link href="/dashboard" className="flex items-center gap-1.5">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image src="/logo-book.png" alt="Pairfect Logo" width={24} height={24} className="rounded-md object-contain" priority />
           <span className="font-sans font-black text-xl tracking-tight text-stone-900">pairfect</span>
           <div className="flex items-center gap-0.5">
             <span className="w-2 h-2 rounded-full bg-[#FF5E8E]" />
@@ -250,6 +251,7 @@ export default function Navigation() {
           {/* Top Brand Logo */}
           <div className="flex items-center justify-between px-1 pt-1">
             <Link href="/dashboard" className="flex items-center gap-2 group">
+              <Image src="/logo-book.png" alt="Pairfect Logo" width={28} height={28} className="rounded-md object-contain" priority />
               <span className="font-sans font-black text-2xl tracking-tight text-stone-900 group-hover:text-rose-600 transition-colors">
                 pairfect
               </span>

@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
-  Camera, Heart, Smile, Check, ChevronRight, ChevronLeft,
-  Volume2, VolumeX, ArrowRight, Lock, Shield, Zap, Play, Pause, Flame,
-  Gift, Mail, Clock, Download, Star, HelpCircle, X,
-  CheckCircle2, Award, Smartphone, Brain, Disc, Archive,
-  Tv, Sparkles, RotateCw, Mic, Send, Radio, Flower2, Printer,
-  Users, Plane, Globe, Laptop, ShoppingBag, User, ExternalLink,
-  RefreshCw, Compass, Music, CloudSun, Scale, Bookmark, Palette,
-  Sun, Snowflake, MessageSquare, Sparkle
+  Camera, Heart, ChevronRight, ChevronLeft,
+  ArrowRight, Lock, Shield, Zap, Play, Pause, Flame,
+  Mail, Clock, Download, Star, HelpCircle, X,
+  Smartphone, Brain, Disc, Archive,
+  Tv, Sparkles, RotateCw, Mic, Send, Radio, Flower2,
+  Users, Plane, Globe, Laptop, User,
+  RefreshCw, Compass, Music, CloudSun, Scale, Palette,
+  Sun, Snowflake, MessageSquare, Sparkle, Check
 } from "lucide-react";
 import {
   motion,
@@ -22,9 +21,6 @@ import {
   useTransform
 } from "framer-motion";
 import { CoupleBeansMascot, HeartBeansAirplaneMascot } from "@/components/couple-mascot";
-
-/* Easing curve for motion system */
-const EASE_CUBIC = [0.22, 0.61, 0.36, 1] as const;
 
 /* Audio Sound Effects Engine */
 function playTactileSound(
@@ -91,7 +87,7 @@ function playTactileSound(
       osc.stop(now + 0.25);
     }
   } catch {
-    // Ignore audio autoplay restrictions
+    // Ignore audio restrictions
   }
 }
 
@@ -157,7 +153,7 @@ function HeroLiveCursor({
           </svg>
         </motion.div>
 
-        {/* Expanding Heart Ripple 2 (staggered phase) */}
+        {/* Expanding Heart Ripple 2 */}
         <motion.div
           className="absolute -top-3.5 -left-3.5 pointer-events-none"
           initial={{ scale: 0.35, opacity: 0.9 }}
@@ -201,7 +197,7 @@ function HeroLiveCursor({
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   1. HERO RETRO 3D PHOTOBOOTH KIOSK & MECHANICAL SPRING DISPENSER
+   1. HERO RETRO 3D PHOTOBOOTH KIOSK & MECHANICAL DISPENSER
    ════════════════════════════════════════════════════════════════════════ */
 function HeroPhotoboothDispenser() {
   const [ejectKey, setEjectKey] = useState(0);
@@ -209,7 +205,7 @@ function HeroPhotoboothDispenser() {
 
   const photos = [
     { src: "/booth/monkey-heart.jpg", alt: "Heart hands pose" },
-    { src: "/booth/monkey-point.jpg", alt: "Pointing at each other pose" },
+    { src: "/booth/monkey-point.jpg", alt: "Pointing pose" },
     { src: "/booth/monkey-shock.jpg", alt: "Surprise gasp pose" },
     { src: "/booth/monkey-heart.jpg", alt: "Cheek squeeze pose" },
   ];
@@ -294,7 +290,7 @@ function HeroPhotoboothDispenser() {
         }}
         className="w-40 sm:w-44 bg-white p-2 rounded-b-xl shadow-2xl border-x-2 border-b-2 border-stone-200 relative z-10 -mt-2 space-y-1.5 select-none overflow-hidden"
       >
-        {/* Subtle Sweeping Diagonal Gloss Sheen Reflection */}
+        {/* Subtle Sweeping Diagonal Gloss Sheen */}
         <motion.div
           key={`sheen-${ejectKey}`}
           initial={{ x: "-120%", y: "-120%" }}
@@ -343,7 +339,7 @@ function HeroPhotoboothDispenser() {
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   2. HERO 3D GLOBE WITH FLIGHT ARC, 3D TILT & PINNED COUPLE AVATARS
+   2. HERO REALISTIC 3D EARTH GLOBE WITH COORDINATE GRIDS & FLIGHT ARC
    ════════════════════════════════════════════════════════════════════════ */
 function HeroGlobeGraphic() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -387,54 +383,119 @@ function HeroGlobeGraphic() {
         }}
         className="relative w-full flex items-center justify-center"
       >
-        {/* Atmospheric Glow Circle Behind Globe */}
-        <div className="absolute w-84 h-84 rounded-full bg-gradient-to-tr from-sky-200/50 via-rose-100/40 to-purple-200/40 blur-2xl pointer-events-none" />
+        {/* Atmospheric Glow Aura Behind Sphere */}
+        <div className="absolute w-88 h-88 rounded-full bg-gradient-to-tr from-sky-400/30 via-rose-300/25 to-purple-400/20 blur-3xl pointer-events-none" />
 
-        {/* Earth Globe Sphere */}
+        {/* 3D Realistic Earth Globe Sphere */}
         <div
           style={{ transform: "translateZ(20px)" }}
-          className="relative w-72 h-72 sm:w-80 sm:h-80 rounded-full bg-gradient-to-br from-[#4F86F7] via-[#2F6AE3] to-[#1C44A6] shadow-[0_20px_50px_rgba(47,106,227,0.35)] overflow-hidden border-4 border-white/60 flex items-center justify-center"
+          className="relative w-76 h-76 sm:w-84 sm:h-84 rounded-full overflow-hidden border-4 border-white/80 shadow-[0_25px_60px_-10px_rgba(20,60,140,0.45)] flex items-center justify-center bg-[radial-gradient(circle_at_35%_28%,#38BDF8_0%,#2563EB_35%,#1E3A8A_65%,#0B132B_100%)]"
         >
-          {/* Continents SVG Texture Layer */}
-          <svg
-            viewBox="0 0 400 400"
-            className="w-full h-full object-cover opacity-85 scale-125"
-            fill="#34D399"
-          >
-            {/* North America */}
-            <path
-              d="M 60 70 Q 110 50 140 80 Q 170 110 150 160 Q 120 180 80 150 Q 50 110 60 70 Z"
-              fill="#48BB78"
-              opacity="0.9"
-            />
-            {/* Asia & Indonesia */}
-            <path
-              d="M 230 140 Q 280 120 330 150 Q 360 210 320 260 Q 260 280 220 220 Q 210 170 230 140 Z"
-              fill="#38A169"
-              opacity="0.9"
-            />
-            {/* Island arcs */}
-            <circle cx="210" cy="270" r="10" fill="#48BB78" />
-            <circle cx="240" cy="290" r="8" fill="#48BB78" />
-            <circle cx="270" cy="300" r="12" fill="#48BB78" />
-          </svg>
+          {/* SVG Map Texture with Accurate Continents and Blue Coordinate Grid */}
+          <svg viewBox="0 0 400 400" className="w-full h-full object-cover">
+            <defs>
+              {/* Landmass Shading Gradient */}
+              <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#4ADE80" />
+                <stop offset="60%" stopColor="#22C55E" />
+                <stop offset="100%" stopColor="#15803D" />
+              </linearGradient>
 
-          {/* Flight Trajectory Curved Arc */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 320">
+              {/* Highland / Mountain Texture Gradient */}
+              <linearGradient id="highlandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#86EFAC" />
+                <stop offset="100%" stopColor="#16A34A" />
+              </linearGradient>
+
+              {/* Glowing Flight Arc Gradient */}
+              <linearGradient id="flightArcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#38BDF8" />
+                <stop offset="50%" stopColor="#FFFFFF" />
+                <stop offset="100%" stopColor="#FF5E8E" />
+              </linearGradient>
+            </defs>
+
+            {/* Blue Latitude & Longitude Coordinate Grid Lines (Planetary Grids) */}
+            <g stroke="#93C5FD" opacity="0.32" strokeDasharray="3 3">
+              {/* Equator */}
+              <line x1="20" y1="200" x2="380" y2="200" strokeWidth="1.2" opacity="0.5" />
+              {/* Latitude 30N & 30S */}
+              <path d="M 44 140 Q 200 165 356 140" fill="none" strokeWidth="1" />
+              <path d="M 44 260 Q 200 235 356 260" fill="none" strokeWidth="1" />
+              {/* Latitude 60N & 60S */}
+              <path d="M 110 85 Q 200 105 290 85" fill="none" strokeWidth="0.8" />
+              <path d="M 110 315 Q 200 295 290 315" fill="none" strokeWidth="0.8" />
+              {/* Meridians (Curved Longitude Ellipses) */}
+              <ellipse cx="200" cy="200" rx="60" ry="176" fill="none" strokeWidth="1" />
+              <ellipse cx="200" cy="200" rx="120" ry="176" fill="none" strokeWidth="1" />
+              <line x1="200" y1="24" x2="200" y2="376" strokeWidth="1.2" opacity="0.5" />
+            </g>
+
+            {/* Continents & Landmasses */}
+            <g fill="url(#landGrad)" opacity="0.94">
+              {/* North America (Alaska, Canada, USA, Mexico, Baja) */}
+              <path d="M 40 85 C 55 65 90 55 125 70 C 145 80 155 105 145 130 C 135 150 115 165 85 160 C 65 155 45 135 40 105 Z" />
+              <path d="M 125 100 C 150 105 165 125 155 145 C 145 160 120 170 100 165 C 105 145 115 125 125 100 Z" fill="url(#highlandGrad)" />
+              {/* Central America & Caribbean */}
+              <path d="M 85 160 C 95 175 105 190 115 200 C 110 205 100 195 90 180 Z" />
+
+              {/* South America */}
+              <path d="M 110 205 C 135 205 155 225 145 260 C 135 290 115 320 95 330 C 85 325 85 285 95 250 C 100 230 95 215 110 205 Z" />
+
+              {/* Eurasia / Europe & Asia */}
+              <path d="M 195 95 C 220 75 270 70 310 90 C 340 105 365 140 350 180 C 335 210 295 230 255 220 C 230 215 210 195 200 165 C 190 135 185 115 195 95 Z" />
+              {/* Scandinavian & Siberian Highlands */}
+              <path d="M 235 90 C 265 85 295 100 285 125 C 270 145 245 135 235 115 Z" fill="url(#highlandGrad)" />
+
+              {/* Africa */}
+              <path d="M 190 165 C 220 160 240 180 235 215 C 230 255 205 290 185 295 C 170 290 165 250 170 215 C 175 190 175 175 190 165 Z" />
+
+              {/* India & Southeast Asia Peninsulas */}
+              <path d="M 260 180 C 275 195 285 220 275 235 C 265 235 255 210 250 195 Z" />
+
+              {/* Indonesia & Archipelago Islands */}
+              <ellipse cx="270" cy="245" rx="14" ry="5" />
+              <ellipse cx="295" cy="255" rx="12" ry="4" />
+              <ellipse cx="320" cy="265" rx="10" ry="5" />
+              <circle cx="250" cy="240" r="5" />
+
+              {/* Australia */}
+              <path d="M 295 285 C 330 280 350 300 345 330 C 330 350 300 350 285 335 C 275 315 280 295 295 285 Z" />
+
+              {/* Japan Archipelago */}
+              <path d="M 345 140 Q 355 160 340 175" stroke="url(#landGrad)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+            </g>
+
+            {/* Slowly Rotating Translucent Cloud Formations */}
+            <g opacity="0.35" fill="#FFFFFF">
+              <path d="M 70 110 C 90 95 130 95 150 115 C 130 125 90 125 70 110 Z" />
+              <path d="M 220 130 C 250 115 300 120 330 140 C 300 150 250 145 220 130 Z" />
+              <path d="M 120 240 C 150 230 190 235 210 250 C 180 260 140 255 120 240 Z" />
+              <path d="M 260 210 C 285 200 320 205 340 220 C 315 230 280 225 260 210 Z" />
+            </g>
+
+            {/* Glowing Parabolic Flight Trajectory Arc (Jakarta to Calgary) */}
             <path
-              d="M 90 230 Q 160 90 240 120"
+              d="M 270 245 Q 185 80 100 125"
               fill="none"
-              stroke="#FFFFFF"
-              strokeWidth="2.5"
+              stroke="url(#flightArcGrad)"
+              strokeWidth="3"
               strokeDasharray="6 6"
-              className="opacity-90"
+              className="opacity-95"
             />
-            {/* Tiny Plane indicator moving along arc */}
-            <circle cx="165" cy="140" r="4" fill="#FFFFFF" className="animate-ping" />
+
+            {/* City Ping Marker: Jakarta (Cyan/Green Pulse) */}
+            <circle cx="270" cy="245" r="4.5" fill="#34D399" />
+            <circle cx="270" cy="245" r="8" fill="none" stroke="#34D399" strokeWidth="1.5" className="animate-ping" />
+
+            {/* City Ping Marker: Calgary (Rose/Pink Pulse) */}
+            <circle cx="100" cy="125" r="4.5" fill="#FF5E8E" />
+            <circle cx="100" cy="125" r="8" fill="none" stroke="#FF5E8E" strokeWidth="1.5" className="animate-ping" />
           </svg>
 
-          {/* Globe Shine Glare */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/10 to-white/30 pointer-events-none" />
+          {/* Spherical Inner Edge Shadow & Ambient Reflection Sheen */}
+          <div className="absolute inset-0 rounded-full shadow-[inset_-16px_-16px_40px_rgba(0,0,0,0.65),inset_16px_16px_35px_rgba(255,255,255,0.35)] pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none" />
         </div>
 
         {/* Mascot Soaring Along Flight Path */}
@@ -445,7 +506,7 @@ function HeroGlobeGraphic() {
           <HeartBeansAirplaneMascot className="w-24 h-16 drop-shadow-md" />
         </div>
 
-        {/* Avatar Pin 1: Jakarta, Indonesia (Bottom Left) */}
+        {/* Avatar Pin 1: Jakarta Partner (Bottom Left) */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -456,7 +517,7 @@ function HeroGlobeGraphic() {
           <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-rose-100">
             <Image
               src="/booth/monkey-point.jpg"
-              alt="Jakarta Partner"
+              alt="You"
               fill
               className="object-cover"
               sizes="64px"
@@ -469,7 +530,7 @@ function HeroGlobeGraphic() {
           </div>
         </motion.div>
 
-        {/* Avatar Pin 2: Calgary, Canada (Top Right) */}
+        {/* Avatar Pin 2: Calgary Partner (Top Right) */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -480,7 +541,7 @@ function HeroGlobeGraphic() {
           <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-sky-100">
             <Image
               src="/booth/monkey-heart.jpg"
-              alt="Calgary Partner"
+              alt="Partner"
               fill
               className="object-cover"
               sizes="64px"
@@ -533,7 +594,7 @@ function ActivitiesCarousel() {
     // 1. Botanical Floral Studio (DigiBouquet)
     {
       id: "botanical-studio",
-      badge: "NEW BOTANICAL STUDIO",
+      badge: "BOTANICAL FLORAL STUDIO",
       badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
       title: "Botanical Floral Studio",
       description: "Arrange a custom digital bouquet stem by stem with Ecuadorian roses, baby's breath, and silk ribbons that never wilt.",
@@ -552,7 +613,6 @@ function ActivitiesCarousel() {
           {/* Central Layered Botanical Bouquet Stage */}
           <div className="relative my-auto flex flex-col items-center justify-center py-2">
             <div className="relative w-40 h-44 flex items-center justify-center">
-              {/* Petal sparkles */}
               <motion.div
                 animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
                 transition={{ repeat: Infinity, duration: 2.5 }}
@@ -570,33 +630,22 @@ function ActivitiesCarousel() {
 
               {/* Hand-drawn layered bouquet SVG */}
               <svg viewBox="0 0 160 180" className="w-full h-full drop-shadow-md">
-                {/* Kraft paper wrapper cone */}
                 <polygon points="40,165 120,165 140,95 20,95" fill="#D7B58B" stroke="#B89467" strokeWidth="1.5" />
                 <polygon points="50,165 110,165 130,105 30,105" fill="#E4C8A3" opacity="0.6" />
-
-                {/* Silk Ribbon Bow */}
                 <path d="M 65 130 Q 80 136 95 130" stroke="#F43F5E" strokeWidth="6" strokeLinecap="round" fill="none" />
                 <circle cx="80" cy="132" r="4" fill="#E11D48" />
                 <path d="M 76 134 Q 70 152 64 160" stroke="#F43F5E" strokeWidth="3" fill="none" />
                 <path d="M 84 134 Q 90 152 96 160" stroke="#F43F5E" strokeWidth="3" fill="none" />
-
-                {/* Eucalyptus Stems */}
                 <path d="M 50 100 Q 35 60 45 35" stroke="#4B7B58" strokeWidth="2.5" fill="none" />
                 <ellipse cx="40" cy="48" rx="6" ry="4" fill="#68A578" />
                 <ellipse cx="48" cy="62" rx="7" ry="5" fill="#68A578" />
-
-                {/* Ecuadorian Roses */}
                 <circle cx="80" cy="65" r="16" fill="#F43F5E" stroke="#BE123C" strokeWidth="1.5" />
                 <circle cx="80" cy="65" r="10" fill="#FB7185" />
                 <circle cx="80" cy="65" r="5" fill="#FFE4E6" />
-
                 <circle cx="106" cy="78" r="13" fill="#FDA4AF" stroke="#F43F5E" strokeWidth="1.2" />
                 <circle cx="106" cy="78" r="8" fill="#FFF1F2" />
-
                 <circle cx="56" cy="78" r="13" fill="#FB7185" stroke="#E11D48" strokeWidth="1.2" />
                 <circle cx="56" cy="78" r="8" fill="#FFE4E6" />
-
-                {/* Chamomile Daisy */}
                 <circle cx="80" cy="40" r="6" fill="#FBBF24" />
                 <ellipse cx="80" cy="28" rx="3" ry="6" fill="#FFFFFF" />
                 <ellipse cx="80" cy="52" rx="3" ry="6" fill="#FFFFFF" />
@@ -612,7 +661,7 @@ function ActivitiesCarousel() {
             {/* Note attached to wrapper */}
             <div className="mt-1 px-3 py-1 rounded-lg bg-white/95 border border-emerald-200 shadow-xs text-center">
               <p className="font-heading font-bold text-[10px] text-emerald-950">
-                &ldquo;For Angie, my forever bloom ♡&rdquo;
+                &ldquo;For my favorite person, my forever bloom ♡&rdquo;
               </p>
             </div>
           </div>
@@ -621,7 +670,7 @@ function ActivitiesCarousel() {
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between text-[9px] font-mono text-emerald-800 font-bold px-0.5">
               <span>TAP TO ADD STEMS</span>
-              <span className="text-rose-600">Angie added Rose 🌹</span>
+              <span className="text-rose-600">Partner added Rose 🌹</span>
             </div>
             <div className="grid grid-cols-4 gap-1">
               {[
@@ -647,7 +696,7 @@ function ActivitiesCarousel() {
     // 2. Korean 인생네컷 Virtual Photobooth
     {
       id: "korean-photobooth",
-      badge: "#1 MOST PLAYED",
+      badge: "SYNCHRONIZED PHOTOBOOTH",
       badgeColor: "bg-rose-100 text-rose-700 border-rose-200",
       title: "Korean 인생네컷 Photobooth",
       description: "One countdown takes the photo on both your phones, framing your shots in authentic Seoul studio 4-cut filmstrips.",
@@ -686,7 +735,7 @@ function ActivitiesCarousel() {
                   className="object-cover"
                 />
                 <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/70 text-[9px] font-mono text-sky-300 font-bold">
-                  Calgary (Angie)
+                  Calgary (Partner)
                 </span>
                 <span className="absolute top-1 right-1 text-xs">✨</span>
               </div>
@@ -698,23 +747,23 @@ function ActivitiesCarousel() {
             </div>
           </div>
 
-          {/* Y2K Filter and Cursors */}
+          {/* Filter & Cursors */}
           <div className="space-y-1.5 pt-1 border-t border-stone-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[9px] font-mono font-bold">
-                  Angie ↖
+                  You ↖
                 </span>
                 <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-mono font-bold">
-                  Alden ↖
+                  Partner ↖
                 </span>
               </div>
               <span className="text-[9px] font-mono text-emerald-400 font-bold">
-                98% pose sync
+                Synced live
               </span>
             </div>
             <div className="flex items-center justify-between text-[8px] font-mono text-stone-500">
-              <span>COQUETTE BOWS PACK</span>
+              <span>CLASSIC STUDIO PACK</span>
               <span>AUTO SHUTTER ON</span>
             </div>
           </div>
@@ -722,19 +771,19 @@ function ActivitiesCarousel() {
       ),
     },
 
-    // 3. Wax-Sealed Love Letters with GIPHY stickers
+    // 3. Wax-Sealed Love Letters
     {
       id: "love-letters",
       badge: "TIMELESS ROMANCE",
       badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
       title: "Wax-Sealed Love Letters",
-      description: "Write letters on textured parchment sealed with custom 3D wax stamps and animated GIPHY reaction stickers.",
+      description: "Write letters on textured parchment sealed with custom 3D wax stamps and animated reaction stickers.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3.5 bg-[#FAF6EE] text-stone-900 font-sans text-xs select-none relative overflow-hidden">
           {/* Airmail header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-stone-600 border-b border-stone-300 pb-1.5">
             <span className="font-bold tracking-wider text-rose-700">PAR AVION · AIRMAIL</span>
-            <span className="text-[9px] text-stone-500">YVR ➔ CGK</span>
+            <span className="text-[9px] text-stone-500">DELHI ➔ MUMBAI</span>
           </div>
 
           {/* Parchment letter content */}
@@ -742,18 +791,17 @@ function ActivitiesCarousel() {
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-mono text-stone-400">November 10, 2026</span>
               <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-mono text-[8px] font-bold">
-                GIPHY STICKER
+                STICKER
               </span>
             </div>
             <p className="font-serif italic text-xs text-stone-800 leading-relaxed">
-              &ldquo;I saw the crescent moon tonight and wondered if you are looking at the exact same sky from Calgary... counting every sunrise until we touch hands again.&rdquo;
+              &ldquo;I saw the crescent moon tonight and wondered if you are looking at the exact same sky right now... counting every sunrise until we touch hands again.&rdquo;
             </p>
 
-            {/* Cute GIPHY Reaction Sticker Badge */}
             <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl bg-pink-50 border border-pink-200">
               <span className="text-base">🐱</span>
               <span className="text-[9px] font-mono font-bold text-rose-600">
-                [GIPHY: Love Hug Sparkles]
+                [Love Hug Sparkles]
               </span>
             </div>
           </div>
@@ -762,7 +810,7 @@ function ActivitiesCarousel() {
           <div className="pt-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-700 via-rose-800 to-red-950 border-2 border-red-500 shadow-md flex items-center justify-center text-white font-serif font-black text-xs rotate-6">
-                A&amp;A
+                ♥
               </div>
               <div className="text-left">
                 <p className="text-[9px] font-mono font-bold text-stone-800">Wax Sealed</p>
@@ -770,7 +818,7 @@ function ActivitiesCarousel() {
               </div>
             </div>
             <span className="text-[9px] font-mono font-bold text-rose-600">
-              Alden ✉ Angie
+              You ✉ Partner
             </span>
           </div>
         </div>
@@ -786,7 +834,6 @@ function ActivitiesCarousel() {
       description: "Solve progressive Raven matrix puzzles on the exact same timer. Watch each other's streak climb in real-time.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3 bg-white text-stone-900 font-sans text-xs select-none">
-          {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
             <span>Pattern 4 of 10</span>
             <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
@@ -794,21 +841,19 @@ function ActivitiesCarousel() {
             </span>
           </div>
 
-          {/* Head to Head Score Bar */}
           <div className="grid grid-cols-2 gap-2 my-1">
             <div className="p-2 rounded-xl bg-sky-50 border border-sky-200 text-center">
-              <span className="text-[9px] font-mono text-sky-700 font-bold block">Alden</span>
+              <span className="text-[9px] font-mono text-sky-700 font-bold block">You</span>
               <span className="font-heading font-black text-sm text-sky-900">420 pts</span>
               <span className="text-[8px] font-mono text-sky-600 block">Streak 🔥 3</span>
             </div>
             <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-center">
-              <span className="text-[9px] font-mono text-rose-700 font-bold block">Angie</span>
+              <span className="text-[9px] font-mono text-rose-700 font-bold block">Partner</span>
               <span className="font-heading font-black text-sm text-rose-900">480 pts</span>
               <span className="text-[8px] font-mono text-rose-600 block">Streak 🔥 4</span>
             </div>
           </div>
 
-          {/* 3x3 Raven Matrix Grid */}
           <div className="my-auto text-center space-y-2">
             <p className="font-heading font-bold text-xs text-stone-900">
               Which shape completes the sequence?
@@ -826,10 +871,9 @@ function ActivitiesCarousel() {
             </div>
           </div>
 
-          {/* Options */}
           <div className="flex items-center justify-between text-[10px] font-mono pt-1">
             <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold">
-              Angie locked in C ✓
+              Partner locked in C ✓
             </span>
             <span className="text-stone-400">Locking in...</span>
           </div>
@@ -837,7 +881,7 @@ function ActivitiesCarousel() {
       ),
     },
 
-    // 5. Between the Lines (AI Vibe Judge courtroom verdicts)
+    // 5. Between the Lines (AI Vibe Judge courtroom)
     {
       id: "between-the-lines",
       badge: "AI COURTROOM",
@@ -846,7 +890,6 @@ function ActivitiesCarousel() {
       description: "Bring your playful couples debates before our impartial AI Judge for dramatic courtroom verdicts and peace treaties.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3.5 bg-[#FAF8F5] text-stone-900 font-sans text-xs select-none">
-          {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
             <span className="text-indigo-600 font-bold flex items-center gap-1">
               <Scale className="w-3 h-3" /> Courtroom for Two
@@ -854,41 +897,38 @@ function ActivitiesCarousel() {
             <span>Case #108</span>
           </div>
 
-          {/* Case subject and verdict */}
           <div className="my-auto space-y-2.5">
             <div className="p-2 rounded-xl bg-white border border-stone-200 shadow-2xs space-y-1">
               <span className="text-[9px] font-mono text-stone-400 uppercase">THE DISPUTE:</span>
               <p className="font-heading font-bold text-xs text-stone-900 leading-snug">
-                &ldquo;Who is responsible for the 2:00 AM snack raids on FaceTime?&rdquo;
+                &ldquo;Who is responsible for the late night snack raids on call?&rdquo;
               </p>
             </div>
 
-            {/* AI Judge Gavel and Verdict Card */}
             <div className="p-3 rounded-2xl bg-indigo-50/90 border-2 border-indigo-200 space-y-2 text-center">
               <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-sm">
                 ⚖️
               </div>
               <div className="space-y-0.5">
                 <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] uppercase">
-                  VERDICT: 84% GUILTY (Alden)
+                  VERDICT: 84% GUILTY (Partner)
                 </span>
                 <p className="text-[10px] font-sans font-medium text-stone-700 leading-tight pt-1">
-                  &ldquo;The Court orders Alden to DoorDash Angie her favorite brown sugar boba immediately.&rdquo;
+                  &ldquo;The Court orders Partner to send you surprise dessert on next date night.&rdquo;
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Reaction */}
           <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 pt-1">
-            <span>Angie: Objection sustained!</span>
+            <span>You: Objection sustained!</span>
             <span className="text-indigo-600 font-bold">Judge AI Presiding</span>
           </div>
         </div>
       ),
     },
 
-    // 6. Gratitude Jar (origami notes floating in glass jar)
+    // 6. Gratitude Jar
     {
       id: "gratitude-jar",
       badge: "DAILY RITUAL",
@@ -897,25 +937,20 @@ function ActivitiesCarousel() {
       description: "Fold daily origami lucky stars and parchment scrolls into a shared glass jar that grows richer over time.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#FFFDF9] via-[#FEFBF2] to-[#FEF3C7]/30 text-stone-900 font-sans text-xs select-none">
-          {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-amber-800">
             <span className="font-bold flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-500" /> Gratitude Jar
             </span>
             <span className="bg-amber-200/60 px-2 py-0.5 rounded-full font-bold text-[9px]">
-              148 Stars
+              Our Star Jar
             </span>
           </div>
 
-          {/* Apothecary Glass Jar Graphic with Folded Stars */}
           <div className="my-auto relative flex flex-col items-center">
-            {/* Glass Jar SVG */}
             <div className="relative w-36 h-40 flex items-center justify-center">
               <svg viewBox="0 0 140 160" className="w-full h-full drop-shadow-md">
-                {/* Cork lid */}
                 <rect x="40" y="8" width="60" height="14" rx="4" fill="#C29A6B" stroke="#9A7447" strokeWidth="1.5" />
                 <rect x="46" y="22" width="48" height="6" fill="#8F6B3E" />
-                {/* Glass bottle container */}
                 <path
                   d="M 46 28 L 30 50 C 20 65 20 140 30 150 C 40 155 100 155 110 150 C 120 140 120 65 110 50 L 94 28 Z"
                   fill="#FFFFFF"
@@ -923,10 +958,7 @@ function ActivitiesCarousel() {
                   stroke="#CBD5E1"
                   strokeWidth="2"
                 />
-                {/* Glass reflection highlight */}
                 <path d="M 32 60 Q 26 100 32 140" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.8" />
-
-                {/* Floating Colorful Origami Stars */}
                 <polygon points="55,130 58,138 66,138 60,143 62,151 55,146 48,151 50,143 44,138 52,138" fill="#FBBF24" />
                 <polygon points="85,125 88,133 96,133 90,138 92,146 85,141 78,146 80,138 74,133 82,133" fill="#F43F5E" />
                 <polygon points="70,105 73,113 81,113 75,118 77,126 70,121 63,126 65,118 59,113 67,113" fill="#A78BFA" />
@@ -936,10 +968,9 @@ function ActivitiesCarousel() {
               </svg>
             </div>
 
-            {/* Unfolded Star Note Popup */}
             <div className="mt-1 p-2.5 rounded-xl bg-white/95 border border-amber-200 shadow-md text-center max-w-[210px]">
               <span className="text-[8px] font-mono text-amber-700 font-bold block uppercase">
-                Angie&apos;s Star From Today
+                Partner&apos;s Star From Today
               </span>
               <p className="font-sans text-[10px] text-stone-800 leading-snug pt-0.5">
                 &ldquo;When you fell asleep on our call and I could just hear you breathing peacefully.&rdquo;
@@ -947,10 +978,9 @@ function ActivitiesCarousel() {
             </div>
           </div>
 
-          {/* Action */}
           <div className="flex items-center justify-between text-[9px] font-mono text-amber-900 pt-1">
             <span>Fold tomorrow&apos;s star ✦</span>
-            <span className="font-bold">2/2 Synced</span>
+            <span className="font-bold">Synced Live</span>
           </div>
         </div>
       ),
@@ -965,7 +995,6 @@ function ActivitiesCarousel() {
       description: "Listen together in lockstep with dual spinning tape reels, handwritten cassette labels, and synced waveform scrubbers.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#18181B] to-[#09090B] text-white font-sans text-xs select-none">
-          {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-emerald-400">
             <span className="flex items-center gap-1 font-bold">
               <Radio className="w-3 h-3 animate-pulse" /> Cassette Radio
@@ -973,18 +1002,15 @@ function ActivitiesCarousel() {
             <span className="text-stone-400">0ms Latency</span>
           </div>
 
-          {/* Retro Audio Cassette Tape Graphic with Spinning Reels */}
           <div className="my-auto space-y-3">
             <div className="relative h-28 rounded-2xl bg-gradient-to-r from-rose-950/80 via-stone-900 to-sky-950/80 border-2 border-stone-700 p-2.5 flex flex-col justify-between shadow-xl">
-              {/* Handwritten Label */}
               <div className="bg-amber-100 text-stone-900 px-3 py-1 rounded-md text-center border border-amber-300">
-                <p className="font-mono font-bold text-[10px] tracking-tight">
-                  SIDE A: Late Night Drives With You
-                </p>
+                <span className="font-mono font-bold text-[9px] uppercase tracking-wider">
+                  Side A · Our Roadtrip Soundtrack
+                </span>
               </div>
 
-              {/* Dual Spinning Cassette Wheels */}
-              <div className="flex items-center justify-around px-4">
+              <div className="flex items-center justify-center gap-10 py-1">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
@@ -993,9 +1019,8 @@ function ActivitiesCarousel() {
                   <div className="w-4 h-4 rounded-full border-2 border-dashed border-white" />
                 </motion.div>
 
-                {/* Center magnetic tape window */}
-                <div className="w-14 h-6 rounded-md bg-stone-950/90 border border-stone-600 flex items-center justify-center">
-                  <div className="w-10 h-2 bg-amber-900/60 rounded-full" />
+                <div className="w-14 h-4 rounded-sm bg-stone-800 border border-stone-600 overflow-hidden flex items-center justify-center">
+                  <div className="w-8 h-2 bg-amber-900/60 rounded-full" />
                 </div>
 
                 <motion.div
@@ -1008,7 +1033,6 @@ function ActivitiesCarousel() {
               </div>
             </div>
 
-            {/* Track Info & Synced Audio Scrubber */}
             <div className="space-y-1.5 px-1">
               <div className="flex items-center justify-between text-[11px]">
                 <div className="truncate">
@@ -1018,7 +1042,6 @@ function ActivitiesCarousel() {
                 <Disc className="w-4 h-4 text-emerald-400 animate-spin" />
               </div>
 
-              {/* Scrubber */}
               <div className="w-full h-1.5 rounded-full bg-stone-800 overflow-hidden relative">
                 <div className="w-3/5 h-full bg-gradient-to-r from-rose-500 to-emerald-400 rounded-full" />
               </div>
@@ -1030,16 +1053,15 @@ function ActivitiesCarousel() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-between text-[9px] font-mono text-stone-400 pt-1 border-t border-stone-800">
-            <span>Angie 🎧</span>
-            <span>Alden 🎧</span>
+            <span>You 🎧</span>
+            <span>Partner 🎧</span>
           </div>
         </div>
       ),
     },
 
-    // 8. Daily Mood Sanctuary & Weather Sync
+    // 8. Daily Mood Sanctuary
     {
       id: "daily-sanctuary",
       badge: "DISTANCE COMPASS",
@@ -1048,51 +1070,46 @@ function ActivitiesCarousel() {
       description: "Track each other's live local weather, timezones, and emotional battery with synchronized ambient light orbs.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#F0F9FF] via-[#E6F4FE] to-[#DCEEFC] text-stone-900 font-sans text-xs select-none">
-          {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-sky-800">
             <span className="font-bold flex items-center gap-1">
-              <Compass className="w-3 h-3 text-sky-600" /> 12,480 km Apart
+              <Compass className="w-3 h-3 text-sky-600" /> Connected for Two
             </span>
             <span className="px-2 py-0.5 rounded-full bg-sky-200/80 font-bold text-[9px]">
-              Connected
+              Live Sync
             </span>
           </div>
 
-          {/* Dual Location Weather and Mood Cards */}
           <div className="my-auto space-y-2">
-            {/* Jakarta Card */}
             <div className="p-2.5 rounded-2xl bg-white/95 border border-sky-200 shadow-2xs space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-heading font-black text-xs text-stone-900 flex items-center gap-1">
-                  <Sun className="w-3.5 h-3.5 text-amber-500" /> Jakarta, ID
+                  <Sun className="w-3.5 h-3.5 text-amber-500" /> Your City
                 </span>
-                <span className="text-[10px] font-mono font-bold text-stone-700">31°C · 11:42 PM</span>
+                <span className="text-[10px] font-mono font-bold text-stone-700">31°C · Sunny</span>
               </div>
               <div className="flex items-center justify-between text-[9px] font-mono">
-                <span className="text-stone-500">Alden&apos;s mood:</span>
+                <span className="text-stone-500">Your mood:</span>
                 <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold">
                   Missing you 🥺
                 </span>
               </div>
             </div>
 
-            {/* Calgary Card */}
             <div className="p-2.5 rounded-2xl bg-white/95 border border-sky-200 shadow-2xs space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-heading font-black text-xs text-stone-900 flex items-center gap-1">
-                  <Snowflake className="w-3.5 h-3.5 text-sky-500" /> Calgary, CA
+                  <Snowflake className="w-3.5 h-3.5 text-sky-500" /> Partner&apos;s City
                 </span>
-                <span className="text-[10px] font-mono font-bold text-stone-700">-4°C · 10:42 AM</span>
+                <span className="text-[10px] font-mono font-bold text-stone-700">18°C · Gentle Breeze</span>
               </div>
               <div className="flex items-center justify-between text-[9px] font-mono">
-                <span className="text-stone-500">Angie&apos;s mood:</span>
+                <span className="text-stone-500">Partner&apos;s mood:</span>
                 <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-bold">
                   Warm tea &amp; cozy ☕
                 </span>
               </div>
             </div>
 
-            {/* Shared Battery Meter */}
             <div className="p-2 rounded-xl bg-gradient-to-r from-rose-50 to-sky-50 border border-stone-200 text-center">
               <div className="flex items-center justify-between text-[9px] font-mono font-bold text-stone-700 pb-1">
                 <span>Love Battery</span>
@@ -1104,9 +1121,8 @@ function ActivitiesCarousel() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="text-center text-[9px] font-mono text-sky-700 font-bold">
-            Next meeting: 42 days till reunion ✈
+            Synchronized in real-time across both screens
           </div>
         </div>
       ),
@@ -1121,7 +1137,6 @@ function ActivitiesCarousel() {
       description: "Can't decide what to eat, watch, or do? Spin the romantic fortune wheel and let destiny settle it.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3.5 bg-[#FFF9F9] text-stone-900 font-sans text-xs select-none">
-          {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
             <span className="text-rose-600 font-bold flex items-center gap-1">
               <RotateCw className="w-3 h-3" /> Date Decider
@@ -1129,32 +1144,26 @@ function ActivitiesCarousel() {
             <span>Spin to decide</span>
           </div>
 
-          {/* 6-Color Segmented Romantic Wheel */}
           <div className="my-auto relative flex flex-col items-center">
-            {/* Top Pointer */}
             <div className="w-0 h-0 border-x-[7px] border-x-transparent border-t-[10px] border-t-rose-600 z-20 -mb-1 drop-shadow-sm" />
 
-            {/* Spinning Wheel SVG */}
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 18, ease: "linear" }}
               className="relative w-36 h-36 rounded-full shadow-lg border-3 border-stone-900 overflow-hidden"
             >
               <svg viewBox="0 0 100 100" className="w-full h-full">
-                {/* 6 Slices */}
                 <path d="M50 50 L50 0 A50 50 0 0 1 93.3 25 Z" fill="#FDA4AF" />
                 <path d="M50 50 L93.3 25 A50 50 0 0 1 93.3 75 Z" fill="#BAE6FD" />
                 <path d="M50 50 L93.3 75 A50 50 0 0 1 50 100 Z" fill="#FDE68A" />
                 <path d="M50 50 L50 100 A50 50 0 0 1 6.7 75 Z" fill="#DDD6FE" />
                 <path d="M50 50 L6.7 75 A50 50 0 0 1 6.7 25 Z" fill="#BBF7D0" />
                 <path d="M50 50 L6.7 25 A50 50 0 0 1 50 0 Z" fill="#FECDD3" />
-                {/* Center Hub */}
                 <circle cx="50" cy="50" r="10" fill="#1C1917" />
                 <circle cx="50" cy="50" r="4" fill="#FFFFFF" />
               </svg>
             </motion.div>
 
-            {/* Winner Decree Card */}
             <div className="mt-2.5 p-2 rounded-xl bg-white border border-rose-200 shadow-sm text-center">
               <span className="text-[8px] font-mono text-rose-500 font-bold uppercase block">
                 DESTINY SELECTED:
@@ -1165,16 +1174,15 @@ function ActivitiesCarousel() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 pt-1">
-            <span>Alden spun</span>
-            <span className="text-rose-600 font-bold">Angie approved ✓</span>
+            <span>You spun</span>
+            <span className="text-rose-600 font-bold">Partner approved ✓</span>
           </div>
         </div>
       ),
     },
 
-    // 10. Collaborative Canvas & Memory Wall
+    // 10. Collaborative Canvas
     {
       id: "collaborative-canvas",
       badge: "SHARED SCRAPBOOK",
@@ -1183,19 +1191,16 @@ function ActivitiesCarousel() {
       description: "An infinite digital bulletin board where you pin polaroids, sketch together in real time, and leave doodle love notes.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3 bg-[#FAF8F3] text-stone-900 font-sans text-xs select-none relative overflow-hidden">
-          {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-stone-600">
             <span className="font-bold flex items-center gap-1">
               <Palette className="w-3 h-3 text-teal-600" /> Corkboard Studio
             </span>
             <span className="text-[9px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">
-              Live 2/2
+              Live for Two
             </span>
           </div>
 
-          {/* Collaborative Bulletin Board Content */}
           <div className="my-auto space-y-2 relative">
-            {/* Pinned Mini Polaroid */}
             <div className="w-28 bg-white p-1.5 rounded-xs shadow-md border border-stone-300 -rotate-3 mx-auto">
               <div className="relative h-14 rounded-xs overflow-hidden bg-stone-100">
                 <Image
@@ -1210,28 +1215,24 @@ function ActivitiesCarousel() {
               </p>
             </div>
 
-            {/* Hand-drawn Mascot and Doodles */}
             <div className="relative flex items-center justify-center">
               <CoupleBeansMascot className="w-24 h-14" />
             </div>
 
-            {/* Sticky Love Note with washi tape */}
             <div className="w-32 bg-[#FEF9C3] p-1.5 rounded-xs shadow-sm border border-amber-300 rotate-2 mx-auto text-center">
               <p className="font-mono text-[8px] font-bold text-amber-900">
                 &ldquo;You are my home.&rdquo;
               </p>
             </div>
 
-            {/* Live Dual Cursors Drawing */}
             <div className="absolute top-2 left-3 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
               <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-mono text-[7px] font-bold">
-                Angie drawing
+                Partner drawing
               </span>
             </div>
           </div>
 
-          {/* Footer Controls */}
           <div className="flex items-center justify-between text-[8px] font-mono text-stone-500 pt-1 border-t border-stone-200">
             <span>DRAWING TOGETHER</span>
             <span className="text-teal-700 font-bold">SAVED LIVE</span>
@@ -1242,11 +1243,14 @@ function ActivitiesCarousel() {
   ];
 
   return (
-    <section id="activities" className="py-20 px-4 sm:px-6 max-w-[1360px] mx-auto select-none space-y-10">
+    <section id="activities" className="py-20 px-4 sm:px-6 max-w-[1360px] mx-auto select-none space-y-10 relative">
+      {/* Delicate Sky Blue Grid Accent in Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#E0F2FE_1px,transparent_1px),linear-gradient(to_bottom,#E0F2FE_1px,transparent_1px)] bg-[size:32px_32px] opacity-35 pointer-events-none [mask-image:radial-gradient(ellipse_70%_50%_at_50%_50%,#000_60%,transparent_100%)]" />
+
       {/* Section Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
         <div className="space-y-3 max-w-2xl">
-          <p className="text-xs font-mono font-bold tracking-widest text-stone-500 uppercase">
+          <p className="text-xs font-mono font-bold tracking-widest text-rose-500 uppercase">
             AUTHENTIC PAIRFECT ACTIVITIES
           </p>
           <h2 className="text-3xl sm:text-5xl font-heading font-black text-stone-900 tracking-tight">
@@ -1256,7 +1260,7 @@ function ActivitiesCarousel() {
             </span>
           </h2>
           <p className="text-sm sm:text-base font-sans text-stone-600 leading-relaxed">
-            Real screens from our games and studios. Open a room, send your partner the 4-digit code, and you will see each other&apos;s moves as they happen.
+            Real screens from our games and studios. Open a private room, send your partner the 4-digit code, and experience your dates in real-time.
           </p>
         </div>
 
@@ -1284,7 +1288,7 @@ function ActivitiesCarousel() {
       {/* Horizontal Scrollable Smartphone Showcase Track */}
       <div
         ref={scrollRef}
-        className="flex items-start gap-6 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x snap-mandatory"
+        className="flex items-start gap-6 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x snap-mandatory relative z-10"
         style={{ scrollbarWidth: "none" }}
       >
         {activities.map((act) => (
@@ -1294,12 +1298,10 @@ function ActivitiesCarousel() {
           >
             {/* Realistic Slim Curved Smartphone Frame */}
             <div className="w-full h-[480px] sm:h-[500px] rounded-[44px] bg-stone-950 p-3 shadow-[0_15px_35px_rgba(0,0,0,0.18)] border-4 border-stone-800 relative transition-transform duration-300 group-hover:-translate-y-2">
-              {/* Top Dynamic Island Notch */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-stone-900 rounded-full z-20 flex items-center justify-center">
                 <span className="w-2.5 h-2.5 rounded-full bg-stone-950 border border-stone-800" />
               </div>
 
-              {/* Screen Bezel Container */}
               <div className="w-full h-full rounded-[34px] overflow-hidden bg-white relative z-10 pt-5">
                 {act.screenContent}
               </div>
@@ -1326,7 +1328,7 @@ function ActivitiesCarousel() {
       </div>
 
       {/* Bottom CTA to Browse All */}
-      <div className="pt-2">
+      <div className="pt-2 relative z-10">
         <Link
           href="/play"
           className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border-2 border-stone-900 bg-white hover:bg-stone-900 hover:text-white text-stone-900 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
@@ -1345,14 +1347,13 @@ function FreshOutOfTheBoothClothesline() {
   const [isPlaying, setIsPlaying] = useState(true);
 
   const strips = [
-    // 1. Boarding Pass Ticket
     {
       id: "ticket",
       pegColor: "bg-rose-400",
       content: (
         <div className="w-44 bg-[#F8FAFC] border border-stone-300 p-2.5 rounded-sm shadow-md text-stone-900 font-mono text-[9px] space-y-1.5">
           <div className="border-b border-stone-300 pb-1 flex items-center justify-between">
-            <span className="font-bold tracking-wider">FLIGHT TICKET</span>
+            <span className="font-bold tracking-wider">BOARDING TICKET</span>
             <span className="text-rose-500 font-bold">YOUR♥HEART</span>
           </div>
           <div className="relative aspect-4/3 rounded bg-stone-200 overflow-hidden">
@@ -1365,14 +1366,12 @@ function FreshOutOfTheBoothClothesline() {
             <Image src="/booth/monkey-shock.jpg" alt="Pose 3" fill className="object-cover" />
           </div>
           <div className="pt-1 border-t border-dashed border-stone-400 flex items-center justify-between text-[8px] text-stone-500">
-            <span>IDN + YVR</span>
-            <span className="font-bold text-stone-900">PAIRFECT</span>
+            <span>PAIRFECT</span>
+            <span className="font-bold text-stone-900">FOR TWO</span>
           </div>
         </div>
       ),
     },
-
-    // 2. Blue Gingham Frame
     {
       id: "blue-gingham",
       pegColor: "bg-sky-400",
@@ -1388,13 +1387,11 @@ function FreshOutOfTheBoothClothesline() {
             <Image src="/booth/monkey-shock.jpg" alt="Pose 3" fill className="object-cover" />
           </div>
           <div className="pt-1 text-center font-mono text-[9px] text-sky-800 font-bold">
-            ♡ Angie Club · 2026
+            ♡ Pairfect Club · 2026
           </div>
         </div>
       ),
     },
-
-    // 3. Yellow Polka Dot Frame
     {
       id: "yellow-polka",
       pegColor: "bg-amber-400",
@@ -1415,8 +1412,6 @@ function FreshOutOfTheBoothClothesline() {
         </div>
       ),
     },
-
-    // 4. Red Tweed Vintage Frame
     {
       id: "red-tweed",
       pegColor: "bg-rose-500",
@@ -1437,8 +1432,6 @@ function FreshOutOfTheBoothClothesline() {
         </div>
       ),
     },
-
-    // 5. Sage Green Gingham
     {
       id: "sage-green",
       pegColor: "bg-emerald-400",
@@ -1459,8 +1452,6 @@ function FreshOutOfTheBoothClothesline() {
         </div>
       ),
     },
-
-    // 6. Modern Minimalist Frame
     {
       id: "minimalist",
       pegColor: "bg-stone-800",
@@ -1484,42 +1475,38 @@ function FreshOutOfTheBoothClothesline() {
   ];
 
   return (
-    <section className="w-full py-16 bg-[#FAFAF9] border-y border-stone-200 relative overflow-hidden select-none">
+    <section className="w-full py-16 bg-gradient-to-b from-[#FFF7F9] via-[#FFFFFF] to-[#F8FAFC] border-y border-stone-200 relative overflow-hidden select-none">
+      {/* Subtle Sky Blue Grid Accent */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#E0F2FE_1px,transparent_1px),linear-gradient(to_bottom,#E0F2FE_1px,transparent_1px)] bg-[size:32px_32px] opacity-40 pointer-events-none" />
+
       {/* Header Container */}
-      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 relative z-10">
         <div className="space-y-3 max-w-xl">
-          <p className="text-xs font-mono font-bold tracking-widest text-stone-500 uppercase">
-            FRESH OUT OF THE BOOTH
+          <p className="text-xs font-mono font-bold tracking-widest text-rose-500 uppercase">
+            FRESH OUT OF THE PHOTOBOOTH
           </p>
           <h2 className="text-3xl sm:text-5xl font-heading font-black text-stone-900 tracking-tight leading-tight">
+            Capture your moments in{" "}
             <span className="bg-gradient-to-r from-[#FF5E8E] to-[#4F86F7] bg-clip-text text-transparent">
-              328,226
-            </span>{" "}
-            strips made in our booth so far.
+              four-cut filmstrips
+            </span>
+            .
           </h2>
           <p className="text-sm sm:text-base font-sans text-stone-600">
-            Our cosiest frames, waiting for the two of you. New ones go up every few weeks.
+            Authentic Seoul-inspired studio frames designed for two screens. Tap any frame to open the photobooth together.
           </p>
         </div>
 
-        {/* Stats & Actions */}
+        {/* Feature Highlights & Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-6 shrink-0">
-          <div className="flex items-center gap-8">
-            <div>
-              <p className="font-heading font-black text-2xl sm:text-3xl text-stone-900">
-                60,128
-              </p>
-              <p className="text-[10px] font-mono font-bold text-stone-500 tracking-wider uppercase">
-                BOOTH VISITS
-              </p>
+          <div className="flex items-center gap-6 text-xs font-mono">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="font-bold text-stone-700">Dual Sync Shutter</span>
             </div>
-            <div>
-              <p className="font-heading font-black text-2xl sm:text-3xl text-stone-900">
-                80
-              </p>
-              <p className="text-[10px] font-mono font-bold text-stone-500 tracking-wider uppercase">
-                FRAMES TO PICK FROM
-              </p>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              <span className="font-bold text-stone-700">Custom Frame Packs</span>
             </div>
           </div>
 
@@ -1543,11 +1530,9 @@ function FreshOutOfTheBoothClothesline() {
       </div>
 
       {/* The Clothesline Wire and Hanging Strips Container */}
-      <div className="relative w-full overflow-hidden pt-4 pb-12">
-        {/* Taut Realistic Clothesline Cable Wire */}
+      <div className="relative w-full overflow-hidden pt-4 pb-12 relative z-10">
         <div className="absolute top-7 left-0 right-0 h-[2px] bg-stone-300 shadow-xs z-10" />
 
-        {/* Scrolling Clothesline Track */}
         <div
           className={`flex items-start gap-10 whitespace-nowrap pl-4 ${isPlaying ? "animate-marquee" : ""}`}
           style={{ width: "max-content" }}
@@ -1557,14 +1542,12 @@ function FreshOutOfTheBoothClothesline() {
               key={`${strip.id}-${idx}`}
               className="relative flex flex-col items-center pt-5 transition-transform duration-300 hover:scale-105"
             >
-              {/* Clothespin Peg Clipping the Wire */}
               <div
                 className={`w-3.5 h-6 rounded-xs shadow-md border border-black/20 relative z-20 -mb-2 ${strip.pegColor}`}
               >
                 <div className="w-full h-1 bg-black/20 my-2" />
               </div>
 
-              {/* The Hanging Strip Card */}
               <div className="relative z-10 transition-transform hover:rotate-1">
                 {strip.content}
               </div>
@@ -1589,30 +1572,33 @@ function KeepsakeFridgeSection() {
   };
 
   return (
-    <section className="py-20 px-4 sm:px-6 max-w-[1360px] mx-auto select-none">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <section className="py-20 px-4 sm:px-6 max-w-[1360px] mx-auto select-none relative">
+      {/* Subtle Sky Blue Grid Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#E0F2FE_1px,transparent_1px),linear-gradient(to_bottom,#E0F2FE_1px,transparent_1px)] bg-[size:32px_32px] opacity-25 pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_60%,transparent_100%)]" />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
         {/* Left Column: Copy & Checklist */}
         <div className="lg:col-span-7 space-y-6 max-w-xl">
           <p className="text-xs font-mono font-bold tracking-widest text-rose-500 uppercase">
-            KEEPSAKES · SHIPS WORLDWIDE
+            SHARED KEEPSAKE SANCTUARY
           </p>
           <h2 className="text-3xl sm:text-5xl font-heading font-black text-stone-900 tracking-tight leading-tight">
-            Put your strip on{" "}
+            A digital fridge door for{" "}
             <span className="bg-gradient-to-r from-[#FF5E8E] via-[#FF758F] to-[#4F86F7] bg-clip-text text-transparent">
-              both your fridges
+              your memories
             </span>
             .
           </h2>
           <p className="text-sm sm:text-base font-sans text-stone-600 leading-relaxed">
-            We print your strip as a die-cut fridge magnet and ship it anywhere in the world. Order two and send one to each of your addresses so every morning feels closer.
+            Keep your favorite photostrips, polaroids, and surprise notes pinned on a living magnetic board. Arrange them freely, leave cute reminders, and wake up to what your partner moved.
           </p>
 
           {/* Checklist with Pink Hearts */}
           <div className="space-y-3 pt-2">
             {[
-              "Die-cut vinyl magnets from your real HD photobooth strip",
-              "One order can split and ship to both your addresses",
-              "20% off when you print 3 or more keepsake strips",
+              "Interactive draggable magnets and polaroids with spring momentum",
+              "Pin live photostrips straight from your photobooth dates",
+              "Tidy button snaps your keepsakes back into neat alignment anytime",
             ].map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 text-stone-800 text-sm font-sans font-medium">
                 <span className="text-rose-500 text-base">♡</span>
@@ -1624,13 +1610,13 @@ function KeepsakeFridgeSection() {
           {/* Action CTA */}
           <div className="pt-3 space-y-2">
             <Link
-              href="/checkout?plan=plus-monthly"
+              href="/moments"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#FF5E8E] to-[#4F86F7] hover:opacity-95 text-white font-mono text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
             >
-              <span>Order a magnet from ₹499 ▷</span>
+              <span>Open Your Keepsakes ▷</span>
             </Link>
             <p className="text-[11px] font-mono text-stone-500">
-              🌍 Magnets worldwide · keychains &amp; HD prints across India &amp; worldwide
+              Living memory scrapbook · saves automatically in your private room
             </p>
           </div>
         </div>
@@ -1651,7 +1637,7 @@ function KeepsakeFridgeSection() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-mono font-bold text-stone-500">
-                  38°F · FRESH
+                  FRESH · FOR TWO
                 </span>
                 <button
                   type="button"
@@ -1665,10 +1651,10 @@ function KeepsakeFridgeSection() {
               </div>
             </div>
 
-            {/* Price Badge Sticker */}
-            <div className="absolute top-12 right-4 z-20 w-14 h-14 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex flex-col items-center justify-center font-mono shadow-lg border-2 border-white rotate-12 pointer-events-none">
-              <span className="text-xs font-black">₹499</span>
-              <span className="text-[7px] uppercase tracking-wider">EACH</span>
+            {/* Keepsake Badge Sticker */}
+            <div className="absolute top-12 right-4 z-20 px-2.5 py-1 rounded-full bg-gradient-to-tr from-rose-500 to-sky-500 text-white flex items-center gap-1 font-mono shadow-md border border-white rotate-6 pointer-events-none">
+              <Sparkle className="w-3 h-3" />
+              <span className="text-[8px] uppercase tracking-wider font-bold">KEEPSAKES</span>
             </div>
 
             {/* Drag Hint Top Pill */}
@@ -1694,7 +1680,6 @@ function KeepsakeFridgeSection() {
                 onDragEnd={() => playTactileSound("click")}
                 className="absolute top-4 left-4 w-28 sm:w-32 bg-white p-1.5 rounded-sm shadow-xl border border-stone-300 space-y-1 -rotate-3 cursor-grab select-none z-10"
               >
-                {/* Red Strawberry / Heart Enamel Magnet Button at Top */}
                 <div className="w-4 h-4 mx-auto -mt-3 rounded-full bg-gradient-to-tr from-rose-600 to-red-400 border border-white shadow-md flex items-center justify-center text-[8px] text-white font-bold">
                   ♥
                 </div>
@@ -1725,7 +1710,6 @@ function KeepsakeFridgeSection() {
                 onDragEnd={() => playTactileSound("click")}
                 className="absolute top-4 right-6 w-28 sm:w-32 bg-[#FFE4E8] p-1.5 rounded-sm shadow-xl border border-rose-200 space-y-1 rotate-4 cursor-grab select-none z-10"
               >
-                {/* Yellow Daisy Enamel Magnet Pin at Top */}
                 <div className="w-4 h-4 mx-auto -mt-3 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 border border-white shadow-md flex items-center justify-center text-[8px] text-amber-900 font-bold">
                   ✿
                 </div>
@@ -1756,13 +1740,12 @@ function KeepsakeFridgeSection() {
                 onDragEnd={() => playTactileSound("click")}
                 className="absolute bottom-6 left-6 w-26 bg-white p-2 rounded-xs shadow-xl border border-stone-300 space-y-1.5 -rotate-6 cursor-grab select-none z-15"
               >
-                {/* Teal Heart Magnet */}
                 <div className="w-3.5 h-3.5 mx-auto -mt-3.5 rounded-full bg-teal-400 border border-white shadow-xs" />
                 <div className="relative aspect-square rounded-xs overflow-hidden bg-stone-100">
-                  <Image src="/booth/monkey-heart.jpg" alt="Bali Reunion" fill className="object-cover" />
+                  <Image src="/booth/monkey-heart.jpg" alt="Our Reunion" fill className="object-cover" />
                 </div>
                 <div className="text-center font-mono text-[7px] font-bold text-stone-700 leading-tight">
-                  Bali Reunion ♡
+                  Our Reunion ♡
                 </div>
               </motion.div>
 
@@ -1779,14 +1762,13 @@ function KeepsakeFridgeSection() {
                 onDragEnd={() => playTactileSound("click")}
                 className="absolute bottom-8 right-6 w-32 bg-[#FEF9C3] p-2.5 rounded-xs shadow-lg border border-amber-300 space-y-1 rotate-3 cursor-grab select-none z-15"
               >
-                {/* Orange Button Magnet */}
                 <div className="w-3.5 h-3.5 mx-auto -mt-4 rounded-full bg-amber-500 border border-white shadow-xs" />
                 <p className="font-heading font-bold text-[9px] text-amber-950">
-                  Angie&apos;s Reminder:
+                  Partner&apos;s Reminder:
                 </p>
                 <p className="font-mono text-[7px] text-amber-900 leading-snug">
-                  • Drink your matcha 🍵<br />
-                  • 10:00 PM FaceTime call<br />
+                  • Drink some water 🍵<br />
+                  • 10:00 PM Date call<br />
                   • I love you the most ♡
                 </p>
               </motion.div>
@@ -1812,7 +1794,7 @@ function KeepsakeFridgeSection() {
               </motion.div>
             </div>
 
-            {/* Fridge Handle Accent on Left Edge */}
+            {/* Fridge Handle Accent */}
             <div className="absolute top-1/3 left-1.5 w-1.5 h-28 rounded-full bg-gradient-to-r from-stone-400 via-stone-300 to-stone-200 shadow-md border border-stone-400" />
           </div>
         </div>
@@ -1822,37 +1804,40 @@ function KeepsakeFridgeSection() {
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   6. CREATOR PROGRAM SECTION
+   6. PRIVATE & ENCRYPTED SANCTUARY SECTION
    ════════════════════════════════════════════════════════════════════════ */
-function CreatorProgramSection() {
+function PrivateSanctuarySection() {
   return (
     <section className="py-12 px-4 sm:px-6 max-w-[1100px] mx-auto select-none">
-      <div className="rounded-3xl bg-white border border-stone-200 shadow-md p-6 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div className="space-y-3 max-w-xl">
+      <div className="rounded-3xl bg-gradient-to-br from-[#FFF5F8] via-white to-[#F0F7FF] border border-stone-200 shadow-md p-6 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8 relative overflow-hidden">
+        {/* Subtle Sky Blue Grid Accent */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#E0F2FE_1px,transparent_1px),linear-gradient(to_bottom,#E0F2FE_1px,transparent_1px)] bg-[size:24px_24px] opacity-40 pointer-events-none" />
+
+        <div className="space-y-3 max-w-xl relative z-10">
           <p className="text-xs font-mono font-bold tracking-widest text-rose-500 uppercase">
-            CREATOR PROGRAM
+            PRIVATE &amp; ENCRYPTED
           </p>
           <h3 className="text-2xl sm:text-4xl font-heading font-black text-stone-900 tracking-tight leading-tight">
-            Post one video,{" "}
+            Just the two of you,{" "}
             <span className="bg-gradient-to-r from-[#FF5E8E] via-[#FF758F] to-[#4F86F7] bg-clip-text text-transparent">
-              get Pairfect free for life
+              no third wheels
             </span>
             .
           </h3>
           <p className="text-xs sm:text-sm font-sans text-stone-600 leading-relaxed">
-            Film yourselves using the photobooth, post it on TikTok or Instagram and send us the link. If we approve it, you get a <strong className="text-stone-900">Lifetime Pass</strong>: every game and every HD download, for good.
+            Invite-only rooms, end-to-end encrypted letters and whispers, zero public feeds, and zero ads. Your relationship belongs to you, not an algorithm.
           </p>
         </div>
 
-        <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
+        <div className="flex flex-col items-start md:items-end gap-2 shrink-0 relative z-10">
           <Link
             href="/onboarding"
             className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#FF5E8E] to-[#4F86F7] hover:opacity-95 text-white font-mono text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
-            Become a creator ▷
+            Open Your Room ▷
           </Link>
           <p className="text-[11px] font-mono text-stone-500 flex items-center gap-1.5">
-            <span>🎬</span> Takes 2 minutes to apply
+            <span>🔒</span> Private 4-digit room code
           </p>
         </div>
       </div>
@@ -1868,27 +1853,27 @@ function FaqSection() {
 
   const faqs = [
     {
-      q: "What games can we play on Pairfect?",
-      a: "There are 22 activities right now, and you play 20 of them together live: the online photobooth, Botanical Floral Studio, Wax-Sealed Love Letters, IQ Duel, Between the Lines courtroom, Gratitude Jar, Spotify Mixtape Sync, Daily Mood Sanctuary, Love Roulette, Collaborative Canvas, How Well Do You Know Me, Draw Together, the Arcade, Love Match, Truth or Dare, Riddle Night, Honest Cards, and more. The live ones happen in one shared room at the exact same moment, so you are playing together, not texting back and forth.",
+      q: "What games and activities can we experience on Pairfect?",
+      a: "Pairfect features a rich suite of live shared activities: the Korean-style online photobooth, Botanical Floral Studio, Wax-Sealed Love Letters, IQ Duel, Between the Lines courtroom, Gratitude Jar, Spotify Mixtape Sync, Daily Mood Sanctuary, Love Roulette, Collaborative Canvas, Love Match, Riddle Night, and more. All activities run live in your private room at the exact same moment, so you are playing together in real-time, not texting back and forth.",
     },
     {
-      q: "Is Pairfect free to play?",
-      a: "Yes, the core games and photobooth are free to play together. We offer a Plus membership for unlimited high-definition photo downloads, custom sticker packs, physical fridge magnets, and exclusive date themes.",
+      q: "Is Pairfect free to play together?",
+      a: "Yes, core activities, live games, and the online photobooth are free to enjoy together. We offer a Plus membership for couples who want unlimited high-definition photo downloads, custom sticker packs, and exclusive date themes.",
     },
     {
-      q: "How does a realtime online date work?",
-      a: "One person opens a room and gets a private 4-digit code. Send the code or invite link to your partner. As soon as they enter, your screens connect in real-time. You will see their cursor, drawings, photo poses, and quiz answers as they happen.",
+      q: "How does a real-time online date work?",
+      a: "One partner creates a room and receives a private 4-digit code. Share the code or invite link with your partner. The instant they join, both your screens connect in real-time: you can see each other's live poses, drawing strokes, answers, and quiz choices as they happen.",
     },
     {
-      q: "Do we need to install an app?",
-      a: "No installation is required. Pairfect works directly inside any mobile or desktop web browser (Safari, Chrome, Firefox, Edge). You can also add it to your home screen as a Progressive Web App (PWA) with one tap.",
+      q: "Do we need to install an app from an app store?",
+      a: "No installation is required. Pairfect is a fast, responsive web application that works directly inside any mobile or desktop browser (Safari, Chrome, Firefox, Edge). You can also add it to your phone home screen with one tap for a full-screen native experience.",
     },
   ];
 
   return (
     <section id="faq" className="py-20 px-4 sm:px-6 max-w-[880px] mx-auto select-none space-y-10">
       <h2 className="text-3xl sm:text-5xl font-heading font-black text-stone-900 tracking-tight">
-        Questions long distance couples ask.
+        Questions couples ask.
       </h2>
 
       <div className="divide-y divide-stone-200 border-t border-b border-stone-200">
@@ -1935,41 +1920,36 @@ function FaqSection() {
    8. MAIN EXPORT: LANDING CONTENT COMPONENT
    ════════════════════════════════════════════════════════════════════════ */
 export default function LandingContent() {
-  const [soundEnabled, setSoundEnabled] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isBannerVisible, setIsBannerVisible] = useState(true);
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-x-hidden bg-white text-stone-900 font-sans selection:bg-rose-100 selection:text-rose-900">
 
-      {/* Top Announcement Ribbon */}
+      {/* Top Announcement Ribbon with Pink to Blue Flow */}
       {isBannerVisible && (
         <div className="w-full bg-gradient-to-r from-[#FF6B8B] via-[#DF7BFE] to-[#4F86F7] text-white py-2 px-4 shadow-xs relative z-50 select-none">
           <div className="max-w-[1360px] mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 text-xs font-mono">
-            {/* Pill Notification */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/95 text-stone-900 shadow-xs">
               <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white font-bold text-[9px] uppercase">
-                NEW
+                PAIRFECT
               </span>
               <span className="font-medium text-[11px]">
-                Coquette + 2 more packs in the photobooth: bows &amp; hearts
+                A private digital sanctuary for you and your favorite person
               </span>
               <Link
-                href="/photo-booth"
+                href="/play"
                 className="text-[11px] font-bold text-rose-600 hover:text-rose-700 underline flex items-center gap-0.5"
               >
-                <span>take some</span>
+                <span>explore</span>
                 <span>&gt;</span>
               </Link>
             </div>
 
-            {/* Subline */}
             <div className="hidden md:inline-flex items-center gap-1.5 text-white/90 text-xs font-medium ml-4">
               <span>♡</span>
-              <span>Real dates for couples who live apart</span>
+              <span>Real dates, letters &amp; games for couples</span>
             </div>
 
-            {/* Dismiss button */}
             <button
               type="button"
               onClick={() => setIsBannerVisible(false)}
@@ -1982,21 +1962,29 @@ export default function LandingContent() {
         </div>
       )}
 
-      {/* Clean White Sticky Navbar */}
+      {/* Clean White Sticky Navbar with Pairfect Logo */}
       <header className="w-full bg-white/95 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-40">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between">
-          {/* Logo with Pink & Sky Blue Dots */}
-          <Link href="/" className="flex items-center gap-2 group select-none shrink-0">
-            <span className="font-sans font-black text-2xl tracking-tight text-stone-900">
+          {/* Logo with official Pairfect emblem and dots */}
+          <Link href="/" className="flex items-center gap-2.5 group select-none shrink-0">
+            <Image
+              src="/logo-book.png"
+              alt="Pairfect Logo"
+              width={32}
+              height={32}
+              className="rounded-lg object-contain shadow-xs transition-transform group-hover:scale-105"
+              priority
+            />
+            <span className="font-heading font-black text-2xl tracking-tight text-stone-900 group-hover:text-rose-600 transition-colors">
               pairfect
             </span>
             <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#FF5E8E]" />
-              <span className="w-2.5 h-2.5 rounded-full bg-[#4F86F7]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FF5E8E] group-hover:scale-125 transition-transform" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#4F86F7] group-hover:scale-125 transition-transform" />
             </div>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Navigation Links (Shop and 30s Film removed) */}
           <nav className="hidden lg:flex items-center space-x-7 text-xs font-mono font-bold text-stone-600 uppercase tracking-wider">
             <a href="#activities" className="hover:text-stone-900 transition-colors">
               Activities
@@ -2016,26 +2004,20 @@ export default function LandingContent() {
             <a href="#faq" className="hover:text-stone-900 transition-colors">
               FAQ
             </a>
-            <Link href="/checkout" className="hover:text-stone-900 transition-colors flex items-center gap-1">
-              <ShoppingBag className="w-3.5 h-3.5" />
-              <span>Shop</span>
-            </Link>
             <Link href="/profile" className="hover:text-stone-900 transition-colors flex items-center gap-1">
               <User className="w-3.5 h-3.5" />
               <span>Profile</span>
             </Link>
           </nav>
 
-          {/* Right Action: Browse Activities Gradient Pill */}
+          {/* Right Action: Sign In & Browse Activities Gradient Pill */}
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsVideoModalOpen(true)}
-              className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-stone-200 bg-stone-50 hover:bg-stone-100 text-[11px] font-mono text-stone-700 cursor-pointer"
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex items-center text-xs font-mono font-bold text-stone-600 hover:text-stone-900 px-3 py-1.5 transition-colors"
             >
-              <Play className="w-3 h-3 fill-rose-500 text-rose-500" />
-              <span>30s Film</span>
-            </button>
+              Sign In
+            </Link>
             <Link
               href="/play"
               className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-[#FF5E8E] via-[#FF758F] to-[#4F86F7] hover:opacity-95 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-1 cursor-pointer shrink-0"
@@ -2046,123 +2028,127 @@ export default function LandingContent() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="max-w-[1360px] mx-auto px-4 sm:px-8 pt-10 sm:pt-16 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+      {/* Hero Section with Pink-White Flow & Subtle Blue Grid Pattern */}
+      <section className="relative overflow-hidden pt-10 sm:pt-16 pb-16">
+        {/* Pink & White Flow Ambient Background with Sky-Blue Precision Grid */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-[560px] bg-gradient-to-b from-[#FFF0F4] via-[#FFF9FA] to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#E0F2FE_1px,transparent_1px),linear-gradient(to_bottom,#E0F2FE_1px,transparent_1px)] bg-[size:32px_32px] opacity-60 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        </div>
 
-          {/* Left Column: Headlines, Interactive Cursors, CTAs */}
-          <div className="lg:col-span-7 space-y-6 text-left relative">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
-            {/* Top Pill Badges */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-md bg-stone-100 border border-stone-200 text-stone-700 font-mono text-xs font-bold uppercase tracking-wider">
-                <span>MADE FOR TWO · 22 ACTIVITIES</span>
+            {/* Left Column: Headlines, Interactive Cursors, CTAs */}
+            <div className="lg:col-span-7 space-y-6 text-left relative">
+
+              {/* Top Pill Badges */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-rose-700 font-mono text-xs font-bold uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  <span>DIGITAL SANCTUARY · FOR TWO</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-sky-300 text-sky-700 bg-sky-50/70 font-mono text-xs">
+                  <span>✨</span>
+                  <span>Real-time dates, letters &amp; photobooth</span>
+                  <span>✨</span>
+                </div>
               </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-rose-300 text-rose-600 bg-rose-50/50 font-mono text-xs">
-                <span>✈</span>
-                <span>Countdown till next time we meet</span>
-                <span>✈</span>
+
+              {/* H1 with Gradient & Interactive Floating Partner Cursors */}
+              <div className="relative">
+                <h1 className="text-4xl sm:text-6xl md:text-[4.4rem] font-heading font-black text-stone-900 tracking-tight leading-[1.05]">
+                  A Private Sanctuary for{" "}
+                  <span className="bg-gradient-to-r from-[#FF5E8E] via-[#FF758F] to-[#4F86F7] bg-clip-text text-transparent">
+                    Two Hearts
+                  </span>
+                </h1>
+
+                {/* Live Partner Cursor 1: "You" (Rose/Pink) with Expanding Heart Ripples */}
+                <HeroLiveCursor
+                  name="You"
+                  label="Online ♡"
+                  color="#FF5E8E"
+                  textColor="text-rose-700"
+                  bgColor="bg-white/95"
+                  borderColor="border-rose-200"
+                  initialPos={{ x: 0, y: 0 }}
+                  pathX={[0, 24, 10, 28, 0]}
+                  pathY={[0, -14, -24, -8, 0]}
+                  duration={4.8}
+                  className="top-1/2 left-32 sm:left-48"
+                />
               </div>
+
+              {/* Genuine Pairfect Subtitle */}
+              <p className="text-base sm:text-lg font-sans text-stone-600 leading-relaxed max-w-xl">
+                Love deserves better than an endless chat history. Pairfect gives you and your partner a private sanctuary to snap photobooth strips, arrange digital bouquets, write wax-sealed letters, and play real-time games together.
+              </p>
+
+              {/* Dual CTAs with "Partner" Cursor */}
+              <div className="relative pt-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href="#activities"
+                    className="px-6 sm:px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#FF5E8E] via-[#FF758F] to-[#4F86F7] hover:opacity-95 text-white font-mono text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Pick an activity ▷</span>
+                  </a>
+                  <Link
+                    href="/photo-booth"
+                    className="px-6 sm:px-7 py-3.5 rounded-xl border-2 border-stone-900 bg-white hover:bg-stone-50 text-stone-900 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Open the photobooth
+                  </Link>
+                </div>
+
+                {/* Live Partner Cursor 2: "Partner" (Sky Blue) with Expanding Heart Ripples */}
+                <HeroLiveCursor
+                  name="Partner"
+                  label="Connected ♡"
+                  color="#4F86F7"
+                  textColor="text-sky-700"
+                  bgColor="bg-white/95"
+                  borderColor="border-sky-200"
+                  initialPos={{ x: 0, y: 0 }}
+                  pathX={[0, -22, -8, -26, 0]}
+                  pathY={[0, 14, 24, 8, 0]}
+                  duration={5.2}
+                  className="-bottom-6 left-60 sm:left-72"
+                />
+              </div>
+
+              {/* Platform Availability (Web Application with zero install) */}
+              <div className="pt-6 space-y-2">
+                <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-stone-500">
+                  <span className="font-bold text-stone-700">WORKS EVERYWHERE</span>
+                  <span className="flex items-center gap-1 text-stone-700 font-medium">
+                    <Globe className="w-3.5 h-3.5 text-sky-500" /> Web Browser · Safari, Chrome &amp; Edge
+                  </span>
+                  <span>·</span>
+                  <span className="text-rose-600 font-medium">Zero install required</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs font-mono text-stone-500">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF5E8E]" /> you
+                  </span>
+                  <span>+</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#4F86F7]" /> partner
+                  </span>
+                  <span>=</span>
+                  <span className="text-stone-700 font-bold">one synchronized room</span>
+                </div>
+              </div>
+
             </div>
 
-            {/* H1 with Gradient & Interactive Floating Partner Cursors */}
-            <div className="relative">
-              <h1 className="text-4xl sm:text-6xl md:text-[4.4rem] font-heading font-black text-stone-900 tracking-tight leading-[1.05]">
-                Fun Dates for{" "}
-                <span className="bg-gradient-to-r from-[#FF5E8E] via-[#FF758F] to-[#4F86F7] bg-clip-text text-transparent">
-                  Long Distance
-                </span>{" "}
-                Relationships
-              </h1>
-
-              {/* Live Partner Cursor 1: "You" (Rose/Pink) with Expanding Heart Ripples */}
-              <HeroLiveCursor
-                name="You"
-                label="Angie ♡"
-                color="#FF5E8E"
-                textColor="text-rose-700"
-                bgColor="bg-white/95"
-                borderColor="border-rose-200"
-                initialPos={{ x: 0, y: 0 }}
-                pathX={[0, 24, 10, 28, 0]}
-                pathY={[0, -14, -24, -8, 0]}
-                duration={4.8}
-                className="top-1/2 left-32 sm:left-48"
-              />
-            </div>
-
-            {/* Subtitle */}
-            <p className="text-base sm:text-lg font-sans text-stone-600 leading-relaxed max-w-xl">
-              I made this for my partner. We have been long distance for two years, and these are the dates and games we actually play. I hope you two like them too.
-            </p>
-
-            {/* Dual CTAs with "Me" Cursor */}
-            <div className="relative pt-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <a
-                  href="#activities"
-                  className="px-6 sm:px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#FF5E8E] via-[#FF758F] to-[#4F86F7] hover:opacity-95 text-white font-mono text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <span>Pick an activity ▷</span>
-                </a>
-                <Link
-                  href="/photo-booth"
-                  className="px-6 sm:px-7 py-3.5 rounded-xl border-2 border-stone-900 bg-white hover:bg-stone-50 text-stone-900 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer"
-                >
-                  Open the photobooth
-                </Link>
-              </div>
-
-              {/* Live Partner Cursor 2: "Me" (Sky Blue) with Expanding Heart Ripples */}
-              <HeroLiveCursor
-                name="Me"
-                label="Alden ♡"
-                color="#4F86F7"
-                textColor="text-sky-700"
-                bgColor="bg-white/95"
-                borderColor="border-sky-200"
-                initialPos={{ x: 0, y: 0 }}
-                pathX={[0, -22, -8, -26, 0]}
-                pathY={[0, 14, 24, 8, 0]}
-                duration={5.2}
-                className="-bottom-6 left-60 sm:left-72"
-              />
-            </div>
-
-            {/* App Store & Platform Availability */}
-            <div className="pt-6 space-y-2">
-              <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-stone-500">
-                <span className="font-bold text-stone-700">AVAILABLE ON</span>
-                <span className="flex items-center gap-1">
-                  <Globe className="w-3.5 h-3.5" /> Web
-                </span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <Smartphone className="w-3.5 h-3.5" /> Android
-                </span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <Laptop className="w-3.5 h-3.5" /> iOS
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-mono text-stone-500">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF5E8E]" /> you
-                </span>
-                <span>+</span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#4F86F7]" /> me
-                </span>
-              </div>
+            {/* Right Column: Realistic 3D Earth Globe with Flight Arc & Emerging Photostrip Dispenser */}
+            <div className="lg:col-span-5 flex justify-center">
+              <HeroGlobeGraphic />
             </div>
 
           </div>
-
-          {/* Right Column: 3D Earth Globe with Flight Arc & Emerging Photostrip Dispenser */}
-          <div className="lg:col-span-5 flex justify-center">
-            <HeroGlobeGraphic />
-          </div>
-
         </div>
       </section>
 
@@ -2175,18 +2161,25 @@ export default function LandingContent() {
       {/* Interactive Draggable Keepsake Fridge */}
       <KeepsakeFridgeSection />
 
-      {/* Creator Program */}
-      <CreatorProgramSection />
+      {/* Private & Encrypted Sanctuary Section */}
+      <PrivateSanctuarySection />
 
       {/* FAQ Accordion */}
       <FaqSection />
 
-      {/* Clean Footer */}
+      {/* Clean Footer with Pairfect Logo */}
       <footer className="border-t border-stone-200 py-10 px-4 sm:px-8 bg-white select-none">
         <div className="max-w-[1360px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo with dots */}
-          <div className="flex items-center gap-2">
-            <span className="font-sans font-black text-xl tracking-tight text-stone-900">
+          {/* Logo with official Pairfect emblem */}
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/logo-book.png"
+              alt="Pairfect Logo"
+              width={26}
+              height={26}
+              className="rounded-md object-contain"
+            />
+            <span className="font-heading font-black text-xl tracking-tight text-stone-900">
               pairfect
             </span>
             <div className="flex items-center gap-1">
@@ -2206,80 +2199,18 @@ export default function LandingContent() {
             <Link href="/terms" className="hover:text-stone-900 transition-colors">
               Terms &amp; Conditions
             </Link>
-            <a href="mailto:pairfect.site@yahoo.com" className="hover:text-stone-900 transition-colors">
+            <a href="mailto:contact@pairfect.site" className="hover:text-stone-900 transition-colors">
               contact@pairfect.site
             </a>
           </div>
 
-          {/* Korean Tagline matching reference */}
           <div className="text-center md:text-right">
             <p className="text-xs text-stone-400 font-mono">
-              인생네컷 · fun dates for long distance
+              pairfect.site · your private relationship sanctuary
             </p>
           </div>
         </div>
       </footer>
-
-      {/* 30-Second GTM Launch Film Modal */}
-      <AnimatePresence>
-        {isVideoModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
-            onClick={() => setIsVideoModalOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-4xl bg-stone-950 rounded-3xl border border-stone-800 shadow-2xl overflow-hidden flex flex-col"
-            >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-stone-800/80 bg-stone-900/50">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-                  <span className="text-xs font-mono font-bold tracking-wider text-stone-200 uppercase">
-                    Pairfect · Official 30s Launch Film
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIsVideoModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 flex items-center justify-center text-stone-300 hover:text-white transition-colors cursor-pointer"
-                  aria-label="Close launch video"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="relative aspect-video bg-black flex items-center justify-center">
-                <video
-                  src="/pairfect_30s_launch_video.mp4"
-                  controls
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
-              </div>
-
-              <div className="p-4 sm:px-6 bg-stone-900/80 border-t border-stone-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-400">
-                <p className="font-sans">
-                  Love deserves better than a chat history. A private digital sanctuary for two.
-                </p>
-                <Link
-                  href="/onboarding"
-                  onClick={() => setIsVideoModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-sky-500 text-white font-mono text-[11px] font-bold uppercase tracking-wider"
-                >
-                  Open Your Room ▷
-                </Link>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
   );
