@@ -388,7 +388,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative w-16 h-16 rounded-full bg-rose-100 border-2 border-rose-300 overflow-hidden flex items-center justify-center text-xl font-bold text-rose-600 shadow-xs">
                 <Image
-                  src="/booth/monkey-heart.jpg"
+                  src="/booth/couple-heart.jpg"
                   alt="Avatar"
                   fill
                   className="object-cover"

@@ -67,9 +67,9 @@ const SAMPLE_MEMORIES: MemoryKeepsake[] = [
     caption: "Three takes to get our favorite silly face",
     date: "June 2",
     images: [
-      "/booth/monkey-heart.jpg",
-      "/booth/monkey-point.jpg",
-      "/booth/monkey-shock.jpg",
+      "/booth/couple-heart.jpg",
+      "/booth/couple-peace.jpg",
+      "/booth/couple-cozy.jpg",
     ],
     rotation: 2.5,
   },
@@ -251,7 +251,7 @@ export default function DashboardPage() {
                   className="relative w-10 h-10 rounded-full border-2 border-emerald-500 overflow-hidden bg-rose-100 flex items-center justify-center font-bold text-rose-600 text-sm shadow-2xs hover:scale-105 transition-transform"
                 >
                   <Image
-                    src="/booth/monkey-heart.jpg"
+                    src="/booth/couple-peace.jpg"
                     alt={partnerDisplayName}
                     fill
                     className="object-cover"
@@ -686,10 +686,10 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { title: "Video call topics", src: "/booth/monkey-heart.jpg" },
-                { title: "Build a bear", src: "/booth/monkey-point.jpg" },
-                { title: "Try not to laugh", src: "/booth/monkey-shock.jpg" },
-                { title: "Couple Clash Royale", src: "/booth/monkey-heart.jpg" },
+                { title: "Photobooth date", src: "/booth/couple-heart.jpg" },
+                { title: "Airport reunion", src: "/booth/couple-reunion.jpg" },
+                { title: "Cozy cafe morning", src: "/booth/couple-cozy.jpg" },
+                { title: "Late night laughter", src: "/booth/couple-peace.jpg" },
               ].map((item, idx) => (
                 <div
                   key={idx}

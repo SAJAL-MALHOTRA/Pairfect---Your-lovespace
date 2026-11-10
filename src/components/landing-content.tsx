@@ -204,10 +204,10 @@ function HeroPhotoboothDispenser() {
   const [isFlashing, setIsFlashing] = useState(false);
 
   const photos = [
-    { src: "/booth/monkey-heart.jpg", alt: "Heart hands pose" },
-    { src: "/booth/monkey-point.jpg", alt: "Pointing pose" },
-    { src: "/booth/monkey-shock.jpg", alt: "Surprise gasp pose" },
-    { src: "/booth/monkey-heart.jpg", alt: "Cheek squeeze pose" },
+    { src: "/booth/couple-heart.jpg", alt: "Heart hands photobooth pose" },
+    { src: "/booth/couple-peace.jpg", alt: "Playful peace sign selfie" },
+    { src: "/booth/couple-cozy.jpg", alt: "Golden hour cozy couple portrait" },
+    { src: "/booth/couple-reunion.jpg", alt: "Airport reunion hug" },
   ];
 
   const triggerEject = () => {
@@ -516,7 +516,7 @@ function HeroGlobeGraphic() {
         >
           <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-rose-100">
             <Image
-              src="/booth/monkey-point.jpg"
+              src="/booth/couple-peace.jpg"
               alt="You"
               fill
               className="object-cover"
@@ -540,7 +540,7 @@ function HeroGlobeGraphic() {
         >
           <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-sky-100">
             <Image
-              src="/booth/monkey-heart.jpg"
+              src="/booth/couple-heart.jpg"
               alt="Partner"
               fill
               className="object-cover"
@@ -628,33 +628,79 @@ function ActivitiesCarousel() {
                 ✦
               </motion.div>
 
-              {/* Hand-drawn layered bouquet SVG */}
-              <svg viewBox="0 0 160 180" className="w-full h-full drop-shadow-md">
-                <polygon points="40,165 120,165 140,95 20,95" fill="#D7B58B" stroke="#B89467" strokeWidth="1.5" />
-                <polygon points="50,165 110,165 130,105 30,105" fill="#E4C8A3" opacity="0.6" />
-                <path d="M 65 130 Q 80 136 95 130" stroke="#F43F5E" strokeWidth="6" strokeLinecap="round" fill="none" />
-                <circle cx="80" cy="132" r="4" fill="#E11D48" />
-                <path d="M 76 134 Q 70 152 64 160" stroke="#F43F5E" strokeWidth="3" fill="none" />
-                <path d="M 84 134 Q 90 152 96 160" stroke="#F43F5E" strokeWidth="3" fill="none" />
-                <path d="M 50 100 Q 35 60 45 35" stroke="#4B7B58" strokeWidth="2.5" fill="none" />
-                <ellipse cx="40" cy="48" rx="6" ry="4" fill="#68A578" />
-                <ellipse cx="48" cy="62" rx="7" ry="5" fill="#68A578" />
-                <circle cx="80" cy="65" r="16" fill="#F43F5E" stroke="#BE123C" strokeWidth="1.5" />
-                <circle cx="80" cy="65" r="10" fill="#FB7185" />
-                <circle cx="80" cy="65" r="5" fill="#FFE4E6" />
-                <circle cx="106" cy="78" r="13" fill="#FDA4AF" stroke="#F43F5E" strokeWidth="1.2" />
-                <circle cx="106" cy="78" r="8" fill="#FFF1F2" />
-                <circle cx="56" cy="78" r="13" fill="#FB7185" stroke="#E11D48" strokeWidth="1.2" />
-                <circle cx="56" cy="78" r="8" fill="#FFE4E6" />
-                <circle cx="80" cy="40" r="6" fill="#FBBF24" />
-                <ellipse cx="80" cy="28" rx="3" ry="6" fill="#FFFFFF" />
-                <ellipse cx="80" cy="52" rx="3" ry="6" fill="#FFFFFF" />
-                <ellipse cx="68" cy="40" rx="6" ry="3" fill="#FFFFFF" />
-                <ellipse cx="92" cy="40" rx="6" ry="3" fill="#FFFFFF" />
-                <ellipse cx="72" cy="32" rx="5" ry="3" fill="#FFFFFF" />
-                <ellipse cx="88" cy="32" rx="5" ry="3" fill="#FFFFFF" />
-                <ellipse cx="72" cy="48" rx="5" ry="3" fill="#FFFFFF" />
-                <ellipse cx="88" cy="48" rx="5" ry="3" fill="#FFFFFF" />
+              {/* Artistic Botanical Bouquet SVG */}
+              <svg viewBox="0 0 160 180" className="w-full h-full drop-shadow-lg">
+                <defs>
+                  <linearGradient id="kraftWrap" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#EDE2CF" />
+                    <stop offset="100%" stopColor="#D5BE9B" />
+                  </linearGradient>
+                  <linearGradient id="roseRed" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FB7185" />
+                    <stop offset="60%" stopColor="#E11D48" />
+                    <stop offset="100%" stopColor="#9F1239" />
+                  </linearGradient>
+                  <linearGradient id="peonyPink" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FFF1F2" />
+                    <stop offset="50%" stopColor="#FDA4AF" />
+                    <stop offset="100%" stopColor="#F43F5E" />
+                  </linearGradient>
+                </defs>
+
+                {/* Craft paper wrapping fold */}
+                <polygon points="36,168 124,168 144,92 16,92" fill="url(#kraftWrap)" stroke="#B89467" strokeWidth="1.2" />
+                <polygon points="44,168 116,168 132,104 28,104" fill="#C8AE87" opacity="0.4" />
+
+                {/* Stems */}
+                <path d="M 54 110 Q 42 70 50 42" stroke="#3D6647" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+                <path d="M 80 115 Q 80 80 80 48" stroke="#3D6647" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                <path d="M 106 110 Q 118 70 110 42" stroke="#3D6647" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+
+                {/* Eucalyptus leaves */}
+                <ellipse cx="44" cy="50" rx="7" ry="5" fill="#68A578" transform="rotate(-25 44 50)" />
+                <ellipse cx="52" cy="64" rx="8" ry="6" fill="#4E875E" transform="rotate(-15 52 64)" />
+                <ellipse cx="116" cy="50" rx="7" ry="5" fill="#68A578" transform="rotate(25 116 50)" />
+                <ellipse cx="108" cy="64" rx="8" ry="6" fill="#4E875E" transform="rotate(15 108 64)" />
+
+                {/* Main Rose (Center) */}
+                <circle cx="80" cy="70" r="18" fill="url(#roseRed)" stroke="#881337" strokeWidth="1" />
+                <path d="M 70 66 Q 80 60 90 66 Q 88 78 80 78 Q 72 78 70 66" fill="#BE123C" />
+                <path d="M 74 68 Q 80 64 86 68 Q 84 74 80 74 Q 76 74 74 68" fill="#FB7185" />
+                <circle cx="80" cy="70" r="3" fill="#FFE4E6" />
+
+                {/* Blush Peony (Left) */}
+                <circle cx="56" cy="80" r="14" fill="url(#peonyPink)" stroke="#E11D48" strokeWidth="0.8" />
+                <circle cx="56" cy="80" r="9" fill="#FB7185" />
+                <circle cx="56" cy="80" r="4" fill="#FFF1F2" />
+
+                {/* Sweetheart Rose (Right) */}
+                <circle cx="104" cy="80" r="14" fill="url(#peonyPink)" stroke="#E11D48" strokeWidth="0.8" />
+                <circle cx="104" cy="80" r="9" fill="#FB7185" />
+                <circle cx="104" cy="80" r="4" fill="#FFF1F2" />
+
+                {/* Daisy / Chamomile (Top) */}
+                <g transform="translate(80, 38)">
+                  {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+                    <ellipse
+                      key={angle}
+                      cx="0"
+                      cy="-9"
+                      rx="3.2"
+                      ry="6.5"
+                      fill="#FFFFFF"
+                      stroke="#E2E8F0"
+                      strokeWidth="0.5"
+                      transform={`rotate(${angle})`}
+                    />
+                  ))}
+                  <circle cx="0" cy="0" r="5" fill="#F59E0B" stroke="#D97706" strokeWidth="0.8" />
+                </g>
+
+                {/* Silk Ribbon Tie */}
+                <path d="M 62 128 Q 80 134 98 128" stroke="#E11D48" strokeWidth="6" strokeLinecap="round" fill="none" />
+                <circle cx="80" cy="130" r="4.5" fill="#BE123C" />
+                <path d="M 76 132 Q 68 152 60 162" stroke="#E11D48" strokeWidth="3" strokeLinecap="round" fill="none" />
+                <path d="M 84 132 Q 92 152 100 162" stroke="#E11D48" strokeWidth="3" strokeLinecap="round" fill="none" />
               </svg>
             </div>
 
@@ -716,28 +762,32 @@ function ActivitiesCarousel() {
               {/* You (Jakarta) */}
               <div className="relative rounded-xl overflow-hidden bg-stone-800">
                 <Image
-                  src="/booth/monkey-heart.jpg"
-                  alt="You"
+                  src="/booth/couple-peace.jpg"
+                  alt="You (Jakarta)"
                   fill
                   className="object-cover"
                 />
-                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/70 text-[9px] font-mono text-rose-300 font-bold">
+                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[9px] font-mono text-rose-300 font-bold border border-white/10">
                   Jakarta (You)
                 </span>
-                <span className="absolute top-1 right-1 text-xs">🎀</span>
+                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[8px] font-mono font-bold text-white uppercase tracking-wider">
+                  Live
+                </span>
               </div>
               {/* Partner (Calgary) */}
               <div className="relative rounded-xl overflow-hidden bg-stone-800">
                 <Image
-                  src="/booth/monkey-point.jpg"
-                  alt="Partner"
+                  src="/booth/couple-cozy.jpg"
+                  alt="Partner (Calgary)"
                   fill
                   className="object-cover"
                 />
-                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/70 text-[9px] font-mono text-sky-300 font-bold">
+                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[9px] font-mono text-sky-300 font-bold border border-white/10">
                   Calgary (Partner)
                 </span>
-                <span className="absolute top-1 right-1 text-xs">✨</span>
+                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[8px] font-mono font-bold text-white uppercase tracking-wider">
+                  Live
+                </span>
               </div>
             </div>
 
@@ -1204,7 +1254,7 @@ function ActivitiesCarousel() {
             <div className="w-28 bg-white p-1.5 rounded-xs shadow-md border border-stone-300 -rotate-3 mx-auto">
               <div className="relative h-14 rounded-xs overflow-hidden bg-stone-100">
                 <Image
-                  src="/booth/monkey-point.jpg"
+                  src="/booth/couple-reunion.jpg"
                   alt="Airport hug"
                   fill
                   className="object-cover"
@@ -1357,13 +1407,13 @@ function FreshOutOfTheBoothClothesline() {
             <span className="text-rose-500 font-bold">YOUR♥HEART</span>
           </div>
           <div className="relative aspect-4/3 rounded bg-stone-200 overflow-hidden">
-            <Image src="/booth/monkey-heart.jpg" alt="Pose 1" fill className="object-cover" />
+            <Image src="/booth/couple-heart.jpg" alt="Pose 1" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-stone-200 overflow-hidden">
-            <Image src="/booth/monkey-point.jpg" alt="Pose 2" fill className="object-cover" />
+            <Image src="/booth/couple-peace.jpg" alt="Pose 2" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-stone-200 overflow-hidden">
-            <Image src="/booth/monkey-shock.jpg" alt="Pose 3" fill className="object-cover" />
+            <Image src="/booth/couple-reunion.jpg" alt="Pose 3" fill className="object-cover" />
           </div>
           <div className="pt-1 border-t border-dashed border-stone-400 flex items-center justify-between text-[8px] text-stone-500">
             <span>PAIRFECT</span>
@@ -1378,13 +1428,13 @@ function FreshOutOfTheBoothClothesline() {
       content: (
         <div className="w-44 bg-[#E0F2FE] border-2 border-sky-300 p-2 rounded-sm shadow-md space-y-1.5">
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-sky-200">
-            <Image src="/booth/monkey-point.jpg" alt="Pose 1" fill className="object-cover" />
+            <Image src="/booth/couple-peace.jpg" alt="Pose 1" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-sky-200">
-            <Image src="/booth/monkey-heart.jpg" alt="Pose 2" fill className="object-cover" />
+            <Image src="/booth/couple-heart.jpg" alt="Pose 2" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-sky-200">
-            <Image src="/booth/monkey-shock.jpg" alt="Pose 3" fill className="object-cover" />
+            <Image src="/booth/couple-cozy.jpg" alt="Pose 3" fill className="object-cover" />
           </div>
           <div className="pt-1 text-center font-mono text-[9px] text-sky-800 font-bold">
             ♡ Pairfect Club · 2026
@@ -1398,13 +1448,13 @@ function FreshOutOfTheBoothClothesline() {
       content: (
         <div className="w-44 bg-[#FEF3C7] border-2 border-amber-300 p-2 rounded-sm shadow-md space-y-1.5">
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-amber-200">
-            <Image src="/booth/monkey-shock.jpg" alt="Pose 1" fill className="object-cover" />
+            <Image src="/booth/couple-cozy.jpg" alt="Pose 1" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-amber-200">
-            <Image src="/booth/monkey-point.jpg" alt="Pose 2" fill className="object-cover" />
+            <Image src="/booth/couple-peace.jpg" alt="Pose 2" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-amber-200">
-            <Image src="/booth/monkey-heart.jpg" alt="Pose 3" fill className="object-cover" />
+            <Image src="/booth/couple-heart.jpg" alt="Pose 3" fill className="object-cover" />
           </div>
           <div className="pt-1 text-center font-mono text-[9px] text-amber-800 font-bold">
             ✿ Sunshine Daze
@@ -1418,13 +1468,13 @@ function FreshOutOfTheBoothClothesline() {
       content: (
         <div className="w-44 bg-[#FFE4E6] border-2 border-rose-400 p-2 rounded-sm shadow-md space-y-1.5">
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-rose-300">
-            <Image src="/booth/monkey-heart.jpg" alt="Pose 1" fill className="object-cover" />
+            <Image src="/booth/couple-heart.jpg" alt="Pose 1" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-rose-300">
-            <Image src="/booth/monkey-shock.jpg" alt="Pose 2" fill className="object-cover" />
+            <Image src="/booth/couple-cozy.jpg" alt="Pose 2" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-rose-300">
-            <Image src="/booth/monkey-point.jpg" alt="Pose 3" fill className="object-cover" />
+            <Image src="/booth/couple-peace.jpg" alt="Pose 3" fill className="object-cover" />
           </div>
           <div className="pt-1 text-center font-mono text-[9px] text-rose-800 font-bold">
             PAIRFECT · SWEETHEART
@@ -1438,13 +1488,13 @@ function FreshOutOfTheBoothClothesline() {
       content: (
         <div className="w-44 bg-[#DCFCE7] border-2 border-emerald-300 p-2 rounded-sm shadow-md space-y-1.5">
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-emerald-200">
-            <Image src="/booth/monkey-point.jpg" alt="Pose 1" fill className="object-cover" />
+            <Image src="/booth/couple-peace.jpg" alt="Pose 1" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-emerald-200">
-            <Image src="/booth/monkey-heart.jpg" alt="Pose 2" fill className="object-cover" />
+            <Image src="/booth/couple-heart.jpg" alt="Pose 2" fill className="object-cover" />
           </div>
           <div className="relative aspect-4/3 rounded bg-white overflow-hidden border border-emerald-200">
-            <Image src="/booth/monkey-shock.jpg" alt="Pose 3" fill className="object-cover" />
+            <Image src="/booth/couple-reunion.jpg" alt="Pose 3" fill className="object-cover" />
           </div>
           <div className="pt-1 text-center font-mono text-[9px] text-emerald-800 font-bold">
             🌿 Matcha Afternoon
@@ -1458,13 +1508,13 @@ function FreshOutOfTheBoothClothesline() {
       content: (
         <div className="w-44 bg-stone-900 border-2 border-stone-800 p-2 rounded-sm shadow-md text-white space-y-1.5">
           <div className="relative aspect-4/3 rounded bg-stone-800 overflow-hidden">
-            <Image src="/booth/monkey-shock.jpg" alt="Pose 1" fill className="object-cover grayscale contrast-125" />
+            <Image src="/booth/couple-cozy.jpg" alt="Pose 1" fill className="object-cover grayscale contrast-125" />
           </div>
           <div className="relative aspect-4/3 rounded bg-stone-800 overflow-hidden">
-            <Image src="/booth/monkey-point.jpg" alt="Pose 2" fill className="object-cover grayscale contrast-125" />
+            <Image src="/booth/couple-peace.jpg" alt="Pose 2" fill className="object-cover grayscale contrast-125" />
           </div>
           <div className="relative aspect-4/3 rounded bg-stone-800 overflow-hidden">
-            <Image src="/booth/monkey-heart.jpg" alt="Pose 3" fill className="object-cover grayscale contrast-125" />
+            <Image src="/booth/couple-heart.jpg" alt="Pose 3" fill className="object-cover grayscale contrast-125" />
           </div>
           <div className="pt-1 text-center font-mono text-[9px] text-stone-400 font-bold uppercase tracking-widest">
             pairfect.site
@@ -1684,13 +1734,13 @@ function KeepsakeFridgeSection() {
                   ♥
                 </div>
                 <div className="relative h-12 sm:h-14 rounded-xs overflow-hidden bg-stone-100">
-                  <Image src="/booth/monkey-heart.jpg" alt="Pose 1" fill className="object-cover grayscale contrast-110" />
+                  <Image src="/booth/couple-heart.jpg" alt="Pose 1" fill className="object-cover grayscale contrast-110" />
                 </div>
                 <div className="relative h-12 sm:h-14 rounded-xs overflow-hidden bg-stone-100">
-                  <Image src="/booth/monkey-point.jpg" alt="Pose 2" fill className="object-cover grayscale contrast-110" />
+                  <Image src="/booth/couple-peace.jpg" alt="Pose 2" fill className="object-cover grayscale contrast-110" />
                 </div>
                 <div className="relative h-12 sm:h-14 rounded-xs overflow-hidden bg-stone-100">
-                  <Image src="/booth/monkey-shock.jpg" alt="Pose 3" fill className="object-cover grayscale contrast-110" />
+                  <Image src="/booth/couple-cozy.jpg" alt="Pose 3" fill className="object-cover grayscale contrast-110" />
                 </div>
                 <div className="pt-0.5 text-center font-mono text-[7px] font-bold text-stone-500 uppercase">
                   pairfect · magnet 01
@@ -1714,13 +1764,13 @@ function KeepsakeFridgeSection() {
                   ✿
                 </div>
                 <div className="relative h-12 sm:h-14 rounded-xs overflow-hidden bg-white">
-                  <Image src="/booth/monkey-point.jpg" alt="Pose 1" fill className="object-cover" />
+                  <Image src="/booth/couple-peace.jpg" alt="Pose 1" fill className="object-cover" />
                 </div>
                 <div className="relative h-12 sm:h-14 rounded-xs overflow-hidden bg-white">
-                  <Image src="/booth/monkey-heart.jpg" alt="Pose 2" fill className="object-cover" />
+                  <Image src="/booth/couple-heart.jpg" alt="Pose 2" fill className="object-cover" />
                 </div>
                 <div className="relative h-12 sm:h-14 rounded-xs overflow-hidden bg-white">
-                  <Image src="/booth/monkey-shock.jpg" alt="Pose 3" fill className="object-cover" />
+                  <Image src="/booth/couple-cozy.jpg" alt="Pose 3" fill className="object-cover" />
                 </div>
                 <div className="pt-0.5 text-center font-mono text-[7px] font-bold text-rose-600">
                   ♡ for our fridge
@@ -1742,7 +1792,7 @@ function KeepsakeFridgeSection() {
               >
                 <div className="w-3.5 h-3.5 mx-auto -mt-3.5 rounded-full bg-teal-400 border border-white shadow-xs" />
                 <div className="relative aspect-square rounded-xs overflow-hidden bg-stone-100">
-                  <Image src="/booth/monkey-heart.jpg" alt="Our Reunion" fill className="object-cover" />
+                  <Image src="/booth/couple-reunion.jpg" alt="Our Reunion" fill className="object-cover" />
                 </div>
                 <div className="text-center font-mono text-[7px] font-bold text-stone-700 leading-tight">
                   Our Reunion ♡

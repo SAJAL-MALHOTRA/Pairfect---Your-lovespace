@@ -274,7 +274,7 @@ export default function Navigation() {
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative w-9 h-9 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center font-bold text-rose-600 text-sm shrink-0 overflow-hidden shadow-2xs">
                 <Image
-                  src="/booth/monkey-heart.jpg"
+                  src="/booth/couple-heart.jpg"
                   alt="Avatar"
                   fill
                   className="object-cover"

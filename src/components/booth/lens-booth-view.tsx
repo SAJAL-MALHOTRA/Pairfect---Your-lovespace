@@ -1460,10 +1460,10 @@ export default function LensBoothView({
                 className="w-52 sm:w-56 bg-white p-2.5 rounded-b-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] space-y-2 border-x-2 border-b-2 border-stone-200 relative z-10"
               >
                 {[
-                  { src: "/booth/monkey-heart.jpg", alt: "Heart hands pose", caption: "FRAME #01" },
-                  { src: "/booth/monkey-point.jpg", alt: "Pointing pose", caption: "FRAME #02" },
-                  { src: "/booth/monkey-shock.jpg", alt: "Scream surprise pose", caption: "FRAME #03" },
-                  { src: "/booth/monkey-heart.jpg", alt: "Big smile pose", caption: "FRAME #04" },
+                  { src: "/booth/couple-heart.jpg", alt: "Heart hands photobooth pose", caption: "FRAME #01" },
+                  { src: "/booth/couple-peace.jpg", alt: "Playful peace sign selfie", caption: "FRAME #02" },
+                  { src: "/booth/couple-cozy.jpg", alt: "Golden hour cozy couple portrait", caption: "FRAME #03" },
+                  { src: "/booth/couple-reunion.jpg", alt: "Airport reunion hug", caption: "FRAME #04" },
                 ].map((frame, idx) => (
                   <div
                     key={idx}
