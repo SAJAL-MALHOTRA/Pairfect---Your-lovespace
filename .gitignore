@@ -54,3 +54,11 @@ next-env.d.ts
 
 *.docx
 
+
+# Scratch, promo renders and temporary audio/video
+/scratch
+/promo-render
+/temp_audio_30s
+/temp_video_raw_30s
+/pairfect-one-shape*.mp4
+scripts/test_session.json

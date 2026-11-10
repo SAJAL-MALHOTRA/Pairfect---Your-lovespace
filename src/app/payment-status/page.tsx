@@ -61,7 +61,7 @@ function PaymentStatusContent() {
         headers["Authorization"] = `Bearer ${session.access_token}`;
       }
 
-      // Call server-side verification route — never trust the client query param alone
+      // Call server-side verification route - never trust the client query param alone
       const res = await fetch(
         `/api/cashfree/order-status?order_id=${encodeURIComponent(orderId)}`,
         { headers }

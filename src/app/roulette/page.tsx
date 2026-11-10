@@ -23,12 +23,20 @@ import {
   Flame,
   CheckCircle2,
   Lock,
+  Copy,
+  Bookmark,
+  Download,
+  Loader2,
+  User,
+  Bot
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/hooks/use-subscription";
 import PlusPaywallModal from "@/components/plus-paywall-modal";
+import AmbientSoundscapeBar from "@/components/ambient-soundscape-bar";
+import { CoupleBeansMascot } from "@/components/couple-mascot";
 
-// ── Preset Wheels ─────────────────────────────────────────────────────────────
+// Preset Wheels
 interface RouletteOption {
   label: string;      // Punchy label on wheel wedge (max 15 chars, never truncated)
   fullTitle: string;  // Rich decree text
@@ -99,54 +107,49 @@ const PRESETS: WheelPreset[] = [
     icon: "🧹",
     tagline: "Zero-resentment, democratic settling.",
     items: [
-      { label: "Dishes", fullTitle: "Wash & dry tonight's dishes", emoji: "🫧" },
-      { label: "Coffee", fullTitle: "Make tomorrow's morning coffee", emoji: "☕" },
-      { label: "Pick Movie", fullTitle: "Pick tonight's film (no vetoes!)", emoji: "🎬" },
-      { label: "Massage", fullTitle: "Give partner a 10-min foot rub", emoji: "💆" },
-      { label: "Trash Run", fullTitle: "Take out all the trash bins", emoji: "🗑️" },
-      { label: "10 Compliments", fullTitle: "Shower partner with 10 sweet compliments", emoji: "💖" },
-      { label: "Cook Meal", fullTitle: "Cook breakfast in bed tomorrow", emoji: "🍳" },
-      { label: "Be DJ", fullTitle: "Pick tonight's playlist", emoji: "🎵" },
+      { label: "Dishes", fullTitle: "Loser tackles the full sink of dishes", emoji: "🫧" },
+      { label: "Takeout", fullTitle: "Loser pays for tonight's takeout order", emoji: "🥡" },
+      { label: "Trash", fullTitle: "Take out all trash and recycling bags", emoji: "🗑️" },
+      { label: "Breakfast", fullTitle: "Winner gets breakfast in bed tomorrow", emoji: "🥞" },
+      { label: "Both Do It", fullTitle: "Truce: play music and clean together in 10 mins", emoji: "🤝" },
+      { label: "Coffee Run", fullTitle: "Loser makes tomorrow morning's coffee run", emoji: "☕" },
     ],
   },
   {
-    id: "chaos",
-    name: "Chaos Mode",
-    icon: "😈",
-    tagline: "Playful, spicy challenges for tonight.",
+    id: "spicy",
+    name: "Spicy Moves",
+    icon: "🌶️",
+    tagline: "Playful dares and intimate physical challenges.",
     isPlusOnly: true,
     items: [
-      { label: "Phone Swap", fullTitle: "60-second phone swap (no panic!)", emoji: "📱" },
-      { label: "1st Photo", fullTitle: "Recreate our very first photo", emoji: "📸" },
-      { label: "Secret", fullTitle: "Whisper a secret you haven't told me", emoji: "🤫" },
-      { label: "Dance Off", fullTitle: "2-minute silly pajama dance battle", emoji: "💃" },
-      { label: "Taste Test", fullTitle: "Blindfolded mystery kitchen taste test", emoji: "🙈" },
-      { label: "Impression", fullTitle: "Dramatic impression of how I act", emoji: "🎭" },
-      { label: "Love Haiku", fullTitle: "Write a 30-second romantic haiku", emoji: "💌" },
-      { label: "Eye Contact", fullTitle: "30 seconds of unbroken eye contact", emoji: "💋" },
+      { label: "Slow Dance", fullTitle: "Slow dance to 1 song in dim light", emoji: "🕯️" },
+      { label: "Neck Kiss", fullTitle: "60-second gentle neck kisses", emoji: "💋" },
+      { label: "Blindfold", fullTitle: "Feed each other dessert blindfolded", emoji: "🍓" },
+      { label: "Whisper", fullTitle: "Whisper your favorite fantasy in their ear", emoji: "🤫" },
+      { label: "Massage", fullTitle: "5-minute full back rub with oil", emoji: "💆" },
+      { label: "Stare", fullTitle: "Look into each other's eyes for 2 mins without talking", emoji: "👀" },
     ],
   },
   {
-    id: "talk",
-    name: "Deep Talk",
-    icon: "💬",
-    tagline: "Intimacy prompts to remember why you fell in love.",
+    id: "micro-adventure",
+    name: "Micro-Adventures",
+    icon: "🧭",
+    tagline: "Break routine with quick mini-dates.",
     items: [
-      { label: "Childhood", fullTitle: "Tell me a childhood memory I haven't heard", emoji: "🧸" },
-      { label: "Felt Loved", fullTitle: "When did you feel most loved this week?", emoji: "💖" },
-      { label: "Next Year", fullTitle: "What is one dream you have for us next year?", emoji: "🌟" },
-      { label: "Love Better", fullTitle: "How can I love you a little better right now?", emoji: "🕊️" },
-      { label: "Three Words", fullTitle: "Describe our love story in three words", emoji: "📖" },
-      { label: "1st Memory", fullTitle: "What was your very first impression of me?", emoji: "💭" },
-      { label: "Admiration", fullTitle: "What is something you admire about my growth?", emoji: "🌱" },
-      { label: "Home", fullTitle: "What does 'home' feel like to you today?", emoji: "🏡" },
+      { label: "Walk & Tea", fullTitle: "Night walk with warm boba tea", emoji: "🧋" },
+      { label: "Convenience Run", fullTitle: "Late-night snack haul from convenience store", emoji: "🏪" },
+      { label: "Music Drive", fullTitle: "Drive with windows down to favorite album", emoji: "🚗" },
+      { label: "Photo Walk", fullTitle: "Take 5 creative photos of each other", emoji: "📷" },
+      { label: "Paper Planes", fullTitle: "Fold paper planes and race from balcony", emoji: "✈️" },
+      { label: "Sunset Spot", fullTitle: "Find a bench with a high view of sunset", emoji: "🌇" },
     ],
   },
 ];
 
-// Luxury Romance Palette: Alternating warm antique tones
+// Warm editorial color palette for wedges
 const PALETTE = [
-  { fill: "#FFF7F2", stroke: "#E8D5C8", text: "#422830" }, // antique linen
+  { fill: "#FFE2E8", stroke: "#F5BFCC", text: "#4A1825" }, // soft rose
+  { fill: "#FFF8F0", stroke: "#EED7C5", text: "#3B2A20" }, // warm cream
   { fill: "#FFEBF1", stroke: "#F0CAD6", text: "#521A28" }, // vintage blush
   { fill: "#F7EFE9", stroke: "#DFCFC2", text: "#3D2B24" }, // warm parchment
   { fill: "#F9E8EE", stroke: "#ECCAD6", text: "#4E2135" }, // soft rose silk
@@ -194,7 +197,7 @@ function playFanfare(audioCtx: AudioContext | null) {
 }
 
 export default function RoulettePage() {
-  const { user, pair, partner } = useAuth();
+  const { user, pair, partner, profile } = useAuth();
   const { isPlus } = useSubscription();
   const supabase = createClient();
 
@@ -204,6 +207,15 @@ export default function RoulettePage() {
   const [customInput, setCustomInput] = useState("");
   const [isCustomMode, setIsCustomMode] = useState(false);
 
+  // Identity and Room Codes
+  const [roomCode, setRoomCode] = useState<string>("");
+  const [guestName, setGuestName] = useState<string>("");
+  const [guestInput, setGuestInput] = useState<string>("");
+  const [isGuestPromptOpen, setIsGuestPromptOpen] = useState(false);
+  const [myEffectiveId, setMyEffectiveId] = useState<string>("");
+  const [dynamicPartnerName, setDynamicPartnerName] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+
   // Wheel physics state
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
@@ -211,13 +223,16 @@ export default function RoulettePage() {
   const [winningIndex, setWinningIndex] = useState<number | null>(null);
   const [confettiBurst, setConfettiBurst] = useState(false);
   const [savedToVault, setSavedToVault] = useState(false);
+  const [isSavingMemory, setIsSavingMemory] = useState(false);
+  const [isDownloadingCard, setIsDownloadingCard] = useState(false);
   const [vetoUsed, setVetoUsed] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [partnerOnline, setPartnerOnline] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const channelRef = useRef<any>(null);
 
-  // Audio context initialization on user gesture
+  // 1. Audio context initialization on user gesture
   useEffect(() => {
     const initAudio = () => {
       if (!audioCtxRef.current) {
@@ -229,95 +244,109 @@ export default function RoulettePage() {
     return () => window.removeEventListener("pointerdown", initAudio);
   }, []);
 
-  // Realtime synchronization channel for couple
+  // 2. Initialize Room Code and Identity on Mount
   useEffect(() => {
-    if (!pair?.id) return;
+    if (typeof window === "undefined") return;
 
-    const channel = supabase.channel(`roulette:${pair.id}`, {
-      config: { presence: { key: user?.id || "user" } },
+    let clientId = user?.id;
+    if (!clientId) {
+      let storedGid = sessionStorage.getItem("pairfect_guest_id");
+      if (!storedGid) {
+        storedGid = `guest_${Math.random().toString(36).substring(2, 9)}`;
+        sessionStorage.setItem("pairfect_guest_id", storedGid);
+      }
+      clientId = storedGid;
+    }
+    setMyEffectiveId(clientId);
+
+    const storedName = localStorage.getItem("pairfect_guest_name");
+    if (storedName) {
+      setGuestName(storedName);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const queryRoom = params.get("room");
+
+    if (queryRoom) {
+      setRoomCode(queryRoom.trim());
+      if (!user && !storedName) {
+        setIsGuestPromptOpen(true);
+      }
+    } else if (pair?.id) {
+      setRoomCode(pair.id);
+    } else {
+      const generated = Math.random().toString(36).substring(2, 7).toUpperCase();
+      setRoomCode(generated);
+    }
+  }, [user, pair?.id]);
+
+  const effectiveDisplayName = profile?.display_name || user?.email?.split("@")[0] || guestName || "You";
+  const effectivePartnerName = dynamicPartnerName || partner?.display_name || "Partner";
+
+  // 3. Realtime Synchronization Channel
+  useEffect(() => {
+    if (!roomCode || !myEffectiveId || isGuestPromptOpen) return;
+
+    const channel = supabase.channel(`roulette:${roomCode}`, {
+      config: { presence: { key: myEffectiveId } },
     });
+    channelRef.current = channel;
 
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
-        setPartnerOnline(Object.keys(state).length >= 2);
+        const otherEntries = Object.entries(state)
+          .filter(([key]) => key !== myEffectiveId)
+          .flatMap(([_, presences]) => presences);
+
+        if (otherEntries.length > 0) {
+          setPartnerOnline(true);
+          const otherInfo = otherEntries[0] as any;
+          if (otherInfo?.user_name) {
+            setDynamicPartnerName(otherInfo.user_name);
+          }
+        } else {
+          setPartnerOnline(false);
+        }
       })
       .on("broadcast", { event: "spin-wheel" }, (payload: any) => {
         if (payload?.payload?.targetRotation !== undefined) {
           executeSpin(payload.payload.targetRotation, payload.payload.winner, payload.payload.winningIndex);
         }
       })
+      .on("broadcast", { event: "preset-change" }, (payload: any) => {
+        const found = PRESETS.find((p) => p.id === payload?.payload?.presetId);
+        if (found) {
+          setActivePreset(found);
+          setItems(found.items);
+          setIsCustomMode(false);
+          setWinner(null);
+          setSavedToVault(false);
+        }
+      })
       .subscribe(async (status: any) => {
         if (status === "SUBSCRIBED") {
-          await channel.track({ online_at: new Date().toISOString() });
+          await channel.track({
+            online_at: new Date().toISOString(),
+            user_name: effectiveDisplayName,
+            user_id: myEffectiveId,
+          });
         }
       });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [pair?.id, user?.id]);
+  }, [roomCode, myEffectiveId, isGuestPromptOpen, effectiveDisplayName, supabase]);
 
-  // Select a preset
-  const handleSelectPreset = (preset: WheelPreset) => {
-    if (preset.isPlusOnly && !isPlus) {
-      setIsPaywallOpen(true);
-      return;
-    }
-    if (isSpinning) return;
-    setActivePreset(preset);
-    setItems(preset.items);
-    setIsCustomMode(false);
-    setWinner(null);
-    setWinningIndex(null);
-    setSavedToVault(false);
-    setVetoUsed(false);
-  };
-
-  // Add custom item
-  const handleAddCustom = () => {
-    if (!customInput.trim() || isSpinning) return;
-    const text = customInput.trim();
-    const newItem: RouletteOption = {
-      label: text.length > 14 ? text.slice(0, 13) + "…" : text,
-      fullTitle: text,
-      emoji: "✨",
-    };
-    setItems([...items, newItem]);
-    setCustomInput("");
-    setIsCustomMode(true);
-    setWinner(null);
-    setWinningIndex(null);
-  };
-
-  // Remove item
-  const handleRemoveItem = (idx: number) => {
-    if (items.length <= 2 || isSpinning) return;
-    setItems(items.filter((_, i) => i !== idx));
-    setIsCustomMode(true);
-    setWinner(null);
-    setWinningIndex(null);
-  };
-
-  // Reset to default preset
-  const handleResetToPreset = () => {
-    if (isSpinning) return;
-    setItems(activePreset.items);
-    setIsCustomMode(false);
-    setWinner(null);
-    setWinningIndex(null);
-  };
-
-  // Execute wheel spin with realistic decelerating audio clicks and celebratory victory fanfare
-  const executeSpin = (targetRotation: number, winningOption: RouletteOption, winIdx?: number) => {
+  // Execute Wheel Rotation Animation and Deceleration Audio
+  const executeSpin = (nextRotation: number, winningOption: RouletteOption, winIdx?: number) => {
     setIsSpinning(true);
     setWinner(null);
     setWinningIndex(null);
     setSavedToVault(false);
-    setConfettiBurst(false);
-    setRotation(targetRotation);
+    setRotation(nextRotation);
 
-    // Dynamic decelerating audio click scheduler (follows cubic deceleration curve)
     if (soundEnabled && audioCtxRef.current) {
       if (audioCtxRef.current.state === "suspended") {
         audioCtxRef.current.resume();
@@ -332,7 +361,6 @@ export default function RoulettePage() {
         playClick(audioCtxRef.current);
 
         const progress = elapsed / totalDuration;
-        // Exponential deceleration: starts crisp at 30ms, ramps to 340ms at tail end
         const nextDelay = 30 + Math.pow(progress, 2.6) * 320;
         setTimeout(scheduleTick, nextDelay);
       };
@@ -350,52 +378,253 @@ export default function RoulettePage() {
     }, 4500);
   };
 
-  // Deterministic spin calculation: winning index aligns under top pointer (12 o'clock) every time
+  // Deterministic Spin Calculation
   const handleSpinClick = () => {
+    console.log("SPIN_TRIGGERED", { isSpinning, count: items.length });
     if (isSpinning || items.length === 0) return;
 
     const sliceAngle = 360 / items.length;
-    // Extra full spins (5-7 full rotations) for dramatic tension
     const extraFullRotations = (5 + Math.floor(Math.random() * 3)) * 360;
-    // Choose random winning index
     const winningIdx = Math.floor(Math.random() * items.length);
     const chosenOption = items[winningIdx];
 
-    // In SVG layout, slice i center is at i * sliceAngle.
-    // For slice i to end up at 0 deg (12 o'clock), the wheel's orientation modulo 360 must be (360 - i * sliceAngle) % 360.
     const targetNormalized = (360 - ((winningIdx * sliceAngle) % 360)) % 360;
     const currentNormalized = ((rotation % 360) + 360) % 360;
     const delta = (targetNormalized - currentNormalized + 360) % 360;
-    // Subtle jitter inside the wedge (±20% of slice width) so it feels natural, never landing outside winning wedge
     const jitter = (Math.random() - 0.5) * (sliceAngle * 0.4);
     const nextRotation = rotation + extraFullRotations + delta + jitter;
 
-    // Broadcast to partner if paired
-    if (pair?.id) {
-      supabase.channel(`roulette:${pair.id}`).send({
-        type: "broadcast",
-        event: "spin-wheel",
-        payload: { targetRotation: nextRotation, winner: chosenOption, winningIndex: winningIdx },
-      });
+    if (channelRef.current) {
+      try {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "spin-wheel",
+          payload: { targetRotation: nextRotation, winner: chosenOption, winningIndex: winningIdx },
+        });
+      } catch (err) {
+        console.warn("Realtime spin broadcast non-blocking error:", err);
+      }
     }
 
     executeSpin(nextRotation, chosenOption, winningIdx);
   };
 
-  // Save to Memory Vault
-  const handleSaveToVault = async () => {
-    if (!winner || !pair?.id || savedToVault) return;
+  // Switch Active Preset
+  const handlePresetSelect = (preset: WheelPreset) => {
+    if (preset.isPlusOnly && !isPlus) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    setActivePreset(preset);
+    setItems(preset.items);
+    setIsCustomMode(false);
+    setWinner(null);
+    setSavedToVault(false);
+
+    if (channelRef.current) {
+      try {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "preset-change",
+          payload: { presetId: preset.id },
+        });
+      } catch (err) {
+        console.warn("Realtime preset broadcast non-blocking error:", err);
+      }
+    }
+  };
+
+  // Copy Room Link
+  const handleCopyLink = async () => {
+    if (typeof window === "undefined") return;
+    const origin = window.location.origin;
+    const shareUrl = `${origin}/roulette?room=${roomCode}`;
     try {
-      await supabase.from("shared_moments").insert({
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      alert(`Share this room code with your partner: ${roomCode}`);
+    }
+  };
+
+  // Guest Modal Submit
+  const handleGuestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guestInput.trim()) return;
+    const clean = guestInput.trim();
+    setGuestName(clean);
+    localStorage.setItem("pairfect_guest_name", clean);
+    setIsGuestPromptOpen(false);
+  };
+
+  // Canvas Keepsake Certificate Generator
+  const generateKeepsakeImage = async (
+    winnerTitle: string,
+    winnerEmoji: string,
+    presetName: string,
+    userA: string,
+    userB: string
+  ): Promise<string> => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 900;
+    canvas.height = 1180;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+
+    // Warm textured parchment background
+    ctx.fillStyle = "#FAF6F0";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Outer border
+    ctx.strokeStyle = "#E4D5C5";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
+
+    // Inner dashed ticket border
+    ctx.setLineDash([8, 6]);
+    ctx.strokeStyle = "#C9B59F";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(48, 48, canvas.width - 96, canvas.height - 96);
+    ctx.setLineDash([]);
+
+    // Header & Vintage Date Stamp
+    ctx.fillStyle = "#8E3D52";
+    ctx.font = "bold 18px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("PAIRFECT KEEPSAKE : TONIGHT'S DECREE", canvas.width / 2, 105);
+
+    const dateStr = new Date().toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }).toUpperCase();
+    ctx.fillStyle = "#8C7A68";
+    ctx.font = "14px monospace";
+    ctx.fillText(dateStr, canvas.width / 2, 135);
+
+    // Divider
+    ctx.strokeStyle = "#DECBC0";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(100, 165);
+    ctx.lineTo(canvas.width - 100, 165);
+    ctx.stroke();
+
+    // Couple Names
+    ctx.fillStyle = "#2D1F2D";
+    ctx.font = "bold italic 34px serif";
+    ctx.fillText(`${userA}  ♡  ${userB}`, canvas.width / 2, 230);
+
+    // Category
+    ctx.fillStyle = "#8E3D52";
+    ctx.font = "bold 18px monospace";
+    ctx.fillText(`${presetName.toUpperCase()} WHEEL`, canvas.width / 2, 275);
+
+    // Big Emoji
+    ctx.font = "96px serif";
+    ctx.fillText(winnerEmoji, canvas.width / 2, 395);
+
+    // Winner Title
+    ctx.fillStyle = "#2D1F2D";
+    ctx.font = "bold italic 38px serif";
+    ctx.fillText(`"${winnerTitle}"`, canvas.width / 2, 475);
+
+    // Decree Seal Box
+    ctx.fillStyle = "#F2E8DC";
+    if (typeof (ctx as any).roundRect === "function") {
+      (ctx as any).roundRect(100, 520, canvas.width - 200, 80, 16);
+    } else {
+      ctx.rect(100, 520, canvas.width - 200, 80);
+    }
+    ctx.fill();
+
+    ctx.fillStyle = "#8E3D52";
+    ctx.font = "bold 19px serif";
+    ctx.fillText("SEALED BY FATE", canvas.width / 2, 555);
+    ctx.fillStyle = "#55444E";
+    ctx.font = "15px sans-serif";
+    ctx.fillText("Accepted without objection. No arguments allowed!", canvas.width / 2, 582);
+
+    // Bottom Decorative Compass
+    ctx.strokeStyle = "#DECBC0";
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, 780, 75, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    ctx.fillStyle = "#8E3D52";
+    ctx.font = "bold 15px monospace";
+    ctx.fillText("THE WHEEL HAS SPOKEN", canvas.width / 2, 880);
+
+    // Footer stamp
+    ctx.textAlign = "center";
+    ctx.strokeStyle = "#DECBC0";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(100, 1030);
+    ctx.lineTo(canvas.width - 100, 1030);
+    ctx.stroke();
+
+    ctx.fillStyle = "#A38F7D";
+    ctx.font = "14px monospace";
+    ctx.fillText("PAIRFECT SANCTUARY : KEPT FOREVER", canvas.width / 2, 1070);
+
+    return canvas.toDataURL("image/png");
+  };
+
+  // Pin Keepsake to Memory Wall
+  const handlePinToMemoryWall = async () => {
+    if (!winner || savedToVault || isSavingMemory) return;
+    if (!user || !pair?.id) {
+      setSavedToVault(true);
+      return;
+    }
+
+    try {
+      setIsSavingMemory(true);
+      const { error } = await supabase.from("shared_moments").insert({
         pair_id: pair.id,
-        created_by: user?.id,
-        title: `🎡 The Wheel Spoke: ${winner.fullTitle}`,
-        description: `Fate settled tonight's decision for ${activePreset.name}. No vetoes allowed! ♡`,
+        created_by: user.id,
+        title: `Fate's Decree: ${winner.fullTitle} ${winner.emoji}`,
+        description: `Spun the ${activePreset.name} wheel together! Fate sealed tonight's decree: "${winner.fullTitle}". No vetoes allowed! ♡`,
         moment_date: new Date().toISOString().split("T")[0],
       });
-      setSavedToVault(true);
+
+      if (!error) {
+        setSavedToVault(true);
+      } else {
+        console.error("Failed to pin memory:", error);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Pin memory error:", err);
+    } finally {
+      setIsSavingMemory(false);
+    }
+  };
+
+  // Download Keepsake Image
+  const handleDownloadKeepsake = async () => {
+    if (!winner) return;
+    try {
+      setIsDownloadingCard(true);
+      const dataUrl = await generateKeepsakeImage(
+        winner.fullTitle,
+        winner.emoji,
+        activePreset.name,
+        effectiveDisplayName,
+        effectivePartnerName
+      );
+
+      if (!dataUrl) return;
+
+      const link = document.createElement("a");
+      link.download = `pairfect-decree-${winner.label.toLowerCase()}-${effectiveDisplayName.toLowerCase()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Download keepsake error:", err);
+    } finally {
+      setIsDownloadingCard(false);
     }
   };
 
@@ -407,96 +636,141 @@ export default function RoulettePage() {
   const sliceAngle = 360 / items.length;
 
   return (
-    <div className="min-h-screen bg-[#FFF5F7] text-[#2D1F2D] flex flex-col transition-colors selection:bg-[#E8527D] selection:text-white">
+    <div className="min-h-screen bg-[#FAF9F6] text-stone-900 flex flex-col transition-colors selection:bg-rose-100 selection:text-rose-900">
       <Navigation />
 
-      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-24 md:pl-36 md:pr-12 pb-24 flex-1 flex flex-col items-center">
-        
-        {/* Header with Presence Pill */}
-        <div className="text-center space-y-3 max-w-2xl mx-auto mb-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/90 border border-[#FFD9E3] text-[#E8527D] text-[10px] font-mono font-bold tracking-widest uppercase shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 fill-current" />
-            <span>Pairfect Parlor · Let Fate Decide</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-display italic font-black text-[#2D1F2D] tracking-tight">
-            Pairfect Roulette
-          </h1>
-
-          <p className="text-sm sm:text-base text-[#6E5564] leading-relaxed max-w-xl mx-auto">
-            Can't decide what to eat, watch, or do? Spin the wheel together.{" "}
-            <span className="font-semibold text-[#E8527D]">No arguing — the wheel has spoken. ♡</span>
-          </p>
-
-          {/* Connection presence indicator */}
-          {pair && (
-            <div className="inline-flex items-center gap-2 text-xs font-mono px-3.5 py-1 rounded-full bg-white/80 border border-[#FFD9E3] text-[#6E5564]">
-              <Users className="w-3.5 h-3.5 text-[#E8527D]" />
-              <span>
-                {partnerOnline ? (
-                  <strong className="text-emerald-700">● {partner?.display_name || "Partner"} is watching live</strong>
-                ) : (
-                  <span>Solo spin or spin for both</span>
-                )}
-              </span>
+      {/* Guest Nickname Modal */}
+      {isGuestPromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-[6px_6px_0px_0px_rgba(28,25,23,0.9)] space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border-2 border-stone-800 text-[#E11D48] flex items-center justify-center mx-auto shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
+              <Sparkles className="w-6 h-6" />
             </div>
-          )}
+            <div className="text-center space-y-1">
+              <h2 className="text-xl font-heading font-bold text-stone-900">Join Pairfect Roulette</h2>
+              <p className="text-xs text-stone-600">
+                You were invited to room <span className="font-mono font-bold text-[#E11D48]">{roomCode}</span>. What should your partner call you?
+              </p>
+            </div>
+            <form onSubmit={handleGuestSubmit} className="space-y-4 pt-2">
+              <input
+                type="text"
+                placeholder="Enter your name or nickname"
+                value={guestInput}
+                onChange={(e) => setGuestInput(e.target.value)}
+                autoFocus
+                maxLength={24}
+                className="w-full px-4 py-3 rounded-xl border-2 border-stone-800 bg-stone-50 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#E11D48]"
+              />
+              <button
+                type="submit"
+                disabled={!guestInput.trim()}
+                className="w-full py-3 rounded-xl bg-[#E11D48] hover:bg-[#BE123C] text-white font-bold text-sm border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] disabled:opacity-50 cursor-pointer transition-all"
+              >
+                Join the Room
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 md:pl-36 md:pr-12 pb-24 flex-1 flex flex-col items-center">
+
+        {/* Top Control Bar with Room Code and Presence */}
+        <div className="w-full flex items-center justify-between mb-5 px-1 text-xs">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopyLink}
+              title="Copy Room Link to Invite Partner"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border-2 border-stone-800 text-stone-700 hover:text-stone-950 transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] font-mono font-bold text-xs"
+            >
+              <Share2 className="w-3.5 h-3.5 text-[#E11D48]" />
+              <span className="font-mono font-bold">Room: {roomCode}</span>
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+
+            {partnerOnline && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-semibold border-2 border-emerald-600 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                {effectivePartnerName} watching live
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            title={soundEnabled ? "Mute audio clicks" : "Unmute audio clicks"}
+            className="p-2 rounded-full bg-white border-2 border-stone-800 text-stone-700 hover:text-stone-950 transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] hover:bg-stone-50"
+          >
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-[#E11D48]" /> : <VolumeX className="w-4 h-4" />}
+          </button>
         </div>
 
-        {/* Refined Segmented Preset Selector */}
-        <div className="w-full max-w-4xl mb-8">
-          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto py-2.5 px-3 no-scrollbar">
-            {PRESETS.map((preset) => {
-              const isActive = activePreset.id === preset.id && !isCustomMode;
-              return (
-                <button
-                  key={preset.id}
-                  onClick={() => handleSelectPreset(preset)}
-                  disabled={isSpinning}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                    isActive
-                      ? "bg-[#E8527D] text-white shadow-md shadow-[#E8527D]/25 ring-2 ring-[#E8527D]/20 font-bold"
-                      : "bg-white/90 hover:bg-white text-[#2D1F2D] border border-[#FFD9E3] hover:border-[#E8527D]/40 shadow-2xs"
-                  }`}
-                >
-                  <span className="text-sm">{preset.icon}</span>
-                  <span>{preset.name}</span>
-                  {preset.isPlusOnly && !isPlus && (
-                    <span className="text-[9px] font-mono font-bold text-[#E8527D] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                      🔒 PLUS
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+        {/* Hero Sanctuary Card with Mascot */}
+        <div className="w-full relative rounded-3xl border-2 border-stone-800 bg-[#FAF9F6] p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] overflow-hidden mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-900 border border-rose-300 text-[11px] font-mono uppercase tracking-wider font-bold mb-3 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.7)]">
+            <Sparkles className="w-3.5 h-3.5 text-rose-600" />
+            <span>OUR PLAYFUL ORACLE · LOVE ROULETTE</span>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+            <div className="space-y-2 max-w-xl">
+              <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight text-stone-900 flex items-center gap-3">
+                <span>Pairfect Roulette</span>
+              </h1>
+              <p className="text-sm text-stone-600 leading-relaxed font-sans">
+                Can't decide what to eat, watch, or do? Spin the wheel together. No arguing: the wheel has spoken. ♡
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center justify-center p-2 rounded-2xl bg-white border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)]">
+              <CoupleBeansMascot className="w-16 h-16" />
+            </div>
           </div>
         </div>
 
-        {/* The Main Stage (Wheel + Decree Card) */}
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-4xl">
-          
-          {/* LEFT: Physical Astrolabe Wheel Card */}
-          <div className="lg:col-span-7 flex flex-col items-center justify-center p-6 sm:p-8 rounded-[32px] bg-[#FAF7F2] border border-[#EAD8CD] shadow-xl relative paper-grain overflow-hidden">
-            
-            {/* Dynamic Brass Pointer Needle with Mechanical Tick Physics */}
+        {/* Wheel Presets Pills */}
+        <div className="w-full flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 pt-1 mb-8 scrollbar-none px-2">
+          {PRESETS.map((preset) => {
+            const isSelected = !isCustomMode && activePreset.id === preset.id;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => handlePresetSelect(preset)}
+                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer border-2 ${
+                  isSelected
+                    ? "bg-stone-900 text-white border-stone-900 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] scale-105"
+                    : "bg-white text-stone-700 border-stone-800 hover:bg-stone-50 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
+                }`}
+              >
+                <span>{preset.icon}</span>
+                <span>{preset.name}</span>
+                {preset.isPlusOnly && (
+                  <span className="ml-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-rose-200 text-rose-900 uppercase font-mono font-bold border border-rose-300">
+                    Plus
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Main Stage Grid */}
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+          {/* LEFT: Roulette Wheel Mechanism */}
+          <div className="lg:col-span-7 flex flex-col items-center p-6 sm:p-8 rounded-3xl bg-white border-2 border-stone-800 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative">
+
+            {/* Pointer / Flapper Arrow */}
             <motion.div
-              className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none drop-shadow-md"
+              className="z-20 -mb-5"
               animate={
                 isSpinning
-                  ? {
-                      rotate: [0, -14, 7, -12, 8, -5, 0],
-                      transition: {
-                        repeat: Infinity,
-                        duration: 0.14,
-                        ease: "easeInOut",
-                      },
-                    }
-                  : winner
-                  ? {
-                      rotate: [14, -5, 0],
-                      transition: { type: "spring", stiffness: 450, damping: 15 },
-                    }
+                  ? { rotate: [0, -18, 12, -15, 8, -6, 0] }
                   : { rotate: 0 }
+              }
+              transition={
+                isSpinning
+                  ? { repeat: Infinity, duration: 0.16, ease: "linear" }
+                  : { duration: 0.3 }
               }
               style={{ transformOrigin: "14px 4px" }}
             >
@@ -518,9 +792,8 @@ export default function RoulettePage() {
               </svg>
             </motion.div>
 
-            {/* Wheel Stage with Balanced 360° Depth & Static Bezel (Shadow never rotates or skews!) */}
+            {/* Wheel Stage */}
             <div className="relative w-[320px] h-[320px] sm:w-[355px] sm:h-[355px] flex items-center justify-center mt-3">
-              {/* Concentric Ambient Shadow — anchored 360° around the wheel */}
               <div
                 className="absolute inset-0 rounded-full pointer-events-none"
                 style={{
@@ -529,7 +802,6 @@ export default function RoulettePage() {
                 }}
               />
 
-              {/* Outer Static Antique Brass Rim Casing */}
               <div
                 className="absolute -inset-2.5 rounded-full pointer-events-none"
                 style={{
@@ -538,7 +810,6 @@ export default function RoulettePage() {
                 }}
               />
 
-              {/* Dynamic Motion Energy Aura while spinning */}
               {isSpinning && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -551,7 +822,7 @@ export default function RoulettePage() {
                 />
               )}
 
-              {/* Celebratory Particle Burst on Win */}
+              {/* Confetti Particle Burst */}
               <AnimatePresence>
                 {confettiBurst && (
                   <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center overflow-visible">
@@ -569,20 +840,12 @@ export default function RoulettePage() {
                       return (
                         <motion.div
                           key={`burst-${i}`}
-                          initial={{ x: 0, y: 0, scale: 0.2, opacity: 1, rotate: 0 }}
-                          animate={{
-                            x: dx,
-                            y: dy + 20,
-                            scale: [0.2, 1.3, 0.8],
-                            opacity: [1, 1, 0],
-                            rotate: Math.random() * 360,
-                          }}
-                          transition={{
-                            duration: 1.8 + (i % 4) * 0.3,
-                            ease: [0.22, 1, 0.36, 1],
-                          }}
-                          className="absolute font-bold select-none"
-                          style={{ color, fontSize: i % 2 === 0 ? "18px" : "13px" }}
+                          initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                          animate={{ opacity: 0, scale: [0.6, 1.3, 0.8], x: dx, y: dy }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 1.2, ease: "easeOut" }}
+                          className="absolute text-lg font-bold select-none"
+                          style={{ color }}
                         >
                           {icon}
                         </motion.div>
@@ -592,11 +855,9 @@ export default function RoulettePage() {
                 )}
               </AnimatePresence>
 
-              {/* The Rotating Wheel Disc (Clean, strictly NO rotating box-shadows!) */}
+              {/* Rotating Wheel Disc */}
               <div
-                className="w-full h-full rounded-full transition-transform ease-out will-change-transform cursor-pointer select-none"
-                onClick={!isSpinning ? handleSpinClick : undefined}
-                title={!isSpinning ? "Click or tap to spin the wheel!" : undefined}
+                className="w-full h-full rounded-full overflow-hidden transition-transform will-change-transform"
                 style={{
                   transform: `rotate(${rotation}deg)`,
                   transitionDuration: isSpinning ? "4500ms" : "0ms",
@@ -604,7 +865,6 @@ export default function RoulettePage() {
                 }}
               >
                 <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full select-none">
-                  {/* Antique Outer Rim */}
                   <circle
                     cx={cx}
                     cy={cy}
@@ -623,7 +883,6 @@ export default function RoulettePage() {
                     strokeDasharray="4 6"
                   />
 
-                  {/* Wheel Wedges */}
                   {items.map((item, idx) => {
                     const mid = idx * sliceAngle;
                     const startAngle = mid - sliceAngle / 2;
@@ -640,15 +899,11 @@ export default function RoulettePage() {
                     const pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`;
                     const theme = PALETTE[idx % PALETTE.length];
                     const isWinnerSlice = !isSpinning && winner && winningIndex === idx;
-
-                    // Smart Spoke Typography: Text is NEVER upside down!
-                    // Slices on bottom half (90° to 270° inclusive) flip 180° with swapped radial offsets so emoji is always near rim
                     const normalizedMid = (mid % 360 + 360) % 360;
                     const isFlipped = normalizedMid >= 90 && normalizedMid <= 270;
 
                     return (
                       <g key={idx}>
-                        {/* Wedge fill */}
                         <path
                           d={pathData}
                           fill={isWinnerSlice ? "#FFE8F0" : theme.fill}
@@ -656,7 +911,6 @@ export default function RoulettePage() {
                           strokeWidth={isWinnerSlice ? "3" : "1.5"}
                         />
 
-                        {/* Winner wedge highlight halo */}
                         {isWinnerSlice && (
                           <path
                             d={pathData}
@@ -667,7 +921,6 @@ export default function RoulettePage() {
                           />
                         )}
 
-                        {/* Wedge spoke group rotated to slice mid angle */}
                         <g transform={`rotate(${mid}, ${cx}, ${cy})`}>
                           <g transform={`translate(${cx}, ${cy - r * 0.62})`}>
                             <g transform={isFlipped ? "rotate(180)" : "rotate(0)"}>
@@ -700,7 +953,6 @@ export default function RoulettePage() {
                     );
                   })}
 
-                  {/* Outer Perimeter Brass Rivets / Pegs */}
                   {items.map((_, pIdx) => {
                     const pAngle = pIdx * sliceAngle - sliceAngle / 2;
                     const pRad = ((pAngle - 90) * Math.PI) / 180;
@@ -715,63 +967,44 @@ export default function RoulettePage() {
                     );
                   })}
 
-                  {/* Golden Center Brass Collar */}
                   <circle cx={cx} cy={cy} r="46" fill="#EBD5C2" stroke="#BFA28E" strokeWidth="2" />
                 </svg>
               </div>
 
-              {/* Central Wax Seal SPIN Button with Idle Glow Ring & Tactile Press */}
-              <div className="absolute z-20 flex items-center justify-center">
-                {/* Idle pulse ring when ready to spin */}
-                {!isSpinning && (
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.45, 0, 0.45] }}
-                    transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-                    className="absolute w-24 h-24 rounded-full bg-rose-400/30 pointer-events-none"
-                  />
-                )}
-
+              {/* Center Spin Trigger Button */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
                 <button
-                  type="button"
+                  id="roulette-spin-button"
                   onClick={handleSpinClick}
-                  disabled={isSpinning}
-                  className="relative w-22 h-22 rounded-full bg-gradient-to-br from-[#FF6B95] via-[#E8527D] to-[#B82B54] text-white flex flex-col items-center justify-center border-4 border-[#FAF7F2] cursor-pointer hover:scale-105 active:scale-95 transition-all disabled:opacity-90 group select-none shadow-lg"
-                  style={{
-                    boxShadow:
-                      "0 0 0 3px rgba(250, 247, 242, 0.9), 0 8px 24px rgba(232, 82, 125, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4)",
-                  }}
+                  disabled={isSpinning || items.length === 0}
+                  className="group relative w-20 h-20 rounded-full bg-[#E11D48] hover:bg-[#BE123C] border-2 border-stone-800 text-white flex flex-col items-center justify-center shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed hover:scale-105"
                 >
-                  <span className="font-heading font-black text-xs tracking-widest uppercase text-white/95">
+                  <span className="font-heading font-black text-xs tracking-widest uppercase text-white">
                     {isSpinning ? "SPINNING" : "SPIN"}
                   </span>
                   <Heart
                     className={`w-4 h-4 fill-white text-white mt-0.5 transition-transform ${
-                      isSpinning ? "animate-spin" : "group-hover:scale-120"
+                      isSpinning ? "animate-spin" : "group-hover:scale-110"
                     }`}
                   />
                 </button>
               </div>
             </div>
 
-            {/* Bottom Bar: Option count + Sound Toggle */}
-            <div className="w-full flex items-center justify-between mt-6 pt-4 border-t border-[#EAD8CD] text-xs text-[#6E5564]">
+            {/* Bottom Bar: Option Count */}
+            <div className="w-full flex items-center justify-between mt-6 pt-4 border-t-2 border-stone-100 text-xs text-stone-600 font-bold">
               <span className="text-[10px] font-mono uppercase tracking-wider">
                 {items.length} Options on Wheel
               </span>
-              <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className="inline-flex items-center gap-1.5 text-xs text-[#6E5564] hover:text-[#2D1F2D] transition-colors cursor-pointer"
-              >
-                {soundEnabled ? <Volume2 className="w-4 h-4 text-[#E8527D]" /> : <VolumeX className="w-4 h-4" />}
-                <span>{soundEnabled ? "Audio clicks on" : "Muted"}</span>
-              </button>
+              <span className="text-[10px] font-mono text-[#E11D48] font-bold">
+                Room: {roomCode}
+              </span>
             </div>
           </div>
 
-          {/* RIGHT: Fate's Decree Parchment Card */}
+          {/* RIGHT: Fate's Decree Parchment Card & Keepsake */}
           <div className="lg:col-span-5 flex flex-col space-y-6">
-            
-            {/* Result / Prompt Card */}
+
             <AnimatePresence mode="wait">
               {winner ? (
                 <motion.div
@@ -779,33 +1012,31 @@ export default function RoulettePage() {
                   initial={{ opacity: 0, scale: 0.92, y: 15 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="p-7 rounded-[32px] bg-white border border-[#FFD9E3] shadow-xl text-center space-y-4 paper-grain relative overflow-hidden"
-                  style={{
-                    boxShadow: "0 16px 40px rgba(232, 82, 125, 0.12)",
-                  }}
+                  className="space-y-4"
                 >
-                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-50 text-[#E8527D] text-[10px] font-mono font-bold tracking-widest uppercase border border-rose-100">
-                    <Sparkles className="w-3.5 h-3.5 fill-current" />
-                    <span>Tonight's Decree</span>
-                  </div>
+                  {/* Result Decree Card */}
+                  <div className="p-7 rounded-3xl bg-white border-2 border-stone-800 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] text-center space-y-4 relative overflow-hidden">
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-100 text-rose-900 border border-stone-800 text-[10px] font-mono font-bold tracking-widest uppercase shadow-[1px_1px_0px_0px_rgba(28,25,23,0.6)]">
+                      <Sparkles className="w-3.5 h-3.5 fill-current" />
+                      <span>Tonight's Decree</span>
+                    </div>
 
-                  <div className="space-y-1 py-1">
-                    <span className="text-4xl block mb-2">{winner.emoji}</span>
-                    <h3 className="text-2xl sm:text-3xl font-display italic font-bold text-[#2D1F2D] leading-snug">
-                      {winner.fullTitle}
-                    </h3>
-                  </div>
+                    <div className="space-y-1 py-1">
+                      <span className="text-4xl block mb-2">{winner.emoji}</span>
+                      <h3 className="text-2xl sm:text-3xl font-serif font-black text-stone-900 leading-snug">
+                        {winner.fullTitle}
+                      </h3>
+                    </div>
 
-                  <p className="font-handwriting text-lg text-[#E8527D] italic">
-                    "No arguing. The wheel has spoken. ♡"
-                  </p>
+                    <p className="font-serif italic text-base text-[#E11D48] font-bold">
+                      "No arguing. The wheel has spoken. ♡"
+                    </p>
 
-                  <div className="pt-3 flex flex-col gap-2.5">
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
                       <button
                         onClick={handleSpinClick}
                         disabled={isSpinning}
-                        className="btn-journal-ghost w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5"
+                        className="w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer bg-white hover:bg-stone-50 text-stone-900 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] rounded-xl transition-all"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         <span>Spin Again</span>
@@ -817,106 +1048,166 @@ export default function RoulettePage() {
                           handleSpinClick();
                         }}
                         disabled={isSpinning || vetoUsed}
-                        className="btn-journal-ghost w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-40"
+                        className="w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer bg-stone-50 hover:bg-stone-100 text-stone-800 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] rounded-xl transition-all"
                         title={vetoUsed ? "Veto already used for this session" : "Playful couple rule: 1 free veto per night!"}
                       >
                         <span>{vetoUsed ? "Veto Used ♡" : "Use Veto (1x) 🚫"}</span>
                       </button>
                     </div>
+                  </div>
 
-                    {pair && (
-                      <button
-                        onClick={handleSaveToVault}
-                        disabled={savedToVault}
-                        className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                          savedToVault
-                            ? "bg-rose-100 text-[#E8527D] border border-[#FFD9E3]"
-                            : "btn-journal shadow-xs"
-                        }`}
-                      >
-                        {savedToVault ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#E8527D]" />
-                            <span>Saved to Memory Wall!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-3.5 h-3.5" />
-                            <span>Save to Memory Wall ▷</span>
-                          </>
-                        )}
-                      </button>
-                    )}
+                  {/* Post-Decree Keepsake Card */}
+                  <div className="relative overflow-hidden rounded-3xl border-2 border-stone-800 bg-[#FAF6F0] text-stone-900 p-6 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)]">
+                    <div className="border-2 border-dashed border-stone-400 rounded-2xl p-4 space-y-3.5">
+
+                      <div className="text-center border-b-2 border-stone-300 pb-2 space-y-1">
+                        <p className="text-[10px] font-mono font-bold tracking-widest uppercase text-[#E11D48]">
+                          PAIRFECT KEEPSAKE : TONIGHT'S DECREE
+                        </p>
+                        <p className="text-xs font-mono text-stone-600 font-bold">
+                          {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs px-2 font-mono">
+                        <div className="flex items-center gap-1 font-bold text-[#E11D48]">
+                          <User className="w-3.5 h-3.5" />
+                          <span>{effectiveDisplayName}</span>
+                        </div>
+                        <span className="text-stone-500 font-bold">♡</span>
+                        <div className="flex items-center gap-1 font-bold text-blue-700">
+                          <span>{effectivePartnerName}</span>
+                          <Bot className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+
+                      <div className="text-center py-1">
+                        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 font-bold">
+                          {activePreset.name} Wheel
+                        </p>
+                        <p className="text-xl font-serif font-black text-[#E11D48] italic mt-1">
+                          "{winner.fullTitle}"
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5 pt-1">
+                        <button
+                          onClick={handlePinToMemoryWall}
+                          disabled={savedToVault || isSavingMemory}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]
+                            ${savedToVault
+                              ? "bg-emerald-100 text-emerald-900"
+                              : "bg-[#E11D48] hover:bg-[#BE123C] text-white"
+                            }`}
+                        >
+                          {isSavingMemory ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : savedToVault ? (
+                            <><Check className="w-3.5 h-3.5" /> Pinned to Memories</>
+                          ) : (
+                            <><Bookmark className="w-3.5 h-3.5" /> Pin to Memory Wall</>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={handleDownloadKeepsake}
+                          disabled={isDownloadingCard}
+                          className="py-2 px-3 rounded-xl text-xs font-bold bg-white text-stone-900 border-2 border-stone-800 hover:bg-stone-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
+                        >
+                          {isDownloadingCard ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <><Download className="w-3.5 h-3.5" /> Download Keepsake</>
+                          )}
+                        </button>
+                      </div>
+
+                    </div>
                   </div>
                 </motion.div>
               ) : (
-                <div className="p-7 rounded-[32px] bg-white/80 border border-[#FFD9E3] text-center space-y-3 paper-grain shadow-sm">
-                  <div className="w-12 h-12 rounded-2xl bg-rose-50 text-[#E8527D] flex items-center justify-center mx-auto">
+                <div className="p-7 rounded-3xl bg-white border-2 border-stone-800 text-center space-y-3 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)]">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-50 border-2 border-stone-800 text-[#E11D48] flex items-center justify-center mx-auto shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
                     <Sparkles className="w-6 h-6" />
                   </div>
-                  <h3 className="font-display italic text-2xl font-bold text-[#2D1F2D]">
+                  <h3 className="font-serif italic text-2xl font-bold text-stone-900">
                     Fate is Waiting...
                   </h3>
-                  <p className="text-xs text-[#6E5564] leading-relaxed max-w-xs mx-auto">
-                    Tap the center <strong className="text-[#E8527D]">SPIN</strong> button to settle tonight's adventure together.
+                  <p className="text-xs text-stone-600 leading-relaxed max-w-xs mx-auto">
+                    Tap the red heart in the center of the wheel to spin. Whatever wedge lands under the top pointer becomes tonight's official decree!
                   </p>
                 </div>
               )}
             </AnimatePresence>
 
-            {/* Curated Chalkboard / Option Manager */}
-            <div className="p-6 rounded-[28px] bg-[#FAF7F2] border border-[#EAD8CD] space-y-4 paper-grain shadow-xs">
+            {/* Custom Option Editor Panel */}
+            <div className="p-6 rounded-3xl bg-white border-2 border-stone-800 space-y-4 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)]">
               <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-heading font-bold text-sm text-[#2D1F2D]">Wheel Slices</h4>
-                  <p className="text-[11px] text-[#6E5564]">{activePreset.tagline}</p>
-                </div>
-                {isCustomMode && (
-                  <button
-                    onClick={handleResetToPreset}
-                    disabled={isSpinning}
-                    className="text-[10px] font-mono text-[#E8527D] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Reset</span>
-                  </button>
-                )}
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-stone-700">
+                  Edit Wheel Wedges
+                </span>
+                <span className="text-[10px] font-mono text-stone-500 font-bold">
+                  {items.length}/10 wedges
+                </span>
               </div>
 
-              {/* Add custom item input */}
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Add custom option (e.g. Thai Food)..."
+                  placeholder="Add custom option (e.g. Thai Food 🍜)..."
                   value={customInput}
                   onChange={(e) => setCustomInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddCustom()}
-                  disabled={isSpinning}
-                  className="flex-1 bg-white border border-[#EAD8CD] rounded-xl px-3.5 py-2 text-xs text-[#2D1F2D] placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#E8527D]"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && customInput.trim()) {
+                      const trimmed = customInput.trim();
+                      const newItem: RouletteOption = {
+                        label: trimmed.slice(0, 14),
+                        fullTitle: trimmed,
+                        emoji: "✨",
+                      };
+                      setItems([...items, newItem]);
+                      setIsCustomMode(true);
+                      setCustomInput("");
+                    }
+                  }}
+                  maxLength={40}
+                  className="flex-1 px-3.5 py-2 text-xs rounded-xl border-2 border-stone-800 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#E11D48] shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05)]"
                 />
                 <button
-                  onClick={handleAddCustom}
-                  disabled={isSpinning || !customInput.trim()}
-                  className="btn-journal py-2 px-3 text-xs flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50"
+                  onClick={() => {
+                    if (!customInput.trim()) return;
+                    const trimmed = customInput.trim();
+                    const newItem: RouletteOption = {
+                      label: trimmed.slice(0, 14),
+                      fullTitle: trimmed,
+                      emoji: "✨",
+                    };
+                    setItems([...items, newItem]);
+                    setIsCustomMode(true);
+                    setCustomInput("");
+                  }}
+                  disabled={!customInput.trim() || items.length >= 10}
+                  className="px-3.5 py-2 rounded-xl bg-[#E11D48] hover:bg-[#BE123C] text-white text-xs font-bold border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] transition-all cursor-pointer disabled:opacity-40"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Chip list */}
-              <div className="max-h-52 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
-                {items.map((it, idx) => (
+              <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                {items.map((opt, i) => (
                   <div
-                    key={idx}
-                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white text-xs border border-[#EAD8CD]/70 shadow-2xs"
+                    key={`${opt.label}-${i}`}
+                    className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-stone-50 border-2 border-stone-200 text-xs font-medium text-stone-900"
                   >
-                    <div className="flex items-center gap-2 truncate">
-                      <span>{it.emoji}</span>
-                      <span className="font-medium text-[#2D1F2D] truncate">{it.fullTitle}</span>
-                    </div>
+                    <span className="truncate max-w-[200px]">
+                      {opt.emoji} {opt.fullTitle}
+                    </span>
                     {items.length > 2 && (
                       <button
-                        onClick={() => handleRemoveItem(idx)}
+                        onClick={() => {
+                          setItems(items.filter((_, idx) => idx !== i));
+                          setIsCustomMode(true);
+                        }}
                         disabled={isSpinning}
                         className="text-stone-400 hover:text-rose-600 transition-colors cursor-pointer p-0.5"
                       >
@@ -932,7 +1223,7 @@ export default function RoulettePage() {
 
         </div>
 
-        {/* ─── PLUS PAYWALL MODAL ─── */}
+        {/* PLUS PAYWALL MODAL */}
         <PlusPaywallModal
           isOpen={isPaywallOpen}
           onClose={() => setIsPaywallOpen(false)}
@@ -941,6 +1232,8 @@ export default function RoulettePage() {
         />
 
       </main>
+
+      <AmbientSoundscapeBar />
     </div>
   );
 }

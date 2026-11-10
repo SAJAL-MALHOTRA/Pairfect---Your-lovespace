@@ -43,7 +43,7 @@ The baseline was recorded using Lighthouse CLI against the live production deplo
 | **TTI (Time to Interactive)** | **11.9 s** | $\le$ 3.0 s | 🔴 Critical |
 | **Speed Index** | **7.1 s** | $\le$ 3.0 s | 🔴 Critical |
 | **CLS (Cumulative Layout Shift)** | **0.000** | $\le$ 0.1 | 🟢 Excellent |
-| **TTFB (Time to First Byte)** | **100 ms – 176 ms** | $\le$ 200 ms | 🟢 Good |
+| **TTFB (Time to First Byte)** | **100 ms - 176 ms** | $\le$ 200 ms | 🟢 Good |
 | **Total Transferred Bytes (Initial)** | **2,006 KiB (2.0 MB)** | $\le$ 800 KB | 🔴 Excessive |
 | **Network Requests (Landing Page)** | **58 requests** | $\le$ 25 requests | 🟡 Needs Work |
 | **Network Requests (Dashboard)** | **114 requests (72 fetches)** | $\le$ 15 requests | 🔴 Severe |
@@ -55,7 +55,7 @@ The baseline was recorded using Lighthouse CLI against the live production deplo
 ## Critical Bottlenecks (Ranked by Impact)
 
 ### Rank 1: Duplicate & Cascading Supabase Client Queries on Dashboard
-* **Files:** `src/app/dashboard/page.tsx` (lines 314–433), `src/components/providers/auth-provider.tsx` (lines 71–195)
+* **Files:** `src/app/dashboard/page.tsx` (lines 314-433), `src/components/providers/auth-provider.tsx` (lines 71-195)
 * **Root Cause:** In `auth-provider.tsx`, both `refreshSession(true)` and `onAuthStateChange` fire on initial mount. As `setUser`, `setPair`, and `setPartner` update asynchronously, the dashboard's `useEffect` dependency `[pair, loading]` triggers twice, launching two identical batches of 8 parallel Supabase calls + 1 mood query + 1 notification query.
 * **Measured Impact:** 72 fetch calls on a single page load; 10.4s to network idle; UI displays a full-page loading spinner (`Loader2`) before jarringly snapping into view.
 * **Fix:** 
@@ -63,13 +63,13 @@ The baseline was recorded using Lighthouse CLI against the live production deplo
   2. Deduplicate `AuthProvider` initial load so `onAuthStateChange` does not double-fetch on `INITIAL_SESSION`.
 
 ### Rank 2: 720 KB of Uncompressed Favicon & Logo PNGs on Critical Path
-* **Files:** `src/app/layout.tsx` (lines 46–55), `public/logo-book.png`, `public/favicon.png`
+* **Files:** `src/app/layout.tsx` (lines 46-55), `public/logo-book.png`, `public/favicon.png`
 * **Root Cause:** A 361.4 KB PNG is declared in `metadata.icons` and loaded as `priority` inside `<Image width={14} height={14} />`. The browser requests and parses 361.4 KB of image data just to render a 14px navbar mark and tab icon.
 * **Measured Impact:** Adds 722 KB of uncompressed payload to initial paint; blocks LCP.
 * **Fix:** Compress `favicon.png` down to a true 32x32 PNG / WebP (< 3 KB) and create a modern 48x48 WebP logo mark (< 4 KB).
 
 ### Rank 3: 20 Font Variants Loaded Synchronously
-* **Files:** `src/app/layout.tsx` (lines 11–42)
+* **Files:** `src/app/layout.tsx` (lines 11-42)
 * **Root Cause:** Layout loads 5 full Google font families with every weight and style (`400`, `500`, `600`, `700`, normal and italic).
 * **Measured Impact:** 8 separate `.woff2` downloads totaling over 210 KB; delays FCP to 2.4s.
 * **Fix:** Consolidate font families: keep `Inter` (sans) and `Playfair_Display` (display serif). Drop unused intermediate weights (`500`, `600`) and redundant `Cormorant_Garamond` / `EB_Garamond` duplications. Set `display: 'swap'`.
@@ -77,7 +77,7 @@ The baseline was recorded using Lighthouse CLI against the live production deplo
 ### Rank 4: Un-cached Landing Page (`export const dynamic = "force-dynamic"`)
 * **Files:** `src/app/page.tsx` (line 5)
 * **Root Cause:** The public landing page bypasses Next.js SSG / ISR and forces a serverless function execution on every visitor to check session cookies.
-* **Measured Impact:** Adds 150–250ms of unnecessary server latency for anonymous traffic before HTML generation starts.
+* **Measured Impact:** Adds 150-250ms of unnecessary server latency for anonymous traffic before HTML generation starts.
 * **Fix:** Change landing page to static prerendering (`export const dynamic = "auto"` or ISR) and handle the redirect for logged-in users via client-side check or lightweight cookie header inspection without running full Supabase auth.
 
 ### Rank 5: `<AmbientHearts />` Continuous GPU Compositing Churn
@@ -183,7 +183,7 @@ The baseline was recorded using Lighthouse CLI against the live production deplo
 
 ## Recommended Fix Plan
 
-### 🚨 Phase P0 — Critical (Must Fix Before Launch)
+### 🚨 Phase P0 - Critical (Must Fix Before Launch)
 1. **Deduplicate Auth & Dashboard Queries:**
    * Batch `AuthProvider` state into a single atomic update.
    * Stop duplicate initial `onAuthStateChange` execution.
@@ -198,13 +198,13 @@ The baseline was recorded using Lighthouse CLI against the live production deplo
 5. **GPU Optimization for `<AmbientHearts />`:**
    * Eliminate expensive runtime CSS `filter: blur()` from animating layers.
 
-### ⚡ Phase P1 — High Impact
+### ⚡ Phase P1 - High Impact
 1. Remove dead dependencies (`three`, `@react-three/fiber`, `@react-three/drei`).
 2. Optimize landing page static caching (remove `force-dynamic`).
 3. Load Google Analytics via `lazyOnload`.
 4. Replace full-screen loading spinners with stable skeleton placeholders.
 
-### 🎨 Phase P2 — Polish
+### 🎨 Phase P2 - Polish
 1. Convert all hero marketing images to modern `.webp`.
 2. Memoize sidebar navigation and chibi avatar renderers.
 3. Add stale-while-revalidate client caching for relationship memories.

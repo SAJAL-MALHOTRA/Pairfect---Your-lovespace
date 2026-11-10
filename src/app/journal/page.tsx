@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
+import { CoupleBeansMascot } from "@/components/couple-mascot";
 import { UnpairedPrompt } from "@/components/unpaired-prompt";
 import Link from "next/link";
 import {
@@ -15,7 +16,6 @@ import {
   Sparkles,
   PenLine,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface JournalHistoryDay {
   date: string;
@@ -64,9 +64,9 @@ export default function JournalHistoryPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6]">
         <Navigation />
-        <Loader2 className="w-6 h-6 text-[var(--burgundy)] animate-spin" />
+        <Loader2 className="w-6 h-6 text-rose-500 animate-spin" />
       </div>
     );
   }
@@ -81,61 +81,61 @@ export default function JournalHistoryPage() {
     );
   }
 
+  const partnerName = partner?.display_name || "Partner";
+
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
+    <div className="min-h-screen bg-[#FAF9F6] text-stone-900">
       <Navigation />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 md:pl-36 md:pr-12 py-20 pb-36 space-y-10">
-        {/* Back Link */}
-        <div>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[var(--text-soft)] hover:text-[var(--burgundy)] transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Dashboard</span>
-          </Link>
-        </div>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-36 space-y-8">
+        {/* Hero Section */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-stone-800 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 washi-tape-coral text-stone-900 font-mono text-xs uppercase tracking-widest px-3 py-1 font-bold border border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
+                <BookOpen className="w-3.5 h-3.5 text-stone-900" />
+                <span>Our Living Archive · Dual-Lock Journal</span>
+              </div>
+              <h1 className="font-heading font-black text-3xl sm:text-4xl text-stone-900 tracking-tight">
+                Our Sealed &amp; Unsealed Words
+              </h1>
+              <p className="text-sm font-sans text-stone-600 max-w-lg leading-relaxed">
+                Every day brings one shared question. Neither can peek until both have written: preserving raw, authentic reflection for you two.
+              </p>
+            </div>
 
-        {/* Page Header */}
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] text-[10px] font-mono font-bold tracking-widest uppercase">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Dual-Lock Journal Archive</span>
+            <div className="p-2 bg-stone-50 rounded-2xl border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] shrink-0 self-start sm:self-center">
+              <CoupleBeansMascot className="w-16 h-16" />
+            </div>
           </div>
-
-          <h1 className="text-3xl sm:text-4xl font-display italic font-bold text-[var(--text)]">
-            Our Sealed &amp; Unsealed Words
-          </h1>
-
-          <p className="text-sm text-[var(--text-soft)] max-w-xl leading-relaxed">
-            Every day brings one shared question. Neither can peek until both have written — preserving raw, authentic reflection for you two.
-          </p>
         </div>
 
         {/* Content list */}
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-6 h-6 text-[var(--burgundy)] animate-spin" />
-            <p className="text-xs font-mono text-[var(--text-soft)]">Unsealing archives...</p>
+            <Loader2 className="w-6 h-6 text-rose-500 animate-spin" />
+            <p className="text-xs font-mono font-bold text-stone-600">Unsealing archives...</p>
           </div>
         ) : error ? (
-          <div className="p-6 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+          <div className="p-6 rounded-2xl bg-rose-100 border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] text-rose-900 text-xs font-mono">
             {error}
           </div>
         ) : history.length === 0 ? (
-          <div className="rounded-[28px] border border-[var(--border)] bg-[var(--paper-warm)] p-10 text-center space-y-4 shadow-sm paper-grain">
-            <div className="w-12 h-12 rounded-2xl bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center mx-auto">
+          <div className="rounded-3xl border-2 border-stone-800 bg-white p-10 text-center space-y-4 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)]">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] text-rose-600 flex items-center justify-center mx-auto">
               <PenLine className="w-6 h-6" />
             </div>
-            <h3 className="font-display italic text-2xl font-bold text-[var(--text)]">
+            <h3 className="font-heading font-black text-2xl text-stone-900">
               Your story starts today
             </h3>
-            <p className="text-xs text-[var(--text-soft)] max-w-md mx-auto leading-relaxed">
-              You haven't sealed any dual-lock journal entries together yet. Write today's prompt on your dashboard!
+            <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed font-sans">
+              You haven&apos;t sealed any dual-lock journal entries together yet. Write today&apos;s prompt on your dashboard!
             </p>
-            <Link href="/dashboard" className="btn-journal inline-block py-2.5 px-6 text-xs font-mono font-bold">
-              <span>Write Today's Journal ▷</span>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-white bg-rose-500 hover:bg-rose-600 border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] transition-all"
+            >
+              <span>Write Today&apos;s Journal ▷</span>
             </Link>
           </div>
         ) : (
@@ -149,27 +149,25 @@ export default function JournalHistoryPage() {
               });
 
               return (
-                <motion.div
+                <div
                   key={day.date}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-[24px] border border-[var(--border)] bg-[var(--paper-warm)] p-6 sm:p-7 shadow-sm space-y-5 paper-grain relative overflow-hidden"
+                  className="rounded-3xl border-2 border-stone-800 bg-white p-6 sm:p-7 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] space-y-5 relative overflow-hidden"
                 >
                   {/* Date & Category */}
-                  <div className="flex items-center justify-between border-b border-[var(--border)]/60 pb-3">
-                    <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-soft)]">
-                      <Calendar className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                  <div className="flex items-center justify-between border-b-2 border-stone-100 pb-3">
+                    <div className="flex items-center gap-2 text-xs font-mono text-stone-600 font-bold">
+                      <Calendar className="w-3.5 h-3.5 text-rose-500" />
                       <span>{formattedDate}</span>
                     </div>
 
                     {day.locked ? (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-900 bg-amber-200 border border-stone-800 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] px-2.5 py-0.5 rounded-full">
                         <Lock className="w-3 h-3" />
                         <span>Locked</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                        <Heart className="w-3 h-3 fill-emerald-600" />
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-900 bg-emerald-200 border border-stone-800 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] px-2.5 py-0.5 rounded-full">
+                        <Heart className="w-3 h-3 fill-emerald-700 text-emerald-700" />
                         <span>Unsealed Together</span>
                       </span>
                     )}
@@ -178,10 +176,10 @@ export default function JournalHistoryPage() {
                   {/* Prompt */}
                   {day.prompt && (
                     <div className="space-y-1">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                        Prompt #{day.prompt.category ? `· ${day.prompt.category}` : ""}
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-stone-500">
+                        Daily Prompt {day.prompt.category ? `· ${day.prompt.category}` : ""}
                       </p>
-                      <h3 className="font-handwriting text-2xl sm:text-3xl text-[var(--text)] leading-snug">
+                      <h3 className="font-heading font-black text-xl sm:text-2xl text-stone-900 leading-snug">
                         {day.prompt.prompt_text}
                       </h3>
                     </div>
@@ -189,46 +187,56 @@ export default function JournalHistoryPage() {
 
                   {/* Entries */}
                   {day.locked ? (
-                    <div className="p-5 rounded-2xl bg-white/50 border border-[var(--border)] text-center space-y-2">
-                      <Lock className="w-5 h-5 text-[var(--burgundy)] mx-auto opacity-70" />
-                      <p className="text-xs font-medium text-[var(--text)]">
+                    <div className="p-5 rounded-2xl bg-stone-50 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] text-center space-y-2">
+                      <Lock className="w-5 h-5 text-stone-700 mx-auto" />
+                      <p className="text-xs font-bold text-stone-800 font-sans">
                         {day.userEntry
-                          ? `Your entry is sealed. Waiting for ${partner?.display_name || "partner"} to unseal both!`
+                          ? `Your entry is sealed. Waiting for ${partnerName} to unseal both!`
                           : `You haven't written your response yet.`}
                       </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                       {/* User's response */}
-                      <div className="bg-white/70 rounded-2xl p-5 border border-[var(--border)] space-y-2">
+                      <div className="bg-stone-50 rounded-2xl p-5 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--burgundy)] bg-[var(--rose)]/15 px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-900 bg-rose-200 border border-stone-800 px-2 py-0.5 rounded-md">
                             You
                           </span>
                         </div>
-                        <p className="text-sm font-sans text-[var(--text)] leading-relaxed whitespace-pre-wrap">
+                        <p className="text-sm font-sans text-stone-800 leading-relaxed whitespace-pre-wrap">
                           {day.userEntry?.content}
                         </p>
                       </div>
 
                       {/* Partner's response */}
-                      <div className="bg-white/70 rounded-2xl p-5 border border-[var(--border)] space-y-2">
+                      <div className="bg-stone-50 rounded-2xl p-5 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--burgundy)] bg-[var(--rose)]/15 px-2 py-0.5 rounded-full">
-                            {partner?.display_name || "Partner"}
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-900 bg-amber-200 border border-stone-800 px-2 py-0.5 rounded-md">
+                            {partnerName}
                           </span>
                         </div>
-                        <p className="text-sm font-sans text-[var(--text)] leading-relaxed whitespace-pre-wrap">
+                        <p className="text-sm font-sans text-stone-800 leading-relaxed whitespace-pre-wrap">
                           {day.partnerEntry?.content}
                         </p>
                       </div>
                     </div>
                   )}
-                </motion.div>
+                </div>
               );
             })}
           </div>
         )}
+
+        {/* Back to Dashboard */}
+        <div className="pt-6 text-center">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-stone-800 hover:text-stone-900 bg-white px-4 py-2 rounded-xl border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] hover:shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+          >
+            ← Back to Love Dashboard
+          </Link>
+        </div>
       </main>
     </div>
   );

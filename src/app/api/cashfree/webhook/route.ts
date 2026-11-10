@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
 
     // 5. Webhook Idempotency Check:
-    // Check current status before acting — prevent re-triggering downstream side effects
+    // Check current status before acting - prevent re-triggering downstream side effects
     const { data: existingPayment } = await admin
       .from("payments")
       .select("id, user_id, order_id, amount, status, metadata")

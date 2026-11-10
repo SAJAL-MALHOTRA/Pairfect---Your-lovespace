@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
+import { CoupleBeansMascot } from "@/components/couple-mascot";
 import { createClient } from "@/lib/supabase/client";
 import {
   Calendar as CalendarIcon,
@@ -18,6 +19,8 @@ import {
   X,
   Loader2,
   Bookmark,
+  ChevronRight,
+  PartyPopper,
 } from "lucide-react";
 
 interface CustomEvent {
@@ -215,59 +218,72 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] relative">
+    <div className="min-h-screen bg-[#FAF9F6] text-stone-900 relative">
       <Navigation />
 
-      <main className="max-w-4xl mx-auto px-6 py-16 pb-36 pt-24 space-y-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border)] pb-6">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--rose)] text-xs font-mono uppercase tracking-widest">
-              <CalendarIcon className="w-4 h-4" />
-              <span>Relationship Calendar</span>
-            </div>
-            <h1 className="font-heading font-semibold text-3xl md:text-4xl text-[var(--text)] mt-1">
-              Important Dates & Milestones
-            </h1>
-            <p className="text-xs text-[var(--text-soft)] font-mono mt-1">
-              Celebrating every milestone with {partnerName} ♥
-            </p>
-          </div>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-32 space-y-8">
+        {/* Hero Section */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-stone-800 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative overflow-hidden">
+          {/* Subtle background accent */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10" />
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => {
-                setFormError("");
-                setIsModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider text-white bg-[var(--burgundy)] hover:bg-[var(--burgundy)]/90 shadow-xs transition-all cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Important Date
-            </button>
-            <Link
-              href="/settings"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider text-[var(--burgundy)] bg-[var(--rose)]/15 border border-[var(--rose)]/30 transition-all hover:bg-[var(--rose)]/25 w-fit"
-            >
-              <Edit3 className="w-3.5 h-3.5" /> Edit Anniversary Date
-            </Link>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 washi-tape-coral text-stone-900 font-mono text-xs uppercase tracking-widest px-3 py-1 font-bold border border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
+                <CalendarIcon className="w-3.5 h-3.5 text-stone-900" />
+                <span>Shared Calendar · Milestone Tracker</span>
+              </div>
+              <h1 className="font-heading font-black text-3xl sm:text-4xl text-stone-900 tracking-tight">
+                Important Dates & Milestones
+              </h1>
+              <p className="text-sm font-sans text-stone-600 max-w-lg leading-relaxed">
+                Celebrating every milestone, memory, and upcoming date with {partnerName} ♥
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-end gap-3 shrink-0">
+              <div className="p-2 bg-stone-50 rounded-2xl border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)]">
+                <CoupleBeansMascot className="w-16 h-16" />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap sm:justify-end">
+                <button
+                  onClick={() => {
+                    setFormError("");
+                    setIsModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-white bg-rose-500 hover:bg-rose-600 border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Important Date
+                </button>
+                <Link
+                  href="/settings"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-stone-800 bg-white hover:bg-stone-50 border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] transition-all"
+                >
+                  <Edit3 className="w-3.5 h-3.5" /> Edit Anniversary
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Hero Card: Anniversary */}
-        <div className="p-8 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] paper-grain border border-[var(--border)] shadow-sm space-y-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-widest text-[var(--rose)] font-semibold flex items-center gap-1.5">
-              <Heart className="w-4 h-4 fill-current" /> Anniversary Summary
+        {/* Hero Card: Anniversary & Milestone Progress */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-stone-800 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-stone-100 pb-4">
+            <span className="text-xs font-mono uppercase tracking-widest text-stone-900 font-bold flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-rose-100 border border-stone-800 flex items-center justify-center text-rose-600">
+                <Heart className="w-3.5 h-3.5 fill-current" />
+              </span>
+              Anniversary Summary
             </span>
-            <span className="text-xs font-mono text-[var(--text-soft)]">
+            <span className="text-xs font-mono font-bold px-3 py-1 bg-amber-100 text-stone-900 rounded-full border border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
               {daysTogether} Days Together
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <div>
-              <p className="text-xs font-mono uppercase text-[var(--text-soft)]">Official Anniversary Date</p>
-              <h2 className="font-heading font-bold text-2xl md:text-3xl text-[var(--text)] mt-1">
+            <div className="space-y-2">
+              <p className="text-xs font-mono uppercase font-bold tracking-wider text-stone-500">Official Anniversary Date</p>
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-stone-900">
                 {startedDate
                   ? startedDate.toLocaleDateString("en-US", {
                       month: "long",
@@ -276,20 +292,20 @@ export default function CalendarPage() {
                     })
                   : "Not Set Yet"}
               </h2>
-              <p className="text-xs text-[var(--text-soft)] mt-2 leading-relaxed">
+              <p className="text-xs text-stone-600 font-sans leading-relaxed">
                 {startedDate
                   ? `Your story officially began on ${startedDate.toLocaleDateString("en-US", {
                       month: "long",
                       day: "numeric",
                       year: "numeric",
-                    })}.`
+                    })}. Live love counter updates every midnight.`
                   : "Set your anniversary date in settings to unlock live countdowns and milestone tracking."}
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-3">
-              <div className="flex items-center gap-2 text-xs font-mono text-[var(--burgundy)] font-bold uppercase tracking-wider">
-                <Sparkles className="w-4 h-4" /> Next Milestone
+            <div className="p-5 rounded-2xl bg-stone-50 border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] space-y-3">
+              <div className="flex items-center gap-2 text-xs font-mono text-stone-900 font-bold uppercase tracking-wider">
+                <Sparkles className="w-4 h-4 text-amber-500" /> Next Big Milestone
               </div>
               {(() => {
                 const nextM =
@@ -303,19 +319,21 @@ export default function CalendarPage() {
                   Math.round((daysTogether / nextM.days) * 100)
                 );
                 return (
-                  <div>
-                    <p className="font-heading text-lg font-bold text-[var(--text)]">
+                  <div className="space-y-2">
+                    <p className="font-heading text-lg font-bold text-stone-900">
                       {nextM.label} in {daysLeft} days
                     </p>
-                    <div className="w-full h-2.5 rounded-full bg-[var(--border)] overflow-hidden mt-2">
+                    <div className="w-full h-3 rounded-full bg-stone-200 border border-stone-800 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[var(--burgundy)] transition-all"
+                        className="h-full rounded-full bg-rose-500 transition-all duration-500"
                         style={{ width: `${percent}%` }}
                       />
                     </div>
-                    <p className="text-[10px] font-mono text-[var(--text-soft)] text-right mt-1">
-                      {percent}% completed
-                    </p>
+                    <div className="flex items-center justify-between text-[11px] font-mono text-stone-600 font-medium">
+                      <span>Day {daysTogether}</span>
+                      <span>{percent}% completed</span>
+                      <span>Day {nextM.days}</span>
+                    </div>
                   </div>
                 );
               })()}
@@ -325,12 +343,12 @@ export default function CalendarPage() {
 
         {/* Custom Important Event Dates Section */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-heading font-semibold text-xl text-[var(--text)]">
+              <h3 className="font-heading font-black text-xl text-stone-900">
                 Our Important Dates
               </h3>
-              <p className="text-xs text-[var(--text-soft)] font-mono mt-0.5">
+              <p className="text-xs text-stone-600 font-mono mt-0.5">
                 Birthdays, first dates, trips, and couple milestones
               </p>
             </div>
@@ -339,33 +357,35 @@ export default function CalendarPage() {
                 setFormError("");
                 setIsModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--burgundy)] hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-stone-900 hover:text-rose-600 bg-white px-3 py-1.5 rounded-lg border border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" /> Add Date
             </button>
           </div>
 
           {loadingEvents ? (
-            <div className="p-10 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center text-xs font-mono text-[var(--text-soft)] gap-2">
-              <Loader2 className="w-4 h-4 animate-spin text-[var(--burgundy)]" /> Loading dates...
+            <div className="p-10 rounded-2xl border-2 border-stone-800 bg-white shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] flex items-center justify-center text-xs font-mono text-stone-600 gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-rose-500" /> Loading dates...
             </div>
           ) : customEvents.length === 0 ? (
-            <div className="p-8 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-secondary)]/50 text-center space-y-3">
-              <div className="w-10 h-10 mx-auto rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center">
-                <CalendarIcon className="w-5 h-5" />
+            <div className="p-8 sm:p-10 rounded-3xl border-2 border-dashed border-stone-800 bg-white shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] text-center space-y-4">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-100 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] text-rose-600 flex items-center justify-center">
+                <CalendarIcon className="w-6 h-6" />
               </div>
-              <p className="text-sm font-heading font-medium text-[var(--text)]">
-                No custom dates added yet
-              </p>
-              <p className="text-xs text-[var(--text-soft)] max-w-sm mx-auto">
-                Add your first date, partner&apos;s birthday, vacations, or any milestone you want to remember together.
-              </p>
+              <div className="space-y-1">
+                <p className="text-base font-heading font-bold text-stone-900">
+                  No custom dates added yet
+                </p>
+                <p className="text-xs text-stone-600 max-w-sm mx-auto font-sans leading-relaxed">
+                  Add your first date, partner&apos;s birthday, vacations, or any milestone you want to remember together.
+                </p>
+              </div>
               <button
                 onClick={() => {
                   setFormError("");
                   setIsModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider text-white bg-[var(--burgundy)] hover:bg-[var(--burgundy)]/90 transition-all cursor-pointer mt-2"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-white bg-rose-500 hover:bg-rose-600 border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] transition-all cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Add First Date
               </button>
@@ -378,17 +398,17 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={ev.id}
-                    className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--rose)]/40 transition-all flex flex-col justify-between gap-3 shadow-2xs group relative"
+                    className="p-5 rounded-2xl border-2 border-stone-800 bg-white shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] hover:shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] transition-all flex flex-col justify-between gap-3 group relative"
                   >
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <span
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold ${
+                          className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase tracking-wider font-bold border border-stone-800 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] ${
                             timing.status === "today"
-                              ? "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                              ? "bg-amber-300 text-stone-900"
                               : timing.status === "upcoming"
-                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                              : "bg-[var(--border)] text-[var(--text-soft)]"
+                              ? "bg-emerald-300 text-stone-900"
+                              : "bg-stone-200 text-stone-700"
                           }`}
                         >
                           {timing.label}
@@ -398,7 +418,7 @@ export default function CalendarPage() {
                           onClick={() => handleDeleteEvent(ev.id)}
                           disabled={isDeleting}
                           title="Delete date"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-[var(--text-soft)] hover:text-rose-600 rounded cursor-pointer"
+                          className="opacity-60 group-hover:opacity-100 transition-opacity p-1.5 text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-transparent hover:border-stone-800 cursor-pointer"
                         >
                           {isDeleting ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -408,16 +428,16 @@ export default function CalendarPage() {
                         </button>
                       </div>
 
-                      <h4 className="font-heading font-bold text-base text-[var(--text)]">
+                      <h4 className="font-heading font-black text-lg text-stone-900 leading-snug">
                         {ev.title}
                       </h4>
 
-                      <p className="text-xs font-mono text-[var(--burgundy)] font-medium">
+                      <p className="text-xs font-mono text-rose-600 font-bold">
                         {formatEventDate(ev.moment_date)}
                       </p>
 
                       {ev.description && (
-                        <p className="text-xs text-[var(--text-soft)] pt-1 leading-relaxed">
+                        <p className="text-xs text-stone-600 pt-1 font-sans leading-relaxed border-t border-stone-100">
                           {ev.description}
                         </p>
                       )}
@@ -431,9 +451,14 @@ export default function CalendarPage() {
 
         {/* Milestone Timeline List */}
         <div className="space-y-4">
-          <h3 className="font-heading font-semibold text-xl text-[var(--text)]">
-            Anniversary Milestones
-          </h3>
+          <div>
+            <h3 className="font-heading font-black text-xl text-stone-900">
+              Anniversary Milestones
+            </h3>
+            <p className="text-xs text-stone-600 font-mono mt-0.5">
+              Standard relationship milestones and badges unlocked together
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {milestones.map((m) => {
               const isPassed = daysTogether >= m.days;
@@ -441,33 +466,33 @@ export default function CalendarPage() {
               return (
                 <div
                   key={m.days}
-                  className={`p-5 rounded-2xl border flex items-center justify-between transition-all ${
+                  className={`p-5 rounded-2xl border-2 border-stone-800 flex items-center justify-between transition-all ${
                     isPassed
-                      ? "bg-[var(--bg-secondary)] border-[var(--border)] opacity-80"
-                      : "bg-[var(--bg-secondary)] border-[var(--rose)]/30"
+                      ? "bg-stone-50 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] opacity-90"
+                      : "bg-white shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${
+                      className={`w-9 h-9 rounded-xl border-2 border-stone-800 flex items-center justify-center text-xs font-black shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] ${
                         isPassed
-                          ? "bg-emerald-500/15 text-emerald-600"
-                          : "bg-[var(--rose)]/20 text-[var(--burgundy)]"
+                          ? "bg-emerald-300 text-stone-900"
+                          : "bg-rose-200 text-stone-900"
                       }`}
                     >
                       {isPassed ? "✓" : "♥"}
                     </div>
                     <div>
-                      <p className="font-heading font-bold text-sm text-[var(--text)]">
+                      <p className="font-heading font-black text-sm text-stone-900">
                         {m.label}
                       </p>
-                      <p className="text-[10px] font-mono text-[var(--text-soft)]">
-                        {isPassed ? "Achieved!" : `${daysLeft} days to go`}
+                      <p className="text-[11px] font-mono text-stone-600 font-medium">
+                        {isPassed ? "Achieved together!" : `${daysLeft} days to go`}
                       </p>
                     </div>
                   </div>
 
-                  <span className="text-xs font-mono font-bold text-[var(--text-soft)]">
+                  <span className="text-xs font-mono font-bold px-2.5 py-1 bg-stone-100 rounded-lg border border-stone-800 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] text-stone-800">
                     Day {m.days}
                   </span>
                 </div>
@@ -480,7 +505,7 @@ export default function CalendarPage() {
         <div className="pt-6 text-center">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase text-[var(--burgundy)] hover:underline"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-stone-800 hover:text-stone-900 bg-white px-4 py-2 rounded-xl border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] hover:shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
           >
             ← Back to Love Dashboard
           </Link>
@@ -489,25 +514,27 @@ export default function CalendarPage() {
 
       {/* Add Important Date Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="relative w-full max-w-md rounded-3xl bg-[var(--bg)] border border-[var(--border)] p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs">
+          <div className="relative w-full max-w-md rounded-3xl bg-[#FAF9F6] border-2 border-stone-800 p-6 sm:p-7 shadow-[6px_6px_0px_0px_rgba(28,25,23,0.9)] space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b-2 border-stone-800 pb-4">
               <div className="flex items-center gap-2">
-                <Bookmark className="w-4 h-4 text-[var(--burgundy)]" />
-                <h3 className="font-heading font-bold text-lg text-[var(--text)]">
+                <div className="w-8 h-8 rounded-xl bg-rose-100 border border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] flex items-center justify-center text-rose-600">
+                  <Bookmark className="w-4 h-4" />
+                </div>
+                <h3 className="font-heading font-black text-xl text-stone-900">
                   Add Important Date
                 </h3>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-[var(--text-soft)] hover:text-[var(--text)] p-1 rounded-full transition-colors cursor-pointer"
+                className="text-stone-600 hover:text-stone-900 p-1.5 rounded-lg border border-stone-800 bg-white hover:bg-stone-50 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-mono">
+              <div className="p-3 rounded-xl bg-rose-100 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] text-rose-800 text-xs font-mono font-medium">
                 {formError}
               </div>
             )}
@@ -515,8 +542,8 @@ export default function CalendarPage() {
             <form onSubmit={handleCreateEvent} className="space-y-4">
               {/* Preset suggestion chips */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-mono uppercase text-[var(--text-soft)]">
-                  Suggestions
+                <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-stone-600">
+                  Quick Suggestions
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {PRESET_TITLES.map((preset) => (
@@ -524,10 +551,10 @@ export default function CalendarPage() {
                       key={preset}
                       type="button"
                       onClick={() => setNewTitle(preset)}
-                      className={`text-[10px] font-mono px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
+                      className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border border-stone-800 transition-all cursor-pointer ${
                         newTitle === preset
-                          ? "bg-[var(--burgundy)] text-white border-[var(--burgundy)]"
-                          : "bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text)] hover:border-[var(--rose)]"
+                          ? "bg-rose-500 text-white shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
+                          : "bg-white text-stone-800 hover:bg-stone-100 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)]"
                       }`}
                     >
                       {preset}
@@ -538,7 +565,7 @@ export default function CalendarPage() {
 
               {/* Title input */}
               <div className="space-y-1">
-                <label className="text-xs font-mono uppercase text-[var(--text-soft)]">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-stone-700">
                   Event Title *
                 </label>
                 <input
@@ -547,13 +574,13 @@ export default function CalendarPage() {
                   placeholder="e.g. First Date, Her Birthday..."
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text)] text-sm focus:outline-hidden focus:border-[var(--burgundy)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border-2 border-stone-800 bg-white text-stone-900 text-sm focus:outline-hidden focus:shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] font-sans"
                 />
               </div>
 
               {/* Date input */}
               <div className="space-y-1">
-                <label className="text-xs font-mono uppercase text-[var(--text-soft)]">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-stone-700">
                   Date *
                 </label>
                 <input
@@ -561,13 +588,13 @@ export default function CalendarPage() {
                   required
                   value={newDate}
                   onChange={(e) => setNewDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text)] text-sm focus:outline-hidden focus:border-[var(--burgundy)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border-2 border-stone-800 bg-white text-stone-900 text-sm focus:outline-hidden focus:shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] font-mono"
                 />
               </div>
 
               {/* Note / Description */}
               <div className="space-y-1">
-                <label className="text-xs font-mono uppercase text-[var(--text-soft)]">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-stone-700">
                   Memory Note (Optional)
                 </label>
                 <textarea
@@ -575,23 +602,23 @@ export default function CalendarPage() {
                   placeholder="e.g. At the rooftop cafe where we talked until 2 AM"
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text)] text-sm focus:outline-hidden focus:border-[var(--burgundy)] resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border-2 border-stone-800 bg-white text-stone-900 text-sm focus:outline-hidden focus:shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] font-sans resize-none"
                 />
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[var(--border)]">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t-2 border-stone-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-mono uppercase text-[var(--text-soft)] hover:text-[var(--text)] transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 rounded-xl text-xs font-mono uppercase tracking-wider text-white bg-[var(--burgundy)] hover:bg-[var(--burgundy)]/90 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-white bg-rose-500 hover:bg-rose-600 border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? (
                     <>

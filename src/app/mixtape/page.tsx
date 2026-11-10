@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
+import { CoupleBeansMascot } from "@/components/couple-mascot";
 import { UnpairedPrompt } from "@/components/unpaired-prompt";
 import { CASSETTE_PATTERNS, CassettePatternConfig } from "@/components/mixtape/cassette-patterns";
 import { CassetteShell } from "@/components/mixtape/cassette-shell";
@@ -382,39 +383,42 @@ function MixtapeContent() {
   }, [draftTracks]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] pb-36 sm:pb-40 paper-grain">
+    <div className="min-h-screen bg-[#FAF9F6] text-stone-900 pb-36 sm:pb-40">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 backdrop-blur-md bg-white/75 border-b border-[var(--border)] px-4 py-3 sm:px-8">
+      <header className="sticky top-0 z-30 backdrop-blur-md bg-[#FAF9F6]/95 border-b-2 border-stone-800 px-4 py-3 sm:px-8 shadow-[0px_2px_0px_0px_rgba(28,25,23,0.9)]">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-[#F5CAD6] hover:border-pink-300 text-[var(--text)] flex items-center justify-center shadow-xs transition-transform active:scale-95"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border-2 border-stone-800 hover:bg-stone-50 text-stone-900 flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] transition-transform active:translate-x-[1px] active:translate-y-[1px]"
               title="Back to Dashboard"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <span className="font-pixel text-[11px] sm:text-xs tracking-wider bg-[var(--burgundy)] text-white px-2.5 sm:px-3 py-1 rounded-md sm:rounded-lg font-bold shadow-xs select-none">
-              PAIRFECT
-            </span>
-            <h1 className="font-pixel text-sm sm:text-lg tracking-wider text-[var(--text)] uppercase">
-              MIXTAPE
-            </h1>
+            <CoupleBeansMascot className="w-9 h-9 sm:w-10 sm:h-10 shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-[10px] sm:text-xs tracking-wider bg-rose-500 text-white px-2.5 sm:px-3 py-1 rounded-lg font-bold border border-stone-800 shadow-[1.5px_1.5px_0px_0px_rgba(28,25,23,0.9)] select-none">
+                PAIRFECT
+              </span>
+              <h1 className="font-heading font-black text-sm sm:text-lg tracking-wider text-stone-900 uppercase">
+                MIXTAPE
+              </h1>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowCollection(!showCollection)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-medium text-[var(--text)] shadow-xs border border-[var(--border)] transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-stone-50 text-xs font-mono font-bold text-stone-900 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] border-2 border-stone-800 transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
             >
-              <FolderHeart className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+              <FolderHeart className="w-3.5 h-3.5 text-rose-500" />
               <span>Our Tapes ({savedTapes.length})</span>
             </button>
 
             {currentStep === 4 && (
               <button
                 onClick={handleCreateNew}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white text-xs font-medium shadow-xs transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-mono font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] border-2 border-stone-800 transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New</span>

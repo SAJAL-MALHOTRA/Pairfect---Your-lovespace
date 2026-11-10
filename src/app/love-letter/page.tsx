@@ -22,19 +22,22 @@ import {
   Sparkles,
   Heart,
   Send,
+  Calendar,
+  Sparkle,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { WritingLetters } from "@/components/cozy-illustrations";
 import { useSubscription } from "@/hooks/use-subscription";
 import PlusPaywallModal from "@/components/plus-paywall-modal";
 import { exportLetterToPNG } from "@/lib/love-letter/export-letter";
 import { decryptText, encryptText, getPairKey } from "@/lib/crypto/e2ee";
+import { CoupleBeansMascot } from "@/components/couple-mascot";
 
-// Giphy block
+// Giphy block renderer
 function GiphyRenderer({ giphyId }: { giphyId: string }) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     fetch(`/api/giphy/resolve?id=${encodeURIComponent(giphyId)}`)
       .then((r) => r.json())
@@ -42,18 +45,21 @@ function GiphyRenderer({ giphyId }: { giphyId: string }) {
       .catch(() => setUrl(null))
       .finally(() => setLoading(false));
   }, [giphyId]);
-  if (loading)
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-24">
-        <Loader2 className="w-4 h-4 animate-spin text-[var(--ink-light)]" />
+        <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
       </div>
     );
-  if (!url)
+  }
+  if (!url) {
     return (
-      <p className="text-[10px] text-[var(--ink-light)] font-mono text-center py-3">
+      <p className="text-[10px] text-stone-400 font-mono text-center py-3">
         Sticker unavailable
       </p>
     );
+  }
   return (
     <img
       src={url}
@@ -81,14 +87,13 @@ const getAudioContext = () => {
   return audioCtxSingleton;
 };
 
-export const playTypewriterClick = (char?: string) => {
+const playTypewriterClick = (char?: string) => {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
 
     const now = ctx.currentTime;
 
-    // 1. Key mechanical strike (filtered white noise burst)
     const bufferSize = Math.floor(ctx.sampleRate * 0.03);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -111,10 +116,8 @@ export const playTypewriterClick = (char?: string) => {
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
-
     noise.start(now);
 
-    // 2. Low mechanical body thump
     const thud = ctx.createOscillator();
     const thudGain = ctx.createGain();
     thud.type = "triangle";
@@ -130,27 +133,21 @@ export const playTypewriterClick = (char?: string) => {
     thud.start(now);
     thud.stop(now + 0.04);
 
-    // 3. Carriage bell ding on sentence endings
-    if (
-      char &&
-      (char === "." || char === "!" || char === "?" || char === "\n")
-    ) {
+    if (char && (char === "." || char === "!" || char === "?" || char === "\n")) {
       const bell = ctx.createOscillator();
       const bellGain = ctx.createGain();
       bell.type = "sine";
       bell.frequency.setValueAtTime(1250, now + 0.01);
-
       bellGain.gain.setValueAtTime(0.1, now + 0.01);
       bellGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
 
       bell.connect(bellGain);
       bellGain.connect(ctx.destination);
-
       bell.start(now + 0.01);
       bell.stop(now + 0.23);
     }
   } catch (e) {
-    // Silent catch if audio not allowed
+    // Silent catch if audio blocked
   }
 };
 
@@ -165,10 +162,12 @@ function TypewriterText({
 }) {
   const [shown, setShown] = useState("");
   const i = useRef(0);
+
   useEffect(() => {
     setShown("");
     i.current = 0;
   }, [text]);
+
   useEffect(() => {
     let t: any;
     const type = () => {
@@ -183,134 +182,45 @@ function TypewriterText({
     t = setTimeout(type, speed);
     return () => clearTimeout(t);
   }, [text, speed, sound]);
+
   return <>{shown}</>;
 }
 
-// Envelope SVG fold diagram
-function EnvelopeFolds({ dark = false }: { dark?: boolean }) {
-  const stroke = dark ? "rgba(255,255,255,0.06)" : "rgba(160,130,90,0.28)";
-  const fill = dark ? "rgba(255,255,255,0.03)" : "rgba(200,175,135,0.14)";
-  return (
-    <svg
-      viewBox="0 0 400 260"
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      preserveAspectRatio="none"
-      fill="none"
-    >
-      <path
-        d="M0,0 L200,120 L400,0"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="1.4"
-      />
-      <path d="M0,260 L140,145" stroke={stroke} strokeWidth="1" />
-      <path d="M400,260 L260,145" stroke={stroke} strokeWidth="1" />
-    </svg>
-  );
-}
-
-// Physical envelope pocket (sides and bottom)
+// Envelope pocket fold diagrams
 function EnvelopePocketFolds({ dark = false }: { dark?: boolean }) {
-  const stroke = dark ? "rgba(255,255,255,0.12)" : "rgba(160,130,90,0.35)";
-  const fillSide = dark ? "rgba(22,32,46,0.92)" : "rgba(240,226,204,0.92)";
-  const fillBottom = dark ? "rgba(18,26,38,0.97)" : "rgba(235,218,192,0.97)";
+  const stroke = dark ? "rgba(255,255,255,0.15)" : "#1C1917";
+  const fillSide = dark ? "#1E293B" : "#FFF8F0";
+  const fillBottom = dark ? "#0F172A" : "#FEEEDD";
   return (
     <svg
       viewBox="0 0 400 260"
-      className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-sm"
+      className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-xs"
       preserveAspectRatio="none"
       fill="none"
     >
-      {/* Left pocket flap */}
-      <path
-        d="M0,0 L180,140 L0,260 Z"
-        fill={fillSide}
-        stroke={stroke}
-        strokeWidth="1.2"
-      />
-      {/* Right pocket flap */}
-      <path
-        d="M400,0 L220,140 L400,260 Z"
-        fill={fillSide}
-        stroke={stroke}
-        strokeWidth="1.2"
-      />
-      {/* Bottom pocket fold */}
-      <path
-        d="M0,260 L200,125 L400,260 Z"
-        fill={fillBottom}
-        stroke={stroke}
-        strokeWidth="1.4"
-      />
+      <path d="M0,0 L180,140 L0,260 Z" fill={fillSide} stroke={stroke} strokeWidth="1.8" />
+      <path d="M400,0 L220,140 L400,260 Z" fill={fillSide} stroke={stroke} strokeWidth="1.8" />
+      <path d="M0,260 L200,125 L400,260 Z" fill={fillBottom} stroke={stroke} strokeWidth="2" />
     </svg>
   );
 }
 
-// Physical envelope top triangular flap with smooth curved corners matching container
 function EnvelopeTopFlap({ dark = false }: { dark?: boolean }) {
-  const stroke = dark ? "rgba(255,255,255,0.16)" : "rgba(160,130,90,0.4)";
-  const fill = dark ? "#1E2B3D" : "#EFE4CD";
+  const stroke = dark ? "rgba(255,255,255,0.2)" : "#1C1917";
+  const fill = dark ? "#334155" : "#FFF4E8";
   return (
     <svg
       viewBox="0 0 400 130"
-      className="w-full h-full pointer-events-none drop-shadow-md"
+      className="w-full h-full drop-shadow-md"
       preserveAspectRatio="none"
       fill="none"
     >
-      <path
-        d="M24,0 L376,0 Q400,0 398,18 L204,126 Q200,128 196,126 L2,18 Q0,0 24,0 Z"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="1.4"
-      />
+      <path d="M 0 0 L 200 120 L 400 0 Z" fill={fill} stroke={stroke} strokeWidth="2" />
     </svg>
   );
 }
 
-// Botanical corner sprig
-function Sprig({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 70 120" className={className} fill="none" aria-hidden>
-      <path
-        d="M35 118 C35 92 33 68 36 48 C38 33 35 18 33 4"
-        stroke="#C4A882"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
-      <path
-        d="M35 98 C27 90 18 87 11 78"
-        stroke="#C4A882"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-      />
-      <path
-        d="M35 78 C26 70 18 66 10 57"
-        stroke="#C4A882"
-        strokeWidth="1"
-        strokeLinecap="round"
-      />
-      <path
-        d="M35 88 C43 80 52 77 59 68"
-        stroke="#C4A882"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-      />
-      <path
-        d="M35 68 C44 60 52 56 60 47"
-        stroke="#C4A882"
-        strokeWidth="1"
-        strokeLinecap="round"
-      />
-      <circle cx="11" cy="78" r="2.1" fill="#C4A882" opacity="0.7" />
-      <circle cx="10" cy="57" r="1.8" fill="#C4A882" opacity="0.64" />
-      <circle cx="59" cy="68" r="2.1" fill="#C4A882" opacity="0.7" />
-      <circle cx="60" cy="47" r="1.8" fill="#C4A882" opacity="0.64" />
-      <circle cx="33" cy="4" r="2.5" fill="#C4A882" opacity="0.76" />
-    </svg>
-  );
-}
-
-// WaxSeal button: 3D realistic wax seal with debossed crest & physical shatter
+// Interactive Wax Seal Button
 function WaxSealButton({
   onPress,
   shattering,
@@ -320,235 +230,26 @@ function WaxSealButton({
 }) {
   return (
     <div className="relative flex items-center justify-center">
-      {/* Golden & ruby wax particle burst */}
-      {shattering && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-40">
-          {Array.from({ length: 18 }).map((_, i) => {
-            const angle = (i / 18) * Math.PI * 2;
-            const dist = 60 + (i % 3) * 25;
-            const isGold = i % 2 === 0;
-            return (
-              <motion.div
-                key={`sparkle-${i}`}
-                className={`absolute rounded-full ${
-                  isGold ? "w-2 h-2 bg-amber-300" : "w-1.5 h-1.5 bg-rose-400"
-                } shadow-xs`}
-                initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-                animate={{
-                  scale: [0, 1.4, 0],
-                  x: Math.cos(angle) * dist,
-                  y: Math.sin(angle) * dist,
-                  opacity: [1, 0.9, 0],
-                }}
-                transition={{ duration: 0.65, ease: "easeOut" }}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Wax seal body: Fractures into 6 distinct flying shards */}
       {shattering ? (
-        <div className="relative w-20 h-20 pointer-events-none">
-          {/* Shard 1: Top-Left */}
-          <motion.div
-            className="absolute top-0 left-0 w-10 h-10 overflow-hidden"
-            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: -36, y: -36, rotate: -35, opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="w-20 h-20 rounded-full bg-[#781121] shadow-lg border border-[#A61C32]" />
-          </motion.div>
-          {/* Shard 2: Top-Right */}
-          <motion.div
-            className="absolute top-0 right-0 w-10 h-10 overflow-hidden"
-            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: 36, y: -32, rotate: 30, opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="w-20 h-20 rounded-full bg-[#871325] -ml-10 shadow-lg border border-[#A61C32]" />
-          </motion.div>
-          {/* Shard 3: Middle-Left */}
-          <motion.div
-            className="absolute top-3 left-0 w-8 h-8 overflow-hidden"
-            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: -44, y: 4, rotate: -25, opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="w-20 h-20 rounded-full bg-[#5E0B19] shadow-lg" />
-          </motion.div>
-          {/* Shard 4: Middle-Right */}
-          <motion.div
-            className="absolute top-3 right-0 w-8 h-8 overflow-hidden"
-            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: 44, y: 6, rotate: 25, opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="w-20 h-20 rounded-full bg-[#5E0B19] -ml-12 shadow-lg" />
-          </motion.div>
-          {/* Shard 5: Bottom-Left */}
-          <motion.div
-            className="absolute bottom-0 left-0 w-10 h-10 overflow-hidden"
-            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: -32, y: 36, rotate: -40, opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="w-20 h-20 rounded-full bg-[#871325] -mt-10 shadow-lg border border-[#A61C32]" />
-          </motion.div>
-          {/* Shard 6: Bottom-Right */}
-          <motion.div
-            className="absolute bottom-0 right-0 w-10 h-10 overflow-hidden"
-            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={{ x: 34, y: 36, rotate: 40, opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="w-20 h-20 rounded-full bg-[#781121] -ml-10 -mt-10 shadow-lg border border-[#A61C32]" />
-          </motion.div>
-        </div>
+        <motion.div
+          initial={{ scale: 1, opacity: 1 }}
+          animate={{ scale: 1.3, opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="w-20 h-20 rounded-full bg-rose-600 border-2 border-stone-800 flex items-center justify-center shadow-lg"
+        >
+          <Sparkles className="w-8 h-8 text-white animate-spin" />
+        </motion.div>
       ) : (
         <motion.button
-          key="seal"
-          aria-label="Break the seal to read the letter"
+          type="button"
           onClick={onPress}
-          whileHover={{ scale: 1.07 }}
-          whileTap={{ scale: 0.93 }}
-          transition={{ type: "spring", stiffness: 450, damping: 26 }}
-          className="relative cursor-pointer group select-none focus:outline-none"
-          style={{
-            filter:
-              "drop-shadow(0 14px 28px rgba(90, 12, 28, 0.45)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22))",
-          }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.94 }}
+          className="w-20 h-20 rounded-full bg-rose-600 border-2 border-stone-800 flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] cursor-pointer group transition-all"
         >
-          {/* Ambient Warm Candle Aura */}
-          <div className="absolute -inset-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-radial from-amber-400/30 via-rose-500/10 to-transparent blur-md" />
-
-          {/* Realistic 3D Wax Seal SVG */}
-          <svg
-            width="82"
-            height="82"
-            viewBox="0 0 84 84"
-            className="w-[82px] h-[82px] block"
-            fill="none"
-          >
-            <defs>
-              {/* Outer wax body radial gradient */}
-              <radialGradient id="waxBase" cx="36%" cy="30%" r="68%">
-                <stop offset="0%" stopColor="#C22941" />
-                <stop offset="35%" stopColor="#96172B" />
-                <stop offset="75%" stopColor="#660C1B" />
-                <stop offset="100%" stopColor="#400510" />
-              </radialGradient>
-
-              {/* Inner stamped well gradient */}
-              <radialGradient id="waxDish" cx="42%" cy="36%" r="58%">
-                <stop offset="0%" stopColor="#801222" />
-                <stop offset="65%" stopColor="#5C0A17" />
-                <stop offset="100%" stopColor="#3E040E" />
-              </radialGradient>
-
-              {/* Specular gloss highlight */}
-              <linearGradient id="waxGloss" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.5" />
-                <stop offset="45%" stopColor="#FFFFFF" stopOpacity="0.12" />
-                <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-              </linearGradient>
-
-              {/* Rim bevel light */}
-              <linearGradient id="rimLight" x1="20%" y1="0%" x2="80%" y2="100%">
-                <stop offset="0%" stopColor="#E65870" stopOpacity="0.85" />
-                <stop offset="50%" stopColor="#A31C32" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#250308" stopOpacity="0.9" />
-              </linearGradient>
-            </defs>
-
-            {/* Organic pressed wax rim (realistic melt contours) */}
-            <path
-              d="M42 4.5 C54 4, 64 8.5, 72 16.5 C80 24.5, 82 35.5, 80 47.5 C78 60.5, 71 71, 59 77 C48 82, 34 81, 23 76 C12 71, 4 61, 3 49 C2 36, 6 24, 14 15 C23 6, 31 5, 42 4.5 Z"
-              fill="url(#waxBase)"
-            />
-
-            {/* Bevel rim highlight & shadow stroke */}
-            <path
-              d="M42 5.5 C53.5 5, 63 9.5, 70.5 17.5 C78 25, 80 35.5, 78 47 C76 59, 69.5 69.5, 58 75 C47.5 80, 34.5 79, 24 74 C13.5 69, 6 60, 5 48 C4 36, 8 24.5, 15.5 16 C24 7.5, 32 5.8, 42 5.5 Z"
-              fill="none"
-              stroke="url(#rimLight)"
-              strokeWidth="2.2"
-            />
-
-            {/* Inner stamped well / dish (recessed circle) */}
-            <circle cx="42" cy="42" r="27" fill="url(#waxDish)" />
-            {/* Inner shadow rim (carved depth) */}
-            <circle
-              cx="42"
-              cy="42"
-              r="27"
-              fill="none"
-              stroke="#280309"
-              strokeWidth="2.4"
-              strokeOpacity="0.9"
-            />
-            <circle
-              cx="42"
-              cy="42"
-              r="25.5"
-              fill="none"
-              stroke="#E2546D"
-              strokeWidth="0.8"
-              strokeOpacity="0.35"
-            />
-
-            {/* Specular gloss arc across upper rim */}
-            <path
-              d="M19 21 C25 14, 34 10, 46 10 C54 10, 62 13, 67 18"
-              stroke="url(#waxGloss)"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-              fill="none"
-            />
-
-            {/* Debossed Heart Crest: shadow pass */}
-            <path
-              d="M42 54.5 C42 54.5, 28 45, 28 35.5 C28 30, 32 26.5, 36.5 26.5 C39.5 26.5, 41.5 28.5, 42 30 C42.5 28.5, 44.5 26.5, 47.5 26.5 C52 26.5, 56 30, 56 35.5 C56 45, 42 54.5, 42 54.5 Z"
-              fill="none"
-              stroke="#200307"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {/* Debossed Heart Crest: highlight pass */}
-            <path
-              d="M42 53.6 C42 53.6, 28.5 44.2, 28.5 35 C28.5 29.8, 32.2 26.6, 36.5 26.6 C39.3 26.6, 41.2 28.3, 41.8 29.8"
-              fill="none"
-              stroke="#EA6B82"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeOpacity="0.75"
-            />
-
-            {/* Central stamped heart fill */}
-            <path
-              d="M42 52.5 C42 52.5, 30 44, 30 35.5 C30 31, 33.2 28, 37 28 C39.6 28, 41.3 29.6, 42 31 C42.7 29.6, 44.4 28, 47 28 C50.8 28, 54 31, 54 35.5 C54 44, 42 52.5, 42 52.5 Z"
-              fill="#6A0D1B"
-              fillOpacity="0.85"
-            />
-
-            {/* Decorative flanking laurel dots */}
-            <circle cx="23" cy="42" r="1.4" fill="#E2546D" fillOpacity="0.8" />
-            <circle cx="61" cy="42" r="1.4" fill="#E2546D" fillOpacity="0.8" />
-            <circle cx="42" cy="20.5" r="1.5" fill="#E2546D" fillOpacity="0.85" />
-
-            {/* Gentle pulse ring */}
-            <motion.circle
-              cx="42"
-              cy="42"
-              r="38"
-              fill="none"
-              stroke="rgba(255,255,255,0.18)"
-              strokeWidth="1.5"
-              animate={{ scale: [1, 1.12, 1], opacity: [0.45, 0, 0.45] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </svg>
+          <div className="w-14 h-14 rounded-full border border-white/30 flex items-center justify-center">
+            <Heart className="w-7 h-7 text-white fill-white/30 group-hover:scale-110 transition-transform" />
+          </div>
         </motion.button>
       )}
     </div>
@@ -558,31 +259,31 @@ function WaxSealButton({
 // Envelope Styles
 const STYLES: Record<
   string,
-  { name: string; bg: string; foldDark: boolean; sealColor: string }
+  { name: string; bg: string; foldDark: boolean; badgeColor: string }
 > = {
   classic: {
-    name: "Parchment",
-    bg: "linear-gradient(160deg,#F8EED8,#EDE0C4)",
+    name: "Warm Parchment",
+    bg: "linear-gradient(160deg,#FFFDF7,#F8EED8)",
     foldDark: false,
-    sealColor: "var(--burgundy)",
+    badgeColor: "bg-rose-500",
   },
   velvet: {
     name: "Velvet Rose",
-    bg: "linear-gradient(160deg,#FDF0F2,#F5D8DC)",
+    bg: "linear-gradient(160deg,#FFF1F2,#FFE4E6)",
     foldDark: false,
-    sealColor: "#9B2E4B",
+    badgeColor: "bg-pink-500",
   },
   midnight: {
-    name: "Midnight",
-    bg: "linear-gradient(160deg,#16202E,#0E1520)",
+    name: "Midnight Sky",
+    bg: "linear-gradient(160deg,#1E293B,#0F172A)",
     foldDark: true,
-    sealColor: "#4F46E5",
+    badgeColor: "bg-indigo-600",
   },
   kraft: {
-    name: "Kraft",
-    bg: "linear-gradient(160deg,#EDE4D0,#DDD0B8)",
+    name: "Botanical Kraft",
+    bg: "linear-gradient(160deg,#FEF3C7,#FDE68A)",
     foldDark: false,
-    sealColor: "#6B4F2C",
+    badgeColor: "bg-amber-600",
   },
 };
 
@@ -626,7 +327,6 @@ const OCCASIONS = [
   },
 ];
 
-// Main Component
 export default function LoveLetterPage() {
   const { user, pair, partner, loading } = useAuth();
   const { isPlus } = useSubscription();
@@ -639,7 +339,7 @@ export default function LoveLetterPage() {
 
   // Compose state
   const [isWriting, setIsWriting] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [blocks, setBlocks] = useState<any[]>([{ type: "text", value: "" }]);
   const [style, setStyle] = useState("classic");
   const [toName, setToName] = useState("");
@@ -661,16 +361,8 @@ export default function LoveLetterPage() {
   const [revealCount, setRevealCount] = useState(0);
   const [typewriter, setTypewriter] = useState(false);
   const [typeSound, setTypeSound] = useState(false);
-  const [candle, setCandle] = useState(false);
 
-  // Nav management
-  useEffect(() => {
-    if (isWriting || activeLetter)
-      window.dispatchEvent(new CustomEvent("navigation-hide"));
-    else window.dispatchEvent(new CustomEvent("navigation-show"));
-  }, [isWriting, activeLetter]);
-
-  // URL query params: unlisted link decoding & writing mode
+  // URL query params
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -744,7 +436,7 @@ export default function LoveLetterPage() {
     } else if (!loading && !pair) {
       setFetching(false);
     }
-  }, [loading, pair, fetchLetters]);
+  }, [loading, pair, fetchLetters, supabase]);
 
   // Deep-link letter ID loading
   useEffect(() => {
@@ -754,7 +446,7 @@ export default function LoveLetterPage() {
       const found = lettersList.find((l) => l.id === letterId);
       if (found) handleUnseal(found);
     }
-  }, [lettersList]);
+  }, [lettersList, activeLetter]);
 
   // Auto-fill names
   useEffect(() => {
@@ -810,9 +502,8 @@ export default function LoveLetterPage() {
 
   useEffect(() => {
     if (galleryOpen) searchStickers(searchQ);
-  }, [galleryOpen]);
+  }, [galleryOpen, searchQ]);
 
-  // Apply occasion starter prompt
   const handleApplyOccasion = (promptText: string) => {
     if (blocks.length === 1 && blocks[0].type === "text" && !blocks[0].value.trim()) {
       setBlocks([{ type: "text", value: promptText }]);
@@ -821,7 +512,6 @@ export default function LoveLetterPage() {
     }
   };
 
-  // Generate unlisted base64 shareable link
   const getShareUrl = () => {
     const clean = blocks.filter((b) => b.type === "cat" || b.value.trim());
     const payload = {
@@ -850,7 +540,6 @@ export default function LoveLetterPage() {
     }
   };
 
-  // Download Keepsake PNG card
   const handleExportPNG = async () => {
     setIsExporting(true);
     try {
@@ -890,7 +579,9 @@ export default function LoveLetterPage() {
     setSending(true);
     try {
       const vaultKey = await getPairKey(pair.id);
-      if (!vaultKey) throw new Error("Your private key is unavailable on this device. Restore your vault key before sending.");
+      if (!vaultKey) {
+        throw new Error("Your private key is unavailable on this device. Restore your vault key before sending.");
+      }
       const encryptedContent = `enc:v1:${await encryptText(JSON.stringify(clean), vaultKey)}`;
       const r = await fetch("/api/love-letters", {
         method: "POST",
@@ -910,7 +601,6 @@ export default function LoveLetterPage() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
 
-      // Trigger partner notification & soft streak activity record
       const partnerId =
         pair.user_a_id === user.id ? pair.user_b_id : pair.user_a_id;
       if (partnerId) {
@@ -973,18 +663,14 @@ export default function LoveLetterPage() {
     setReadPhase("unsealing");
     await new Promise((r) => setTimeout(r, 1100));
     setReadPhase("open");
-    // Reveal blocks one at a time
+
     const count = activeLetter.content?.length || 0;
     for (let i = 0; i <= count; i++) {
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 450));
       setRevealCount(i + 1);
     }
-    // Mark as opened in Supabase only if it is a paired DB letter
-    if (
-      !activeLetter.isShared &&
-      user?.id &&
-      user.id !== activeLetter.sender_id
-    ) {
+
+    if (!activeLetter.isShared && user?.id && user.id !== activeLetter.sender_id) {
       await supabase
         .from("love_letters")
         .update({ is_opened: true, opened_at: new Date().toISOString() })
@@ -994,81 +680,103 @@ export default function LoveLetterPage() {
 
   if (loading || (pair && fetching)) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+      <div className="min-h-screen bg-[#FFF9F6] flex items-center justify-center">
         <Navigation />
-        <Loader2 className="w-5 h-5 text-[var(--seal-red)] animate-spin" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 text-rose-500 animate-spin" />
+          <span className="font-mono text-xs text-stone-500">Unlocking letter vault...</span>
+        </div>
       </div>
     );
   }
 
-  // COMPOSE: The blank lined paper
+  // ─── 1. COMPOSE VIEW ───
   if (isWriting) {
-    const cfg = STYLES[style] || STYLES.classic;
     return (
       <div
-        className="min-h-screen relative"
-        style={{ background: "var(--paper-warm)" }}
+        className="min-h-screen bg-[#FFF9F6] text-stone-900 py-10 px-4 selection:bg-rose-100 selection:text-rose-900"
+        style={{
+          backgroundImage: "radial-gradient(#d6d3d1 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
+        }}
       >
-        <main className="max-w-lg mx-auto px-5 py-12 pb-32">
-          {/* Top Switcher & Cancel */}
-          <div className="flex items-center justify-between mb-8">
-            <motion.button
-              whileTap={{ x: -2 }}
+        <main className="max-w-xl mx-auto space-y-6">
+          {/* Top Header & Step Tracker */}
+          <div className="flex items-center justify-between pb-2">
+            <button
               onClick={() => {
                 setIsWriting(false);
                 setStep(1);
               }}
-              className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--ink-mid)] hover:text-[var(--ink-dark)] cursor-pointer transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-stone-600 hover:text-stone-900 cursor-pointer transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Cancel
-            </motion.button>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Inbox</span>
+            </button>
 
-            <div className="flex items-center gap-3">
-              <Link
-                href="/bouquet"
-                className="text-[10px] font-mono uppercase tracking-widest text-rose-600 hover:text-rose-700 flex items-center gap-1 transition-colors"
-              >
-                <Flower2 className="w-3.5 h-3.5" /> Digital Bouquet ▷
-              </Link>
-              <span className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]">
-                {step} / 3
-              </span>
+            {/* Step indicator pills */}
+            <div className="flex items-center gap-1.5" aria-label={`Step ${step} of 3`}>
+              {[1, 2, 3].map((stepNum) => (
+                <span
+                  key={stepNum}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    step === stepNum
+                      ? "w-6 bg-stone-900"
+                      : step > stepNum
+                      ? "w-2 bg-stone-400"
+                      : "w-2 bg-stone-200"
+                  }`}
+                />
+              ))}
             </div>
+
+            <Link
+              href="/bouquet"
+              className="text-xs font-mono font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
+            >
+              <Flower2 className="w-3.5 h-3.5" />
+              <span>Bouquet</span>
+            </Link>
           </div>
 
           <AnimatePresence mode="wait">
-            {/* STEP 1: The paper & occasion starters */}
+            {/* STEP 1: Compose Letter Content */}
             {step === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-5"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative space-y-6"
               >
-                <div>
-                  <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">
-                    Compose
+                <div className="absolute -top-3.5 left-8 -rotate-1 shadow-xs">
+                  <span className="bg-rose-500 text-white font-mono uppercase text-[11px] font-black tracking-wider px-3.5 py-1 rounded-sm border border-stone-800">
+                    STEP 1 · WRITE FROM THE HEART
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 tracking-tight">
+                    Write Your Love Letter
                   </h1>
-                  <p className="text-xs text-[var(--ink-mid)] font-mono mt-1">
-                    Write what is in your heart, or pick an occasion starter.
+                  <p className="mt-1 text-xs sm:text-sm text-stone-600 font-sans">
+                    Pour your thoughts onto vintage parchment. Add stickers or pick an occasion starter.
                   </p>
                 </div>
 
-                {/* Heartfelt Occasion Starters */}
+                {/* Inspiration Starter Pills */}
                 <div className="space-y-2">
-                  <p className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1">
+                    <Sparkle className="w-3 h-3 text-amber-500 fill-amber-500" />
                     <span>Inspiration Starters</span>
-                  </p>
+                  </span>
                   <div className="flex flex-wrap gap-2">
                     {OCCASIONS.map((occ) => (
                       <button
                         key={occ.label}
                         type="button"
                         onClick={() => handleApplyOccasion(occ.prompt)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono border border-[var(--border-warm)] bg-white/70 hover:bg-white hover:border-[var(--seal-red)] text-[var(--ink-dark)] cursor-pointer transition-all shadow-xs hover:scale-102"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium border border-stone-300 bg-[#FFFDFB] hover:bg-rose-50 hover:border-rose-400 text-stone-800 cursor-pointer transition-all shadow-xs"
                       >
                         <span>{occ.icon}</span>
                         <span>{occ.label}</span>
@@ -1077,231 +785,221 @@ export default function LoveLetterPage() {
                   </div>
                 </div>
 
-                {/* The lined paper */}
-                <div
-                  className="relative rounded-3xl overflow-hidden paper-grain"
-                  style={{
-                    background:
-                      "linear-gradient(180deg,#FFFDF5 0%,#FBF6EA 100%)",
-                    border: "1px solid var(--border-warm)",
-                    backgroundImage:
-                      "linear-gradient(180deg,#FFFDF5 0%,#FBF6EA 100%),linear-gradient(transparent calc(32px - 1px),rgba(196,168,130,0.22) calc(32px - 1px),rgba(196,168,130,0.22) 32px,transparent 32px)",
-                    backgroundSize: "100%,100% 32px",
-                    boxShadow:
-                      "0 8px 40px rgba(60,40,20,0.1),0 2px 8px rgba(60,40,20,0.06)",
-                  }}
-                >
-                  {/* Washi tape strip */}
-                  <div
-                    className="absolute top-3 right-8 w-16 h-5 pointer-events-none"
-                    style={{
-                      background: "var(--washi-warm)",
-                      transform: "rotate(-2deg)",
-                    }}
-                  />
-                  <Sprig className="absolute bottom-3 right-3 w-10 h-16 opacity-40 pointer-events-none" />
-
-                  <div className="px-8 pt-10 pb-6">
-                    {blocks.map((block, idx) => (
-                      <div key={idx} className="relative group mb-3">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => {
-                            if (
-                              blocks.length === 1 &&
-                              blocks[0].type === "text"
-                            ) {
-                              setBlocks([{ type: "text", value: "" }]);
-                              return;
-                            }
-                            setBlocks(blocks.filter((_, j) => j !== idx));
-                          }}
-                          className="absolute -right-3 top-0 opacity-0 group-hover:opacity-100 p-1 text-[var(--ink-light)] hover:text-red-500 rounded cursor-pointer transition-all z-10"
-                        >
-                          <X className="w-3 h-3" />
-                        </motion.button>
-                        {block.type === "text" ? (
-                          <textarea
-                            value={block.value}
-                            onChange={(e) => {
-                              const u = [...blocks];
-                              u[idx].value = e.target.value;
-                              setBlocks(u);
-                            }}
-                            placeholder={idx === 0 ? "Dearest..." : "Continue..."}
-                            rows={5}
-                            className="input-warm w-full resize-none text-base"
-                            style={{
-                              lineHeight: "32px",
-                              fontFamily:
-                                "var(--font-handwriting), Georgia, serif",
-                              color: "var(--ink-dark)",
-                            }}
-                          />
-                        ) : (
-                          <div className="rounded-xl overflow-hidden border border-[var(--border-warm)] max-w-xs p-2 bg-white/70">
-                            <GiphyRenderer giphyId={block.giphy_id} />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    <div className="flex gap-4 pt-2 border-t border-[var(--border-warm)]/50">
+                {/* Parchment Lined Paper Container */}
+                <div className="rounded-2xl border-2 border-dashed border-stone-300 bg-[#FFFDFB] p-5 sm:p-6 space-y-4">
+                  {blocks.map((block, idx) => (
+                    <div key={idx} className="relative group">
                       <button
-                        onClick={() =>
-                          setBlocks([...blocks, { type: "text", value: "" }])
-                        }
-                        className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-[var(--ink-dark)] inline-flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <Plus className="w-3 h-3" /> Paragraph
-                      </button>
-                      <button
-                        onClick={() => setGalleryOpen(true)}
-                        className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] hover:text-[var(--seal-red)] inline-flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <Smile className="w-3 h-3" /> Sticker
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-center pt-2">
-                  <button
-                    onClick={() => setStep(2)}
-                    disabled={blocks.every(
-                      (b) => b.type === "text" && !b.value.trim()
-                    )}
-                    className="btn-primary py-3 px-10 text-[10px] uppercase tracking-widest disabled:opacity-40 cursor-pointer"
-                  >
-                    Choose Envelope →
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* STEP 2: Envelope */}
-            {step === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-5"
-              >
-                <div>
-                  <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">
-                    Envelope
-                  </h1>
-                  <p className="text-xs text-[var(--ink-mid)] font-mono mt-1">
-                    Choose the outer wrapping and wax seal.
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(STYLES).map(([key, cfg]) => {
-                    const sel = style === key;
-                    return (
-                      <motion.button
-                        key={key}
-                        onClick={() => setStyle(key)}
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        className={`relative rounded-2xl h-32 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all border ${
-                          sel
-                            ? "border-[var(--seal-red)] shadow-[0_0_0_3px_rgba(128,32,48,0.12)]"
-                            : "border-[var(--border-mid)] opacity-70"
-                        }`}
-                        style={{ background: cfg.bg }}
-                      >
-                        {sel && (
-                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[var(--seal-red)] flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                          </div>
-                        )}
-                        <p
-                          className="text-xs font-bold text-center leading-tight px-3"
-                          style={{
-                            color: cfg.foldDark
-                              ? "rgba(255,255,255,0.8)"
-                              : "#3A2E22",
-                          }}
-                        >
-                          {cfg.name}
-                        </p>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={() => setStep(1)}
-                    className="btn-secondary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer"
-                  >
-                    ← Back
-                  </button>
-                  <button
-                    onClick={() => setStep(3)}
-                    className="btn-primary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer"
-                  >
-                    Address & Share →
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* STEP 3: Seal & Share */}
-            {step === 3 && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-5"
-              >
-                <div>
-                  <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)]">
-                    Seal & Deliver
-                  </h1>
-                  <p className="text-xs text-[var(--ink-mid)] font-mono mt-1">
-                    Address your letter and pick how you want to send it.
-                  </p>
-                </div>
-                <div className="bg-[var(--bg-secondary)] border border-[var(--border-mid)] rounded-3xl p-6 space-y-4 paper-grain">
-                  {[
-                    {
-                      label: "To",
-                      val: toName,
-                      set: setToName,
-                      placeholder: "My Love",
-                    },
-                    {
-                      label: "From",
-                      val: fromName,
-                      set: setFromName,
-                      placeholder: "Your name",
-                    },
-                  ].map((f) => (
-                    <div key={f.label} className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)] block">
-                        {f.label}
-                      </label>
-                      <input
-                        type="text"
-                        value={f.val}
-                        onChange={(e) => f.set(e.target.value)}
-                        placeholder={f.placeholder}
-                        className="input-warm w-full"
-                        style={{
-                          fontFamily: "var(--font-handwriting),cursive",
+                        type="button"
+                        onClick={() => {
+                          if (blocks.length === 1 && blocks[0].type === "text") {
+                            setBlocks([{ type: "text", value: "" }]);
+                            return;
+                          }
+                          setBlocks(blocks.filter((_, j) => j !== idx));
                         }}
-                      />
+                        className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-red-500 rounded-full bg-white border border-stone-200 cursor-pointer transition-all z-10"
+                        title="Remove block"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+
+                      {block.type === "text" ? (
+                        <textarea
+                          value={block.value}
+                          onChange={(e) => {
+                            const u = [...blocks];
+                            u[idx].value = e.target.value;
+                            setBlocks(u);
+                          }}
+                          placeholder={idx === 0 ? "My love,\n\nI was just thinking about you today..." : "Continue your thoughts..."}
+                          rows={6}
+                          className="w-full bg-transparent resize-none text-base text-stone-900 placeholder:text-stone-400 focus:outline-none leading-relaxed font-sans"
+                        />
+                      ) : (
+                        <div className="rounded-2xl overflow-hidden border border-stone-200 max-w-xs p-2 bg-white">
+                          <GiphyRenderer giphyId={block.giphy_id} />
+                        </div>
+                      )}
                     </div>
                   ))}
 
-                  {/* Future lock date option (if paired) */}
+                  <div className="flex items-center gap-3 pt-3 border-t border-stone-200 text-xs font-mono">
+                    <button
+                      type="button"
+                      onClick={() => setBlocks([...blocks, { type: "text", value: "" }])}
+                      className="inline-flex items-center gap-1 text-stone-600 hover:text-stone-900 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Paragraph</span>
+                    </button>
+                    <span>·</span>
+                    <button
+                      type="button"
+                      onClick={() => setGalleryOpen(true)}
+                      className="inline-flex items-center gap-1 text-stone-600 hover:text-rose-600 cursor-pointer"
+                    >
+                      <Smile className="w-3.5 h-3.5" />
+                      <span>Add Sticker</span>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  disabled={blocks.every((b) => b.type === "text" && !b.value.trim())}
+                  className="w-full bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white py-3.5 px-6 rounded-full font-heading font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+                >
+                  Choose Envelope Wrap →
+                </button>
+              </motion.div>
+            )}
+
+            {/* STEP 2: Envelope Outer Wrap & Styling */}
+            {step === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative space-y-6"
+              >
+                <div className="absolute -top-3.5 left-8 -rotate-1 shadow-xs">
+                  <span className="bg-amber-400 text-stone-900 font-mono uppercase text-[11px] font-black tracking-wider px-3.5 py-1 rounded-sm border border-stone-800">
+                    STEP 2 · ENVELOPE &amp; WAX
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 tracking-tight">
+                    Select Outer Envelope
+                  </h2>
+                  <p className="mt-1 text-xs sm:text-sm text-stone-600 font-sans">
+                    Pick the aesthetic wrapping and digital wax seal for your delivery.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3.5">
+                  {Object.entries(STYLES).map(([key, cfg]) => {
+                    const sel = style === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setStyle(key)}
+                        className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between h-32 ${
+                          sel
+                            ? "border-stone-900 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] scale-[1.02]"
+                            : "border-stone-300 opacity-70 hover:opacity-100"
+                        }`}
+                        style={{ background: cfg.bg }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-xs font-heading font-black ${
+                              cfg.foldDark ? "text-white" : "text-stone-900"
+                            }`}
+                          >
+                            {cfg.name}
+                          </span>
+                          {sel && (
+                            <span className="w-4 h-4 rounded-full bg-stone-900 text-white flex items-center justify-center text-[10px]">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-4 h-4 rounded-full bg-rose-600 border border-stone-800" />
+                          <span
+                            className={`text-[10px] font-mono ${
+                              cfg.foldDark ? "text-stone-300" : "text-stone-600"
+                            }`}
+                          >
+                            Wax Seal
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="text-xs font-mono font-bold text-stone-500 hover:text-stone-900 inline-flex items-center gap-1"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    className="bg-stone-900 hover:bg-stone-800 text-white py-3 px-6 rounded-full font-heading font-bold text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+                  >
+                    Address &amp; Deliver →
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 3: Address & Deliver */}
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative space-y-6"
+              >
+                <div className="absolute -top-3.5 left-8 -rotate-1 shadow-xs">
+                  <span className="bg-emerald-500 text-white font-mono uppercase text-[11px] font-black tracking-wider px-3.5 py-1 rounded-sm border border-stone-800">
+                    STEP 3 · SEAL &amp; DELIVER
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 tracking-tight">
+                    Address Your Envelope
+                  </h2>
+                  <p className="mt-1 text-xs sm:text-sm text-stone-600 font-sans">
+                    Address who this is for and choose instant or time-capsule delivery.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-stone-500 mb-1.5">
+                      To (Partner&apos;s Name)
+                    </label>
+                    <input
+                      type="text"
+                      value={toName}
+                      onChange={(e) => setToName(e.target.value)}
+                      placeholder="My Love"
+                      className="w-full px-4 py-3 text-sm border-2 border-stone-800 rounded-2xl bg-[#FFFBF8] text-stone-900 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-stone-500 mb-1.5">
+                      From (Your Name)
+                    </label>
+                    <input
+                      type="text"
+                      value={fromName}
+                      onChange={(e) => setFromName(e.target.value)}
+                      placeholder="Always Yours"
+                      className="w-full px-4 py-3 text-sm border-2 border-stone-800 rounded-2xl bg-[#FFFBF8] text-stone-900 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    />
+                  </div>
+
+                  {/* Scheduled Unseal Date Option */}
                   {pair && (
-                    <div className="pt-2 border-t border-[var(--border-warm)]/50">
+                    <div className="p-4 rounded-2xl bg-[#FFFDFB] border-2 border-dashed border-stone-300 space-y-2">
                       <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                           <input
@@ -1314,92 +1012,82 @@ export default function LoveLetterPage() {
                               }
                               setScheduleUnseal(e.target.checked);
                             }}
-                            className="rounded border-[var(--border-mid)] text-[var(--seal-red)] focus:ring-[var(--seal-red)] w-4 h-4 cursor-pointer"
+                            className="rounded border-stone-800 text-rose-600 focus:ring-rose-400 w-4 h-4 cursor-pointer"
                           />
-                          <span className="text-xs font-medium text-[var(--ink-dark)] flex items-center gap-1.5">
-                            <Lock className="w-3.5 h-3.5 text-[var(--burgundy)]" />
+                          <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                            <Lock className="w-3.5 h-3.5 text-rose-600" />
                             <span>Schedule future unseal date</span>
                           </span>
                         </label>
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#E8527D] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
                           PLUS
                         </span>
                       </div>
-                      <p className="text-[10px] text-[var(--ink-light)] mt-1 ml-6">
-                        Seal a letter with digital wax that only opens on an
-                        upcoming anniversary, birthday, or milestone.
+                      <p className="text-[11px] text-stone-500 font-sans leading-relaxed">
+                        Lock with digital wax that only breaks on an upcoming anniversary, birthday, or milestone.
                       </p>
                       {scheduleUnseal && (
-                        <div className="mt-3 ml-6">
-                          <input
-                            type="date"
-                            value={unsealDate}
-                            onChange={(e) => setUnsealDate(e.target.value)}
-                            min={format(
-                              new Date(Date.now() + 86400000),
-                              "yyyy-MM-dd"
-                            )}
-                            max={format(
-                              new Date(Date.now() + 10 * 365 * 86400000),
-                              "yyyy-MM-dd"
-                            )}
-                            className="input-warm w-full text-xs"
-                          />
-                        </div>
+                        <input
+                          type="date"
+                          value={unsealDate}
+                          onChange={(e) => setUnsealDate(e.target.value)}
+                          min={format(new Date(Date.now() + 86400000), "yyyy-MM-dd")}
+                          className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl bg-white"
+                        />
                       )}
                     </div>
                   )}
-                </div>
 
-                {/* Keepsake Option */}
-                <div className="grid grid-cols-1 gap-3 pt-2">
+                  {/* Download PNG card keepsake */}
                   <button
                     type="button"
                     onClick={handleExportPNG}
                     disabled={isExporting}
-                    className="p-4 rounded-2xl border border-[var(--border-warm)] bg-white/80 hover:bg-white text-left transition-all shadow-xs cursor-pointer group"
+                    className="w-full p-3.5 rounded-2xl border-2 border-stone-800 bg-[#FFFDFB] hover:bg-stone-50 text-left transition-colors flex items-center justify-between cursor-pointer"
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-mono font-bold text-[var(--ink-dark)] flex items-center gap-1.5">
-                        <Download className="w-4 h-4 text-amber-600" />
-                        <span>Download Keepsake PNG</span>
-                      </span>
-                      <span className="text-[10px] font-mono text-[var(--ink-light)]">
-                        {isExporting ? "Rendering..." : "300 DPI"}
-                      </span>
+                    <div className="flex items-center gap-2.5">
+                      <Download className="w-4 h-4 text-amber-600" />
+                      <div>
+                        <span className="text-xs font-mono font-bold text-stone-900 block">
+                          Download Keepsake PNG
+                        </span>
+                        <span className="text-[10px] text-stone-500 font-sans">
+                          High-resolution calligraphy card to keep forever.
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-[var(--ink-mid)] font-sans">
-                      Generate an authentic high-resolution calligraphy letter image to save or print.
-                    </p>
+                    <span className="text-[10px] font-mono text-stone-400">
+                      {isExporting ? "Rendering..." : "300 DPI"}
+                    </span>
                   </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                <div className="flex items-center justify-between pt-2">
                   <button
+                    type="button"
                     onClick={() => setStep(2)}
-                    className="btn-secondary py-2.5 px-6 text-[10px] uppercase tracking-widest cursor-pointer"
+                    className="text-xs font-mono font-bold text-stone-500 hover:text-stone-900 inline-flex items-center gap-1"
                   >
-                    ← Back
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back</span>
                   </button>
 
                   {pair ? (
                     <button
+                      type="button"
                       onClick={handleSend}
                       disabled={sending || !toName.trim()}
-                      className="btn-primary py-2.5 px-8 text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-40"
+                      className="bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white py-3.5 px-8 rounded-full font-heading font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer inline-flex items-center gap-2"
                     >
-                      {sending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        "Send to Partner 💌"
-                      )}
+                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      <span>Send to Partner 💌</span>
                     </button>
                   ) : (
                     <Link
                       href="/onboarding"
-                      className="btn-primary py-2.5 px-8 text-[10px] uppercase tracking-widest cursor-pointer inline-flex items-center justify-center"
+                      className="bg-stone-900 hover:bg-stone-800 text-white py-3.5 px-6 rounded-full font-heading font-bold text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                     >
-                      Link with Partner to Send 💌
+                      Connect Partner to Send 💌
                     </Link>
                   )}
                 </div>
@@ -1416,27 +1104,21 @@ export default function LoveLetterPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+              className="fixed inset-0 bg-stone-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
             >
-              <motion.div
-                initial={{ y: 40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 40, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 36 }}
-                className="bg-[var(--bg)] rounded-3xl max-w-sm w-full max-h-[70vh] flex flex-col border border-[var(--border-mid)] overflow-hidden shadow-2xl"
-              >
-                <div className="p-4 border-b border-[var(--border-mid)] flex items-center justify-between">
-                  <p className="text-sm font-bold text-[var(--ink-dark)]">
-                    Pick a sticker
-                  </p>
+              <div className="bg-white border-2 border-stone-800 rounded-3xl max-w-sm w-full max-h-[70vh] flex flex-col overflow-hidden shadow-[6px_6px_0px_0px_rgba(28,25,23,0.9)]">
+                <div className="p-4 border-b border-stone-200 flex items-center justify-between">
+                  <span className="font-heading font-bold text-sm text-stone-900">
+                    Pick a Sticker
+                  </span>
                   <button
                     onClick={() => setGalleryOpen(false)}
-                    className="p-1.5 rounded-lg text-[var(--ink-mid)] hover:bg-[var(--muted)] cursor-pointer"
+                    className="p-1 rounded-lg text-stone-500 hover:text-stone-900 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="px-4 py-2.5 border-b border-[var(--border-mid)]">
+                <div className="p-3 border-b border-stone-200">
                   <div className="relative">
                     <input
                       type="text"
@@ -1445,16 +1127,16 @@ export default function LoveLetterPage() {
                         setSearchQ(e.target.value);
                         searchStickers(e.target.value);
                       }}
-                      placeholder="Search..."
-                      className="w-full pl-8 pr-4 py-2 border border-[var(--border-mid)] bg-[var(--muted)] rounded-xl text-xs focus:outline-none"
+                      placeholder="Search stickers..."
+                      className="w-full pl-8 pr-3 py-2 border border-stone-300 rounded-xl text-xs bg-[#FFFDFB] focus:outline-none"
                     />
-                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-[var(--ink-light)]" />
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-stone-400" />
                   </div>
                 </div>
-                <div className="p-4 overflow-y-auto flex-1">
+                <div className="p-3 overflow-y-auto flex-1">
                   {searching ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-5 h-5 animate-spin text-[var(--ink-light)]" />
+                      <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
                     </div>
                   ) : stickers.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2">
@@ -1462,19 +1144,13 @@ export default function LoveLetterPage() {
                         <button
                           key={s.id}
                           onClick={() => {
-                            setBlocks([
-                              ...blocks,
-                              { type: "cat", giphy_id: s.id },
-                            ]);
+                            setBlocks([...blocks, { type: "cat", giphy_id: s.id }]);
                             setGalleryOpen(false);
                           }}
-                          className="rounded-xl border border-[var(--border-mid)] bg-white dark:bg-[var(--muted)] p-1 cursor-pointer hover:scale-105 transition-all h-20 flex items-center justify-center"
+                          className="rounded-xl border border-stone-200 bg-[#FFFDFB] p-1 cursor-pointer hover:border-rose-400 transition-all h-20 flex items-center justify-center"
                         >
                           <img
-                            src={
-                              s.images?.fixed_height_small?.url ||
-                              s.images?.fixed_height?.url
-                            }
+                            src={s.images?.fixed_height_small?.url || s.images?.fixed_height?.url}
                             alt="Sticker"
                             className="max-h-16 object-contain"
                           />
@@ -1482,17 +1158,17 @@ export default function LoveLetterPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs font-mono text-[var(--ink-light)] text-center py-8">
+                    <p className="text-xs font-mono text-stone-400 text-center py-8">
                       No stickers found
                     </p>
                   )}
                 </div>
-                <div className="px-4 py-2 border-t border-[var(--border-mid)] text-center">
-                  <span className="text-[8px] font-mono uppercase tracking-widest text-[var(--ink-light)]">
+                <div className="p-2 border-t border-stone-200 text-center">
+                  <span className="text-[9px] font-mono text-stone-400">
                     Powered by GIPHY
                   </span>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1507,474 +1183,232 @@ export default function LoveLetterPage() {
     );
   }
 
-  // READ: The paper & interactive unsealing
+  // ─── 2. READ / UNSEAL LETTER VIEW ───
   if (activeLetter) {
     const cfg = STYLES[activeLetter.envelope_style] || STYLES.classic;
-    const bg = candle
-      ? "linear-gradient(160deg,#110C06,#1A1208)"
-      : "var(--bg)";
 
     return (
-      <div className="relative min-h-screen" style={{ background: bg }}>
-        {/* Back navigation */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          onClick={() => {
-            setActiveLetter(null);
-            setReadPhase("sealed");
-            setRevealCount(0);
-            fetchLetters();
-          }}
-          className="fixed top-5 left-5 z-50 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest cursor-pointer transition-colors px-3 py-2 rounded-full backdrop-blur-sm"
-          style={{
-            color: candle
-              ? "rgba(245,210,150,0.6)"
-              : "var(--ink-light)",
-            background: candle
-              ? "rgba(30,18,8,0.6)"
-              : "rgba(250,246,238,0.8)",
-          }}
-        >
-          <ArrowLeft className="w-3 h-3" /> Inbox
-        </motion.button>
+      <div
+        className="relative min-h-screen bg-[#FFF9F6] text-stone-900 py-10 px-4 selection:bg-rose-100 selection:text-rose-900"
+        style={{
+          backgroundImage: "radial-gradient(#d6d3d1 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
+        }}
+      >
+        <div className="max-w-xl mx-auto space-y-6">
+          <div className="flex items-center justify-between pb-2">
+            <button
+              onClick={() => {
+                setActiveLetter(null);
+                setReadPhase("sealed");
+                setRevealCount(0);
+                fetchLetters();
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-stone-600 hover:text-stone-900 cursor-pointer transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Inbox</span>
+            </button>
 
-        {/* Toggles: only visible when unsealed */}
-        {readPhase === "open" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="fixed top-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-sm"
-            style={{
-              background: candle
-                ? "rgba(30,18,8,0.6)"
-                : "rgba(250,246,238,0.8)",
-            }}
-          >
-            {[
-              {
-                emoji: "🕯️",
-                active: candle,
-                toggle: () => setCandle((p) => !p),
-                title: "Candlelight",
-              },
-              {
-                emoji: "⌨️",
-                active: typewriter,
-                toggle: () => setTypewriter((p) => !p),
-                title: "Typewriter",
-              },
-            ].map((t, i) => (
-              <button
-                key={i}
-                onClick={t.toggle}
-                title={t.title}
-                className={`text-sm cursor-pointer transition-opacity ${
-                  t.active ? "opacity-100" : "opacity-35 hover:opacity-60"
-                }`}
-              >
-                {t.emoji}
-              </button>
-            ))}
-            {typewriter && (
-              <button
-                onClick={() => setTypeSound((p) => !p)}
-                title="Typewriter sound"
-                className={`text-sm cursor-pointer transition-opacity ${
-                  typeSound ? "opacity-100" : "opacity-35 hover:opacity-60"
-                }`}
-              >
-                🔊
-              </button>
+            {readPhase === "open" && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTypewriter((p) => !p)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-colors ${
+                    typewriter
+                      ? "bg-stone-900 text-white border-stone-900"
+                      : "bg-white text-stone-600 border-stone-300"
+                  }`}
+                >
+                  Typewriter {typewriter ? "ON" : "OFF"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportPNG}
+                  disabled={isExporting}
+                  className="p-1.5 rounded-full border border-stone-300 bg-white text-stone-700 hover:text-stone-900"
+                  title="Download Keepsake PNG"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
-          </motion.div>
-        )}
-
-        <main className="flex items-start justify-center min-h-screen pt-14 px-5 pb-24">
-          <div className="w-full max-w-md">
-            <AnimatePresence mode="wait">
-              {/* SEALED, SHATTERING & UNSEALING: Physical Envelope Flap & Paper Rise */}
-              {(readPhase === "sealed" ||
-                readPhase === "shattering" ||
-                readPhase === "unsealing") && (
-                <motion.div
-                  key="sealed-stage"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96, y: -16 }}
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex flex-col items-center justify-center min-h-[75vh] gap-8"
-                >
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]"
-                  >
-                    A handwritten letter awaits you
-                  </motion.p>
-
-                  {/* 3D Envelope Container with Perspective */}
-                  <div className="relative w-full" style={{ perspective: 1200 }}>
-                    <motion.div
-                      className="relative w-full rounded-3xl paper-grain"
-                      style={{
-                        background: cfg.bg,
-                        aspectRatio: "1.42 / 1",
-                        boxShadow:
-                          "0 24px 64px -8px rgba(60,38,18,0.24),0 4px 12px rgba(60,38,18,0.1)",
-                        border: "1px solid rgba(196,168,130,0.3)",
-                      }}
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{
-                        delay: 0.15,
-                        duration: 0.6,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                    >
-                      {/* 1. Folded Parchment Letter Sheet rising out of the envelope */}
-                      <motion.div
-                        className="absolute inset-x-6 top-6 bottom-6 rounded-2xl paper-grain p-5 shadow-md border border-[rgba(196,168,130,0.4)] flex flex-col justify-between overflow-hidden"
-                        style={{
-                          background:
-                            "linear-gradient(180deg, #FFFDF7 0%, #F8F2E4 100%)",
-                          zIndex: 12,
-                        }}
-                        initial={{ y: 8, opacity: 0.95 }}
-                        animate={
-                          readPhase === "unsealing"
-                            ? {
-                                y: -130,
-                                scale: 1.03,
-                                opacity: 1,
-                                boxShadow:
-                                  "0 24px 48px -6px rgba(60,38,18,0.32)",
-                              }
-                            : { y: 8, opacity: 0.95 }
-                        }
-                        transition={{ duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between border-b border-[rgba(196,168,130,0.3)] pb-1.5">
-                            <span className="text-[8px] font-mono uppercase tracking-widest text-[#9A876A]">
-                              Personal & Confidential
-                            </span>
-                            <span className="text-xs">💌</span>
-                          </div>
-                          <p className="font-handwriting text-lg font-bold text-[#4A3A28]">
-                            Dearest {activeLetter.recipient_name},
-                          </p>
-                          <div className="space-y-2 pt-1">
-                            <div className="h-1.5 w-3/4 rounded-full bg-[rgba(196,168,130,0.35)]" />
-                            <div className="h-1.5 w-5/6 rounded-full bg-[rgba(196,168,130,0.25)]" />
-                            <div className="h-1.5 w-2/3 rounded-full bg-[rgba(196,168,130,0.2)]" />
-                          </div>
-                        </div>
-                        <div className="text-right pt-2 border-t border-[rgba(196,168,130,0.2)]">
-                          <span className="font-handwriting text-sm text-[#6B573E]">
-                            With love, {activeLetter.sender_name}
-                          </span>
-                        </div>
-                      </motion.div>
-
-                      {/* 2. Physical Envelope Pocket Folds (sides and bottom) */}
-                      <div
-                        className="absolute inset-0 pointer-events-none"
-                        style={{ zIndex: 18 }}
-                      >
-                        <EnvelopePocketFolds dark={cfg.foldDark} />
-                      </div>
-
-                      {/* 3. Vintage Airmail Stamp & Postmark (Top Right) */}
-                      <div
-                        className="absolute top-4 right-5 pointer-events-none flex items-center gap-2 select-none"
-                        style={{ zIndex: 22 }}
-                      >
-                        <div className="w-11 h-13 rounded-xs border border-dashed border-[#A88B60]/50 bg-[#FDF9F0]/85 p-1 flex flex-col items-center justify-between shadow-2xs rotate-2">
-                          <div className="flex items-center justify-between w-full text-[6px] font-mono text-[#8C6D45] uppercase font-bold">
-                            <span>PAIR</span>
-                            <span>2026</span>
-                          </div>
-                          <span className="text-sm leading-none">💌</span>
-                          <span className="text-[6px] font-mono tracking-widest text-[#8C6D45] uppercase">
-                            AIR MAIL
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* 4. Elegant Centered Calligraphy Recipient Nameplate */}
-                      <div
-                        className="absolute inset-x-8 bottom-6 flex flex-col items-center justify-center text-center pointer-events-none select-none"
-                        style={{ zIndex: 22 }}
-                      >
-                        <span
-                          className="text-[8px] font-mono uppercase tracking-[0.25em]"
-                          style={{
-                            color: cfg.foldDark
-                              ? "rgba(255,255,255,0.45)"
-                              : "rgba(130,105,75,0.75)",
-                          }}
-                        >
-                          For
-                        </span>
-                        <p
-                          className="font-handwriting text-2xl font-bold tracking-wide mt-0.5"
-                          style={{
-                            color: cfg.foldDark ? "rgba(255,255,255,0.92)" : "#3D2B1B",
-                            textShadow: cfg.foldDark
-                              ? "0 1px 2px rgba(0,0,0,0.5)"
-                              : "0 1px 1px rgba(255,255,255,0.6)",
-                          }}
-                        >
-                          {activeLetter.recipient_name}
-                        </p>
-                        <div
-                          className="w-16 h-px mt-1.5"
-                          style={{
-                            background: cfg.foldDark
-                              ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)"
-                              : "linear-gradient(90deg, transparent, rgba(160,130,90,0.5), transparent)",
-                          }}
-                        />
-                      </div>
-
-                      {/* 5. 3D Top Triangular Flap */}
-                      <motion.div
-                        className="absolute inset-x-0 top-0 h-[50%] pointer-events-none"
-                        style={{
-                          transformOrigin: "top center",
-                          transformStyle: "preserve-3d",
-                          zIndex: readPhase === "unsealing" ? 8 : 26,
-                        }}
-                        initial={{ rotateX: 0 }}
-                        animate={
-                          readPhase === "unsealing"
-                            ? { rotateX: 180 }
-                            : { rotateX: 0 }
-                        }
-                        transition={{
-                          duration: 0.8,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                      >
-                        <EnvelopeTopFlap dark={cfg.foldDark} />
-                      </motion.div>
-
-                      {/* 6. Wax Seal Button */}
-                      {readPhase !== "unsealing" && (
-                        <div
-                          className="absolute inset-0 flex items-center justify-center"
-                          style={{ zIndex: 30 }}
-                        >
-                          <WaxSealButton
-                            onPress={breakSeal}
-                            shattering={readPhase === "shattering"}
-                          />
-                        </div>
-                      )}
-                    </motion.div>
-                  </div>
-
-                  <motion.p
-                    key={readPhase}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-[9px] font-mono uppercase tracking-widest text-[var(--ink-light)]"
-                  >
-                    {readPhase === "sealed" && "Tap the seal to break and open"}
-                    {readPhase === "shattering" && "Breaking wax seal..."}
-                    {readPhase === "unsealing" && "Unfolding letter..."}
-                  </motion.p>
-                </motion.div>
-              )}
-
-              {/* OPEN: The unfolded letter */}
-              {readPhase === "open" && (
-                <motion.div
-                  key="open"
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <div
-                    className={`relative rounded-3xl overflow-hidden ${
-                      candle ? "animate-candle-flicker" : ""
-                    }`}
-                    style={{
-                      background: candle
-                        ? "linear-gradient(160deg,#1C1208,#221608)"
-                        : "linear-gradient(180deg,#FFFDF5 0%,#FAF4E8 100%)",
-                      border: candle
-                        ? "1px solid #3A2810"
-                        : "1px solid var(--border-warm)",
-                      boxShadow: candle
-                        ? "0 0 80px 20px rgba(200,120,30,0.06)"
-                        : "0 12px 48px rgba(60,40,20,0.1),0 2px 8px rgba(60,40,20,0.06)",
-                      backgroundImage: candle
-                        ? undefined
-                        : "linear-gradient(180deg,#FFFDF5 0%,#FAF4E8 100%),linear-gradient(transparent calc(32px - 1px),rgba(196,168,130,0.2) calc(32px - 1px),rgba(196,168,130,0.2) 32px,transparent 32px)",
-                      backgroundSize: candle ? undefined : "100%,100% 32px",
-                    }}
-                  >
-                    {!candle && (
-                      <>
-                        <div
-                          className="absolute top-3 right-5 w-12 h-4 pointer-events-none"
-                          style={{
-                            background: "var(--washi-warm)",
-                            transform: "rotate(-2deg)",
-                          }}
-                        />
-                        <Sprig className="absolute bottom-4 right-4 w-10 h-16 opacity-35 pointer-events-none" />
-                      </>
-                    )}
-
-                    <div className="p-8 md:p-12 space-y-6">
-                      <div
-                        className="flex justify-between text-xs font-handwriting"
-                        style={{
-                          color: candle
-                            ? "rgba(245,210,150,0.5)"
-                            : "var(--ink-light)",
-                        }}
-                      >
-                        <span>To: {activeLetter.recipient_name}</span>
-                        <span>
-                          {format(
-                            parseISO(activeLetter.sent_at),
-                            "MMMM d, yyyy"
-                          )}
-                        </span>
-                      </div>
-
-                      <div className="space-y-5">
-                        {Array.isArray(activeLetter.content) ? (
-                          activeLetter.content.map(
-                            (block: any, idx: number) => {
-                              if (revealCount <= idx) return null;
-                              return (
-                                <motion.div
-                                  key={idx}
-                                  initial={{ opacity: 0, y: 8 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ duration: 0.5 }}
-                                >
-                                  {block.type === "text" ? (
-                                    <p
-                                      className="text-base leading-8 whitespace-pre-wrap"
-                                      style={{
-                                        fontFamily:
-                                          "var(--font-handwriting),cursive",
-                                        color: candle
-                                          ? "rgba(245,210,150,0.88)"
-                                          : "var(--ink-dark)",
-                                      }}
-                                    >
-                                      {typewriter ? (
-                                        <TypewriterText
-                                          text={block.value || ""}
-                                          sound={typeSound}
-                                        />
-                                      ) : (
-                                        block.value || ""
-                                      )}
-                                    </p>
-                                  ) : (
-                                    <div className="rounded-xl overflow-hidden border border-[var(--border-warm)] max-w-xs p-2 bg-white/60">
-                                      <GiphyRenderer
-                                        giphyId={block.giphy_id}
-                                      />
-                                    </div>
-                                  )}
-                                </motion.div>
-                              );
-                            }
-                          )
-                        ) : (
-                          <p
-                            className="text-base leading-8 whitespace-pre-wrap font-handwriting"
-                            style={{
-                              color: candle
-                                ? "rgba(245,210,150,0.88)"
-                                : "var(--ink-dark)",
-                            }}
-                          >
-                            {typeof activeLetter.content === "string"
-                              ? activeLetter.content
-                              : "A handwritten letter for you ♡"}
-                          </p>
-                        )}
-                      </div>
-
-                      {revealCount > (activeLetter.content?.length || 0) && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.3 }}
-                          className="border-t pt-6 space-y-5"
-                          style={{
-                            borderColor: candle
-                              ? "rgba(255,255,255,0.06)"
-                              : "rgba(196,168,130,0.3)",
-                          }}
-                        >
-                          <p
-                            className="text-right text-xl font-handwriting"
-                            style={{
-                              color: candle
-                                ? "rgba(245,210,150,0.9)"
-                                : "var(--ink-dark)",
-                            }}
-                          >
-                            With love, {activeLetter.sender_name}
-                          </p>
-
-                          {/* Action Bar */}
-                          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                            <button
-                              onClick={handleExportPNG}
-                              disabled={isExporting}
-                              className="inline-flex items-center gap-1.5 py-2 px-4 rounded-full text-xs font-mono font-medium border border-[var(--border-warm)] bg-white/80 hover:bg-white text-[var(--ink-dark)] cursor-pointer transition-all shadow-xs"
-                            >
-                              <Download className="w-3.5 h-3.5 text-amber-600" />
-                              <span>
-                                {isExporting ? "Saving..." : "Download Keepsake"}
-                              </span>
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                setIsWriting(true);
-                                setStep(1);
-                                setToName(activeLetter.sender_name || "");
-                                setBlocks([{ type: "text", value: "" }]);
-                                setActiveLetter(null);
-                              }}
-                              className="inline-flex items-center gap-1.5 py-2 px-4 rounded-full text-xs font-mono font-medium text-white cursor-pointer transition-all shadow-xs"
-                              style={{ background: "var(--seal-red)" }}
-                            >
-                              <Heart className="w-3.5 h-3.5" />
-                              <span>Write a Reply</span>
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
-        </main>
+
+          <AnimatePresence mode="wait">
+            {/* SEALED STAGE: Interactive Wax Envelope */}
+            {(readPhase === "sealed" ||
+              readPhase === "shattering" ||
+              readPhase === "unsealing") && (
+              <motion.div
+                key="sealed-envelope"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                className="flex flex-col items-center justify-center min-h-[65vh] gap-6"
+              >
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-100 border border-rose-300 text-rose-800 text-[11px] font-mono font-bold uppercase tracking-wider">
+                  <Sparkle className="w-3.5 h-3.5 text-rose-600 fill-rose-600" />
+                  <span>A HANDWRITTEN LETTER AWAITS YOU</span>
+                </div>
+
+                {/* 3D Envelope Container */}
+                <div className="relative w-full max-w-md aspect-[1.45/1] rounded-3xl border-2 border-stone-800 shadow-[6px_6px_0px_0px_rgba(28,25,23,0.9)] overflow-hidden" style={{ background: cfg.bg }}>
+                  {/* Rising paper preview on unseal */}
+                  <motion.div
+                    className="absolute inset-x-5 top-5 bottom-5 rounded-2xl bg-white border border-stone-300 p-5 flex flex-col justify-between"
+                    animate={
+                      readPhase === "unsealing"
+                        ? { y: -120, opacity: 1, scale: 1.02 }
+                        : { y: 6, opacity: 0.95 }
+                    }
+                    transition={{ duration: 0.9 }}
+                    style={{ zIndex: 10 }}
+                  >
+                    <div className="space-y-1.5">
+                      <span className="text-[8px] font-mono uppercase tracking-widest text-stone-400">
+                        Personal &amp; Confidential
+                      </span>
+                      <p className="font-heading font-black text-lg text-stone-900">
+                        Dearest {activeLetter.recipient_name},
+                      </p>
+                      <div className="h-1.5 w-3/4 rounded-full bg-stone-200" />
+                      <div className="h-1.5 w-1/2 rounded-full bg-stone-200" />
+                    </div>
+                    <span className="text-right text-xs font-mono text-stone-500">
+                      With love, {activeLetter.sender_name}
+                    </span>
+                  </motion.div>
+
+                  {/* Envelope pocket */}
+                  <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 15 }}>
+                    <EnvelopePocketFolds dark={cfg.foldDark} />
+                  </div>
+
+                  {/* Top Flap */}
+                  <motion.div
+                    className="absolute inset-x-0 top-0 h-[50%] pointer-events-none"
+                    style={{ transformOrigin: "top center", zIndex: readPhase === "unsealing" ? 8 : 20 }}
+                    animate={readPhase === "unsealing" ? { rotateX: 180 } : { rotateX: 0 }}
+                    transition={{ duration: 0.7 }}
+                  >
+                    <EnvelopeTopFlap dark={cfg.foldDark} />
+                  </motion.div>
+
+                  {/* Wax Seal Button */}
+                  {readPhase !== "unsealing" && (
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 30 }}>
+                      <WaxSealButton onPress={breakSeal} shattering={readPhase === "shattering"} />
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs font-mono font-bold text-stone-500 uppercase tracking-widest">
+                  {readPhase === "sealed" && "Tap the wax seal to unseal"}
+                  {readPhase === "shattering" && "Breaking wax seal..."}
+                  {readPhase === "unsealing" && "Unfolding parchment..."}
+                </p>
+              </motion.div>
+            )}
+
+            {/* OPENED STAGE: Parchment Letter */}
+            {readPhase === "open" && (
+              <motion.div
+                key="open-letter"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-10 shadow-[6px_6px_0px_0px_rgba(28,25,23,0.9)] relative space-y-6"
+              >
+                <div className="absolute -top-3.5 left-8 -rotate-1 shadow-xs">
+                  <span className="bg-rose-500 text-white font-mono uppercase text-[11px] font-black tracking-wider px-3.5 py-1 rounded-sm border border-stone-800">
+                    SEALED FOR YOU
+                  </span>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-b border-stone-200 pb-4 text-xs font-mono text-stone-500">
+                  <span>To: {activeLetter.recipient_name}</span>
+                  <span>{format(parseISO(activeLetter.sent_at), "MMMM d, yyyy")}</span>
+                </div>
+
+                {/* Letter Body */}
+                <div className="space-y-4">
+                  {Array.isArray(activeLetter.content) ? (
+                    activeLetter.content.map((block: any, idx: number) => {
+                      if (revealCount <= idx) return null;
+                      return (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4 }}
+                        >
+                          {block.type === "text" ? (
+                            <p className="text-base sm:text-lg leading-relaxed text-stone-900 font-sans whitespace-pre-wrap">
+                              {typewriter ? (
+                                <TypewriterText text={block.value || ""} sound={typeSound} />
+                              ) : (
+                                block.value || ""
+                              )}
+                            </p>
+                          ) : (
+                            <div className="rounded-2xl overflow-hidden border border-stone-200 max-w-xs p-2 bg-[#FFFDFB]">
+                              <GiphyRenderer giphyId={block.giphy_id} />
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-base sm:text-lg leading-relaxed text-stone-900 font-sans whitespace-pre-wrap">
+                      {typeof activeLetter.content === "string"
+                        ? activeLetter.content
+                        : "A handwritten letter for you ♡"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-6 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <span className="font-heading font-black text-xl text-stone-900">
+                    With love, {activeLetter.sender_name}
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleExportPNG}
+                      disabled={isExporting}
+                      className="px-4 py-2 rounded-full border-2 border-stone-800 text-xs font-mono font-bold text-stone-900 hover:bg-stone-50 transition-colors cursor-pointer"
+                    >
+                      {isExporting ? "Saving..." : "Save Keepsake"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWriting(true);
+                        setStep(1);
+                        setToName(activeLetter.sender_name || "");
+                        setBlocks([{ type: "text", value: "" }]);
+                        setActiveLetter(null);
+                      }}
+                      className="px-5 py-2 rounded-full bg-stone-900 text-white text-xs font-mono font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <Heart className="w-3.5 h-3.5" />
+                      <span>Write a Reply</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     );
   }
 
-  // INBOX: The unread letter card and archives
+  // ─── 3. INBOX / ARCHIVE VAULT VIEW ───
   const unread = lettersList.filter(
     (l) => l.sender_id !== user?.id && !l.is_opened
   );
@@ -1983,220 +1417,192 @@ export default function LoveLetterPage() {
   );
 
   return (
-    <div className="relative min-h-screen" style={{ background: "var(--bg)" }}>
+    <div
+      className="relative min-h-screen bg-[#FFF9F6] text-stone-900 selection:bg-rose-100 selection:text-rose-900"
+      style={{
+        backgroundImage: "radial-gradient(#d6d3d1 1px, transparent 1px)",
+        backgroundSize: "20px 20px",
+      }}
+    >
       <Navigation />
-      <main className="max-w-lg mx-auto px-5 py-20 pb-36">
-        {/* Top Mode Toggle: Letters & Bouquets */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="inline-flex p-1 rounded-2xl bg-[var(--paper-mid)] border border-[var(--border-warm)] shadow-xs">
-            <span className="px-4 py-1.5 rounded-xl text-xs font-medium bg-white text-[var(--ink-dark)] shadow-xs font-mono">
-              💌 Love Letters
+
+      <main className="max-w-2xl mx-auto px-5 md:pl-28 md:pr-10 py-16 pb-36 space-y-8">
+        {/* Top Header Mode Toggle */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 p-1 rounded-2xl bg-white border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.8)]">
+            <span className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold bg-stone-900 text-white">
+              💌 Letters
             </span>
             <Link
               href="/bouquet"
-              className="px-4 py-1.5 rounded-xl text-xs font-medium text-[var(--ink-light)] hover:text-[var(--ink-dark)] transition-all flex items-center gap-1.5 font-mono"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold text-stone-600 hover:text-stone-900 transition-colors flex items-center gap-1"
             >
               <span>💐</span>
-              <span>Digital Bouquets</span>
+              <span>Bouquets</span>
             </Link>
           </div>
-        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex items-end justify-between mb-8"
-        >
-          <div>
-            <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--ink-light)]">
-              Keepsakes
-            </p>
-            <h1 className="font-display italic text-3xl font-black text-[var(--ink-dark)] mt-0.5">
-              Letters
-            </h1>
-          </div>
           <button
             onClick={() => {
               setIsWriting(true);
               setStep(1);
             }}
-            className="btn-primary py-2 px-5 text-[10px] uppercase tracking-widest cursor-pointer"
+            className="bg-stone-900 hover:bg-stone-800 text-white py-2.5 px-5 rounded-full font-heading font-bold text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer inline-flex items-center gap-1.5"
           >
-            Write
+            <Plus className="w-3.5 h-3.5" />
+            <span>Write Letter</span>
           </button>
-        </motion.div>
+        </div>
 
-        {/* If unpaired, show friendly prompt with write action */}
-        {!pair ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-12 flex flex-col items-center gap-5 border border-[var(--border-warm)] rounded-3xl p-6 bg-white/60 paper-grain"
-          >
-            <WritingLetters className="w-44 h-44 rounded-3xl" />
-            <div className="space-y-2 max-w-sm">
-              <h2 className="font-display italic text-2xl text-[var(--ink-dark)]">
-                Wax-Sealed Love Letters
-              </h2>
-              <p className="text-xs text-[var(--ink-mid)] font-sans">
-                Write heartfelt handwritten letters on vintage parchment, seal them with wax, and share secret unlisted links. Connect your partner to save directly to each other is inboxes.
+        {/* Hero Header Card */}
+        <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative">
+          <div className="absolute -top-3.5 left-8 -rotate-1 shadow-xs">
+            <span className="bg-rose-500 text-white font-mono uppercase text-[11px] font-black tracking-wider px-3.5 py-1 rounded-sm border border-stone-800">
+              WAX-SEALED VAULT
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2">
+            <div className="space-y-1.5 text-center sm:text-left">
+              <h1 className="font-heading font-black text-3xl sm:text-4xl text-stone-900 tracking-tight">
+                Love Letters
+              </h1>
+              <p className="text-xs sm:text-sm text-stone-600 font-sans">
+                Written from the heart, sealed with digital wax, encrypted on your device, and kept forever.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <CoupleBeansMascot className="w-24 h-18 shrink-0" />
+          </div>
+        </div>
+
+        {/* If unpaired */}
+        {!pair ? (
+          <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] text-center space-y-4">
+            <CoupleBeansMascot className="w-28 h-20" />
+            <h2 className="font-heading font-black text-xl text-stone-900">
+              Link Your Couple Sanctuary
+            </h2>
+            <p className="text-xs text-stone-600 max-w-sm mx-auto leading-relaxed">
+              Connect your partner to send sealed wax letters directly to each other&apos;s private vaults.
+            </p>
+            <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 onClick={() => {
                   setIsWriting(true);
                   setStep(1);
                 }}
-                className="btn-primary py-2.5 px-6 text-xs uppercase font-mono tracking-wider cursor-pointer"
+                className="bg-stone-900 text-white px-5 py-2.5 rounded-full font-heading font-bold text-xs"
               >
-                Write a Letter
+                Write Draft
               </button>
               <Link
-                href="/dashboard"
-                className="btn-secondary py-2.5 px-6 text-xs uppercase font-mono tracking-wider"
+                href="/onboarding"
+                className="border-2 border-stone-800 text-stone-900 px-5 py-2.5 rounded-full font-heading font-bold text-xs hover:bg-stone-50"
               >
                 Connect Partner
               </Link>
             </div>
-          </motion.div>
+          </div>
         ) : lettersList.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-center py-16 flex flex-col items-center gap-5"
-          >
-            <WritingLetters className="w-48 h-48 rounded-3xl" />
-            <div>
-              <p className="font-display italic text-2xl text-[var(--ink-mid)] mb-2">
-                The box is empty.
-              </p>
-              <p className="text-[10px] font-mono text-[var(--ink-light)]">
-                Write the first letter to your partner.
-              </p>
-            </div>
-          </motion.div>
+          <div className="bg-white border-2 border-stone-800 rounded-3xl p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] text-center space-y-4">
+            <CoupleBeansMascot className="w-28 h-20" />
+            <h2 className="font-heading font-black text-xl text-stone-900">
+              The Letterbox is Quiet
+            </h2>
+            <p className="text-xs text-stone-600 max-w-sm mx-auto leading-relaxed">
+              Surprise your partner with their first sealed wax letter. Write a quick note of love or appreciation.
+            </p>
+            <button
+              onClick={() => {
+                setIsWriting(true);
+                setStep(1);
+              }}
+              className="bg-stone-900 hover:bg-stone-800 text-white px-6 py-3 rounded-full font-heading font-bold text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)]"
+            >
+              Write First Letter 💌
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex justify-center mb-6"
-            >
-              <WritingLetters className="w-44 h-44 rounded-3xl" />
-            </motion.div>
+            {/* Unread Letters Section */}
+            {unread.length > 0 && (
+              <div className="space-y-3">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                  Waiting to be Unsealed ({unread.length})
+                </span>
 
-            <div className="space-y-3">
-              {unread.map((l, i) => {
-                const isLocked =
-                  l.unseal_at && new Date(l.unseal_at) > new Date();
-                return (
-                  <motion.button
-                    key={l.id}
-                    onClick={() => !isLocked && handleUnseal(l)}
-                    className={`w-full text-left cursor-pointer ${
-                      isLocked ? "opacity-80" : ""
-                    }`}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    whileHover={!isLocked ? { y: -2 } : {}}
-                    whileTap={!isLocked ? { scale: 0.98 } : {}}
-                  >
-                    <div
-                      className="relative material-cotton rounded-2xl px-6 py-5"
-                      style={{
-                        boxShadow:
-                          "0 4px 20px rgba(128,32,48,0.1), 0 1px 4px rgba(60,40,20,0.06)",
-                      }}
+                {unread.map((l) => {
+                  const isLocked = l.unseal_at && new Date(l.unseal_at) > new Date();
+                  return (
+                    <button
+                      key={l.id}
+                      onClick={() => !isLocked && handleUnseal(l)}
+                      className={`w-full text-left bg-white border-2 border-stone-800 rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] hover:translate-y-[-2px] transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                        isLocked ? "opacity-80" : ""
+                      }`}
                     >
-                      {!isLocked && (
-                        <motion.div
-                          className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[var(--seal-red)] flex items-center justify-center"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          <div className="w-1.5 h-1.5 rounded-full bg-white/80" />
-                        </motion.div>
-                      )}
-                      <div className="flex items-center gap-4 pr-8">
-                        <div className="w-10 h-10 rounded-xl bg-[var(--paper-mid)] border border-[var(--border-warm)] flex items-center justify-center flex-shrink-0">
-                          {isLocked ? (
-                            <Lock className="w-4 h-4 text-[var(--ink-mid)]" />
-                          ) : (
-                            <Gift className="w-4 h-4 text-[var(--seal-red)]" />
-                          )}
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-rose-100 border border-stone-800 text-rose-600 flex items-center justify-center shrink-0">
+                          {isLocked ? <Lock className="w-5 h-5" /> : <Mail className="w-5 h-5" />}
                         </div>
                         <div>
-                          <p className="font-heading italic font-bold text-base text-[var(--ink-dark)]">
+                          <span className="font-heading font-black text-base text-stone-900 block">
                             From {l.sender_name}
-                          </p>
-                          {isLocked ? (
-                            <p className="text-[9px] font-mono mt-0.5 text-[var(--seal-red)]">
-                              Unseals on{" "}
-                              {format(
-                                parseISO(l.unseal_at),
-                                "MMMM d, yyyy"
-                              )}
-                            </p>
-                          ) : (
-                            <p className="text-[9px] font-mono text-[var(--ink-light)] mt-0.5">
-                              {format(
-                                parseISO(l.sent_at),
-                                "MMMM d, yyyy"
-                              )}{" "}
-                              · Sealed
-                            </p>
-                          )}
+                          </span>
+                          <span className="text-[11px] font-mono text-stone-500">
+                            {isLocked
+                              ? `Locked until ${format(parseISO(l.unseal_at), "MMMM d, yyyy")}`
+                              : `Sealed on ${format(parseISO(l.sent_at), "MMM d, yyyy")}`}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                  </motion.button>
-                );
-              })}
 
-              {unread.length > 0 && read.length > 0 && (
-                <div className="flex items-center gap-3 py-3">
-                  <div className="flex-1 h-px bg-[var(--border-mid)]" />
-                  <span className="text-[8px] font-mono uppercase tracking-widest text-[var(--ink-light)]">
-                    Earlier
-                  </span>
-                  <div className="flex-1 h-px bg-[var(--border-mid)]" />
-                </div>
-              )}
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-rose-500 animate-pulse" />
+                        <span className="text-xs font-mono font-bold text-stone-900">
+                          {isLocked ? "Locked" : "Unseal →"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-              {read.map((l, i) => (
-                <motion.button
-                  key={l.id}
-                  onClick={() => handleUnseal(l)}
-                  className="w-full text-left cursor-pointer"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (unread.length + i) * 0.07 }}
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-center gap-4 material-cotton rounded-2xl px-5 py-4 transition-colors hover:bg-[var(--paper-warm)]">
-                    <div className="w-8 h-8 rounded-lg bg-[var(--border-mid)] flex items-center justify-center flex-shrink-0">
-                      <Mail className="w-3.5 h-3.5 text-[var(--ink-mid)]" />
+            {/* Read / Archive Letters Section */}
+            {read.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-500">
+                  Archive &amp; Keepsakes ({read.length})
+                </span>
+
+                {read.map((l) => (
+                  <button
+                    key={l.id}
+                    onClick={() => handleUnseal(l)}
+                    className="w-full text-left bg-white border-2 border-stone-800 rounded-2xl p-4 sm:p-5 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.8)] hover:translate-y-[-1px] transition-all cursor-pointer flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-stone-100 border border-stone-300 text-stone-600 flex items-center justify-center shrink-0">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-heading font-bold text-sm text-stone-900 block truncate">
+                          {l.sender_id === user?.id ? `To ${l.recipient_name}` : `From ${l.sender_name}`}
+                        </span>
+                        <span className="text-[10px] font-mono text-stone-500">
+                          {format(parseISO(l.sent_at), "MMMM d, yyyy")}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-[var(--ink-dark)]">
-                        {l.sender_id === user?.id
-                          ? `To ${l.recipient_name}`
-                          : `From ${l.sender_name}`}
-                      </p>
-                      <p className="text-[9px] font-mono text-[var(--ink-light)] mt-0.5">
-                        {format(parseISO(l.sent_at), "MMM d, yyyy")}
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
+
+                    <span className="text-xs font-mono font-bold text-stone-600 hover:text-stone-900 shrink-0">
+                      Read Again →
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

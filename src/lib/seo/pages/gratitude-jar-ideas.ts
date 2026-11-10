@@ -20,7 +20,7 @@ export const page: SEOPage = {
   sections: [
     {
       heading: "How to Start a Gratitude Practice",
-      body: "Starting a gratitude jar is simple. If you're going physical, find a nice jar, some slips of paper, and a pen. Place it somewhere visible, like the kitchen counter or bedside table. The goal is to write down one thing you are grateful for about your partner each day, or at least a few times a week. It doesn't have to be monumental; in fact, appreciating the small, everyday acts of kindness—like making the coffee or offering a comforting hug—often has the most significant impact over time."
+      body: "Starting a gratitude jar is simple. If you're going physical, find a nice jar, some slips of paper, and a pen. Place it somewhere visible, like the kitchen counter or bedside table. The goal is to write down one thing you are grateful for about your partner each day, or at least a few times a week. It doesn't have to be monumental; in fact, appreciating the small, everyday acts of kindness-like making the coffee or offering a comforting hug-often has the most significant impact over time."
     },
     {
       heading: "Gratitude Prompts to Inspire You",

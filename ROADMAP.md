@@ -11,10 +11,10 @@ The goal isn't to build the most feature-rich couples app. The goal is to make o
 
 ## Feature-by-Feature Details
 
-### ❤️ Love Letters — "A Letter Worth Keeping"
+### ❤️ Love Letters - "A Letter Worth Keeping"
 This should become Pairfect's signature feature.
 * **Atmosphere**:
-  * Wax seal closing animation (not melting—opening a sealed letter feels more authentic than watching wax melt).
+  * Wax seal closing animation (not melting-opening a sealed letter feels more authentic than watching wax melt).
   * Soft paper textures (vintage, floral, cream, handmade, notebook).
   * Fountain pen ink animation while text appears.
   * Optional typewriter mode (sound + animation).
@@ -26,7 +26,7 @@ This should become Pairfect's signature feature.
   * Favorite lines can be highlighted.
   * Keep an archive that feels like a wooden letter box rather than an inbox.
 
-### 📸 Memories — "A Shared Scrapbook"
+### 📸 Memories - "A Shared Scrapbook"
 This has the highest long-term retention potential.
 * **Scrapbook experience**:
   * Freely draggable photos.
@@ -37,15 +37,15 @@ This has the highest long-term retention potential.
 * **Dashboard integration**:
   * Surface **Memory of the Week** instead of simply showing the latest photo.
 
-### 📷 Photobooth — "Disposable Camera"
+### 📷 Photobooth - "Disposable Camera"
 Don't make it another camera. Make it feel like buying a disposable Kodak.
 * **Camera behavior**:
   * Countdown, Flash delay, Random exposure, Film grain.
   * Tiny imperfections, Date stamp option.
 * **After capture (Anticipation)**:
-  * Instead of instantly revealing the image, display a progress bar: `Developing... ██████░░░░` and wait 3–5 seconds.
+  * Instead of instantly revealing the image, display a progress bar: `Developing... ██████░░░░` and wait 3-5 seconds.
 
-### 🌱 Gratitude — "Growing Together"
+### 🌱 Gratitude - "Growing Together"
 Don't make it a text box. Make it feel like tending something together.
 * **Theme**: A shared plant. Every gratitude entry helps it grow: `🌱` → `🌿` → `🪴` → `🌸`.
 * **Rewards (Gentle Progression)**:
@@ -53,7 +53,7 @@ Don't make it a text box. Make it feel like tending something together.
   * 30-day streak → flowers.
   * 100 entries → tree.
 
-### ⚖️ Between the Lines — "A Calm Mediator"
+### ⚖️ Between the Lines - "A Calm Mediator"
 This feature should never feel like ChatGPT. It should feel like someone quietly helping.
 * **UI**:
   * Soft neutral colors, Minimal UI, Lots of whitespace.
@@ -68,7 +68,7 @@ Don't optimize for difficulty. Optimize for conversation.
 
 ### 📚 Stories
 This feature could become something special.
-* **Format**: *Chapter 12: Our First Trip — July 2026*.
+* **Format**: *Chapter 12: Our First Trip - July 2026*.
 * **Concept**: Every chapter automatically collects photos, letters, gratitude, playlists, and moods so the couple is writing a book together.
 
 ### 🎵 Watch Together
@@ -118,4 +118,4 @@ Don't optimize for page views. Track whether they are building a relationship ar
 
 ### North Star
 **"The place where a relationship quietly lives."**
-If every feature feels like a small ritual instead of a utility, people won't remember Pairfect because it had AI—they'll remember it because it became part of their relationship.
+If every feature feels like a small ritual instead of a utility, people won't remember Pairfect because it had AI-they'll remember it because it became part of their relationship.

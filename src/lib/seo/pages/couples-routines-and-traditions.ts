@@ -26,11 +26,11 @@ export const page: SEOPage = {
     },
     {
       heading: "Milestone Traditions (Monthly & Annual)",
-      body: "These are the larger traditions that build your unique couple identity and create lasting memories.\n\n*   **The Monthly New Experience:** Once a month, commit to trying something you've *never* done before—a new restaurant, a new hiking trail, a new class. It keeps the relationship from feeling stagnant.\n*   **The \"Origin\" Anniversary:** Celebrating not just your wedding or official anniversary, but the day you met or your first date.\n*   **The Annual Reflection:** Going away for a night once a year specifically to review the past year and set intentions for your relationship in the year ahead."
+      body: "These are the larger traditions that build your unique couple identity and create lasting memories.\n\n*   **The Monthly New Experience:** Once a month, commit to trying something you've *never* done before-a new restaurant, a new hiking trail, a new class. It keeps the relationship from feeling stagnant.\n*   **The \"Origin\" Anniversary:** Celebrating not just your wedding or official anniversary, but the day you met or your first date.\n*   **The Annual Reflection:** Going away for a night once a year specifically to review the past year and set intentions for your relationship in the year ahead."
     },
     {
       heading: "How to Build Your Own Traditions",
-      body: "Don't just copy traditions from others—create rituals that reflect your unique personalities.\n\n1.  **Identify the Gap:** What are you missing? Romance? Fun? Organization? Choose a routine that addresses that need.\n2.  **Start Small:** Don't overhaul your life. Introduce one small routine and stick to it for a month before adding another.\n3.  **Use Triggers:** Attach new routines to existing habits. (e.g., \"We will use Pairfect's **Spotify Song Search** to share a song of the day *while* we brush our teeth.\")\n4.  **Protect the Time:** Treat your routines like important business meetings. Do not cancel them for trivial reasons."
+      body: "Don't just copy traditions from others-create rituals that reflect your unique personalities.\n\n1.  **Identify the Gap:** What are you missing? Romance? Fun? Organization? Choose a routine that addresses that need.\n2.  **Start Small:** Don't overhaul your life. Introduce one small routine and stick to it for a month before adding another.\n3.  **Use Triggers:** Attach new routines to existing habits. (e.g., \"We will use Pairfect's **Spotify Song Search** to share a song of the day *while* we brush our teeth.\")\n4.  **Protect the Time:** Treat your routines like important business meetings. Do not cancel them for trivial reasons."
     }
   ],
   faqs: [

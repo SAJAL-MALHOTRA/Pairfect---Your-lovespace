@@ -213,7 +213,7 @@ function LoginFormContent() {
                 <div className="space-y-1">
                   <p className="font-sans font-bold text-xs uppercase tracking-wider font-mono">Verify Your Email</p>
                   <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                    Please verify your email first — enter the 6-digit verification code sent to <span className="font-bold text-[var(--text)]">{email}</span>
+                    Please verify your email first - enter the 6-digit verification code sent to <span className="font-bold text-[var(--text)]">{email}</span>
                   </p>
                 </div>
               </div>

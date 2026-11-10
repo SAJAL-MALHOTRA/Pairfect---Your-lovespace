@@ -167,7 +167,7 @@ async function injectCinematicCursor(page) {
   // ══════════════════════════════════════════════════════════
   // SCENE 3: BETWEEN THE LINES / CONVERSATION (0:13 - 0:22)
   // "The games you played just to make each other laugh.
-  // Pairfect brings them all into one private space — just for the two of you."
+  // Pairfect brings them all into one private space - just for the two of you."
   // ══════════════════════════════════════════════════════════
   console.log('Scene 3: Navigating to Between the Lines (AI Vibe Judge)...');
   await page.goto('https://pairfect.site/vibe-judge', { waitUntil: 'networkidle' });

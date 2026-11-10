@@ -36,8 +36,11 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isSharedLetter = path.startsWith("/love-letter") && (request.nextUrl.searchParams.has("id") || request.nextUrl.searchParams.has("share"));
+  const isSharedJar = path.startsWith("/gratitude-jar") && (request.nextUrl.searchParams.has("drop") || request.nextUrl.searchParams.has("room") || request.nextUrl.searchParams.has("demo"));
+  const isSharedMoments = path.startsWith("/moments") && (request.nextUrl.searchParams.has("share") || request.nextUrl.searchParams.has("pair"));
+  const isPublicPlay = path === "/play" || path.startsWith("/play/love-match") || path.startsWith("/roulette") || path.startsWith("/iq-duel") || path.startsWith("/quiz") || path.startsWith("/riddle") || path.startsWith("/vibe-judge");
 
-  const isProtectedRoute = !isSharedLetter && (
+  const isProtectedRoute = !isSharedLetter && !isSharedJar && !isSharedMoments && !isPublicPlay && (
     path.startsWith("/dashboard") ||
     path.startsWith("/checkin") ||
     path.startsWith("/history") ||
@@ -50,13 +53,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/match-game") ||
     path.startsWith("/settings") ||
     path.startsWith("/profile") ||
-    path.startsWith("/riddle") ||
-    path.startsWith("/iq-duel") ||
-    path.startsWith("/vibe-judge") ||
     path.startsWith("/focus") ||
     path.startsWith("/calendar") ||
     path.startsWith("/onboarding") ||
-    path.startsWith("/quiz") ||
     path.startsWith("/avatars")
   );
 

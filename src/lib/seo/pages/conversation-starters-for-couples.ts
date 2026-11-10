@@ -16,7 +16,7 @@ export const page: SEOPage = {
     ogDescription: "Explore 50+ conversation starters for couples to build deeper connection and communication."
   },
   h1: "The Best Conversation Starters for Couples",
-  introduction: "Even the strongest couples can sometimes run out of things to talk about. When everyday discussions revolve around work, chores, and what's for dinner, it's crucial to intentionally introduce new topics to keep the spark alive. Good conversation starters can help you discover new facets of your partner, reignite old memories, and dream about the future together. In this guide, we've broken down conversation prompts into light, medium, and deep categories, giving you the perfect questions for any occasion—from a casual coffee date to a late-night heart-to-heart.",
+  introduction: "Even the strongest couples can sometimes run out of things to talk about. When everyday discussions revolve around work, chores, and what's for dinner, it's crucial to intentionally introduce new topics to keep the spark alive. Good conversation starters can help you discover new facets of your partner, reignite old memories, and dream about the future together. In this guide, we've broken down conversation prompts into light, medium, and deep categories, giving you the perfect questions for any occasion-from a casual coffee date to a late-night heart-to-heart.",
   sections: [
     {
       heading: "Light and Fun Conversation Prompts",

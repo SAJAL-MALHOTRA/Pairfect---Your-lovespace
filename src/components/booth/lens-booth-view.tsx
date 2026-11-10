@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Camera,
@@ -19,6 +20,8 @@ import {
   Share2,
   Copy,
   ArrowLeft,
+  ArrowRight,
+  Smartphone,
   X,
   Sparkles,
   Loader2,
@@ -389,7 +392,7 @@ export default function LensBoothView({
   const getFrameFilter = useCallback(
     (idx: number) => {
       if (isPrinting && printStep < (idx === 0 ? 2 : idx === 1 ? 3 : 4)) {
-        return "sepia(0.85) contrast(0.65) brightness(1.2) blur(1.5px)";
+        return "sepia(0.75) saturate(0.4) contrast(0.85) brightness(1.15)";
       }
       return currentResultFilterObj.css;
     },
@@ -773,7 +776,7 @@ export default function LensBoothView({
   // Load image helper for canvas export
   const loadImageAsync = (src: string): Promise<HTMLImageElement | null> => {
     return new Promise((resolve) => {
-      const img = new Image();
+      const img = new window.Image();
       img.crossOrigin = "anonymous";
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
@@ -1273,120 +1276,250 @@ export default function LensBoothView({
       </AnimatePresence>
 
       {/* ════════════════════════════════════════════════════════════════════════
-          SCREEN 1: LOBBY VIEW (When boothMode === "lobby")
+          SCREEN 1: LOBBY VIEW (Angie-Style Photobooth Split Screen)
           ════════════════════════════════════════════════════════════════════════ */}
       {screen === "capture" && boothMode === "lobby" && (
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12 max-w-4xl mx-auto w-full">
-          {/* Tagline & Badge */}
-          <div className="text-center mb-8 sm:mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 text-xs font-mono font-bold uppercase tracking-wider mb-4">
-              <Sparkles className="w-3.5 h-3.5 text-red-500" />
-              <span>Instant Virtual Photobooth</span>
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-heading font-extrabold text-zinc-900 tracking-tight">
-              Capture moments together, or solo.
-            </h1>
-            <p className="mt-3 text-sm sm:text-base text-zinc-600 max-w-xl mx-auto font-sans leading-relaxed">
-              Authentic countdown snaps with vintage film styles, instant 3D photo strip dispenser, and real-time live sync.
-            </p>
-          </div>
+        <main className="flex-1 flex items-center justify-center px-4 py-8 sm:py-14 max-w-5xl mx-auto w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
+            {/* Left Column: Actions & Details */}
+            <div className="lg:col-span-7 space-y-6 max-w-lg mx-auto lg:mx-0">
+              {/* Back to Activities */}
+              <Link
+                href="/play"
+                className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Activities</span>
+              </Link>
 
-          {/* Mode Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-            {/* CARD 1: SOLO PHOTOBOOTH */}
-            <motion.div
-              whileHover={{ y: -3 }}
-              className="p-6 rounded-3xl bg-white border-2 border-zinc-200/80 hover:border-zinc-900 transition-all shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-900 mb-4">
-                  <Camera className="w-6 h-6" />
+              {/* Tag & Heading */}
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFE4E8] text-rose-600 font-mono text-xs font-bold tracking-wider">
+                  <span>인생네컷 · for two</span>
                 </div>
-                <div className="inline-block px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700 text-[10px] font-mono font-semibold uppercase tracking-wider mb-2">
-                  Personal Keepsake
-                </div>
-                <h3 className="font-heading font-bold text-xl text-zinc-900">
-                  Solo Photobooth
-                </h3>
-                <p className="text-xs text-zinc-600 font-sans mt-2 leading-relaxed">
-                  Take 3 studio portraits by yourself. Test live visual looks, custom backgrounds, and print your personal photostrip.
+                <h1 className="text-4xl sm:text-5xl font-heading font-black text-stone-900 tracking-tight">
+                  Photobooth
+                </h1>
+                <p className="text-sm sm:text-base text-stone-600 font-sans leading-relaxed">
+                  One photo strip, both of you in it, taken from two places at once.
                 </p>
               </div>
 
-              <button
-                onClick={handleStartSolo}
-                className="mt-6 w-full py-3.5 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all hover:scale-101 active:scale-99"
+              {/* Primary Action: Start a room */}
+              <motion.button
+                whileHover={{ scale: 1.015, y: -2 }}
+                whileTap={{ scale: 0.985 }}
+                transition={{ type: "spring", stiffness: 380, damping: 25 }}
+                type="button"
+                onClick={partner?.display_name ? handleQuickStartDuoWithPartner : handleStartDuoWithCode}
+                className="w-full p-4 sm:p-5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white flex items-center justify-between shadow-md transition-all cursor-pointer group text-left border-2 border-stone-900"
               >
-                <Camera className="w-4 h-4" />
-                <span>Launch Solo Photobooth →</span>
-              </button>
-            </motion.div>
-
-            {/* CARD 2: DUO PHOTOBOOTH */}
-            <motion.div
-              whileHover={{ y: -3 }}
-              className="p-6 rounded-3xl bg-white border-2 border-zinc-200/80 hover:border-red-500/80 transition-all shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-4">
-                  <Users className="w-6 h-6" />
+                <div>
+                  <p className="font-heading font-bold text-base sm:text-lg text-white">
+                    Start a room
+                  </p>
+                  <p className="text-xs text-stone-400 font-sans mt-0.5">
+                    {partner?.display_name ? `with ${partner.display_name}` : "with your partner"}
+                  </p>
                 </div>
-                <div className="inline-block px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-600 text-[10px] font-mono font-semibold uppercase tracking-wider mb-2">
-                  Live Synchronized
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white group-hover:translate-x-1 transition-transform">
+                  <ArrowRight className="w-4 h-4" />
                 </div>
-                <h3 className="font-heading font-bold text-xl text-zinc-900">
-                  Duo Photobooth
-                </h3>
-                <p className="text-xs text-zinc-600 font-sans mt-2 leading-relaxed">
-                  50/50 dual split camera. Captures both partners at the exact same millisecond across any distance.
-                </p>
+              </motion.button>
 
-                {/* Quick paired partner option if available */}
-                {partner?.display_name && (
-                  <button
-                    onClick={handleQuickStartDuoWithPartner}
-                    className="mt-3 w-full py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                  >
-                    <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
-                    <span>Quick Start with {partner.display_name}</span>
-                  </button>
-                )}
-
-                {/* Join with Code input */}
-                <form onSubmit={handleJoinDuoWithCode} className="mt-4 pt-3 border-t border-zinc-100">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={joinCodeInput}
-                      onChange={(e) => {
-                        setJoinCodeInput(e.target.value.toUpperCase());
-                        setJoinError(null);
-                      }}
-                      placeholder="Enter Code (e.g. P7K4)"
-                      className="flex-1 px-3 py-2 text-xs font-mono uppercase rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500/30"
-                    />
-                    <button
-                      type="submit"
-                      disabled={joinCodeInput.trim().length < 3}
-                      className="px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer transition-colors"
-                    >
-                      Join
-                    </button>
+              {/* Secondary Action: Join a room */}
+              <div className="w-full p-4 sm:p-5 rounded-2xl bg-white border-2 border-stone-200 hover:border-stone-400 shadow-xs transition-all text-left">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-heading font-bold text-base text-stone-900">
+                      Join a room
+                    </p>
+                    <p className="text-xs text-stone-500 font-sans">
+                      with a code
+                    </p>
                   </div>
-                  {joinError && (
-                    <p className="text-[11px] text-red-500 mt-1">{joinError}</p>
-                  )}
+                </div>
+                <form onSubmit={handleJoinDuoWithCode} className="mt-3 flex items-center gap-2">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={joinCodeInput}
+                    onChange={(e) => {
+                      setJoinCodeInput(e.target.value.toUpperCase());
+                      setJoinError(null);
+                    }}
+                    placeholder="ENTER CODE (E.G. P7K4)"
+                    className="flex-1 px-3.5 py-2 text-xs font-mono font-bold tracking-wider uppercase rounded-xl border border-stone-300 bg-stone-50 text-stone-900 placeholder:text-stone-400 focus:outline-hidden focus:border-stone-900"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    type="submit"
+                    disabled={joinCodeInput.trim().length < 3}
+                    className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer transition-colors"
+                  >
+                    Join
+                  </motion.button>
                 </form>
+                {joinError && (
+                  <p className="text-[11px] text-rose-500 mt-1.5 font-mono">{joinError}</p>
+                )}
               </div>
 
-              <button
-                onClick={handleStartDuoWithCode}
-                className="mt-5 w-full py-3.5 px-4 rounded-2xl bg-red-500 hover:bg-red-600 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all hover:scale-101 active:scale-99"
+              {/* Other ways to play */}
+              <div className="space-y-2.5 pt-2">
+                <p className="text-xs font-mono font-bold uppercase tracking-wider text-stone-500 text-center sm:text-left">
+                  Other ways to play
+                </p>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {/* Just me */}
+                  <motion.button
+                    whileHover={{ y: -4, scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 24 }}
+                    type="button"
+                    onClick={handleStartSolo}
+                    className="p-3.5 rounded-2xl bg-[#FFEBEF] hover:bg-[#FFDFE7] border border-rose-200 flex flex-col items-center justify-center text-center cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-xs flex items-center justify-center text-rose-500 mb-2 group-hover:scale-110 transition-transform">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-heading font-bold text-stone-900">Just me</span>
+                  </motion.button>
+
+                  {/* Friends, one camera */}
+                  <motion.button
+                    whileHover={{ y: -4, scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 24 }}
+                    type="button"
+                    onClick={handleStartSolo}
+                    className="p-3.5 rounded-2xl bg-[#E8F3FF] hover:bg-[#DBECFF] border border-blue-200 flex flex-col items-center justify-center text-center cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-xs flex items-center justify-center text-blue-600 mb-2 group-hover:scale-110 transition-transform">
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-heading font-bold text-stone-900 leading-tight">Friends, 1 cam</span>
+                  </motion.button>
+
+                  {/* Group of 4 */}
+                  <motion.button
+                    whileHover={{ y: -4, scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 24 }}
+                    type="button"
+                    onClick={handleStartDuoWithCode}
+                    className="p-3.5 rounded-2xl bg-[#F0EBFF] hover:bg-[#E5DDFF] border border-purple-200 flex flex-col items-center justify-center text-center cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-xs flex items-center justify-center text-purple-600 mb-2 group-hover:scale-110 transition-transform">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-heading font-bold text-stone-900">Group of 4</span>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Physical 3D Photobooth Dispenser with 4-Cut Strip */}
+            <motion.div
+              initial={{ y: -40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 320, damping: 26 }}
+              className="lg:col-span-5 flex flex-col items-center justify-center relative py-6"
+            >
+              {/* Dispenser Status Indicator Badge */}
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 border border-stone-700 shadow-md mb-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399] animate-pulse" />
+                <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-stone-300">
+                  LENSBOOTH DISPENSER READY
+                </span>
+              </div>
+
+              {/* Dispenser Hardware Slot Mouth */}
+              <div className="w-64 sm:w-72 h-7 bg-gradient-to-b from-stone-800 via-stone-900 to-black rounded-full shadow-[0_12px_28px_rgba(0,0,0,0.35),inset_0_1px_2px_rgba(255,255,255,0.2)] relative z-20 flex items-center justify-center border border-stone-700">
+                <div className="w-48 sm:w-52 h-2 bg-black rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] relative overflow-hidden flex items-center justify-center">
+                  <motion.div
+                    className="absolute inset-x-0 h-full bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                  />
+                </div>
+              </div>
+
+              {/* Emerging 4-Cut Vertical Photo Strip with realistic vertical dispensing slide-down */}
+              <motion.div
+                initial={{ y: -260, opacity: 0 }}
+                animate={{ y: -6, opacity: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 240,
+                  damping: 24,
+                  delay: 0.35,
+                }}
+                className="w-52 sm:w-56 bg-white p-2.5 rounded-b-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] space-y-2 border-x-2 border-b-2 border-stone-200 relative z-10"
               >
-                <Share2 className="w-4 h-4" />
-                <span>Invite Duo with Code →</span>
-              </button>
+                {[
+                  { src: "/booth/monkey-heart.jpg", alt: "Heart hands pose", caption: "FRAME #01" },
+                  { src: "/booth/monkey-point.jpg", alt: "Pointing pose", caption: "FRAME #02" },
+                  { src: "/booth/monkey-shock.jpg", alt: "Scream surprise pose", caption: "FRAME #03" },
+                  { src: "/booth/monkey-heart.jpg", alt: "Big smile pose", caption: "FRAME #04" },
+                ].map((frame, idx) => (
+                  <div
+                    key={idx}
+                    className="relative aspect-4/3 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shadow-xs group"
+                  >
+                    <motion.div
+                      initial={{
+                        filter: "sepia(0.8) saturate(0.35) contrast(0.85) brightness(1.15)",
+                      }}
+                      animate={{
+                        filter: "sepia(0) saturate(1.15) contrast(1.05) brightness(1)",
+                      }}
+                      transition={{
+                        duration: 2.2,
+                        delay: 0.9 + idx * 0.45,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className="w-full h-full relative"
+                    >
+                      <Image
+                        src={frame.src}
+                        alt={frame.alt}
+                        fill
+                        className="object-cover"
+                        sizes="220px"
+                      />
+                    </motion.div>
+
+                    {/* Developing Shimmer Overlay */}
+                    <motion.div
+                      initial={{ opacity: 0.7, top: "-10%" }}
+                      animate={{ opacity: 0, top: "110%" }}
+                      transition={{
+                        duration: 1.6,
+                        delay: 0.9 + idx * 0.45,
+                        ease: "easeInOut",
+                      }}
+                      className="absolute inset-x-0 h-6 bg-gradient-to-b from-transparent via-white/60 to-transparent pointer-events-none"
+                    />
+
+                    {/* Frame index pill */}
+                    <span className="absolute bottom-1 right-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-xs text-[8px] font-mono font-bold text-white tracking-wider">
+                      {frame.caption}
+                    </span>
+                  </div>
+                ))}
+
+                <div className="pt-1.5 pb-0.5 text-center">
+                  <p className="text-[10px] font-mono tracking-widest text-stone-500 font-bold uppercase">
+                    PAIRFECT : MEMORIES
+                  </p>
+                  <p className="text-[9px] font-mono text-stone-400">
+                    {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </p>
+                </div>
+              </motion.div>
             </motion.div>
           </div>
         </main>
@@ -2005,7 +2138,10 @@ export default function LensBoothView({
               <div className="flex items-center gap-3 overflow-x-auto pb-1">
                 {/* None Filter */}
                 <div className="flex flex-col items-center">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.12, y: -2 }}
+                    whileTap={{ scale: 0.94 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     onClick={() => setResultFilter("none")}
                     className={`w-14 h-14 rounded-full border-2 bg-white flex items-center justify-center cursor-pointer transition-all ${
                       resultFilter === "none"
@@ -2024,7 +2160,7 @@ export default function LensBoothView({
                       <circle cx="12" cy="12" r="9" />
                       <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
                     </svg>
-                  </button>
+                  </motion.button>
                   <span className="text-xs font-semibold text-zinc-800 mt-1.5">
                     None
                   </span>
@@ -2033,7 +2169,10 @@ export default function LensBoothView({
                 {/* Styled Look Filters */}
                 {BOOTH_FILTERS.filter((f) => f.key !== "none").map((f) => (
                   <div key={f.key} className="flex flex-col items-center shrink-0">
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.12, y: -2 }}
+                      whileTap={{ scale: 0.94 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
                       onClick={() => setResultFilter(f.key)}
                       className={`relative w-14 h-14 rounded-full overflow-hidden border-2 cursor-pointer transition-all ${
                         resultFilter === f.key
@@ -2050,7 +2189,7 @@ export default function LensBoothView({
                       <span className="absolute bottom-0 inset-x-0 bg-black/75 text-white text-[8px] font-bold text-center py-0.5 tracking-wider">
                         LOOK
                       </span>
-                    </button>
+                    </motion.button>
                     <span className="text-[11px] font-medium text-zinc-700 mt-1.5">
                       {f.label}
                     </span>
@@ -2066,9 +2205,12 @@ export default function LensBoothView({
               </span>
               <div className="flex items-center gap-3">
                 {/* Card 1: Classic */}
-                <button
+                <motion.button
+                  whileHover={{ y: -5, scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 25 }}
                   onClick={() => setSelectedStripStyle("classic")}
-                  className={`w-24 sm:w-28 h-44 sm:h-48 rounded-2xl border-2 bg-white p-2.5 flex flex-col items-center justify-between cursor-pointer transition-all hover:scale-102 ${
+                  className={`w-24 sm:w-28 h-44 sm:h-48 rounded-2xl border-2 bg-white p-2.5 flex flex-col items-center justify-between cursor-pointer transition-all ${
                     selectedStripStyle === "classic"
                       ? "border-zinc-900 ring-2 ring-zinc-900/10 shadow-sm"
                       : "border-zinc-200 hover:border-zinc-300"
@@ -2082,12 +2224,15 @@ export default function LensBoothView({
                   <span className="text-xs font-bold text-zinc-800 pt-2">
                     Classic
                   </span>
-                </button>
+                </motion.button>
 
                 {/* Card 2: Retro Film */}
-                <button
+                <motion.button
+                  whileHover={{ y: -5, scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 25 }}
                   onClick={() => setSelectedStripStyle("retro_film")}
-                  className={`w-24 sm:w-28 h-44 sm:h-48 rounded-2xl border-2 bg-white p-2.5 flex flex-col items-center justify-between cursor-pointer transition-all hover:scale-102 ${
+                  className={`w-24 sm:w-28 h-44 sm:h-48 rounded-2xl border-2 bg-white p-2.5 flex flex-col items-center justify-between cursor-pointer transition-all ${
                     selectedStripStyle === "retro_film"
                       ? "border-zinc-900 ring-2 ring-zinc-900/10 shadow-sm"
                       : "border-zinc-200 hover:border-zinc-300"
@@ -2101,12 +2246,15 @@ export default function LensBoothView({
                   <span className="text-xs font-bold text-zinc-800 pt-2">
                     Retro Film
                   </span>
-                </button>
+                </motion.button>
 
                 {/* Card 3: Web Rush */}
-                <button
+                <motion.button
+                  whileHover={{ y: -5, scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 25 }}
                   onClick={() => setSelectedStripStyle("web_rush")}
-                  className={`w-24 sm:w-28 h-44 sm:h-48 rounded-2xl border-2 bg-white p-2.5 flex flex-col items-center justify-between cursor-pointer transition-all hover:scale-102 ${
+                  className={`w-24 sm:w-28 h-44 sm:h-48 rounded-2xl border-2 bg-white p-2.5 flex flex-col items-center justify-between cursor-pointer transition-all ${
                     selectedStripStyle === "web_rush"
                       ? "border-red-500 ring-2 ring-red-500/20 shadow-sm"
                       : "border-zinc-200 hover:border-zinc-300"
@@ -2120,10 +2268,13 @@ export default function LensBoothView({
                   <span className="text-xs font-bold text-red-600 pt-2">
                     Web Rush
                   </span>
-                </button>
+                </motion.button>
 
                 {/* Cycle Style Next Arrow */}
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.15, rotate: 12 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
                   onClick={() => {
                     const styles: StripStyleKey[] = [
                       "classic",
@@ -2134,31 +2285,37 @@ export default function LensBoothView({
                       (styles.indexOf(selectedStripStyle) + 1) % styles.length;
                     setSelectedStripStyle(styles[nextIdx]);
                   }}
-                  className="w-9 h-9 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 hover:bg-zinc-50 cursor-pointer transition-transform hover:scale-105"
+                  className="w-9 h-9 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 hover:bg-zinc-50 cursor-pointer"
                   title="Next style"
                 >
                   <ChevronRight className="w-4 h-4" />
-                </button>
+                </motion.button>
               </div>
             </div>
 
             {/* ACTION BUTTONS */}
             <div className="space-y-3 pt-2">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
                 disabled={isExporting}
                 onClick={handleDownload}
-                className="w-full py-3.5 px-6 rounded-2xl bg-black hover:bg-zinc-800 text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
+                className="w-full py-3.5 px-6 rounded-2xl bg-black hover:bg-zinc-800 text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
                 <span>
                   {isExporting ? "Rendering 300 DPI Strip..." : "Download Strip"}
                 </span>
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
                 disabled={isPrinting}
                 onClick={triggerPrintAnimation}
-                className="w-full py-2.5 px-6 rounded-2xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-300/80 text-zinc-700 font-semibold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
+                className="w-full py-2.5 px-6 rounded-2xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-300/80 text-zinc-700 font-semibold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Printer className="w-3.5 h-3.5 text-zinc-600" />
                 <span>
@@ -2166,24 +2323,30 @@ export default function LensBoothView({
                     ? "Printing Strip In Progress..."
                     : "Watch Print Animation Again"}
                 </span>
-              </button>
+              </motion.button>
 
               <div className="flex items-center justify-center gap-4 pt-1">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.06, x: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   onClick={handleRetake}
                   className="text-xs font-medium text-zinc-500 hover:text-zinc-900 flex items-center gap-1.5 cursor-pointer py-1.5 transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Retake Snaps</span>
-                </button>
+                </motion.button>
                 <span className="text-zinc-300">•</span>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.06, x: 2 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   onClick={handleBackToLobby}
                   className="text-xs font-medium text-zinc-500 hover:text-zinc-900 flex items-center gap-1.5 cursor-pointer py-1.5 transition-colors"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Change Mode</span>
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>

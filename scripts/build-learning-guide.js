@@ -13,7 +13,7 @@ const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pairfect — Complete Learning Documentation & Architectural Guide</title>
+  <title>Pairfect - Complete Learning Documentation & Architectural Guide</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap');
 
@@ -27,7 +27,7 @@ const htmlContent = `<!DOCTYPE html>
         color: #8C7A70;
       }
       @bottom-left {
-        content: "Pairfect — Full Codebase & Architecture Guide";
+        content: "Pairfect - Full Codebase & Architecture Guide";
         font-family: 'Inter', sans-serif;
         font-size: 8pt;
         color: #8C7A70;
@@ -415,7 +415,7 @@ const htmlContent = `<!DOCTYPE html>
   <!-- COVER PAGE -->
   <div class="cover-page">
     <div class="cover-badge">Pairfect Architecture & Mastery Guide</div>
-    <h1 class="cover-title">Pairfect — Codebase Master Reference</h1>
+    <h1 class="cover-title">Pairfect - Codebase Master Reference</h1>
     <p class="cover-subtitle">A Complete, Deep Technical Learning Guide to Full-Stack Architecture, React 19 / Next.js 16, Supabase, Realtime WebSockets, WebRTC, Database Security, and Production Deployment.</p>
 
     <div class="cover-meta">
@@ -438,10 +438,10 @@ const htmlContent = `<!DOCTYPE html>
     <div class="toc-grid">
       <div class="toc-item"><a href="#ch1">1. Complete Project Audit & Flow</a> <span>03</span></div>
       <div class="toc-item"><a href="#ch2">2. Executive Summary & Architecture</a> <span>05</span></div>
-      <div class="toc-item"><a href="#ch3">3. Technology Stack — Deep "WHY"</a> <span>07</span></div>
+      <div class="toc-item"><a href="#ch3">3. Technology Stack - Deep "WHY"</a> <span>07</span></div>
       <div class="toc-item"><a href="#ch4">4. Frontend Deep Dive & Tree</a> <span>11</span></div>
       <div class="toc-item"><a href="#ch5">5. Important Components Breakdown</a> <span>14</span></div>
-      <div class="toc-item"><a href="#ch6">6. Functions — Teach Me WHY</a> <span>20</span></div>
+      <div class="toc-item"><a href="#ch6">6. Functions - Teach Me WHY</a> <span>20</span></div>
       <div class="toc-item"><a href="#ch7">7. React 19 & Next.js 16 Concepts</a> <span>25</span></div>
       <div class="toc-item"><a href="#ch8">8. Backend Deep Dive & Handlers</a> <span>29</span></div>
       <div class="toc-item"><a href="#ch9">9. Complete API Documentation</a> <span>32</span></div>
@@ -487,36 +487,36 @@ const htmlContent = `<!DOCTYPE html>
 |                                                                                                    |
 |  [1] USER ACTION (Click, Keypress, Pointer Draw, Camera Snap)                                     |
 |         │                                                                                          |
-|         ▼                                                                                          |
+|         �-�                                                                                          |
 |  [2] REACT CLIENT COMPONENT (src/app/*/page.tsx, src/components/*.tsx)                             |
 |         │                                                                                          |
-|         ▼                                                                                          |
+|         �-�                                                                                          |
 |  [3] EVENT HANDLER / DISPATCHER (e.g. handleSignup(), triggerCaptureSequence(), submitArgument())  |
 |         │                                                                                          |
-|         ▼                                                                                          |
+|         �-�                                                                                          |
 |  [4] CLIENT VALIDATION & SANITIZATION (Email trimming, invite code verification, schema checks)    |
 |         │                                                                                          |
 |         ├──────────────────────────────────────────┬──────────────────────────────────────────┐    |
-|         ▼                                          ▼                                          ▼    |
+|         �-�                                          �-�                                          �-�    |
 |  [5A] SUPABASE CLIENT API                  [5B] NEXT.JS ROUTE HANDLER                 [5C] REALTIME CHANNEL|
 |  (Direct PostgREST via RLS)                (/api/disputes/judge, /api/spotify)        (supabase.channel)   |
 |         │                                          │                                          │    |
-|         ▼                                          ▼                                          ▼    |
+|         �-�                                          �-�                                          �-�    |
 |  [6A] POSTGRESQL + RLS POLICIES            [6B] BACKEND / GEMINI AI PROCESSING        [6C] WEBSOCKET PEER  |
 |  (pair_id tenant isolation)                (Server-side secret execution)             (Instant sync)       |
 |         │                                          │                                          │    |
 |         └──────────────────────────────────────────┴──────────────────────────────────────────┘    |
 |         │                                                                                          |
-|         ▼                                                                                          |
+|         �-�                                                                                          |
 |  [7] SECURE JSON / STREAM RESPONSE                                                                 |
 |         │                                                                                          |
-|         ▼                                                                                          |
+|         �-�                                                                                          |
 |  [8] REACT STATE UPDATE (useState, useReducer, React Context dispatch)                             |
 |         │                                                                                          |
-|         ▼                                                                                          |
+|         �-�                                                                                          |
 |  [9] FRAMER MOTION & DOM RE-RENDER (Optimistic UI updates, spring animations)                      |
 |         │                                                                                          |
-|         ▼                                                                                          |
+|         �-�                                                                                          |
 |  [10] PERSISTENT CACHE & TELEMETRY (LocalStorage, GA4 custom event, Vercel Analytics)               |
 +----------------------------------------------------------------------------------------------------+
   </div>
@@ -557,7 +557,7 @@ const htmlContent = `<!DOCTYPE html>
 |     +--------------┬-------------+                     +--------------┬-------------+                   |
 |                    │                                                  │                                 |
 |                    │   HTTPS Requests (Next.js SSR / Static Assets)   │                                 |
-|                    ▼                                                  ▼                                 |
+|                    �-�                                                  �-�                                 |
 |     +───────────────────────────────────────────────────────────────────────────────+                   |
 |     |                         VERCEL EDGE NETWORK / CDN                             |                   |
 |     |  - Middleware (src/proxy.ts): Session validation & Route protection           |                   |
@@ -567,7 +567,7 @@ const htmlContent = `<!DOCTYPE html>
 |                             │                                       │                                   |
 |       Serverless Functions  │                                       │ Client-Direct PostgREST Queries   |
 |       (Route Handlers)      │                                       │ (Authenticated with User JWT)     |
-|                             ▼                                       ▼                                   |
+|                             �-�                                       �-�                                   |
 |     +───────────────────────────────────+           +───────────────────────────────────+               |
 |     |      VERCEL ROUTE HANDLERS        |           |      SUPABASE MANAGED CLOUD       |               |
 |     |  - /api/disputes/judge (Gemini)   |           |  - GoTrue Auth (JWT & Refresh)    |               |
@@ -590,7 +590,7 @@ const htmlContent = `<!DOCTYPE html>
   <div class="page-break"></div>
 
   <!-- CHAPTER 3 -->
-  <h2 id="ch3">3. Technology Stack — Deep "WHY" Analysis</h2>
+  <h2 id="ch3">3. Technology Stack - Deep "WHY" Analysis</h2>
   <p><span class="badge badge-intermediate">🟡 Intermediate</span></p>
 
   <table>
@@ -758,7 +758,7 @@ src/
   <div class="page-break"></div>
 
   <!-- CHAPTER 6 -->
-  <h2 id="ch6">6. Functions — Teach Me WHY</h2>
+  <h2 id="ch6">6. Functions - Teach Me WHY</h2>
   <p><span class="badge badge-advanced">🔴 Advanced</span></p>
 
   <h3>Function: <code>drawImageCover()</code> (<code>src/app/photo-booth/page.tsx</code>)</h3>
@@ -889,7 +889,7 @@ src/
 |   |      auth.users       | (Supabase Managed Authentication)                                      |
 |   +-----------┬-----------+                                                                        |
 |               │ 1:1 Cascade                                                                        |
-|               ▼                                                                                    |
+|               �-�                                                                                    |
 |   +-----------------------+                                                                        |
 |   |     public.users      |                                                                        |
 |   |  - id (PK, UUID)      |<───────────────────────┐                                               |
@@ -899,7 +899,7 @@ src/
 |   +-----------┬-----------+                        │                                               |
 |               │                                    │                                               |
 |               │ 1:N (user_a_id / user_b_id)        │                                               |
-|               ▼                                    │                                               |
+|               �-�                                    │                                               |
 |   +-----------------------+                        │                                               |
 |   |     public.pairs      |                        │                                               |
 |   |  - id (PK, UUID)      |                        │                                               |
@@ -910,14 +910,14 @@ src/
 |   +-----------┬-----------+                        │                                               |
 |               │                                    │                                               |
 |               ├─────────────────┬──────────────────┼─────────────────┬──────────────────┐          |
-|               ▼ 1:N             ▼ 1:N              ▼ 1:N             ▼ 1:N              ▼ 1:N      |
+|               �-� 1:N             �-� 1:N              �-� 1:N             �-� 1:N              �-� 1:N      |
 |   +-----------------------+ +------------------+ +-----------------+ +----------------+ +---------+|
 |   |       mood_logs       | |  shared_moments  | | gratitude_entry | |  love_letters  | | canvases ||
 |   | - id (PK)             | | - id (PK)        | | - id (PK)       | | - id (PK)      | | - id(PK) ||
 |   | - pair_id (FK)        | | - pair_id (FK)   | | - pair_id (FK)  | | - pair_id (FK) | | -pair_id ||
 |   | - mood (ENUM)         | | - photo_url      | | - note (TEXT)   | | - letter_body  | +----+----+|
 |   | - intensity (1-5)     | | - moment_date    | | - revealed (BOL)| | - sticker_url  |      │ 1:N  |
-|   +-----------------------+ +------------------+ +-----------------+ +----------------+      ▼      |
+|   +-----------------------+ +------------------+ +-----------------+ +----------------+      �-�      |
 |                                                                                         +---------+|
 |                                                                                         | strokes ||
 |                                                                                         +---------+|
@@ -979,17 +979,17 @@ create policy "Users can view mood logs if in the active pair"
   <div class="ascii-diagram">
 [USER] -> Submits Email/Password or Google OAuth
    │
-   ▼
+   �-�
 [SUPABASE AUTH] -> Issues JWT (Access Token 1hr) + Sets HttpOnly Refresh Cookie
    │
-   ▼
+   �-�
 [NEXT.JS PROXY MIDDLEWARE (src/proxy.ts)] -> Validates session on edge server
    │
-   ├─► If Unauthenticated & Route is Protected -> Redirects to /login
-   ├─► If Authenticated & Route is Auth Form -> Redirects to /dashboard
-   └─► If Valid -> Passes request to Next.js App Router
+   ├─�-� If Unauthenticated & Route is Protected -> Redirects to /login
+   ├─�-� If Authenticated & Route is Auth Form -> Redirects to /dashboard
+   └─�-� If Valid -> Passes request to Next.js App Router
    │
-   ▼
+   �-�
 [API ROUTE / POSTGREST] -> Decodes JWT -> Extracts auth.uid() -> Evaluates RLS -> Returns Data
   </div>
 
@@ -1005,18 +1005,18 @@ create policy "Users can view mood logs if in the active pair"
   <div class="ascii-diagram">
 Partner A (Pointer Move Event)
    │
-   ▼
+   �-�
 Canvas Context (Smooth Bézier Curves via requestAnimationFrame)
    │
-   ▼
+   �-�
 Supabase Realtime Channel: "pair_canvas_${pairId}"
    │
-   ├──► [BROADCAST (Ephemeral)] -> Instant WebSockets to Partner B (<50ms latency)
+   ├──�-� [BROADCAST (Ephemeral)] -> Instant WebSockets to Partner B (<50ms latency)
    │                                     │
-   │                                     ▼
+   │                                     �-�
    │                              Partner B Canvas (Draws incoming coordinates immediately)
    │
-   └──► [DEBOUNCED DATABASE FLUSH] -> Writes compressed stroke batch to public.canvas_strokes
+   └──�-� [DEBOUNCED DATABASE FLUSH] -> Writes compressed stroke batch to public.canvas_strokes
   </div>
 
   <div class="page-break"></div>
@@ -1029,16 +1029,16 @@ Supabase Realtime Channel: "pair_canvas_${pairId}"
   <div class="ascii-diagram">
 Local VS Code Codebase (C:\Users\2006s\.gemini\antigravity\scratch\hoedex)
    │
-   ▼  git commit -m "..." && git push origin main
+   �-�  git commit -m "..." && git push origin main
 GitHub Repository (https://github.com/SAJAL-MALHOTRA/Pairfect---Your-lovespace)
    │
-   ▼  Automatic GitHub Webhook Trigger
+   �-�  Automatic GitHub Webhook Trigger
 Vercel Production CI/CD Builder
    │
-   ├──► 1. Runs "next build" -> Generates Static Pages (SSG) & Optimized RSC Manifests
-   ├──► 2. Runs Turbopack Tree-Shaking -> Compresses JS Chunks
-   ├──► 3. Uploads Serverless Handlers to Vercel Global Edge Network
-   └──► 4. Propagates Edge SSL Certificate to Custom Domain: https://pairfect.site
+   ├──�-� 1. Runs "next build" -> Generates Static Pages (SSG) & Optimized RSC Manifests
+   ├──�-� 2. Runs Turbopack Tree-Shaking -> Compresses JS Chunks
+   ├──�-� 3. Uploads Serverless Handlers to Vercel Global Edge Network
+   └──�-� 4. Propagates Edge SSL Certificate to Custom Domain: https://pairfect.site
   </div>
 
   <div class="page-break"></div>
@@ -1071,35 +1071,35 @@ Vercel Production CI/CD Builder
   <!-- CHAPTER 22 -->
   <h2 id="ch22">22. Beginner → Intermediate → Advanced Learning Roadmap</h2>
 
-  <h3>Level 1 — Fundamentals (Week 1–2)</h3>
+  <h3>Level 1 - Fundamentals (Week 1-2)</h3>
   <ul>
     <li><strong>TypeScript Strict Types:</strong> Understand interfaces, generics, and return types in <code>src/lib/seo/types.ts</code>.</li>
     <li><strong>React 19 Hooks:</strong> Master <code>useState</code>, <code>useEffect</code>, <code>useCallback</code>, <code>useMemo</code>, <code>useRef</code>.</li>
     <li><strong>Tailwind CSS v4 & CSS Variables:</strong> Study how theme tokens in <code>src/app/globals.css</code> cascade across components.</li>
   </ul>
 
-  <h3>Level 2 — Next.js 16 App Router Architecture (Week 3–4)</h3>
+  <h3>Level 2 - Next.js 16 App Router Architecture (Week 3-4)</h3>
   <ul>
     <li><strong>Server vs Client Components:</strong> Understand why page wrappers are server components while interactive widgets use <code>"use client"</code>.</li>
     <li><strong>Route Handlers & Serverless APIs:</strong> Study request parsing, status codes, and error catching in <code>src/app/api/</code>.</li>
     <li><strong>Edge Middleware:</strong> Study how <code>src/proxy.ts</code> inspects cookies and protects authenticated routes.</li>
   </ul>
 
-  <h3>Level 3 — Database, Security & Supabase (Week 5–6)</h3>
+  <h3>Level 3 - Database, Security & Supabase (Week 5-6)</h3>
   <ul>
     <li><strong>PostgreSQL Schema Design:</strong> Study <code>supabase/schema.sql</code>, foreign keys, cascades, and indexes.</li>
     <li><strong>Row Level Security (RLS):</strong> Understand how PostgreSQL policies isolate couple data mathematically.</li>
     <li><strong>PL/pgSQL Functions & Triggers:</strong> Learn how <code>SECURITY DEFINER</code> functions bypass RLS safely.</li>
   </ul>
 
-  <h3>Level 4 — Realtime WebSockets & Graphics (Week 7–8)</h3>
+  <h3>Level 4 - Realtime WebSockets & Graphics (Week 7-8)</h3>
   <ul>
     <li><strong>Supabase Realtime Channels:</strong> Learn broadcast vs presence vs postgres changes in <code>src/app/match-game/page.tsx</code>.</li>
     <li><strong>HTML5 2D Canvas API:</strong> Master coordinate math, aspect-ratio cropping (<code>drawImageCover</code>), and 300 DPI exports.</li>
     <li><strong>Three.js / React Three Fiber:</strong> Explore 3D scenes, meshes, and lighting in <code>src/components/memory-desk.tsx</code>.</li>
   </ul>
 
-  <h3>Level 5 — Production, AI & Scale (Week 9–10)</h3>
+  <h3>Level 5 - Production, AI & Scale (Week 9-10)</h3>
   <ul>
     <li><strong>LLM Structured Outputs:</strong> Learn Gemini 2.5 Flash prompt engineering and schema validation.</li>
     <li><strong>Performance Optimization:</strong> Bundle splitting, dynamic imports, debouncing, and rate limiting.</li>
@@ -1160,7 +1160,7 @@ Vercel Production CI/CD Builder
   </div>
 
   <div style="text-align:center; margin-top:40px; padding:20px; border-top:2px solid #8E2B45; font-family:'Playfair Display',serif; color:#591629;">
-    <h3>Pairfect — Your Private Love Sanctuary</h3>
+    <h3>Pairfect - Your Private Love Sanctuary</h3>
     <p style="font-size:9pt; font-family:'Inter',sans-serif; color:#8C7A70;">Engineered with love by Sajal Malhotra. Master reference guide verified and compiled.</p>
   </div>
 

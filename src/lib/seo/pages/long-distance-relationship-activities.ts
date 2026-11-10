@@ -24,7 +24,7 @@ export const page: SEOPage = {
     },
     {
       heading: "Maintaining Emotional Connection Across Timezones",
-      body: "When you can't read your partner's body language at the end of a long day, you have to be more explicit about your feelings. Daily check-ins are crucial. Discussing not just what you did, but how you felt, helps maintain emotional intimacy. Finding ways to show you're thinking of them—whether through a spontaneous message, a shared playlist, or a digital love letter—reassures your partner of your commitment and presence."
+      body: "When you can't read your partner's body language at the end of a long day, you have to be more explicit about your feelings. Daily check-ins are crucial. Discussing not just what you did, but how you felt, helps maintain emotional intimacy. Finding ways to show you're thinking of them-whether through a spontaneous message, a shared playlist, or a digital love letter-reassures your partner of your commitment and presence."
     },
     {
       heading: "Activities That Work Across Any Distance",
@@ -38,7 +38,7 @@ export const page: SEOPage = {
   faqs: [
     {
       question: "How often should long-distance couples communicate?",
-      answer: "Communication frequency depends on the couple, but daily check-ins—even brief ones—are generally recommended to maintain a sense of shared daily life."
+      answer: "Communication frequency depends on the couple, but daily check-ins-even brief ones-are generally recommended to maintain a sense of shared daily life."
     },
     {
       question: "What is the hardest part of a long-distance relationship?",

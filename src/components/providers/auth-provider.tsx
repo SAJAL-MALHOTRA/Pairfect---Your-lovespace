@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useRouter, usePathname } from "next/navigation";
+import { autoRecoverVaultKeyIfMissing } from "@/lib/crypto/e2ee";
 
 interface UserProfile {
   id: string;
@@ -73,15 +74,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const inFlightFetchRef = useRef<string | null>(null);
+  const inFlightPromiseRef = useRef<Promise<void> | null>(null);
   const loadedUserRef = useRef<string | null>(null);
 
   const fetchUserData = async (currentUser: User) => {
-    // Deduplicate in-flight fetch for the exact same user ID
-    if (inFlightFetchRef.current === currentUser.id) return;
-    inFlightFetchRef.current = currentUser.id;
+    // Await any in-flight fetch for this user session
+    if (inFlightPromiseRef.current) {
+      return inFlightPromiseRef.current;
+    }
 
-    try {
+    const fetchPromise = (async () => {
+      try {
       // 1. Fetch user profile
       let { data: profileData } = await supabase
         .from("users")
@@ -150,13 +153,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setPair(pairData);
       setPartner(partnerData);
       loadedUserRef.current = currentUser.id;
-    } catch (err) {
-      console.error("Error loading user profile or pair details:", err);
-      setPair(null);
-      setPartner(null);
-    } finally {
-      inFlightFetchRef.current = null;
-    }
+
+      // Silently restore zero-knowledge vault key if missing on this device
+      if (pairData?.id && pairData.status === "active" && pairData.invite_code) {
+        autoRecoverVaultKeyIfMissing(pairData.id, pairData.invite_code).catch(() => {});
+      }
+      } catch (err) {
+        console.error("Error loading user profile or pair details:", err);
+        setPair(null);
+        setPartner(null);
+      } finally {
+        inFlightPromiseRef.current = null;
+      }
+    })();
+
+    inFlightPromiseRef.current = fetchPromise;
+    return fetchPromise;
   };
 
   const refreshSession = async (showLoadingSpinner = false) => {

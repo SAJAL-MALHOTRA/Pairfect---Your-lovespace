@@ -8,10 +8,11 @@ import { createClient } from "@/lib/supabase/client";
 import {
   Heart, Sparkles, Check, ArrowRight, RotateCcw, Share2, ArrowLeft,
   Users, Lock, Shield, Trophy, PartyPopper, Smile, Loader2, Play,
-  Copy, Bot, UserCheck
+  Copy, Bot, UserCheck, Download, Bookmark, CheckCircle2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MATCH_QUESTIONS, MatchQuestion, getMatchFeedback } from "@/lib/match-game/questions";
+import AmbientSoundscapeBar from "@/components/ambient-soundscape-bar";
 
 type GamePhase = "lobby" | "playing" | "locked" | "comparing" | "revealed" | "completed";
 
@@ -30,6 +31,11 @@ export default function LoveMatchGamePage() {
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
   const [isSoloMode, setIsSoloMode] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Keepsake Card State
+  const [pinnedToMemories, setPinnedToMemories] = useState(false);
+  const [isSavingMemory, setIsSavingMemory] = useState(false);
+  const [isDownloadingCard, setIsDownloadingCard] = useState(false);
 
   // Guest & Room Code State
   const [roomCode, setRoomCode] = useState<string>("");
@@ -161,25 +167,31 @@ export default function LoveMatchGamePage() {
 
   // ── 3. Reveal Trigger When Both Lock In ──
   useEffect(() => {
-    if (myAnswer && partnerAnswer && phase !== "revealed" && phase !== "completed") {
+    if (myAnswer && partnerAnswer && (phase === "locked" || phase === "playing")) {
       setPhase("comparing");
 
       const isMatch = myAnswer === partnerAnswer;
-      const newHistory = [...matchHistory, {
-        qIndex: currentQIndex,
-        isMatch,
-        myAns: myAnswer,
-        partnerAns: partnerAnswer,
-      }];
-      setMatchHistory(newHistory);
+      setMatchHistory((prev) => [
+        ...prev,
+        {
+          qIndex: currentQIndex,
+          isMatch,
+          myAns: myAnswer,
+          partnerAns: partnerAnswer,
+        },
+      ]);
+    }
+  }, [myAnswer, partnerAnswer, currentQIndex, phase]);
 
+  // Transition from comparing to revealed after 1600ms
+  useEffect(() => {
+    if (phase === "comparing") {
       const timer = setTimeout(() => {
         setPhase("revealed");
       }, 1600);
-
       return () => clearTimeout(timer);
     }
-  }, [myAnswer, partnerAnswer, currentQIndex, phase, matchHistory]);
+  }, [phase]);
 
   // ── 4. Animated Percentage Meter ──
   useEffect(() => {
@@ -216,6 +228,7 @@ export default function LoveMatchGamePage() {
     setPartnerAnswer(null);
     setPartnerLocked(false);
     setMatchHistory([]);
+    setPinnedToMemories(false);
     setPhase("playing");
 
     if (!solo && channelRef.current) {
@@ -296,6 +309,7 @@ export default function LoveMatchGamePage() {
     setPartnerAnswer(null);
     setPartnerLocked(false);
     setMatchHistory([]);
+    setPinnedToMemories(false);
     setPhase("playing");
 
     if (!isSoloMode && channelRef.current) {
@@ -329,6 +343,199 @@ export default function LoveMatchGamePage() {
     setGuestName(clean);
     localStorage.setItem("pairfect_guest_name", clean);
     setIsGuestPromptOpen(false);
+  };
+
+  // ── Keepsake Canvas Generator ──
+  const generateKeepsakeImage = async (
+    percent: number,
+    userA: string,
+    userB: string,
+    matchedHighlights: string[],
+    verdictTitle: string
+  ): Promise<string> => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 900;
+    canvas.height = 1180;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+
+    // 1. Warm textured background
+    ctx.fillStyle = "#FAF6F0";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Outer border
+    ctx.strokeStyle = "#E4D5C5";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
+
+    // Inner dashed ticket border
+    ctx.setLineDash([8, 6]);
+    ctx.strokeStyle = "#C9B59F";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(48, 48, canvas.width - 96, canvas.height - 96);
+    ctx.setLineDash([]);
+
+    // 2. Header & Vintage Date Stamp
+    ctx.fillStyle = "#8E3D52";
+    ctx.font = "bold 18px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("PAIRFECT KEEPSAKE · LOVE MATCH", canvas.width / 2, 105);
+
+    const dateStr = new Date().toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }).toUpperCase();
+    ctx.fillStyle = "#8C7A68";
+    ctx.font = "14px monospace";
+    ctx.fillText(dateStr, canvas.width / 2, 135);
+
+    // Divider
+    ctx.strokeStyle = "#DECBC0";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(100, 165);
+    ctx.lineTo(canvas.width - 100, 165);
+    ctx.stroke();
+
+    // 3. Couple Names
+    ctx.fillStyle = "#2D1F2D";
+    ctx.font = "bold italic 34px serif";
+    ctx.fillText(`${userA}  ♡  ${userB}`, canvas.width / 2, 230);
+
+    // 4. Big Match Score
+    ctx.fillStyle = "#8E3D52";
+    ctx.font = "italic 900 110px serif";
+    ctx.fillText(`${percent}%`, canvas.width / 2, 380);
+
+    ctx.fillStyle = "#2D1F2D";
+    ctx.font = "bold 22px monospace";
+    ctx.fillText("IN SYNC", canvas.width / 2, 425);
+
+    // Verdict Box
+    ctx.fillStyle = "#F2E8DC";
+    if (typeof (ctx as any).roundRect === "function") {
+      (ctx as any).roundRect(100, 465, canvas.width - 200, 70, 16);
+    } else {
+      ctx.rect(100, 465, canvas.width - 200, 70);
+    }
+    ctx.fill();
+
+    ctx.fillStyle = "#8E3D52";
+    ctx.font = "bold 20px serif";
+    ctx.fillText(`"${verdictTitle}"`, canvas.width / 2, 508);
+
+    // 5. Matched Highlights section
+    ctx.fillStyle = "#8C7A68";
+    ctx.font = "bold 15px monospace";
+    ctx.fillText("SYNCHRONIZED PICKS", canvas.width / 2, 595);
+
+    let currentY = 645;
+    ctx.textAlign = "left";
+    if (matchedHighlights.length > 0) {
+      matchedHighlights.slice(0, 4).forEach((item) => {
+        ctx.fillStyle = "#8E3D52";
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText("✓", 120, currentY);
+
+        ctx.fillStyle = "#3D2E35";
+        ctx.font = "17px sans-serif";
+        const truncated = item.length > 46 ? item.slice(0, 43) + "..." : item;
+        ctx.fillText(truncated, 155, currentY);
+        currentY += 55;
+      });
+    } else {
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#6E5A64";
+      ctx.font = "italic 18px serif";
+      ctx.fillText("Opposites attract: dynamic picks across every question!", canvas.width / 2, currentY + 30);
+      currentY += 70;
+    }
+
+    // 6. Footer stamp
+    ctx.textAlign = "center";
+    ctx.strokeStyle = "#DECBC0";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(100, 1030);
+    ctx.lineTo(canvas.width - 100, 1030);
+    ctx.stroke();
+
+    ctx.fillStyle = "#A38F7D";
+    ctx.font = "14px monospace";
+    ctx.fillText("PAIRFECT SANCTUARY · KEPT FOREVER", canvas.width / 2, 1070);
+
+    return canvas.toDataURL("image/png");
+  };
+
+  // ── Pin Keepsake to Memory Wall ──
+  const handlePinToMemoryWall = async () => {
+    if (!user || !pair?.id || pinnedToMemories || isSavingMemory) return;
+    try {
+      setIsSavingMemory(true);
+      const matchedHighlights = matchHistory
+        .filter((h) => h.isMatch)
+        .map((h) => {
+          const q = MATCH_QUESTIONS[h.qIndex];
+          const opt = q?.options.find((o) => o.id === h.myAns);
+          return `"${q?.question || ""}: ${opt?.text || ""}"`;
+        });
+
+      const summaryText = matchedHighlights.length > 0
+        ? `Top synced picks: ${matchedHighlights.slice(0, 3).join(", ")}.`
+        : "Different perspectives on every question: dynamic opposites attract!";
+
+      const { error } = await supabase.from("shared_moments").insert({
+        pair_id: pair.id,
+        created_by: user.id,
+        title: `Love Match: ${animatedPercentage}% In Sync 💕`,
+        description: `Played Love Match together! Matched on ${matchHistory.filter((h) => h.isMatch).length}/${matchHistory.length} questions. ${summaryText}`,
+        moment_date: new Date().toISOString().split("T")[0],
+      });
+
+      if (!error) {
+        setPinnedToMemories(true);
+      } else {
+        console.error("Failed to pin memory:", error);
+      }
+    } catch (err) {
+      console.error("Pin memory error:", err);
+    } finally {
+      setIsSavingMemory(false);
+    }
+  };
+
+  // ── Download Keepsake Image ──
+  const handleDownloadKeepsake = async () => {
+    try {
+      setIsDownloadingCard(true);
+      const matchedHighlights = matchHistory
+        .filter((h) => h.isMatch)
+        .map((h) => {
+          const q = MATCH_QUESTIONS[h.qIndex];
+          const opt = q?.options.find((o) => o.id === h.myAns);
+          return `${q?.question || ""}: ${opt?.text || ""}`;
+        });
+
+      const dataUrl = await generateKeepsakeImage(
+        animatedPercentage,
+        userName,
+        partnerName,
+        matchedHighlights,
+        getMatchFeedback(animatedPercentage).headline
+      );
+
+      if (dataUrl) {
+        const link = document.createElement("a");
+        link.download = `love-match-keepsake-${new Date().toISOString().split("T")[0]}.png`;
+        link.href = dataUrl;
+        link.click();
+      }
+    } catch (err) {
+      console.error("Failed to generate keepsake:", err);
+    } finally {
+      setIsDownloadingCard(false);
+    }
   };
 
   const isCurrentMatch = myAnswer && partnerAnswer && myAnswer === partnerAnswer;
@@ -413,73 +620,154 @@ export default function LoveMatchGamePage() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-xl mx-auto w-full p-8 sm:p-10 rounded-3xl bg-white border border-[var(--border)] shadow-md text-center space-y-6 paper-grain"
+            className="w-full max-w-5xl mx-auto py-6"
           >
-            <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 flex items-center justify-center text-3xl mx-auto shadow-xs">
-              💖
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+              
+              {/* Left Column: Heading, Badges, CTAs */}
+              <div className="lg:col-span-6 space-y-6 text-left">
+                {/* Back Link */}
+                <Link
+                  href="/play"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Activities</span>
+                </Link>
 
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-pink-600 text-[9px] font-mono font-bold uppercase tracking-wider">
-                <Sparkles className="w-3 h-3" />
-                <span>Real-Time Couple Match Game</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-display italic font-black text-[var(--text)]">
-                Love Match
-              </h1>
-              <p className="text-xs sm:text-sm text-[var(--text-soft)] max-w-md mx-auto leading-relaxed">
-                One question, two screens. Both lock in your answers privately (neither can peek), then both choices flip at the exact same second!
-              </p>
-            </div>
+                {/* Tag & Heading */}
+                <div className="space-y-3">
+                  <p className="text-xs font-mono font-bold tracking-widest text-rose-500 uppercase">
+                    FOR TWO
+                  </p>
+                  <h1 className="text-4xl sm:text-5xl font-heading font-black text-stone-900 tracking-tight leading-[1.1]">
+                    How Well Do You Know Me?
+                  </h1>
+                  <p className="text-sm sm:text-base font-sans text-stone-600 leading-relaxed">
+                    Both of you lock in privately, then it opens on both screens at the same second. How well do you really know each other?
+                  </p>
+                </div>
 
-            {/* Room Connection Card */}
-            <div className="p-4 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-between text-left">
-              <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${partnerConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`} />
-                <div>
-                  <p className="text-xs font-bold text-[var(--text)]">
-                    {partnerConnected ? partnerName : "Waiting for partner..."}
-                  </p>
-                  <p className="text-[10px] font-mono text-[var(--text-soft)]">
-                    {partnerConnected ? "Online & Synchronized" : `Room Code: ${roomCode}`}
-                  </p>
+                {/* 4 Feature Badges */}
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-semibold">
+                  <span className="px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700">
+                    26 packs
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700">
+                    surprise twists
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+                    AI-judged answers
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-700">
+                    compatibility score
+                  </span>
+                </div>
+
+                {/* Primary CTA Button: Create a room */}
+                <div className="pt-2 space-y-3">
+                  <button
+                    onClick={() => handleStartGame(false)}
+                    className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-rose-500 via-pink-500 to-sky-500 hover:opacity-95 text-white font-mono text-sm font-bold uppercase tracking-wider flex items-center justify-between shadow-md transition-all cursor-pointer group"
+                  >
+                    <span>Create a room</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </button>
+
+                  {/* Secondary Buttons Row */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="py-3 px-4 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-800 font-mono text-xs font-bold uppercase tracking-wider shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copied ? "Copied!" : "Join with a code"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStartGame(true)}
+                      className="py-3 px-4 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-800 font-mono text-xs font-bold uppercase tracking-wider shadow-2xs transition-colors cursor-pointer"
+                    >
+                      Play on this phone
+                    </button>
+                  </div>
+                </div>
+
+                {/* Room status pill */}
+                <div className="flex items-center gap-2 pt-1 text-xs font-mono text-stone-500">
+                  <span className={`w-2.5 h-2.5 rounded-full ${partnerConnected ? "bg-emerald-500" : "bg-amber-400"}`} />
+                  <span>{partnerConnected ? `Connected with ${partnerName}` : `Room Code: ${roomCode}`}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  title="Copy direct invite link"
-                  className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-white text-[10px] font-mono font-bold hover:border-[var(--burgundy)] transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                  <span>{copied ? "Link Copied!" : "Copy Link"}</span>
-                </button>
-                <span className={`text-[9px] font-mono font-bold px-2.5 py-1 rounded-full uppercase ${
-                  partnerConnected ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
-                }`}>
-                  {partnerConnected ? "READY" : "WAITING"}
-                </span>
+              {/* Right Column: Realistic Game Preview Card */}
+              <div className="lg:col-span-6 flex justify-center">
+                <div className="w-full max-w-md rounded-3xl bg-white border border-stone-200/90 shadow-xl p-5 space-y-4">
+                  
+                  {/* Top Player Status Row */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-2.5 rounded-2xl bg-white border border-rose-200 flex items-center gap-2.5 shadow-2xs">
+                      <div className="w-8 h-8 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center font-bold text-rose-600 text-xs">
+                        M
+                      </div>
+                      <div>
+                        <p className="font-heading font-bold text-xs text-stone-900 leading-tight">Mia</p>
+                        <p className="text-[10px] font-mono text-rose-500">Answers</p>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-white border border-sky-200 flex items-center gap-2.5 shadow-2xs">
+                      <div className="w-8 h-8 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center font-bold text-sky-600 text-xs">
+                        L
+                      </div>
+                      <div>
+                        <p className="font-heading font-bold text-xs text-stone-900 leading-tight">Leo</p>
+                        <p className="text-[10px] font-mono text-sky-500">Guesses</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dotted Gold Stars Line */}
+                  <div className="flex items-center justify-center gap-1.5 text-amber-400 text-xs">
+                    {"✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦".split(" ").map((s, i) => (
+                      <span key={i}>{s}</span>
+                    ))}
+                  </div>
+
+                  {/* Purple Prompt Box */}
+                  <div className="p-5 sm:p-6 rounded-2xl bg-[#5B4CD9] text-white text-center space-y-2 shadow-md">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 font-mono text-[10px] uppercase tracking-wider font-bold">
+                      guess Mia&apos;s answer
+                    </span>
+                    <h3 className="font-heading font-black text-lg text-white">
+                      What&apos;s Mia&apos;s ultimate comfort food?
+                    </h3>
+                  </div>
+
+                  {/* 4 Choices */}
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <div className="p-3 rounded-xl bg-white border border-stone-200 text-stone-800 font-heading font-bold text-xs flex items-center gap-2">
+                      <span className="font-mono text-stone-400">A</span>
+                      <span>Pizza</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#1E1B4B] text-white border border-indigo-950 font-heading font-bold text-xs flex items-center gap-2 shadow-xs">
+                      <span className="font-mono text-indigo-300">B</span>
+                      <span>Ramen / noodles</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-stone-200 text-stone-800 font-heading font-bold text-xs flex items-center gap-2">
+                      <span className="font-mono text-stone-400">C</span>
+                      <span>Ice cream</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-stone-200 text-stone-800 font-heading font-bold text-xs flex items-center gap-2">
+                      <span className="font-mono text-stone-400">D</span>
+                      <span>Mom&apos;s home cooking</span>
+                    </div>
+                  </div>
+
+                </div>
               </div>
-            </div>
 
-            {/* Launch Actions */}
-            <div className="space-y-3 pt-2">
-              <button
-                onClick={() => handleStartGame(false)}
-                className="w-full btn-journal py-3.5 text-xs font-mono font-bold justify-center cursor-pointer"
-              >
-                <span>Start 2-Player Match ▷</span>
-              </button>
-
-              <button
-                onClick={() => handleStartGame(true)}
-                className="w-full text-xs font-mono font-bold text-[var(--text-soft)] hover:text-[var(--text)] py-2 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Bot className="w-3.5 h-3.5 text-rose-500" />
-                <span>Play vs Cupid Bot (Solo Practice) ▷</span>
-              </button>
             </div>
           </motion.div>
         )}
@@ -669,85 +957,191 @@ export default function LoveMatchGamePage() {
           </div>
         )}
 
-        {/* PHASE 6: COMPLETION / FINAL SCORE SCREEN */}
+        {/* PHASE 6: COMPLETION & DIGITAL KEEPSAKE CARD */}
         {phase === "completed" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="max-w-xl mx-auto w-full p-8 sm:p-12 rounded-3xl bg-white border border-[var(--border)] shadow-xl text-center space-y-8 paper-grain"
+            className="max-w-xl mx-auto w-full space-y-6"
           >
-            <div className="space-y-2">
-              <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[var(--text-soft)] uppercase">
-                LOVE MATCH COMPLETE
-              </span>
-              <h2 className="text-xl sm:text-2xl font-sans font-bold text-[var(--text)]">
-                YOU TWO ARE
-              </h2>
-            </div>
+            {/* 1. Physical Polaroid / Keepsake Ticket */}
+            <div className="relative mx-auto w-full bg-[#FAF7F2] rounded-3xl p-7 sm:p-9 border border-[#E4D5C5] shadow-xl text-center space-y-6 paper-grain">
 
-            {/* Percentage Score */}
-            <div className="space-y-2">
-              <div className="text-6xl sm:text-7xl font-display italic font-black text-[var(--burgundy)] tracking-tight">
-                {animatedPercentage}%
+              {/* Top Ticket Header */}
+              <div className="flex items-center justify-between border-b border-dashed border-[#D5C2AF] pb-3 text-[10px] font-mono tracking-widest text-[#8C7A68]">
+                <span className="font-bold">PAIRFECT KEEPSAKE · LOVE MATCH</span>
+                <span className="uppercase">
+                  {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
               </div>
-              <p className="text-sm font-mono font-bold tracking-widest text-[var(--text)] uppercase">
-                IN SYNC 💕
-              </p>
-              <p className="text-xs font-mono text-[var(--text-soft)]">
-                {matchHistory.filter((h) => h.isMatch).length} of {matchHistory.length} answers matched
-              </p>
+
+              {/* Couple Title */}
+              <div className="flex items-center justify-center gap-3">
+                <div className="px-3.5 py-1 rounded-full bg-white border border-[#E4D5C5] flex items-center gap-2 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  <span className="font-heading font-bold text-xs text-[var(--text)]">
+                    {userName}
+                  </span>
+                </div>
+                <span className="text-rose-500 font-bold text-base">♡</span>
+                <div className="px-3.5 py-1 rounded-full bg-white border border-[#E4D5C5] flex items-center gap-2 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="font-heading font-bold text-xs text-[var(--text)]">
+                    {partnerName}
+                  </span>
+                </div>
+              </div>
+
+              {/* Big Animated Score */}
+              <div className="py-2 space-y-1">
+                <div className="text-6xl sm:text-7xl font-display italic font-black text-[var(--burgundy)] tracking-tight">
+                  {animatedPercentage}%
+                </div>
+                <p className="text-xs font-mono font-bold tracking-widest text-[var(--text)] uppercase">
+                  IN SYNC 💕
+                </p>
+                <p className="text-[11px] font-mono text-[var(--text-soft)]">
+                  {matchHistory.filter((h) => h.isMatch).length} of {matchHistory.length} answers matched
+                </p>
+              </div>
+
+              {/* Verdict Badge */}
+              <div className="px-4 py-3 rounded-2xl bg-white border border-[#E4D5C5] text-xs font-medium text-[var(--text)] shadow-2xs text-left space-y-1">
+                <p className="font-bold text-[var(--text)] flex items-center gap-1.5">
+                  <span>{getMatchFeedback(animatedPercentage).emoji}</span>
+                  <span>{getMatchFeedback(animatedPercentage).headline}</span>
+                </p>
+                <p className="text-[11px] text-[var(--text-soft)] leading-relaxed">
+                  {getMatchFeedback(animatedPercentage).message}
+                </p>
+              </div>
+
+              {/* Synchronized Picks Highlights */}
+              <div className="text-left space-y-2.5 pt-3 border-t border-dashed border-[#D5C2AF]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#8C7A68] font-bold">
+                    Synchronized Highlights
+                  </span>
+                  <span className="text-[10px] font-mono text-[#8C7A68]">
+                    {matchHistory.filter((h) => h.isMatch).length} matched
+                  </span>
+                </div>
+
+                {matchHistory.filter((h) => h.isMatch).length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {matchHistory
+                      .filter((h) => h.isMatch)
+                      .map((h, i) => {
+                        const q = MATCH_QUESTIONS[h.qIndex];
+                        const opt = q?.options.find((o) => o.id === h.myAns);
+                        return (
+                          <div
+                            key={i}
+                            className="text-xs p-2.5 rounded-xl bg-white border border-[#EFE5DB] flex items-start gap-2.5 shadow-2xs"
+                          >
+                            <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
+                            <div className="leading-tight">
+                              <span className="text-[#8C7A68] text-[10px] font-mono block">
+                                {q?.question}
+                              </span>
+                              <span className="font-bold text-[var(--text)] text-xs mt-0.5 block">
+                                {opt?.text}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-white border border-[#EFE5DB] text-center">
+                    <p className="text-xs italic text-[#8C7A68]">
+                      Opposites attract: you both brought unique flavors to every question!
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Certificate Footer */}
+              <div className="pt-2 text-[9px] font-mono text-[#A89887] uppercase tracking-wider border-t border-[#EFE5DB]">
+                Official Match Record · Pairfect Sanctuary
+              </div>
             </div>
 
-            {/* Verdict Note */}
-            <div className="p-5 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-1.5 text-left">
-              <p className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
-                <span>{getMatchFeedback(animatedPercentage).emoji}</span>
-                <span>{getMatchFeedback(animatedPercentage).headline}</span>
-              </p>
-              <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                {getMatchFeedback(animatedPercentage).message}
-              </p>
-            </div>
-
-            {/* Soft Conversion Note for Guest Players */}
-            {!user && (
-              <div className="p-5 rounded-2xl border border-rose-200 bg-rose-50/60 text-left space-y-2">
-                <p className="text-xs font-bold text-[var(--burgundy)] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" /> Save Your Memories Together
-                </p>
-                <p className="text-xs text-[var(--text-soft)] leading-relaxed">
-                  Liked playing? Create a free private Lovespace to send 3D wax-sealed love letters, drop notes in a gratitude jar, and record your milestones.
-                </p>
+            {/* 2. Interactive Action Toolbar */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {user && pair ? (
+                <button
+                  onClick={handlePinToMemoryWall}
+                  disabled={pinnedToMemories || isSavingMemory}
+                  className={`w-full sm:w-auto py-3 px-6 rounded-2xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    pinnedToMemories
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                      : "btn-journal shadow-md"
+                  }`}
+                >
+                  {pinnedToMemories ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Pinned to Memory Wall!</span>
+                    </>
+                  ) : isSavingMemory ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Pinning to Memories...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="w-4 h-4" />
+                      <span>Pin to Memory Wall 📌</span>
+                    </>
+                  )}
+                </button>
+              ) : (
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--burgundy)] hover:underline pt-1"
+                  className="w-full sm:w-auto btn-journal py-3 px-6 text-xs font-mono font-bold flex items-center justify-center gap-2"
                 >
-                  Create Free Shared Space ▷
+                  <Bookmark className="w-4 h-4" />
+                  <span>Create Account to Save 📌</span>
                 </Link>
-              </div>
-            )}
+              )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
-                onClick={handlePlayAgain}
-                className="w-full sm:w-auto btn-journal py-3 px-6 text-xs font-mono font-bold justify-center cursor-pointer"
+                onClick={handleDownloadKeepsake}
+                disabled={isDownloadingCard}
+                className="w-full sm:w-auto btn-journal-ghost py-3 px-6 text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Play Again ▷</span>
+                {isDownloadingCard ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                <span>Download Keepsake</span>
               </button>
 
+              <button
+                onClick={handlePlayAgain}
+                className="w-full sm:w-auto btn-journal-ghost py-3 px-6 text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Play Again</span>
+              </button>
+            </div>
+
+            <div className="text-center pt-1">
               <Link
                 href="/play"
-                className="w-full sm:w-auto btn-journal-ghost py-3 px-6 text-xs font-mono font-bold justify-center"
+                className="text-xs font-mono text-[var(--text-soft)] hover:text-[var(--burgundy)] transition-colors inline-flex items-center gap-1.5"
               >
-                <span>Playroom</span>
+                <span>← Back to Playroom Hub</span>
               </Link>
             </div>
           </motion.div>
         )}
 
       </main>
+
+      <AmbientSoundscapeBar />
     </div>
   );
 }

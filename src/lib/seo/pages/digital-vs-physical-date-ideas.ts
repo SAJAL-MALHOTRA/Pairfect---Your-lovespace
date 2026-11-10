@@ -14,7 +14,7 @@ export const page: SEOPage = {
     ogDescription: 'Compare digital vs physical date ideas. Learn when to choose in-person romance, when digital dates thrive, and how to blend both for a strong relationship.'
   },
   h1: 'Digital vs Physical Date Ideas: Which Is Right for Your Relationship?',
-  introduction: 'In the modern relationship landscape, couples have more options than ever for how they spend their time together. The debate between digital vs physical date ideas is increasingly relevant, especially for long-distance couples, busy professionals, or those just looking to mix up their routine. But it\'s not about which is strictly "better"—it\'s about understanding the unique benefits of each and knowing when to use them to strengthen your bond. Let\'s break down the pros and cons of both approaches and explore how a hybrid model might be the secret to lasting connection.',
+  introduction: 'In the modern relationship landscape, couples have more options than ever for how they spend their time together. The debate between digital vs physical date ideas is increasingly relevant, especially for long-distance couples, busy professionals, or those just looking to mix up their routine. But it\'s not about which is strictly "better"-it\'s about understanding the unique benefits of each and knowing when to use them to strengthen your bond. Let\'s break down the pros and cons of both approaches and explore how a hybrid model might be the secret to lasting connection.',
   sections: [
     {
       heading: 'The Magic of Physical Dates',

@@ -1,646 +1,439 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/auth-provider";
-import { useNotifications } from "@/components/providers/notification-provider";
-import { parseAvatarConfig, ChibiAvatar } from "@/components/chibi-avatar";
+import { CoupleBeansMascot } from "@/components/couple-mascot";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
-  Mail,
-  Camera,
-  Gamepad2,
-  Gift,
-  Clock,
-  Calendar,
+  Compass,
   User,
   Settings,
+  Camera,
   Heart,
-  Bell,
+  Brain,
+  Scale,
   Sparkles,
+  Gamepad2,
+  HelpCircle,
+  Palette,
   Flame,
+  MessageSquare,
+  Mail,
   BookOpen,
+  PanelLeftClose,
+  Menu,
+  X,
+  ChevronDown,
+  ChevronUp,
   Flower2,
-  Radio,
-  LogOut,
+  Music
 } from "lucide-react";
 
-/* Navigation Items */
-const SIDEBAR_ITEMS = [
-  { href: "/dashboard",    icon: Home,     label: "HOME",      title: "Home",       subtitle: "Return to your story →" },
-  { href: "/whisper",      icon: Radio,    label: "WHISPER",   title: "Whisper Radio", subtitle: "Tune in to voice notes →" },
-  { href: "/bouquet",      icon: Flower2,  label: "BOUQUET",   title: "Bouquets",   subtitle: "Handpick botanical blooms →" },
-  { href: "/love-letter",  icon: Mail,     label: "LETTERS",   title: "Letters",    subtitle: "Sealed with wax, kept forever →" },
-  { href: "/photo-booth",  icon: Camera,   label: "PHOTOBOOTH",title: "Photobooth", subtitle: "Four frames of us →" },
-  { href: "/play",         icon: Gamepad2, label: "PLAYROOM",  title: "Playroom",   subtitle: "Play tonight's date night →" },
-  { href: "/gratitude-jar",icon: Gift,     label: "JAR",       title: "Gratitude Jar", subtitle: "Daily appreciation jar →" },
-  { href: "/stories",      icon: BookOpen, label: "STORIES",   title: "Stories & Explore", subtitle: "Stories & community →" },
-  { href: "/calendar",     icon: Calendar, label: "DATES",     title: "Dates",      subtitle: "Special milestones →" },
-  { href: "/profile",      icon: User,     label: "PROFILE",   title: "Profile",    subtitle: "Your profile & space →" },
-  { href: "/settings",     icon: Settings, label: "SETTINGS",  title: "Settings",   subtitle: "Preferences & security →" },
-];
+interface JumpInItem {
+  id: string;
+  name: string;
+  href: string;
+  iconBg: string;
+  iconColor: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
 
-const PING_PHRASES = [
-  "Thinking of you ♡",
-  "Missing you",
-  "Sending a warm hug 🫂",
-  "Can't wait to see you ✨",
+const JUMP_IN_ACTIVITIES: JumpInItem[] = [
+  { id: "booth", name: "Photobooth", href: "/photo-booth", iconBg: "bg-rose-100", iconColor: "text-rose-600", icon: Camera },
+  { id: "know-me", name: "Love Match", href: "/play/love-match", iconBg: "bg-blue-100", iconColor: "text-blue-600", icon: HelpCircle },
+  { id: "bouquet", name: "Floral Studio", href: "/bouquet", iconBg: "bg-emerald-100", iconColor: "text-emerald-600", icon: Flower2 },
+  { id: "letters", name: "Love Letters", href: "/love-letter", iconBg: "bg-amber-100", iconColor: "text-amber-600", icon: Mail },
+  { id: "court", name: "Couples Court", href: "/vibe-judge", iconBg: "bg-rose-100", iconColor: "text-rose-600", icon: Scale },
+  { id: "iq-duel", name: "IQ Duel", href: "/iq-duel", iconBg: "bg-purple-100", iconColor: "text-purple-600", icon: Brain },
+  { id: "gratitude", name: "Gratitude Jar", href: "/gratitude-jar", iconBg: "bg-pink-100", iconColor: "text-pink-600", icon: Heart },
+  { id: "riddles", name: "Riddle Night", href: "/riddle", iconBg: "bg-yellow-100", iconColor: "text-yellow-600", icon: Sparkles },
+  { id: "roulette", name: "Love Roulette", href: "/roulette", iconBg: "bg-red-100", iconColor: "text-red-600", icon: Flame },
+  { id: "mixtape", name: "Spotify Mixtape", href: "/mixtape", iconBg: "bg-teal-100", iconColor: "text-teal-600", icon: Music },
+  { id: "whisper", name: "Whisper Memos", href: "/whisper", iconBg: "bg-sky-100", iconColor: "text-sky-600", icon: MessageSquare },
+  { id: "checkin", name: "Daily Check-in", href: "/checkin", iconBg: "bg-cyan-100", iconColor: "text-cyan-600", icon: Compass },
+  { id: "scrapbook", name: "Memory Wall", href: "/moments", iconBg: "bg-indigo-100", iconColor: "text-indigo-600", icon: BookOpen },
+  { id: "draw", name: "Shared Canvas", href: "/moments", iconBg: "bg-violet-100", iconColor: "text-violet-600", icon: Palette },
+  { id: "arcade", name: "Arcade Path", href: "/play", iconBg: "bg-purple-100", iconColor: "text-purple-600", icon: Gamepad2 },
 ];
 
 export default function Navigation() {
-  const pathname = usePathname();
-  const { user, profile, pair, partner, signOut } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, sendPing } = useNotifications();
+  const pathname = usePathname() || "";
+  const { user, profile, partner } = useAuth();
+  const [showAllJumpIn, setShowAllJumpIn] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [visible, setVisible] = useState(true);
-  const [hoveredHref, setHoveredHref] = useState<string | null>(null);
-  const [showPingMenu, setShowPingMenu] = useState(false);
-  const [showNotifPanel, setShowNotifPanel] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [pingStatus, setPingStatus] = useState<string | null>(null);
-  const [lastPingTime, setLastPingTime] = useState<number>(0);
+  // Hidden on auth/onboarding routes
+  const hiddenRoutes = ["/login", "/signup", "/onboarding", "/auth/callback"];
+  if (hiddenRoutes.some((r) => pathname.startsWith(r))) return null;
 
-  const pingMenuRef = useRef<HTMLDivElement>(null);
-  const notifPanelRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const isHomeActive = pathname === "/dashboard" || pathname === "/home";
+  const isActivitiesActive = pathname.startsWith("/play") || pathname === "/activities";
+  const isProfileActive = pathname.startsWith("/profile");
 
-  useEffect(() => {
-    const onHide = () => setVisible(false);
-    const onShow = () => setVisible(true);
-    window.addEventListener("navigation-hide", onHide);
-    window.addEventListener("navigation-show", onShow);
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (pingMenuRef.current && !pingMenuRef.current.contains(e.target as Node)) {
-        setShowPingMenu(false);
-      }
-      if (notifPanelRef.current && !notifPanelRef.current.contains(e.target as Node)) {
-        setShowNotifPanel(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setShowUserMenu(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      window.removeEventListener("navigation-hide", onHide);
-      window.removeEventListener("navigation-show", onShow);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const currentPath = pathname || "";
-
-  // Don't render on auth / onboarding pages
-  const hiddenRoutes = ["/login", "/signup", "/onboarding", "/auth/callback", "/avatars"];
-  if (hiddenRoutes.some((r) => currentPath.startsWith(r))) return null;
-
-  const getInitials = (name?: string | null) => {
-    if (!name) return "U";
-    return name.trim().charAt(0).toUpperCase();
-  };
-
-  const userInitial = getInitials(profile?.display_name);
-
-  const handleTriggerPing = async (phrase?: string) => {
-    const now = Date.now();
-    if (now - lastPingTime < 120000) {
-      setPingStatus("Sent with love! Give it a minute before sending another ♡");
-      setTimeout(() => setPingStatus(null), 3000);
-      setShowPingMenu(false);
-      return;
-    }
-
-    setLastPingTime(now);
-    setShowPingMenu(false);
-    const res = await sendPing(phrase);
-    setPingStatus(res.message);
-    setTimeout(() => setPingStatus(null), 3500);
-  };
-
-  const currentStreak = pair?.current_streak || 0;
-  const isStreakPaused = pair?.is_paused || false;
-
-  const getNotificationHref = (n: any) => {
-    if (n.metadata?.route) return n.metadata.route;
-    if (n.metadata?.bouquet || n.title?.toLowerCase().includes("bouquet")) {
-      return `/bouquet?unwrap=${n.id}`;
-    }
-    if (n.type === "letter_sent" || n.type === "reaction_reply") return "/love-letter";
-    if (n.type === "gratitude_note") return "/gratitude-jar";
-    if (n.type === "memory_added") return "/stories";
-    if (n.type === "game_started") return "/play";
-    if (n.type === "ping_sent") return "/dashboard";
-    return "/dashboard";
-  };
+  const visibleJumpIn = showAllJumpIn ? JUMP_IN_ACTIVITIES : JUMP_IN_ACTIVITIES.slice(0, 6);
 
   return (
     <>
       {/* ══════════════════════════════════════════════════
-          TOP CONTROL BAR: Logo, Streak, Ping, Bell, Avatar
+          1. MOBILE TOP APP BAR & SLIDE-OVER DRAWER
           ══════════════════════════════════════════════════ */}
-      <div className="fixed top-0 left-0 right-0 z-40 h-20 px-6 md:pl-32 md:pr-12 flex items-center justify-between pointer-events-none">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-b border-stone-200 z-50 px-4 flex items-center justify-between select-none">
+        {/* Brand */}
+        <Link href="/dashboard" className="flex items-center gap-1.5">
+          <span className="font-sans font-black text-xl tracking-tight text-stone-900">pairfect</span>
+          <div className="flex items-center gap-0.5">
+            <span className="w-2 h-2 rounded-full bg-[#FF5E8E]" />
+            <span className="w-2 h-2 rounded-full bg-[#4F86F7]" />
+          </div>
+        </Link>
 
-        {/* Left: Brand Logo */}
-        <div className="flex items-center gap-4 pointer-events-auto">
+        {/* Mobile controls */}
+        <div className="flex items-center gap-2">
           <Link
-            href="/dashboard"
-            className="flex items-center gap-2.5 select-none transition-opacity hover:opacity-85"
+            href="/profile"
+            className="w-8 h-8 rounded-full border border-stone-200 overflow-hidden bg-rose-50 flex items-center justify-center text-xs font-bold text-rose-600"
           >
-            <Image src="/logo-book.png" alt="Pairfect" height={32} width={32} className="rounded-lg shadow-xs" priority />
-            <div className="flex items-center gap-1.5">
-              <span className="font-display italic text-xl font-black tracking-tight text-[#3D2432]">
-                pairfect
-              </span>
-              <span className="w-2 h-2 rounded-full bg-[#FF8DA1] inline-block" />
-            </div>
+            {profile?.display_name ? profile.display_name.charAt(0).toUpperCase() : "G"}
           </Link>
-
-          {pair && currentStreak > 0 && (
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border transition-all ${
-                isStreakPaused
-                  ? "bg-[var(--paper-warm)] border-[var(--border)] text-[var(--text-soft)]"
-                  : "bg-[var(--paper-warm)] border-[var(--border)] text-[var(--burgundy)] font-bold shadow-xs"
-              }`}
-            >
-              {isStreakPaused ? (
-                <span>💛 Streak paused at {currentStreak}</span>
-              ) : (
-                <>
-                  <Flame className="w-3.5 h-3.5 fill-current text-[var(--burgundy)]" />
-                  <span>{currentStreak} day streak</span>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Right Controls */}
-        <div className="flex items-center gap-3 pointer-events-auto select-none">
-          {partner && (
-            <div className="relative" ref={pingMenuRef}>
-              <button
-                onClick={() => setShowPingMenu(!showPingMenu)}
-                className="btn-journal-ghost px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 !rounded-full shadow-xs"
-                title="Send a Thinking of You ping"
-              >
-                <Heart className="w-3.5 h-3.5 fill-current text-[var(--burgundy)]" />
-                <span className="hidden sm:inline font-sans text-xs">Ping</span>
-              </button>
-
-              <AnimatePresence>
-                {showPingMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-xl z-50 space-y-1 paper-grain"
-                  >
-                    <p className="px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                      Send a Ping to {partner.display_name || "partner"}
-                    </p>
-                    {PING_PHRASES.map((phrase, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleTriggerPing(phrase)}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-sans text-[var(--text)] hover:bg-[var(--bg-secondary)] hover:text-[var(--burgundy)] transition-colors flex items-center justify-between"
-                      >
-                        <span>{phrase}</span>
-                        <Heart className="w-3 h-3 text-[var(--rose)] opacity-60" />
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
-          {/* Bell */}
-          <div className="relative" ref={notifPanelRef}>
-            <button
-              onClick={() => setShowNotifPanel(!showNotifPanel)}
-              className="relative w-9 h-9 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xs"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--burgundy)] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs animate-pulse">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            <AnimatePresence>
-              {showNotifPanel && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto p-3 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-2xl z-50 space-y-2 paper-grain"
-                >
-                  <div className="flex items-center justify-between px-2 pb-2 border-b border-[var(--border)]">
-                    <p className="font-heading font-bold text-sm text-[var(--burgundy)]">Notifications</p>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={markAllAsRead}
-                        className="text-[10px] font-mono text-[var(--text-soft)] hover:text-[var(--burgundy)]"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-
-                  {notifications.length === 0 ? (
-                    <div className="p-6 text-center text-xs text-[var(--text-soft)] italic">
-                      No notifications yet ♡
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {notifications.map((n) => {
-                        const targetHref = getNotificationHref(n);
-                        return (
-                          <Link
-                            key={n.id}
-                            href={targetHref}
-                            onClick={() => {
-                              markAsRead(n.id);
-                              setShowNotifPanel(false);
-                            }}
-                            className={`block p-2.5 rounded-xl transition-all cursor-pointer ${
-                              !n.read
-                                ? "bg-[var(--bg-secondary)] border border-[var(--border)] font-medium"
-                                : "hover:bg-black/5 opacity-80"
-                            }`}
-                          >
-                            <p className="font-heading font-semibold text-xs text-[var(--text)]">{n.title}</p>
-                            {n.body && <p className="text-[11px] text-[var(--text-soft)] line-clamp-1 mt-0.5">{n.body}</p>}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* User Profile Avatar with Dropdown Menu */}
-          <div className="relative" ref={userMenuRef}>
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-9 h-9 rounded-full overflow-hidden bg-[var(--burgundy)] text-white font-sans flex items-center justify-center text-sm font-bold select-none shadow-sm transition-transform hover:scale-105 active:scale-95 border border-[var(--border)] cursor-pointer"
-              title={profile?.display_name || user?.email || "Account Menu"}
-              aria-label="Account Menu"
-            >
-              {profile?.avatar_url ? (
-                <ChibiAvatar
-                  config={parseAvatarConfig(profile.avatar_url)}
-                  pose="profile"
-                  className="w-full h-full"
-                />
-              ) : (
-                <span>{userInitial}</span>
-              )}
-            </button>
-
-            <AnimatePresence>
-              {showUserMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  className="absolute right-0 mt-2 w-64 p-3 rounded-2xl bg-[var(--paper-warm)] border border-[var(--border)] shadow-2xl z-50 space-y-2 paper-grain"
-                >
-                  <div className="px-2 pb-2 border-b border-[var(--border)]">
-                    <p className="font-heading font-bold text-sm text-[var(--text)] truncate">
-                      {profile?.display_name || "Your Account"}
-                    </p>
-                    <p className="text-[11px] text-[var(--text-soft)] truncate font-mono">
-                      {user?.email}
-                    </p>
-                    {partner && (
-                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-mono text-[var(--burgundy)] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                        Paired with {partner.display_name} ♡
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <Link
-                      href="/profile"
-                      onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-secondary)] hover:text-[var(--burgundy)] transition-colors"
-                    >
-                      <User className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                      <span>Profile & Bucket List</span>
-                    </Link>
-
-                    <Link
-                      href="/settings"
-                      onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-secondary)] hover:text-[var(--burgundy)] transition-colors"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-[var(--text-soft)]" />
-                      <span>Settings & Preferences</span>
-                    </Link>
-                  </div>
-
-                  <div className="pt-1.5 border-t border-[var(--border)]">
-                    <button
-                      onClick={async () => {
-                        setShowUserMenu(false);
-                        await signOut();
-                      }}
-                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
-                    >
-                      <LogOut className="w-3.5 h-3.5 text-red-500" />
-                      <span>Log Out</span>
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Quick Direct Logout Button */}
           <button
-            onClick={async () => {
-              await signOut();
-            }}
-            title="Log out"
-            aria-label="Log out"
-            className="w-9 h-9 rounded-full bg-[var(--paper-warm)] border border-[var(--border)] text-[var(--text-soft)] hover:text-red-500 hover:border-red-200 hover:bg-red-50/50 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-9 h-9 rounded-xl border border-stone-200 bg-white flex items-center justify-center text-stone-700 active:scale-95 transition-transform"
+            aria-label="Toggle navigation"
           >
-            <LogOut className="w-4 h-4 ml-0.5" />
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Ping Status Toast */}
+      {/* Mobile Slide-Over Drawer */}
       <AnimatePresence>
-        {pingStatus && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[var(--burgundy)] text-white text-xs font-sans font-medium shadow-lg flex items-center gap-2"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{pingStatus}</span>
-          </motion.div>
+        {isMobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-xs flex">
+            <motion.div
+              initial={{ x: -280, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -280, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="w-72 bg-white h-full pt-16 pb-6 px-4 flex flex-col justify-between overflow-y-auto shadow-2xl"
+            >
+              <div className="space-y-4">
+                {/* Profile Card */}
+                <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center font-bold text-rose-600 text-sm">
+                      {profile?.display_name ? profile.display_name.charAt(0).toUpperCase() : "G"}
+                    </div>
+                    <div>
+                      <p className="font-heading font-bold text-xs text-stone-900">
+                        {profile?.display_name || "Guest"}
+                      </p>
+                      <p className="text-[10px] font-mono text-stone-400">
+                        {user ? "Connected" : "Saved locally"}
+                      </p>
+                    </div>
+                  </div>
+                  {!user && (
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-2.5 py-1 rounded-lg bg-stone-900 text-white font-mono text-[10px] font-bold"
+                    >
+                      Sign in
+                    </Link>
+                  )}
+                </div>
+
+                {/* Main Nav */}
+                <div className="space-y-1">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-heading font-bold transition-all ${
+                      isHomeActive ? "bg-[#FFE4E8] text-[#E11D48] border border-rose-200" : "text-stone-700 hover:bg-stone-50"
+                    }`}
+                  >
+                    <Home className="w-4 h-4" />
+                    <span>Home</span>
+                  </Link>
+
+                  <Link
+                    href="/play"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-heading font-bold transition-all ${
+                      isActivitiesActive ? "bg-[#FFE4E8] text-[#E11D48] border border-rose-200" : "text-stone-700 hover:bg-stone-50"
+                    }`}
+                  >
+                    <Gamepad2 className="w-4 h-4" />
+                    <span>Activities</span>
+                  </Link>
+
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-heading font-bold transition-all ${
+                      isProfileActive ? "bg-[#FFE4E8] text-[#E11D48] border border-rose-200" : "text-stone-700 hover:bg-stone-50"
+                    }`}
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Profile</span>
+                  </Link>
+                </div>
+
+                {/* Jump In Mobile */}
+                <div className="pt-2">
+                  <p className="text-[10px] font-mono font-bold tracking-wider text-stone-400 uppercase px-2 mb-2">
+                    JUMP IN
+                  </p>
+                  <div className="space-y-1">
+                    {visibleJumpIn.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-heading font-medium text-stone-700 hover:bg-stone-50 transition-colors"
+                        >
+                          <div className={`w-6 h-6 rounded-lg ${item.iconBg} ${item.iconColor} flex items-center justify-center shrink-0`}>
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <span>{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom promo in mobile drawer */}
+              <div className="pt-4 border-t border-stone-200 space-y-2">
+                <div className="p-3 rounded-2xl bg-[#FFF0F5] border border-rose-200 text-center space-y-2">
+                  <CoupleBeansMascot className="w-16 h-12 mx-auto" />
+                  <p className="font-heading font-black text-xs text-stone-900">
+                    Couples Court
+                  </p>
+                  <Link
+                    href="/vibe-judge"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block w-full py-1.5 rounded-xl bg-[#E8557F] text-white font-mono text-[10px] font-bold uppercase tracking-wider"
+                  >
+                    Play Date Night
+                  </Link>
+                </div>
+                <Link
+                  href="/settings"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-mono font-bold text-stone-500 hover:text-stone-900"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Settings</span>
+                </Link>
+              </div>
+            </motion.div>
+            <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
+          </div>
         )}
       </AnimatePresence>
 
-
       {/* ══════════════════════════════════════════════════
-          DESKTOP: SIGNATURE COZY PINK CAPSULE SIDEBAR
-          Matches exact design from reference screenshot
+          2. DESKTOP FIXED LEFT SIDEBAR
           ══════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {visible && (
-          <motion.nav
-            initial={{ x: -100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -100, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 350, damping: 35 }}
-            className="hidden md:block fixed left-4 top-20 bottom-3 my-auto z-50 h-fit max-h-[calc(100vh-88px)] overflow-y-auto no-scrollbar"
-            aria-label="Main Navigation"
-          >
-            {/* Sidebar Capsule */}
-            <div
-              className="relative flex flex-col items-center py-3 px-2 rounded-[999px] select-none"
-              style={{
-                width: "76px",
-                background: "linear-gradient(180deg, #FFF2F5 0%, #FFF8FA 100%)",
-                border: "2px solid rgba(255, 255, 255, 0.95)",
-                boxShadow: "0 12px 32px rgba(232, 82, 125, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.9)",
-              }}
-            >
-              {/* Subtle top heart accent on capsule */}
-              <div className="absolute top-2 right-2 text-[#FF7597] text-[9px] animate-pulse pointer-events-none select-none">
-                ♥
+      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-60 xl:w-64 bg-white border-r border-stone-200/90 z-40 flex-col justify-between p-4 xl:p-5 select-none overflow-y-auto">
+        
+        <div className="space-y-4">
+          
+          {/* Top Brand Logo */}
+          <div className="flex items-center justify-between px-1 pt-1">
+            <Link href="/dashboard" className="flex items-center gap-2 group">
+              <span className="font-sans font-black text-2xl tracking-tight text-stone-900 group-hover:text-rose-600 transition-colors">
+                pairfect
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#FF5E8E] group-hover:scale-125 transition-transform" />
+                <span className="w-2 h-2 rounded-full bg-[#4F86F7] group-hover:scale-125 transition-transform" />
               </div>
+            </Link>
+            <div className="w-8 h-8 rounded-xl border border-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-700 transition-colors">
+              <PanelLeftClose className="w-4 h-4" />
+            </div>
+          </div>
 
-              {/* Navigation Items Stack */}
-              <div className="flex flex-col items-center gap-1.5 relative z-10 w-full">
-                {SIDEBAR_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  const isActive =
-                    currentPath === item.href ||
-                    (item.href !== "/dashboard" && currentPath.startsWith(item.href));
-
-                  const isHovered = hoveredHref === item.href;
-
-                  return (
-                    <div
-                      key={item.href}
-                      className="relative flex flex-col items-center justify-center w-full"
-                      onMouseEnter={() => setHoveredHref(item.href)}
-                      onMouseLeave={() => setHoveredHref(null)}
-                    >
-                      <Link
-                        href={item.href}
-                        aria-label={item.title}
-                        className="relative flex flex-col items-center justify-center w-full group focus-visible:outline-none"
-                      >
-                        {/* Active State Glowing Pink Orb */}
-                        {isActive ? (
-                          <motion.div
-                            layoutId="active-glowing-orb"
-                            className="relative flex items-center justify-center w-11 h-11 rounded-full mb-0.5"
-                            transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                            style={{
-                              background: "linear-gradient(135deg, #FF6B95 0%, #E8527D 100%)",
-                              boxShadow: "0 6px 20px rgba(232, 82, 125, 0.42), inset 0 2px 3px rgba(255, 255, 255, 0.4)",
-                            }}
-                          >
-                            {/* Tiny top heart on active orb */}
-                            <span className="absolute -top-1 right-1 text-[8px] text-[#FFB3C6]">♥</span>
-                            <Icon className="w-4.5 h-4.5 text-white stroke-[2]" />
-                          </motion.div>
-                        ) : (
-                          <div
-                            className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 ${
-                              isHovered ? "bg-white/80 scale-105 shadow-xs" : ""
-                            }`}
-                          >
-                            <Icon
-                              strokeWidth={1.75}
-                              className={`w-4.5 h-4.5 transition-colors duration-200 ${
-                                isHovered ? "text-[#E8527D]" : "text-[#7A4B5D]"
-                              }`}
-                            />
-                          </div>
-                        )}
-
-                        {/* Label below icon */}
-                        <span
-                          className={`text-[8.5px] font-mono font-bold tracking-wider uppercase transition-colors duration-150 ${
-                            isActive
-                              ? "text-[#E8527D] font-black"
-                              : isHovered
-                              ? "text-[#E8527D]"
-                              : "text-[#7A4B5D]/80"
-                          }`}
-                        >
-                          {item.label}
-                        </span>
-                      </Link>
-
-                      {/* ── Active / Hover Floating Popout Tooltip Card ── */}
-                      <AnimatePresence>
-                        {(isActive || isHovered) && (
-                          <motion.div
-                            initial={{ opacity: 0, x: -10, scale: 0.94 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: -10, scale: 0.94 }}
-                            transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
-                            className="absolute left-full ml-4 px-4 py-3 rounded-2xl bg-white border border-[#FFD0DD] shadow-xl z-50 pointer-events-none select-none flex items-center gap-3"
-                            style={{
-                              boxShadow: "0 12px 32px rgba(232, 82, 125, 0.15), 0 4px 12px rgba(0,0,0,0.04)",
-                            }}
-                          >
-                            {/* Speech Bubble Triangle Pointer */}
-                            <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-y-6 border-y-transparent border-r-6 border-r-white" />
-
-                            {/* Left Pink Square Icon Badge */}
-                            <div className="w-9 h-9 rounded-xl bg-[#FFF0F4] border border-[#FFD0DD] flex items-center justify-center text-[#E8527D] shrink-0">
-                              <Icon className="w-4.5 h-4.5 stroke-[2]" />
-                            </div>
-
-                            {/* Title & Subtitle */}
-                            <div className="text-left space-y-0.5 whitespace-nowrap">
-                              <p className="font-heading font-bold text-sm text-[#3D2432]">
-                                {item.title}
-                              </p>
-                              <p className="font-sans text-[11px] text-[#7A4B5D]">
-                                {item.subtitle}
-                              </p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                    </div>
-                  );
-                })}
-
-                {/* Subtle divider */}
-                <div className="w-8 h-px bg-[#FFD0DD]/80 my-1" />
-
-                {/* Logout Button */}
-                <div
-                  className="relative flex flex-col items-center justify-center w-full"
-                  onMouseEnter={() => setHoveredHref("logout")}
-                  onMouseLeave={() => setHoveredHref(null)}
-                >
-                  <button
-                    onClick={() => signOut()}
-                    className="relative flex flex-col items-center justify-center w-12 h-12 rounded-2xl transition-all duration-150 group cursor-pointer hover:bg-red-50"
-                    aria-label="Log out"
-                  >
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150">
-                      <LogOut className="w-4 h-4 stroke-[1.8] text-[#7A4B5D] group-hover:text-red-500" />
-                    </div>
-                    <span className="text-[8.5px] font-mono font-bold tracking-wider uppercase text-[#7A4B5D]/80 group-hover:text-red-500">
-                      LOGOUT
-                    </span>
-                  </button>
-
-                  <AnimatePresence>
-                    {hoveredHref === "logout" && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -10, scale: 0.94 }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        exit={{ opacity: 0, x: -10, scale: 0.94 }}
-                        transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
-                        className="absolute left-full ml-4 px-4 py-3 rounded-2xl bg-white border border-red-200 shadow-xl z-50 pointer-events-none select-none flex items-center gap-3"
-                      >
-                        <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-y-6 border-y-transparent border-r-6 border-r-white" />
-                        <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-500 shrink-0">
-                          <LogOut className="w-4.5 h-4.5 stroke-[2]" />
-                        </div>
-                        <div className="text-left space-y-0.5 whitespace-nowrap">
-                          <p className="font-heading font-bold text-sm text-red-600">
-                            Log Out
-                          </p>
-                          <p className="font-sans text-[11px] text-[var(--text-soft)]">
-                            Sign out of Pairfect
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+          {/* User Profile Card */}
+          <motion.div
+            whileHover={{ y: -1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="p-2.5 rounded-2xl bg-stone-50/80 border border-stone-200 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative w-9 h-9 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center font-bold text-rose-600 text-sm shrink-0 overflow-hidden shadow-2xs">
+                <Image
+                  src="/booth/monkey-heart.jpg"
+                  alt="Avatar"
+                  fill
+                  className="object-cover"
+                  sizes="36px"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-xs text-stone-900 truncate">
+                  {profile?.display_name || "Guest"}
+                </p>
+                <div className="flex items-center gap-1 text-[10px] font-mono text-stone-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{user ? "Connected" : "Sign in"}</span>
                 </div>
               </div>
             </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
+            {!user && (
+              <Link
+                href="/login"
+                className="px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-mono text-[10px] font-bold transition-colors cursor-pointer"
+              >
+                Sign in
+              </Link>
+            )}
+          </motion.div>
 
+          {/* Primary Navigation Items */}
+          <nav className="space-y-1">
+            {/* Home */}
+            <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                href="/dashboard"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-heading font-bold transition-all ${
+                  isHomeActive
+                    ? "bg-[#FFE4E8] text-[#E11D48] border border-rose-200/80 shadow-2xs"
+                    : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
+                }`}
+              >
+                <Home className={`w-4 h-4 ${isHomeActive ? "text-[#E11D48]" : "text-stone-500"}`} />
+                <span>Home</span>
+              </Link>
+            </motion.div>
 
-      {/* ══════════════════════════════════════════════════
-          MOBILE: FLOATING BOTTOM CAPSULE
-          ══════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {visible && (
-          <motion.nav
-            initial={{ y: 80, opacity: 0, x: "-50%" }}
-            animate={{ y: 0, opacity: 1, x: "-50%" }}
-            exit={{ y: 80, opacity: 0, x: "-50%" }}
-            transition={{ type: "spring", stiffness: 350, damping: 35 }}
-            className="md:hidden fixed bottom-6 left-1/2 z-50"
-            aria-label="Mobile Navigation"
-          >
-            <div
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-[999px] bg-[#FFF2F5] border-2 border-white paper-grain select-none shadow-2xl"
-              style={{
-                boxShadow: "0 12px 36px rgba(232, 82, 125, 0.22)",
-              }}
-            >
-              {SIDEBAR_ITEMS.slice(0, 7).map((item) => {
+            {/* Activities */}
+            <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                href="/play"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-heading font-bold transition-all ${
+                  isActivitiesActive
+                    ? "bg-[#FFE4E8] text-[#E11D48] border border-rose-200/80 shadow-2xs"
+                    : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
+                }`}
+              >
+                <Gamepad2 className={`w-4 h-4 ${isActivitiesActive ? "text-[#E11D48]" : "text-stone-500"}`} />
+                <span>Activities</span>
+              </Link>
+            </motion.div>
+
+            {/* Profile */}
+            <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                href="/profile"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-heading font-bold transition-all ${
+                  isProfileActive
+                    ? "bg-[#FFE4E8] text-[#E11D48] border border-rose-200/80 shadow-2xs"
+                    : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
+                }`}
+              >
+                <User className={`w-4 h-4 ${isProfileActive ? "text-[#E11D48]" : "text-stone-500"}`} />
+                <span>Profile</span>
+              </Link>
+            </motion.div>
+          </nav>
+
+          {/* JUMP IN Activities List */}
+          <div className="pt-2">
+            <p className="text-[10px] font-mono font-bold tracking-wider text-stone-400 uppercase px-2 mb-2">
+              JUMP IN
+            </p>
+            <div className="space-y-1">
+              {visibleJumpIn.map((item) => {
                 const Icon = item.icon;
-                const isActive =
-                  currentPath === item.href ||
-                  (item.href !== "/dashboard" && currentPath.startsWith(item.href));
-
+                const isItemActive = pathname === item.href;
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-label={item.title}
-                    className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-90"
+                  <motion.div
+                    key={item.id}
+                    whileHover={{ scale: 1.03, x: 2 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 25 }}
                   >
-                    {isActive && (
-                      <motion.div
-                        layoutId="mobile-active-orb-pill"
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                          background: "linear-gradient(135deg, #FF6B95 0%, #E8527D 100%)",
-                          boxShadow: "0 4px 14px rgba(232, 82, 125, 0.4)",
-                        }}
-                        transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                      />
-                    )}
-                    <Icon
-                      strokeWidth={1.75}
-                      className={`w-4 h-4 relative z-10 ${
-                        isActive ? "text-white" : "text-[#7A4B5D]"
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all text-xs font-heading font-medium ${
+                        isItemActive
+                          ? "bg-stone-100 text-stone-900 font-bold shadow-2xs"
+                          : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
                       }`}
-                    />
-                  </Link>
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-lg ${item.iconBg} ${item.iconColor} flex items-center justify-center shrink-0 shadow-2xs`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="truncate">{item.name}</span>
+                    </Link>
+                  </motion.div>
                 );
               })}
             </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
+
+            {/* See All / Show Less Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowAllJumpIn(!showAllJumpIn)}
+              className="mt-2 w-full flex items-center justify-center gap-1.5 py-1 px-2 text-[11px] font-mono font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50/50 rounded-lg transition-colors cursor-pointer"
+            >
+              <span>{showAllJumpIn ? "Show less" : "See all"}</span>
+              {showAllJumpIn ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+          </div>
+
+        </div>
+
+        {/* Bottom Section: Promo Card & Settings */}
+        <div className="pt-4 space-y-3 border-t border-stone-200/80">
+          
+          {/* This Week's Date Night Promo Card with Mascot */}
+          <motion.div
+            whileHover={{ y: -3, scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 350, damping: 24 }}
+            className="p-3.5 rounded-3xl bg-[#FFF0F5] border border-rose-200/80 text-center space-y-2 shadow-2xs relative overflow-hidden group cursor-pointer"
+          >
+            <CoupleBeansMascot className="w-20 h-14 mx-auto" />
+            <div>
+              <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-rose-500">
+                THIS WEEK&apos;S DATE NIGHT
+              </p>
+              <p className="font-heading font-black text-xs text-stone-900 mt-0.5">
+                Couples Court
+              </p>
+            </div>
+            <Link
+              href="/vibe-judge"
+              className="w-full py-1.5 px-3 rounded-xl bg-[#E8557F] hover:bg-[#D43D69] active:scale-98 text-white font-mono text-[11px] font-bold uppercase tracking-wider shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <span>Play</span>
+              <span>&gt;</span>
+            </Link>
+          </motion.div>
+
+          {/* Settings Link */}
+          <Link
+            href="/settings"
+            className="flex items-center gap-2.5 px-3 py-2 text-xs font-mono font-bold text-stone-500 hover:text-stone-900 hover:bg-stone-50 rounded-xl transition-colors"
+          >
+            <Settings className="w-4 h-4 text-stone-400" />
+            <span>Settings</span>
+          </Link>
+        </div>
+
+      </aside>
     </>
   );
 }

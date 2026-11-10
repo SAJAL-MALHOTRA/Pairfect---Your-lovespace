@@ -3,7 +3,7 @@
 // Shared Web Audio Context
 let sharedAudioCtx: AudioContext | null = null;
 
-function getAudioContext(): AudioContext | null {
+export function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
     if (!sharedAudioCtx) {
@@ -126,4 +126,84 @@ export function playStationLockChime() {
   } catch (err) {
     console.debug("Audio FX playStationLockChime error:", err);
   }
+}
+
+/**
+ * Expressive acoustic analog radio synthesizer playback fallback
+ * Used when voice file link has expired, is blocked by codecs, or offline.
+ * Plays a warm, soothing chord sequence in sync with the progress bar.
+ */
+export function playSynthesizedWhisper(
+  durationSec = 2.5,
+  onProgress?: (progressSec: number) => void,
+  onEnd?: () => void
+): () => void {
+  const ctx = getAudioContext();
+  if (!ctx) {
+    if (onEnd) onEnd();
+    return () => {};
+  }
+
+  const safeDuration = Math.max(1, durationSec);
+  const now = ctx.currentTime;
+  const chordFrequencies = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; // C4, E4, G4, C5, E5, G5
+  const totalNotes = Math.max(3, Math.floor(safeDuration * 2.2));
+  const step = safeDuration / totalNotes;
+
+  const activeNodes: OscillatorNode[] = [];
+  let isStopped = false;
+
+  for (let i = 0; i < totalNotes; i++) {
+    const noteTime = now + i * step;
+    const noteFreq = chordFrequencies[i % chordFrequencies.length];
+
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      // Soft musical bell-like acoustic tone
+      osc.type = i % 2 === 0 ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(noteFreq, noteTime);
+
+      gain.gain.setValueAtTime(0.001, noteTime);
+      gain.gain.linearRampToValueAtTime(0.12, noteTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + step * 0.94);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(noteTime);
+      osc.stop(noteTime + step);
+      activeNodes.push(osc);
+    } catch {
+      // ignore
+    }
+  }
+
+  const startTime = Date.now();
+  const interval = setInterval(() => {
+    if (isStopped) {
+      clearInterval(interval);
+      return;
+    }
+    const elapsed = (Date.now() - startTime) / 1000;
+    if (elapsed >= safeDuration) {
+      clearInterval(interval);
+      if (onProgress) onProgress(safeDuration);
+      if (onEnd) onEnd();
+    } else {
+      if (onProgress) onProgress(elapsed);
+    }
+  }, 100);
+
+  return () => {
+    isStopped = true;
+    clearInterval(interval);
+    activeNodes.forEach((node) => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch {}
+    });
+  };
 }

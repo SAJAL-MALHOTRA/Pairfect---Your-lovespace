@@ -85,9 +85,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Failed to update pair status." }, { status: 500 });
     }
 
+    // 4. Retrieve vault envelope if available so joining partner automatically receives key
+    let vaultEnvelope: string | null = null;
+    try {
+      const { data: envData } = await adminSupabase.storage
+        .from("memories")
+        .download(`${targetPair.id}/vault-envelope.json`);
+      if (envData) {
+        vaultEnvelope = await envData.text();
+      }
+    } catch (e) {
+      console.warn("[Join Pair API] No vault envelope found:", e);
+    }
+
     return NextResponse.json({
       success: true,
       pairId: targetPair.id,
+      vaultEnvelope,
       message: "Pair successfully activated!",
     });
   } catch (err: any) {

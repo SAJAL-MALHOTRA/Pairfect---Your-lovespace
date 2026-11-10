@@ -99,14 +99,15 @@ export function WhisperRecorderModal({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const barWidth = (canvas.width / 24) - 2;
-    let x = 1;
+    let x = 0;
 
     for (let i = 0; i < 24; i++) {
-      const value = dataArray[i * 2] || 0;
-      const barHeight = Math.max(4, (value / 255) * canvas.height * 0.9);
-      const y = (canvas.height - barHeight) / 2;
+      const idx = Math.floor((i / 24) * bufferLength);
+      const val = dataArray[idx] || 0;
+      const barHeight = Math.max(4, (val / 255) * canvas.height * 0.9);
 
-      ctx.fillStyle = "#E8527D";
+      const y = (canvas.height - barHeight) / 2;
+      ctx.fillStyle = "#E11D48";
       ctx.beginPath();
       ctx.roundRect(x, y, barWidth, barHeight, 3);
       ctx.fill();
@@ -117,7 +118,7 @@ export function WhisperRecorderModal({
     animationFrameRef.current = requestAnimationFrame(drawWaveform);
   }, []);
 
-  // Start audio recording
+  // Start recording
   const handleStartRecording = async () => {
     playRadioClick();
     setErrorMessage(null);
@@ -127,12 +128,9 @@ export function WhisperRecorderModal({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
-      // Setup audio analyzer
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      // Setup audio analysis for live waveform
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioCtx();
-      if (ctx.state === "suspended") {
-        await ctx.resume().catch(() => {});
-      }
       audioContextRef.current = ctx;
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
@@ -140,14 +138,19 @@ export function WhisperRecorderModal({
       source.connect(analyser);
       analyserRef.current = analyser;
 
-      // Start visualizer
-      drawWaveform();
+      // Determine supported mimeType
+      let mimeType = "audio/webm";
+      if (typeof MediaRecorder !== "undefined") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+          mimeType = "audio/ogg";
+        }
+      }
 
-      // Setup MediaRecorder
-      const mimeTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
-      const supportedMime = mimeTypes.find((t) => MediaRecorder.isTypeSupported(t)) || "";
-
-      const recorder = new MediaRecorder(stream, supportedMime ? { mimeType: supportedMime } : undefined);
+      const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -157,35 +160,21 @@ export function WhisperRecorderModal({
       };
 
       recorder.onstop = () => {
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-          mediaStreamRef.current = null;
-        }
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        recordedBlobRef.current = audioBlob;
 
-        const mime = recorder.mimeType || "audio/webm";
-        const blob = new Blob(audioChunksRef.current, { type: mime });
+        // Init preview audio element
+        const url = URL.createObjectURL(audioBlob);
+        const prevAudio = new Audio(url);
+        previewAudioRef.current = prevAudio;
 
-        if (!blob || blob.size < 500) {
-          console.error("Audio recording blob is empty or too small:", blob?.size);
-          setErrorMessage("No audio was captured. Please speak into your microphone and try again.");
-          setRecordState("idle");
-          setSeconds(0);
-          return;
-        }
-
-        recordedBlobRef.current = blob;
-
-        const audioUrl = URL.createObjectURL(blob);
-        const audio = new Audio(audioUrl);
-        previewAudioRef.current = audio;
-
-        audio.ontimeupdate = () => {
-          if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
-            setPreviewProgress((audio.currentTime / audio.duration) * 100);
+        prevAudio.ontimeupdate = () => {
+          if (prevAudio.duration) {
+            setPreviewProgress((prevAudio.currentTime / prevAudio.duration) * 100);
           }
         };
 
-        audio.onended = () => {
+        prevAudio.onended = () => {
           setIsPreviewPlaying(false);
           setPreviewProgress(0);
         };
@@ -193,11 +182,11 @@ export function WhisperRecorderModal({
         setRecordState("preview");
       };
 
-      recorder.start(100);
+      recorder.start(200);
       setRecordState("recording");
       setSeconds(0);
 
-      // Start second timer
+      // Start timer
       timerRef.current = setInterval(() => {
         setSeconds((prev) => {
           if (prev >= MAX_SECONDS - 1) {
@@ -207,9 +196,12 @@ export function WhisperRecorderModal({
           return prev + 1;
         });
       }, 1000);
-    } catch (err: unknown) {
-      console.error("Mic access error:", err);
-      setErrorMessage("Could not access your microphone. Please check browser permissions.");
+
+      // Start visualizer
+      drawWaveform();
+    } catch (err) {
+      console.error("Microphone access error:", err);
+      setErrorMessage("Could not access microphone. Please allow microphone permissions in your browser.");
     }
   };
 
@@ -221,6 +213,7 @@ export function WhisperRecorderModal({
     if (recordState === "recording") {
       mediaRecorderRef.current.pause();
       if (timerRef.current) clearInterval(timerRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       setRecordState("paused");
     } else if (recordState === "paused") {
       mediaRecorderRef.current.resume();
@@ -233,6 +226,7 @@ export function WhisperRecorderModal({
           return prev + 1;
         });
       }, 1000);
+      drawWaveform();
       setRecordState("recording");
     }
   };
@@ -244,87 +238,94 @@ export function WhisperRecorderModal({
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      try {
-        mediaRecorderRef.current.requestData();
-      } catch (err) {
-        console.warn("requestData error:", err);
-      }
       mediaRecorderRef.current.stop();
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
     }
   };
 
-  // Discard and re-record
+  // Toggle preview playback
+  const handleTogglePreviewPlay = () => {
+    playRadioClick();
+    const audio = previewAudioRef.current;
+    if (!audio) return;
+
+    if (isPreviewPlaying) {
+      audio.pause();
+      setIsPreviewPlaying(false);
+    } else {
+      audio.play().catch((err) => console.error("Preview play error:", err));
+      setIsPreviewPlaying(true);
+    }
+  };
+
+  // Reset and record again
   const handleRecordAgain = () => {
     playRadioClick();
     cleanupRecording();
-    recordedBlobRef.current = null;
-    setSeconds(0);
     setRecordState("idle");
+    setSeconds(0);
+    recordedBlobRef.current = null;
   };
 
-  // Preview Play / Pause
-  const handleTogglePreviewPlay = () => {
-    playRadioClick();
-    if (!previewAudioRef.current) return;
-
-    if (isPreviewPlaying) {
-      previewAudioRef.current.pause();
-      setIsPreviewPlaying(false);
-    } else {
-      previewAudioRef.current
-        .play()
-        .then(() => {
-          setIsPreviewPlaying(true);
-        })
-        .catch((err) => {
-          console.error("Preview play failed:", err);
-          setIsPreviewPlaying(false);
-        });
-    }
-  };
-
-  // Final Broadcast Submission
+  // Submit and broadcast whisper
   const handleBroadcast = async () => {
-    if (!recordedBlobRef.current || recordedBlobRef.current.size < 500) {
-      setErrorMessage("No audio captured. Please speak into the mic and try again.");
+    playRadioClick();
+    if (!recordedBlobRef.current) {
+      setErrorMessage("No recorded audio to broadcast.");
       return;
     }
-    playRadioClick();
+
     setRecordState("broadcasting");
     setErrorMessage(null);
 
     try {
-      if (!pairId) throw new Error("Connect your private space before sending a whisper.");
-      const vaultKey = await getPairKey(pairId);
-      if (!vaultKey) throw new Error("Your private key is unavailable on this device. Restore your vault key before sending.");
-      const encryptedBlob = await encryptAudioBlob(recordedBlobRef.current, vaultKey);
+      const audioBlob = recordedBlobRef.current;
+      const effectivePairId = pairId || "local-space";
+      let uploadPayload: Blob | string = audioBlob;
+      let isEncrypted = false;
 
-      // Convert Blob to base64 Data URL
-      const reader = new FileReader();
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(encryptedBlob);
-      });
+      // Encrypt audio blob on client if pair encryption vault key exists
+      if (pairId) {
+        try {
+          const key = await getPairKey(pairId);
+          if (key) {
+            const encryptedBytes = await encryptAudioBlob(audioBlob, key);
+            uploadPayload = new Blob([encryptedBytes], { type: "application/octet-stream" });
+            isEncrypted = true;
+          }
+        } catch (encErr) {
+          console.warn("Client encryption failed, uploading unencrypted fallback:", encErr);
+        }
+      }
 
-      const response = await fetch("/api/whisper", {
+      // Upload via FormData
+      const formData = new FormData();
+      const ext = audioBlob.type.includes("mp4") ? "mp4" : audioBlob.type.includes("ogg") ? "ogg" : "webm";
+      const filename = `whisper_${Date.now()}.${ext}${isEncrypted ? ".enc" : ""}`;
+      formData.append("audio", uploadPayload, filename);
+      formData.append("pair_id", effectivePairId);
+      formData.append("frequency", String(targetFrequency));
+      formData.append("title", title.trim() || `${senderName}'s Whisper`);
+      formData.append("duration", String(Math.max(1, seconds)));
+      formData.append("mood_tag", moodTag);
+      formData.append("sender_name", senderName);
+
+      const res = await fetch("/api/whisper", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pairId: pairId || "demo-pair",
-          frequency: targetFrequency,
-          title: title.trim() || `${MOOD_TAG_LABELS[moodTag].label} Whisper`,
-          audioData: base64Data,
-          audioMime: recordedBlobRef.current.type || "audio/webm",
-          encrypted: true,
-          duration: seconds,
-          moodTag,
-          senderName,
-        }),
+        body: formData,
       });
 
-      const data = await response.json();
-      if (data.success && data.whisper) {
+      const data = await res.json();
+      if (res.ok && data?.whisper) {
         onBroadcastSuccess(data.whisper);
         onClose();
       } else {
@@ -347,39 +348,39 @@ export function WhisperRecorderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-lg rounded-3xl bg-[#FFF5F8] border-2 border-[var(--border)] shadow-2xl p-5 sm:p-7 overflow-hidden text-[var(--text)]">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[#FAF9F6] border-2 border-stone-800 shadow-[6px_6px_0px_0px_rgba(28,25,23,0.9)] p-6 sm:p-7 overflow-hidden text-stone-900">
         {/* Top Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white text-[var(--text-soft)] hover:text-[var(--text)] shadow-xs border border-[var(--border)] transition-transform active:scale-95 cursor-pointer"
+          className="absolute top-5 right-5 w-9 h-9 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center transition-all cursor-pointer"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4 stroke-[2.5]" />
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-9 h-9 rounded-full bg-[var(--burgundy)] text-white flex items-center justify-center shadow-xs">
-            <Radio className="w-5 h-5" />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
+            <Radio className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
-            <h3 className="font-heading font-bold text-lg sm:text-xl text-[var(--text)] leading-tight">
+            <h3 className="font-heading font-black text-xl text-stone-900 leading-tight">
               Drop a Whisper
             </h3>
-            <p className="text-xs text-[var(--text-soft)]">
-              Broadcast a voice note across your private radio frequency
+            <p className="text-xs text-stone-600 font-sans">
+              Broadcast a private voice note across your couple airwaves
             </p>
           </div>
         </div>
 
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 flex items-center gap-2">
+          <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border-2 border-stone-800 text-xs font-bold text-rose-700 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* ─── RECORDING / VISUALIZER WORKSPACE ─── */}
-        <div className="my-4 rounded-2xl bg-white/90 border border-[var(--border)] shadow-sm p-4 text-center">
+        {/* Recording Visualizer Workspace */}
+        <div className="my-4 rounded-2xl bg-white border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] p-5 text-center">
           {/* Waveform Canvas / Meter */}
           <div className="h-16 flex items-center justify-center">
             {recordState === "recording" || recordState === "paused" ? (
@@ -390,51 +391,51 @@ export function WhisperRecorderModal({
                 className="w-full max-w-[260px] h-14"
               />
             ) : recordState === "preview" ? (
-              <div className="w-full max-w-[280px] flex items-center gap-2">
+              <div className="w-full max-w-[280px] flex items-center gap-3">
                 <button
                   onClick={handleTogglePreviewPlay}
-                  className="w-10 h-10 rounded-full bg-[var(--burgundy)] text-white flex items-center justify-center shadow-sm hover:brightness-110 active:scale-95 cursor-pointer"
+                  className="w-11 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer"
                 >
                   {isPreviewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
                 </button>
                 <div className="flex-1">
-                  <div className="h-2 rounded-full bg-zinc-100 overflow-hidden border border-zinc-200">
+                  <div className="h-3 rounded-full bg-stone-100 overflow-hidden border-2 border-stone-800">
                     <div
-                      className="h-full bg-[var(--burgundy)] transition-all"
+                      className="h-full bg-rose-500 transition-all"
                       style={{ width: `${previewProgress}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] font-mono text-zinc-400 mt-1">
+                  <div className="flex justify-between text-[11px] font-mono font-bold text-stone-500 mt-1.5">
                     <span>{formatTimer(Math.floor((previewProgress / 100) * seconds))}</span>
                     <span>{formatTimer(seconds)}</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-1 text-[var(--text-soft)]">
-                <Mic className="w-6 h-6 text-[var(--burgundy)] opacity-60" />
-                <span className="text-xs">Press record to start speaking</span>
+              <div className="flex flex-col items-center gap-1.5 text-stone-500">
+                <Mic className="w-7 h-7 text-rose-500 stroke-[2.5]" />
+                <span className="text-xs font-mono font-bold">Press record to start speaking</span>
               </div>
             )}
           </div>
 
           {/* Timer Display */}
           {(recordState === "recording" || recordState === "paused") && (
-            <div className="mt-2 flex items-center justify-center gap-2 text-sm font-mono font-bold text-[var(--burgundy)]">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <div className="mt-2 flex items-center justify-center gap-2 text-sm font-mono font-bold text-rose-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
               <span>{formatTimer(seconds)}</span>
-              <span className="text-xs text-zinc-400 font-normal">/ 01:00</span>
+              <span className="text-xs text-stone-400 font-normal">/ 01:00</span>
             </div>
           )}
 
           {/* Record Actions Bar */}
-          <div className="mt-3 flex items-center justify-center gap-3">
+          <div className="mt-4 flex items-center justify-center gap-3">
             {recordState === "idle" && (
               <button
                 onClick={handleStartRecording}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] text-white font-semibold text-sm shadow-md transition-all active:scale-95 cursor-pointer"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs uppercase tracking-wider border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all"
               >
-                <Mic className="w-4 h-4" />
+                <Mic className="w-4 h-4 stroke-[2.5]" />
                 <span>Start Recording</span>
               </button>
             )}
@@ -443,13 +444,13 @@ export function WhisperRecorderModal({
               <>
                 <button
                   onClick={handleTogglePause}
-                  className="px-4 py-2 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-medium border border-zinc-300 transition-all active:scale-95 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-stone-50 text-stone-800 text-xs font-bold border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
                 >
                   {recordState === "recording" ? "Pause" : "Resume"}
                 </button>
                 <button
                   onClick={handleStopRecording}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[var(--burgundy)] text-white text-xs font-semibold shadow-sm hover:brightness-110 active:scale-95 cursor-pointer"
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer"
                 >
                   <Square className="w-3.5 h-3.5 fill-current" />
                   <span>Done</span>
@@ -460,20 +461,20 @@ export function WhisperRecorderModal({
             {recordState === "preview" && (
               <button
                 onClick={handleRecordAgain}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white hover:bg-zinc-50 text-[var(--text-soft)] text-xs font-medium border border-[var(--border)] shadow-xs transition-all active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-stone-50 text-stone-800 text-xs font-bold border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Record Again</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* ─── STATION & METADATA CONFIGURATION ─── */}
-        <div className="space-y-3 pt-2">
+        {/* Station & Metadata Configuration */}
+        <div className="space-y-3.5 pt-1">
           {/* Target Radio Station Frequency */}
           <div>
-            <label className="block text-xs font-mono font-semibold uppercase text-[var(--text-soft)] mb-1.5">
+            <label className="block text-xs font-mono font-bold uppercase text-stone-600 mb-1.5">
               Broadcast Station ({targetFrequency.toFixed(1)} FM)
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
@@ -486,10 +487,10 @@ export function WhisperRecorderModal({
                       playRadioClick();
                       setTargetFrequency(station.frequency);
                     }}
-                    className={`py-1.5 px-2 rounded-xl text-center border text-xs font-mono font-bold transition-all cursor-pointer ${
+                    className={`py-2 px-2 rounded-xl text-center text-xs font-mono font-bold border-2 border-stone-800 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[var(--burgundy)] text-white border-[var(--burgundy)] shadow-xs scale-102"
-                        : "bg-white text-zinc-700 border-[var(--border)] hover:bg-rose-50"
+                        ? "bg-rose-500 text-white shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
+                        : "bg-white text-stone-800 hover:bg-stone-50 shadow-none"
                     }`}
                   >
                     <div>{station.frequency} FM</div>
@@ -501,7 +502,7 @@ export function WhisperRecorderModal({
 
           {/* Whisper Title */}
           <div>
-            <label className="block text-xs font-mono font-semibold uppercase text-[var(--text-soft)] mb-1">
+            <label className="block text-xs font-mono font-bold uppercase text-stone-600 mb-1">
               Whisper Note Title (Optional)
             </label>
             <input
@@ -510,13 +511,13 @@ export function WhisperRecorderModal({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Good morning my love, just thinking of you"
               maxLength={60}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-[var(--border)] text-sm font-medium outline-none focus:border-[var(--burgundy)] transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-stone-800 text-sm font-medium text-stone-900 outline-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] focus:ring-2 focus:ring-rose-500/20 transition-all"
             />
           </div>
 
           {/* Mood Tag Selector */}
           <div>
-            <label className="block text-xs font-mono font-semibold uppercase text-[var(--text-soft)] mb-1.5">
+            <label className="block text-xs font-mono font-bold uppercase text-stone-600 mb-1.5">
               Mood Tag
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -530,10 +531,10 @@ export function WhisperRecorderModal({
                       playRadioClick();
                       setMoodTag(tag);
                     }}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border-2 border-stone-800 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[var(--burgundy)] text-white border-[var(--burgundy)] shadow-xs"
-                        : "bg-white text-zinc-700 border-[var(--border)] hover:bg-rose-50"
+                        ? "bg-stone-900 text-white shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
+                        : "bg-white text-stone-800 hover:bg-stone-50 shadow-none"
                     }`}
                   >
                     <span>{info.icon}</span>
@@ -545,11 +546,11 @@ export function WhisperRecorderModal({
           </div>
         </div>
 
-        {/* ─── BROADCAST SUBMIT BUTTON ─── */}
-        <div className="mt-5 pt-3 border-t border-[var(--border)] flex justify-end gap-3">
+        {/* Broadcast Submit Button */}
+        <div className="mt-5 pt-3.5 border-t-2 border-stone-200 flex justify-end items-center gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 rounded-full text-xs font-medium text-[var(--text-soft)] hover:text-[var(--text)] transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -557,7 +558,7 @@ export function WhisperRecorderModal({
           <button
             onClick={handleBroadcast}
             disabled={recordState !== "preview"}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--burgundy)] hover:bg-[#D13D68] disabled:opacity-40 text-white font-semibold text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider border-2 border-stone-800 shadow-[3px_3px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
           >
             {recordState === "broadcasting" ? (
               <>
@@ -566,7 +567,7 @@ export function WhisperRecorderModal({
               </>
             ) : (
               <>
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Broadcast to Airwaves</span>
               </>
             )}

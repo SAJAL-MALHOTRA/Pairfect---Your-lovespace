@@ -28,7 +28,7 @@ export const page: SEOPage = {
     },
     {
       heading: "General Trivia for Couples",
-      body: "Not every quiz has to be about the relationship. Teaming up or facing off in general trivia—covering topics like pop culture, history, or geography—is a fantastic date night activity. It brings out friendly competition and allows you to celebrate each other's niche knowledge (like your partner's surprising expertise in 90s action movies)."
+      body: "Not every quiz has to be about the relationship. Teaming up or facing off in general trivia-covering topics like pop culture, history, or geography-is a fantastic date night activity. It brings out friendly competition and allows you to celebrate each other's niche knowledge (like your partner's surprising expertise in 90s action movies)."
     },
     {
       heading: "Real-Time Quiz Battles with Pairfect",

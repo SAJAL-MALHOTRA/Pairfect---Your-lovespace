@@ -14,7 +14,7 @@ export const page: SEOPage = {
     ogDescription: 'Discover practical relationship tips for busy couples. Learn how to create micro-moments of connection in just 2-5 minutes a day.'
   },
   h1: 'Relationship Tips for Busy Couples: Finding Time When There Is None',
-  introduction: 'Between demanding careers, social obligations, and everyday chores, finding quality time for your partner can feel impossible. But maintaining a healthy, thriving relationship doesn\'t always require grand gestures or hours of free time. For busy couples, the secret lies in micro-moments of connection—small, intentional actions that show your partner they are a priority. Let\'s explore some practical relationship tips for busy couples that fit seamlessly into even the most hectic schedules.',
+  introduction: 'Between demanding careers, social obligations, and everyday chores, finding quality time for your partner can feel impossible. But maintaining a healthy, thriving relationship doesn\'t always require grand gestures or hours of free time. For busy couples, the secret lies in micro-moments of connection-small, intentional actions that show your partner they are a priority. Let\'s explore some practical relationship tips for busy couples that fit seamlessly into even the most hectic schedules.',
   sections: [
     {
       heading: 'The Power of Micro-Moments',
@@ -22,7 +22,7 @@ export const page: SEOPage = {
     },
     {
       heading: 'Quick and Meaningful Check-Ins',
-      body: 'You don\'t need a long conversation to understand where your partner is at emotionally. A fast, structured check-in can keep you both aligned.\n\nUse Pairfect\'s **Mood Tracking** feature. It takes seconds to log how you\'re feeling and instantly communicates your emotional state to your partner. If they see you\'re feeling stressed, they know to offer a little extra support that evening—no lengthy explanation required.'
+      body: 'You don\'t need a long conversation to understand where your partner is at emotionally. A fast, structured check-in can keep you both aligned.\n\nUse Pairfect\'s **Mood Tracking** feature. It takes seconds to log how you\'re feeling and instantly communicates your emotional state to your partner. If they see you\'re feeling stressed, they know to offer a little extra support that evening-no lengthy explanation required.'
     },
     {
       heading: 'Cultivating Gratitude on the Go',

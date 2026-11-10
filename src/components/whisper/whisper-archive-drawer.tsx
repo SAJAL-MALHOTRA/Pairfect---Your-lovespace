@@ -30,35 +30,42 @@ export function WhisperArchiveDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-xl max-h-[85vh] rounded-3xl bg-[#FFF5F8] border-2 border-[var(--border)] shadow-2xl p-5 sm:p-6 overflow-hidden flex flex-col text-[var(--text)]">
+      <div className="relative w-full max-w-xl max-h-[85vh] rounded-3xl bg-[#FAF9F6] border-2 border-stone-800 shadow-[6px_6px_0px_0px_rgba(28,25,23,0.9)] p-6 sm:p-7 overflow-hidden flex flex-col text-stone-900">
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]/70">
-          <div className="flex items-center gap-2">
-            <Radio className="w-5 h-5 text-[var(--burgundy)]" />
-            <h3 className="font-heading font-bold text-lg text-[var(--text)]">
-              Whisper Guide & Airwaves
-            </h3>
+        <div className="flex items-center justify-between pb-3.5 border-b-2 border-stone-200">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]">
+              <Radio className="w-5 h-5 stroke-[2.5]" />
+            </div>
+            <div>
+              <h3 className="font-heading font-black text-lg text-stone-900 leading-tight">
+                Whisper Guide &amp; Airwaves
+              </h3>
+              <p className="text-xs font-mono text-stone-500">
+                Browse stored notes and couple stations
+              </p>
+            </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-white/80 hover:bg-white text-[var(--text-soft)] hover:text-[var(--text)] border border-[var(--border)] shadow-xs transition-transform active:scale-95 cursor-pointer"
+            className="w-9 h-9 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center transition-all cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 stroke-[2.5]" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 pt-3 pb-2">
+        <div className="flex items-center gap-2.5 pt-4 pb-3">
           <button
             onClick={() => {
               playRadioClick();
               setActiveTab("notes");
             }}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border-2 border-stone-800 ${
               activeTab === "notes"
-                ? "bg-[var(--burgundy)] text-white shadow-xs"
-                : "bg-white text-[var(--text-soft)] hover:bg-rose-50 border border-[var(--border)]"
+                ? "bg-rose-500 text-white shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
+                : "bg-white text-stone-800 hover:bg-stone-50 shadow-none"
             }`}
           >
             Voice Notes ({whispers.length})
@@ -69,10 +76,10 @@ export function WhisperArchiveDrawer({
               playRadioClick();
               setActiveTab("stations");
             }}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border-2 border-stone-800 ${
               activeTab === "stations"
-                ? "bg-[var(--burgundy)] text-white shadow-xs"
-                : "bg-white text-[var(--text-soft)] hover:bg-rose-50 border border-[var(--border)]"
+                ? "bg-rose-500 text-white shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
+                : "bg-white text-stone-800 hover:bg-stone-50 shadow-none"
             }`}
           >
             Station Guide ({PRESET_STATIONS.length})
@@ -80,13 +87,13 @@ export function WhisperArchiveDrawer({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto pr-1 py-2 space-y-2.5">
+        <div className="flex-1 overflow-y-auto pr-1 py-2 space-y-3">
           {activeTab === "notes" ? (
             whispers.length === 0 ? (
-              <div className="py-12 text-center text-sm text-[var(--text-soft)]">
-                <Radio className="w-8 h-8 text-[var(--burgundy)]/40 mx-auto mb-2" />
-                <p className="font-medium">The airwaves are quiet right now.</p>
-                <p className="text-xs text-zinc-400 mt-1">Press the red button on the radio to drop your first whisper!</p>
+              <div className="py-12 text-center text-sm text-stone-500">
+                <Radio className="w-8 h-8 text-stone-400 mx-auto mb-2" />
+                <p className="font-bold text-stone-800">The airwaves are quiet right now.</p>
+                <p className="text-xs text-stone-500 mt-1">Press the red button on the radio to drop your first whisper!</p>
               </div>
             ) : (
               whispers.map((w) => {
@@ -99,56 +106,56 @@ export function WhisperArchiveDrawer({
                 return (
                   <div
                     key={w.id}
-                    className={`p-3.5 rounded-2xl border transition-all ${
+                    className={`p-4 rounded-2xl border-2 border-stone-800 transition-all ${
                       isTunedIn
-                        ? "bg-white border-[var(--burgundy)] ring-2 ring-[var(--burgundy)]/20 shadow-sm"
-                        : "bg-white/80 border-[var(--border)] hover:bg-white"
+                        ? "bg-amber-50 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)]"
+                        : "bg-white hover:bg-stone-50 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono font-bold text-xs bg-[#1A1F24] text-emerald-400 px-2 py-0.5 rounded-md">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className="font-mono font-black text-xs bg-stone-900 text-white px-2 py-0.5 rounded-md border border-stone-800 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)]">
                             {noteFreq.toFixed(1)} FM
                           </span>
 
-                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${moodInfo.color}`}>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-stone-800">
                             {moodInfo.icon} {moodInfo.label}
                           </span>
 
                           {w.listened_at && (
-                            <span className="text-[10px] text-rose-500 font-semibold flex items-center gap-0.5">
-                              <Heart className="w-2.5 h-2.5 fill-current" />
+                            <span className="text-[11px] text-rose-600 font-bold flex items-center gap-1">
+                              <Heart className="w-3 h-3 fill-current" />
                               <span>Heard</span>
                             </span>
                           )}
                         </div>
 
-                        <h4 className="font-sans font-semibold text-sm text-[var(--text)] truncate">
+                        <h4 className="font-heading font-black text-sm text-stone-900 truncate">
                           {w.title}
                         </h4>
 
-                        <div className="flex items-center gap-2 text-[11px] text-[var(--text-soft)] mt-0.5">
-                          <span>By {w.sender_name || "Partner"}</span>
-                          <span>•</span>
+                        <div className="flex items-center gap-2 text-xs font-mono text-stone-500 mt-1">
+                          <span>By <strong className="text-stone-800">{w.sender_name || "Partner"}</strong></span>
+                          <span>·</span>
                           <span>{w.duration ? `${Math.floor(Number(w.duration))}s` : "Voice Note"}</span>
-                          <span>•</span>
+                          <span>·</span>
                           <span>{formattedDate}</span>
                         </div>
                       </div>
 
                       {/* Action Button: Tune In */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => {
                             playRadioClick();
                             onTuneToFrequency(noteFreq);
                             onClose();
                           }}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer ${
+                          className={`flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-bold border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer ${
                             isTunedIn
                               ? "bg-emerald-600 text-white"
-                              : "bg-[var(--burgundy)] hover:bg-[#D13D68] text-white"
+                              : "bg-rose-500 hover:bg-rose-600 text-white"
                           }`}
                         >
                           <Play className="w-3 h-3 fill-current ml-0.5" />
@@ -158,10 +165,10 @@ export function WhisperArchiveDrawer({
                         {isOwn && onDeleteWhisper && (
                           <button
                             onClick={() => onDeleteWhisper(w.id)}
-                            className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                            className="p-1.5 text-stone-400 hover:text-red-600 transition-colors cursor-pointer"
                             title="Delete note"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4 stroke-[2.5]" />
                           </button>
                         )}
                       </div>
@@ -178,28 +185,28 @@ export function WhisperArchiveDrawer({
               return (
                 <div
                   key={station.frequency}
-                  className={`p-3.5 rounded-2xl border transition-all ${
+                  className={`p-4 rounded-2xl border-2 border-stone-800 transition-all ${
                     isCurrent
-                      ? "bg-white border-[var(--burgundy)] ring-2 ring-[var(--burgundy)]/20 shadow-sm"
-                      : "bg-white/80 border-[var(--border)] hover:bg-white"
+                      ? "bg-amber-50 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)]"
+                      : "bg-white hover:bg-stone-50 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)]"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono font-bold text-xs bg-[#1A1F24] text-white px-2 py-0.5 rounded-md">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="font-mono font-black text-xs bg-stone-900 text-white px-2 py-0.5 rounded-md border border-stone-800 shadow-[1px_1px_0px_0px_rgba(28,25,23,0.9)]">
                           {station.frequency.toFixed(1)} FM
                         </span>
-                        <span className="font-sans font-bold text-sm text-[var(--text)]">
+                        <span className="font-heading font-black text-sm text-stone-900">
                           {station.name}
                         </span>
                       </div>
 
-                      <p className="text-xs text-[var(--text-soft)] leading-relaxed">
+                      <p className="text-xs text-stone-600 font-sans leading-relaxed">
                         {station.description}
                       </p>
 
-                      <div className="text-[11px] font-mono text-zinc-400 mt-1">
+                      <div className="text-[11px] font-mono font-bold text-stone-500 mt-1.5">
                         {matchingNotes.length} voice note{matchingNotes.length !== 1 ? "s" : ""} on this frequency
                       </div>
                     </div>
@@ -210,7 +217,7 @@ export function WhisperArchiveDrawer({
                         onTuneToFrequency(station.frequency);
                         onClose();
                       }}
-                      className="px-3 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-[var(--border)] text-xs font-semibold text-[var(--text)] shadow-xs transition-transform active:scale-95 cursor-pointer flex-shrink-0"
+                      className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-stone-50 border-2 border-stone-800 text-xs font-bold text-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer flex-shrink-0"
                     >
                       Tune Here
                     </button>

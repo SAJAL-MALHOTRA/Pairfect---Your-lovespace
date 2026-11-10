@@ -908,7 +908,7 @@ export default function StoriesPage() {
                             <span>{mainTopic.label}</span>
                           </span>
                           <span className="text-[10px] font-mono text-[#7A4B5D]">
-                            — {story.author_display || "Anonymous Couple"} · {story.relationship_duration}
+                            - {story.author_display || "Anonymous Couple"} · {story.relationship_duration}
                           </span>
                         </div>
 
@@ -1389,7 +1389,7 @@ export default function StoriesPage() {
                       <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-[11px] flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                         <span>
-                          <strong>Moderation Queue:</strong> This story will be reviewed by moderation before appearing in Explore — never auto-published.
+                          <strong>Moderation Queue:</strong> This story will be reviewed by moderation before appearing in Explore - never auto-published.
                         </span>
                       </div>
                     </motion.div>

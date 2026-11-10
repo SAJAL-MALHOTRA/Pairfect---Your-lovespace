@@ -81,7 +81,7 @@ export default function MemoryResurfacingCard({ pairId }: { pairId?: string }) {
           // Ignore cache write errors
         }
       } catch {
-        // Silently fail — this is a bonus feature
+        // Silently fail - this is a bonus feature
       } finally {
         setLoaded(true);
       }
@@ -160,7 +160,7 @@ export default function MemoryResurfacingCard({ pairId }: { pairId?: string }) {
             </div>
           </Link>
 
-          {/* "View more" — only if multiple matches */}
+          {/* "View more" - only if multiple matches */}
           {hasMore && (
             <div className="space-y-2">
               <button

@@ -22,7 +22,7 @@ export const page: SEOPage = {
     },
     {
       heading: 'Documenting the Early Days',
-      body: 'The first year flies by in a blur of shared firsts—first holidays, first big purchases, first domestic disputes over loading the dishwasher. Documenting these moments is crucial.\n\nMake a habit of capturing your daily life, not just the highlights. Use Pairfect\'s **Virtual Photobooth** to take silly, unfiltered photos on a random Tuesday night. Over time, these candid snapshots become the most treasured memories of your newlywed phase.'
+      body: 'The first year flies by in a blur of shared firsts-first holidays, first big purchases, first domestic disputes over loading the dishwasher. Documenting these moments is crucial.\n\nMake a habit of capturing your daily life, not just the highlights. Use Pairfect\'s **Virtual Photobooth** to take silly, unfiltered photos on a random Tuesday night. Over time, these candid snapshots become the most treasured memories of your newlywed phase.'
     },
     {
       heading: 'Establishing Healthy Communication Habits',

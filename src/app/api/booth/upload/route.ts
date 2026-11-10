@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         });
 
       if (!uploadErr && uploadData?.path) {
-        // The memories bucket is private — use signed URLs instead of public URLs
+        // The memories bucket is private - use signed URLs instead of public URLs
         const { data: signedUrlData, error: signedUrlErr } = await admin.storage
           .from("memories")
           .createSignedUrl(uploadData.path, 60 * 60 * 24 * 7); // 7 days

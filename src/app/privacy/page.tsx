@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Shield, Lock, EyeOff, Heart, CheckCircle2 } from "lucide-react";
 
 export const metadata = {
-  title: "Privacy Policy — Pairfect",
+  title: "Privacy Policy - Pairfect",
   description: "Pairfect Privacy Policy. A transparent, privacy-first commitment to how we protect your couple space and personal memories.",
 };
 

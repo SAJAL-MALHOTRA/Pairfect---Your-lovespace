@@ -125,7 +125,7 @@ export async function grantPairSubscription({
     let newExpiresAt: Date | null = null;
 
     if (currentTier === "forever") {
-      // RULE: Forever is lifetime — never downgrade if monthly is purchased
+      // RULE: Forever is lifetime - never downgrade if monthly is purchased
       newTier = "forever";
       newExpiresAt = null;
     } else if (plan.tier === "forever") {

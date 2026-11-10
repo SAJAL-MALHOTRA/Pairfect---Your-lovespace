@@ -1,323 +1,123 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
-import { createClient } from "@/lib/supabase/client";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { Loader2, Calendar, Mail, Image as ImageIcon, Gift, ArrowRight, Heart, Send, Sparkles, PenTool, Music, Moon, Sun, Coffee, Sunset, Flower2, Radio } from "lucide-react";
-import { motion } from "framer-motion";
-import { PairfectPortrait } from "@/components/cozy-illustrations";
+import Image from "next/image";
+import {
+  Bell,
+  Camera,
+  Heart,
+  Mail,
+  BookOpen,
+  Sparkles,
+  Flame,
+  Palette,
+  Gamepad2,
+  Clock,
+  HelpCircle,
+  MapPin,
+  Film,
+  Zap,
+  Scale,
+  X,
+  Eye,
+  Maximize2,
+  ArrowRight
+} from "lucide-react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  useSpring,
+} from "framer-motion";
+import { CoupleBeansMascot } from "@/components/couple-mascot";
 import PushOptInBanner from "@/components/push-opt-in-banner";
 import MeanwhileCard from "@/components/meanwhile-card";
 import CitySelectorModal from "@/components/city-selector-modal";
-import MemoryResurfacingCard from "@/components/memory-resurfacing-card";
-import JournalCard from "@/components/journal-card";
 import { useSubscription } from "@/hooks/use-subscription";
 import PlusPaywallModal from "@/components/plus-paywall-modal";
 
-export const moodDetails = {
-  joyful:   { label: "Joyful",   emoji: "😊", color: "text-yellow-600  bg-yellow-50  dark:bg-yellow-950/20  border-yellow-100 dark:border-yellow-900/25" },
-  content:  { label: "Content",  emoji: "🥰", color: "text-rose-600    bg-rose-50    dark:bg-rose-950/20    border-rose-100   dark:border-rose-900/25" },
-  neutral:  { label: "Neutral",  emoji: "😐", color: "text-slate-600   bg-slate-50   dark:bg-slate-900/20   border-slate-100  dark:border-slate-800/25" },
-  tired:    { label: "Tired",    emoji: "🥱", color: "text-blue-600    bg-blue-50    dark:bg-blue-950/20    border-blue-100   dark:border-blue-900/25" },
-  stressed: { label: "Stressed", emoji: "😰", color: "text-orange-600  bg-orange-50  dark:bg-orange-950/20  border-orange-100 dark:border-orange-900/25" },
-  sad:      { label: "Sad",      emoji: "😢", color: "text-sky-600     bg-sky-50     dark:bg-sky-950/20     border-sky-100    dark:border-sky-900/25" },
-  anxious:  { label: "Anxious",  emoji: "🥺", color: "text-blue-500    bg-blue-50    dark:bg-blue-950/20    border-blue-100   dark:border-blue-900/25" },
-  excited:  { label: "Excited",  emoji: "🤪", color: "text-pink-600    bg-pink-50    dark:bg-pink-950/20    border-pink-100   dark:border-pink-900/25" },
-  loved:    { label: "Loved",    emoji: "💖", color: "text-rose-600    bg-rose-50    dark:bg-rose-950/20    border-rose-100   dark:border-rose-900/25" },
-  distant:  { label: "Distant",  emoji: "😶", color: "text-teal-600    bg-teal-50    dark:bg-teal-950/20    border-teal-100   dark:border-teal-900/25" },
-};
+interface MemoryKeepsake {
+  id: string;
+  type: "polaroid" | "photostrip";
+  title: string;
+  caption: string;
+  date: string;
+  images: string[];
+  rotation: number;
+}
 
-// ── Milestone Calculator ──
-const MILESTONES = [
-  { days: 7, label: "1 Week" },
-  { days: 14, label: "2 Weeks" },
-  { days: 30, label: "1 Month" },
-  { days: 50, label: "50 Days" },
-  { days: 100, label: "100 Days" },
-  { days: 180, label: "6 Months" },
-  { days: 200, label: "200 Days" },
-  { days: 365, label: "1 Year" },
-  { days: 500, label: "500 Days" },
-  { days: 730, label: "2 Years" },
-  { days: 1000, label: "1,000 Days" },
+const SAMPLE_MEMORIES: MemoryKeepsake[] = [
+  {
+    id: "mem-1",
+    type: "polaroid",
+    title: "Golden Hour Glow",
+    caption: "The evening we forgot to look at our phones",
+    date: "May 14",
+    images: ["/polaroid-memories.jpg"],
+    rotation: -3,
+  },
+  {
+    id: "mem-2",
+    type: "photostrip",
+    title: "Photobooth Smiles",
+    caption: "Three takes to get our favorite silly face",
+    date: "June 2",
+    images: [
+      "/booth/monkey-heart.jpg",
+      "/booth/monkey-point.jpg",
+      "/booth/monkey-shock.jpg",
+    ],
+    rotation: 2.5,
+  },
+  {
+    id: "mem-3",
+    type: "polaroid",
+    title: "Cozy Blanket Fort",
+    caption: "Popcorn, rain on the glass, zero plans",
+    date: "July 19",
+    images: ["/cozy-movie-night.jpg"],
+    rotation: -1.5,
+  },
 ];
 
-function getUpcomingMilestone(currentDays: number) {
-  const next = MILESTONES.find((m) => m.days > currentDays) || {
-    days: currentDays + 100,
-    label: `${currentDays + 100} Days`,
-  };
-  const daysToGo = next.days - currentDays;
-  const percent = Math.min(100, Math.max(5, Math.round((currentDays / next.days) * 100)));
-  return { next, daysToGo, percent };
-}
-
-// ── Live Countdown Timer Component ──
-function LiveCountdownTimer({ targetDateISO }: { targetDateISO?: string | null }) {
-  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-
-  useEffect(() => {
-    function calculate() {
-      if (!targetDateISO) return;
-      const targetDate = new Date(targetDateISO);
-      if (isNaN(targetDate.getTime())) return;
-
-      const today = new Date();
-      let nextAnniv = new Date(today.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0);
-      if (nextAnniv.getTime() <= today.getTime()) {
-        nextAnniv.setFullYear(nextAnniv.getFullYear() + 1);
-      }
-
-      const diffMs = nextAnniv.getTime() - today.getTime();
-      if (diffMs <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
-      const seconds = Math.floor((diffMs / 1000) % 60);
-
-      setTimeLeft({ days, hours, minutes, seconds });
-    }
-
-    calculate();
-    const interval = setInterval(calculate, 1000);
-    return () => clearInterval(interval);
-  }, [targetDateISO]);
-
-  return (
-    <div className="grid grid-cols-4 gap-2 text-center select-none w-full max-w-[280px]">
-      {[
-        { val: timeLeft.days, label: "Days" },
-        { val: timeLeft.hours, label: "Hours" },
-        { val: timeLeft.minutes, label: "Minutes" },
-        { val: timeLeft.seconds, label: "Seconds" },
-      ].map((seg) => (
-        <div
-          key={seg.label}
-          className="bg-[var(--bg)] border border-[var(--border)] rounded-xl py-2 px-1.5 flex flex-col items-center justify-center shadow-xs"
-        >
-          <span className="font-heading font-bold text-xl md:text-2xl text-[var(--text)] tabular-nums leading-none">
-            {String(seg.val).padStart(2, "0")}
-          </span>
-          <span className="text-[8px] font-sans font-semibold uppercase tracking-wider text-[var(--text-soft)] mt-1">
-            {seg.label}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Dried Botanical Sprig SVG behind envelope ──
-function BotanicalFlower({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 120 180" className={className} fill="none" aria-hidden="true">
-      <path d="M30 170 Q48 135 55 90 T70 20" stroke="#C4A882" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M42 120 Q30 110 24 102" stroke="#C4A882" strokeWidth="1.0" strokeLinecap="round" />
-      <path d="M50 95 Q65 85 70 78" stroke="#C4A882" strokeWidth="1.0" strokeLinecap="round" />
-      <path d="M58 65 Q45 55 38 48" stroke="#C4A882" strokeWidth="1.0" strokeLinecap="round" />
-      
-      <ellipse cx="24" cy="102" rx="4.5" ry="3" transform="rotate(-30 24 102)" fill="#D4B892" opacity="0.75" />
-      <ellipse cx="70" cy="78" rx="4.5" ry="3" transform="rotate(30 70 78)" fill="#D4B892" opacity="0.75" />
-      <ellipse cx="38" cy="48" rx="4" ry="2.5" transform="rotate(-20 38 48)" fill="#D4B892" opacity="0.75" />
-      <ellipse cx="70" cy="20" rx="5" ry="3.5" transform="rotate(15 70 20)" fill="#D4B892" opacity="0.75" />
-      
-      <path d="M34 145 Q20 135 12 128" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" />
-      <ellipse cx="12" cy="128" rx="3.5" ry="2" fill="#D4B892" opacity="0.7" />
-    </svg>
-  );
-}
-
-// ── Sparkle Overlay ──
-function Sparkle({ className = "", delay = 0 }: { className?: string; delay?: number }) {
-  return (
-    <motion.svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="var(--rose)"
-      strokeWidth="1.8"
-      animate={{ opacity: [0.15, 0.95, 0.15] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay }}
-    >
-      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" strokeLinecap="round" />
-    </motion.svg>
-  );
-}
-
-function getExcerpt(text: any, maxLen = 75): string {
-  if (!text) return "";
-  let raw = "";
-  if (typeof text === "string") raw = text;
-  else if (Array.isArray(text)) {
-    const textObj = text.find((item: any) => item && item.type === "text" && item.value);
-    if (textObj && textObj.value) raw = String(textObj.value);
-    else raw = text.map((b: any) => (typeof b === "string" ? b : b?.value || "")).join(" ");
-  } else if (typeof text === "object") {
-    raw = text.content || text.text || "";
-  }
-
-  if (!raw || raw.startsWith("enc:")) {
-    return "A handwritten letter for you ♡";
-  }
-  return raw.slice(0, maxLen);
-}
-
-// ── Wax Seal Monogram ──
-function WaxSeal({ letter = "P" }: { letter?: string }) {
-  return (
-    <motion.div
-      className="w-16 h-16 rounded-full flex items-center justify-center"
-      style={{
-        backgroundColor: "var(--burgundy)",
-        boxShadow: "0 4px 14px rgba(142, 43, 69, 0.35)",
-      }}
-      animate={{ scale: [1, 1.05, 1] }}
-      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <div className="w-[50px] h-[50px] rounded-full border border-white/15 flex items-center justify-center">
-        <span className="font-heading italic text-2xl text-white/80 font-bold select-none">{letter}</span>
-      </div>
-    </motion.div>
-  );
-}
-
-// ── Envelope Component ──
-function HomeEnvelope({ partnerName }: { partnerName: string }) {
-  const monogram = partnerName.trim().charAt(0).toUpperCase() || "P";
-
-  return (
-    <div className="relative select-none" style={{ width: "380px", height: "260px" }}>
-      <BotanicalFlower className="absolute -bottom-10 -left-12 w-28 h-40 opacity-75 z-0 pointer-events-none" />
-
-      <Sparkle className="absolute -top-6 left-12 w-5 h-5 z-10" delay={0} />
-      <Sparkle className="absolute bottom-10 -right-6 w-4 h-4 z-10" delay={1.2} />
-      <Sparkle className="absolute -bottom-6 left-28 w-4 h-4 z-10" delay={2.4} />
-
-      <div
-        className="relative w-full h-full rounded-2xl border overflow-hidden z-10"
-        style={{
-          backgroundColor: "var(--paper-mid)",
-          borderColor: "var(--border)",
-          boxShadow: "0 18px 40px var(--shadow)",
-        }}
-      >
-        <div className="absolute top-4 right-4 opacity-15 pointer-events-none">
-          <svg width="60" height="60" viewBox="0 0 64 64" fill="none" stroke="var(--burgundy)" strokeWidth="1.2">
-            <circle cx="32" cy="32" r="28" strokeDasharray="3 3" />
-            <circle cx="32" cy="32" r="22" />
-            <text x="50%" y="42%" textAnchor="middle" fontSize="6.5" fontFamily="var(--font-sans)" letterSpacing="1">KEEPSAKE</text>
-            <text x="50%" y="62%" textAnchor="middle" fontSize="6.5" fontFamily="var(--font-sans)" letterSpacing="1">PAIRFECT</text>
-          </svg>
-        </div>
-
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 380 260" fill="none">
-          <path d="M 0 0 L 190 135 L 380 0" stroke="rgba(142, 43, 69, 0.16)" strokeWidth="1.5" />
-          <path d="M 0 260 L 135 125" stroke="rgba(142, 43, 69, 0.12)" strokeWidth="1" />
-          <path d="M 380 260 L 245 125" stroke="rgba(142, 43, 69, 0.12)" strokeWidth="1" />
-        </svg>
-
-        <div className="absolute inset-0 flex items-center justify-center z-20">
-          <WaxSeal letter={monogram} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Dynamic SVG Glass Jar Sketch ──
-function GlassJarSketch() {
-  return (
-    <svg viewBox="0 0 100 120" className="w-16 h-20" fill="none" aria-hidden="true">
-      <path d="M 30 20 Q 20 20 20 30 L 20 90 Q 20 100 30 100 H 70 Q 80 100 80 90 L 80 30 Q 80 20 70 20 Z" fill="rgba(255, 255, 255, 0.15)" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <rect x="35" y="12" width="30" height="8" rx="2" fill="var(--text-soft)" stroke="var(--text-soft)" strokeWidth="1.2" />
-      
-      {/* Mini slips inside */}
-      <rect x="32" y="75" width="10" height="10" rx="2" fill="#E0B8B8" transform="rotate(15 32 75)" />
-      <rect x="48" y="80" width="10" height="10" rx="2" fill="#A8BDB2" transform="rotate(-10 48 80)" />
-      <rect x="58" y="72" width="10" height="10" rx="2" fill="#D2C4D8" transform="rotate(25 58 72)" />
-      
-      {/* Heart tag label */}
-      <rect x="38" y="45" width="24" height="20" rx="3" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1" />
-      <path d="M 50 51 C 48 47, 44 49, 50 57 C 56 49, 52 47, 50 51 Z" fill="var(--rose)" />
-    </svg>
-  );
-}
-
-// ── Dynamic SVG Cake Sketch ──
-function AnniversaryCakeSketch() {
-  return (
-    <svg viewBox="0 0 100 100" className="w-20 h-20" fill="none" aria-hidden="true">
-      <rect x="15" y="60" width="70" height="24" rx="4" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <rect x="25" y="40" width="50" height="20" rx="4" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <rect x="35" y="24" width="30" height="16" rx="4" fill="var(--card)" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <line x1="50" y1="24" x2="50" y2="12" stroke="var(--text-soft)" strokeWidth="1.5" />
-      <path d="M 50 12 C 48 8, 44 10, 50 18 C 56 10, 52 8, 50 12 Z" fill="var(--rose)" />
-      <path d="M 15 68 C 25 72, 75 72, 85 68" stroke="var(--rose)" strokeWidth="1" />
-      <path d="M 25 46 C 35 50, 65 50, 75 46" stroke="var(--rose)" strokeWidth="1" />
-    </svg>
-  );
-}
-
-interface RecentActivityItem {
-  id: string;
-  type: "letter" | "gratitude" | "moment";
-  text: string;
-  timeStr: string;
-  timestamp: number;
-}
-
 export default function DashboardPage() {
-  const { user, profile, pair, partner, loading } = useAuth();
+  const { user, profile, pair, partner, loading, refreshSession } = useAuth();
   const { isPlus, isTrial, daysRemaining } = useSubscription();
-  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
-  const [lettersCount, setLettersCount] = useState(0);
+
   const [momentsCount, setMomentsCount] = useState(0);
+  const [lettersCount, setLettersCount] = useState(0);
   const [gratitudeCount, setGratitudeCount] = useState(0);
-  const [partnerFeeling, setPartnerFeeling] = useState("feeling peaceful");
-  const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([]);
-  const [anniversaryDaysToGo, setAnniversaryDaysToGo] = useState(0);
-  const [anniversaryDateFormatted, setAnniversaryDateFormatted] = useState("");
-  const [anniversaryNotSet, setAnniversaryNotSet] = useState(false);
-  const [latestLetter, setLatestLetter] = useState<any>(null);
-  const [latestMoment, setLatestMoment] = useState<any>(null);
-  const [latestGratitude, setLatestGratitude] = useState<any>(null);
-  const [mixtapeCount, setMixtapeCount] = useState(0);
-  const [latestMixtape, setLatestMixtape] = useState<any>(null);
-  const [whisperCount, setWhisperCount] = useState(0);
-  const [latestWhisper, setLatestWhisper] = useState<any>(null);
-  const [fetching, setFetching] = useState(true);
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
-  const { refreshSession } = useAuth();
-  const supabase = createClient();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
-  // prefers-reduced-motion hook (declared before early returns)
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
+  // Today Question 3D Tilt & Mascot Cheer
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const cardX = useMotionValue(0);
+  const cardY = useMotionValue(0);
+  const rotateX = useSpring(useTransform(cardY, [-0.5, 0.5], [6, -6]), {
+    stiffness: 320,
+    damping: 26,
+  });
+  const rotateY = useSpring(useTransform(cardX, [-0.5, 0.5], [-6, 6]), {
+    stiffness: 320,
+    damping: 26,
+  });
+  const [isMascotExcited, setIsMascotExcited] = useState(false);
+  const [heartsBurst, setHeartsBurst] = useState<number[]>([]);
 
-  // Tab active/inactive state to pause animations when tab is backgrounded
-  const [tabActive, setTabActive] = useState(true);
-  useEffect(() => {
-    const handleVisibility = () => setTabActive(!document.hidden);
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
+  // Interactive Memories Preview Modal State
+  const [selectedMemory, setSelectedMemory] = useState<MemoryKeepsake | null>(null);
+
+  // Formatted date string
+  const todayFormatted = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
 
   useEffect(() => {
     if (!pair || loading) return;
@@ -326,7 +126,7 @@ export default function DashboardPage() {
     (async () => {
       try {
         const res = await fetch("/api/dashboard-summary");
-        if (!res.ok) throw new Error("Failed to fetch dashboard summary");
+        if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
 
@@ -334,914 +134,959 @@ export default function DashboardPage() {
           setLettersCount(data.counts.letters || 0);
           setMomentsCount(data.counts.moments || 0);
           setGratitudeCount(data.counts.gratitude || 0);
-          setMixtapeCount(data.counts.mixtapes || 0);
         }
-
-        if (data.recentLetters && data.recentLetters.length > 0) {
-          setLatestLetter(data.recentLetters[0]);
-        }
-        if (data.recentMoments && data.recentMoments.length > 0) {
-          setLatestMoment(data.recentMoments[0]);
-        }
-        if (data.recentGratitude && data.recentGratitude.length > 0) {
-          setLatestGratitude(data.recentGratitude[0]);
-        }
-        if (data.latestMixtape) {
-          setLatestMixtape(data.latestMixtape);
-        }
-
-        fetch(`/api/whisper?pairId=${pair.id}`)
-          .then((r) => r.json())
-          .then((whisperList) => {
-            if (cancelled) return;
-            if (Array.isArray(whisperList) && whisperList.length > 0) {
-              setLatestWhisper(whisperList[0]);
-              setWhisperCount(whisperList.length);
-            }
-          })
-          .catch(() => {});
-
-        if (data.partnerMood) {
-          setPartnerFeeling(`feeling ${data.partnerMood}`);
-        } else {
-          setPartnerFeeling("feeling peaceful");
-        }
-
-        // Assemble recent activities from summary
-        const activities: RecentActivityItem[] = [];
-        const partnerName = partner?.display_name || "Partner";
-
-        if (data.recentLetters) {
-          data.recentLetters.forEach((l: any) => {
-            const isMe = l.sender_id === user?.id;
-            const t = l.sent_at ? new Date(l.sent_at).getTime() : 0;
-            activities.push({
-              id: l.id,
-              type: "letter",
-              text: isMe ? "You wrote a letter" : `${partnerName} sent you a letter`,
-              timeStr: "Recently",
-              timestamp: isNaN(t) ? 0 : t,
-            });
-          });
-        }
-
-        if (data.recentMoments) {
-          data.recentMoments.forEach((m: any) => {
-            const t = m.created_at ? new Date(m.created_at).getTime() : 0;
-            activities.push({
-              id: m.id,
-              type: "moment",
-              text: `Added memory: "${m.title}"`,
-              timeStr: "Recently",
-              timestamp: isNaN(t) ? 0 : t,
-            });
-          });
-        }
-
-        if (data.recentGratitude) {
-          data.recentGratitude.forEach((g: any) => {
-            const isMe = g.user_id === user?.id;
-            const t = g.created_at ? new Date(g.created_at).getTime() : 0;
-            activities.push({
-              id: g.id,
-              type: "gratitude",
-              text: isMe ? "You added a gratitude note" : `${partnerName} added a gratitude note`,
-              timeStr: "Recently",
-              timestamp: isNaN(t) ? 0 : t,
-            });
-          });
-        }
-
-        // Sort by timestamp desc, take top 3
-        activities.sort((a, b) => b.timestamp - a.timestamp);
-        setRecentActivities(activities.slice(0, 3));
-
-        // Anniversary calculation: display actual start date, not future year date
-        const anniversaryDateISO = pair.started_dating_date || pair.created_at;
-        if (anniversaryDateISO) {
-          const startDate = new Date(anniversaryDateISO);
-          if (!isNaN(startDate.getTime())) {
-            const today = new Date();
-            let nextAnniversary = new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate());
-            if (nextAnniversary.getTime() <= today.getTime()) {
-              nextAnniversary.setFullYear(nextAnniversary.getFullYear() + 1);
-            }
-            const diffTime = Math.abs(nextAnniversary.getTime() - today.getTime());
-            const daysToGo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            setAnniversaryDaysToGo(daysToGo);
-
-            const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric" };
-            setAnniversaryDateFormatted(startDate.toLocaleDateString("en-US", options));
-            setAnniversaryNotSet(false);
-          } else {
-            setAnniversaryNotSet(true);
-          }
-        } else {
-          setAnniversaryNotSet(true);
-        }
-      } catch (e) {
-        console.error("Dashboard summary fetch failed:", e);
-      } finally {
-        if (!cancelled) setFetching(false);
+      } catch {
+        // Silently handle summary fetch error
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [pair?.id, loading]);
+  }, [pair, loading]);
 
-  if (loading || fetching) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--bg)" }}>
-        <Navigation />
-        <Loader2 className="w-5 h-5 text-[var(--burgundy)] animate-spin" />
-      </div>
-    );
-  }
+  // Handle ESC key to dismiss memory preview modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedMemory(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
-  const anniversaryStart = pair?.started_dating_date || pair?.created_at;
+  const streakWeeks = Math.max(0, Math.floor((pair?.current_streak || 0) / 7));
 
-  const daysTogether = anniversaryStart
-    ? Math.max(1, Math.floor((Date.now() - new Date(anniversaryStart).getTime()) / 86400000) + 1)
-    : 1;
-
-  const getGreeting = () => {
-    const hours = new Date().getHours();
-    if (hours >= 5 && hours < 12) return "Good morning,";
-    if (hours >= 12 && hours < 17) return "Good afternoon,";
-    return "Good evening,";
+  const handleBannerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!bannerRef.current) return;
+    const rect = bannerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    cardX.set(x);
+    cardY.set(y);
   };
 
-  // ── Time-Aware Ritual Prompt ──
-  const getRitualPrompt = () => {
-    const hours = new Date().getHours();
-    if (hours >= 5 && hours < 10) return { text: "Start the day with a small note of gratitude.", icon: Coffee, href: "/gratitude-jar", label: "Write a note" };
-    if (hours >= 10 && hours < 14) return { text: "Thinking of each other? Send a little letter.", icon: Sun, href: "/love-letter", label: "Write a letter" };
-    if (hours >= 14 && hours < 18) return { text: "Take a moment: maybe play a game together.", icon: Sunset, href: "/play", label: "Play together" };
-    if (hours >= 18 && hours < 22) return { text: "Tonight: maybe write them a goodnight letter.", icon: Moon, href: "/love-letter", label: "Write tonight" };
-    return { text: "Can't sleep? Leave a note for tomorrow.", icon: Moon, href: "/gratitude-jar", label: "Leave a note" };
-  };
-  const ritual = getRitualPrompt();
-  const RitualIcon = ritual.icon;
-
-  // ── Narrative Relationship Summary ──
-  const getNarrativeSummary = () => {
-    if (daysTogether < 30) return `${daysTogether} days of choosing each other. The beginning of your story.`;
-    if (daysTogether < 100) return `${daysTogether} days of choosing each other. Still writing the first chapter.`;
-    if (daysTogether < 365) return `${daysTogether} days of choosing each other. Your story is growing.`;
-    const years = Math.floor(daysTogether / 365);
-    if (years === 1) return `${daysTogether} days of choosing each other. The first year of your story.`;
-    return `${daysTogether} days of choosing each other. ${years} years of your story.`;
+  const handleBannerMouseLeave = () => {
+    cardX.set(0);
+    cardY.set(0);
+    setIsMascotExcited(false);
   };
 
-  const greetingLine = getGreeting();
-  const recipientName = partner?.display_name || "partner";
+  const triggerMascotCheer = () => {
+    setIsMascotExcited(true);
+    setHeartsBurst((prev) => [...prev, Date.now()]);
+    setTimeout(() => {
+      setHeartsBurst((prev) => prev.slice(1));
+    }, 1200);
+  };
 
-  // Faint, large, heavily blurred background glass blobs (opacity < 5% for deep depth)
-  const glassBlobs = [
-    { left: "10%", top: "20%", size: 380, color: "rgba(255, 200, 215, 0.02)", dx: [-25, 25, -25], dy: [-15, 15, -15], duration: 40 },
-    { left: "75%", top: "55%", size: 340, color: "rgba(235, 215, 255, 0.02)", dx: [20, -20, 20], dy: [-20, 20, -20], duration: 45 },
-    { left: "80%", top: "10%", size: 450, color: "rgba(255, 235, 200, 0.015)", dx: [-15, 15, -15], dy: [15, -15, 15], duration: 50 },
-  ];
-
-  // Translucent glass hearts with custom colors, blur levels (depth, in pixels), opacities, and shimmer delays
-  const glassHearts = [
-    // Foregrounds (Sharp, bright, highest glow)
-    { size: 72, left: "81%", top: "12%", color: "#FFD3E2", blur: 0, glow: 0.28, duration: 32, delay: 0, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, 8, 0], shimmerDelay: 1, shimmerInterval: 9 },
-    { size: 60, left: "11%", top: "72%", color: "#FFE8E2", blur: 0, glow: 0.28, duration: 38, delay: 2, dx: [-15, 15, -15], dy: [-18, 18, -18], rot: [0, -12, 0], shimmerDelay: 4, shimmerInterval: 12 },
-    { size: 42, left: "91%", top: "45%", color: "#EEDAF5", blur: 1, glow: 0.22, duration: 28, delay: 1, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, 15, 0], shimmerDelay: 3, shimmerInterval: 11 },
-    
-    // Middleground (Slight blur)
-    { size: 26, left: "84%", top: "26%", color: "#FFF0EB", blur: 2, glow: 0.18, duration: 24, delay: 3, dx: [-10, 10, -10], dy: [-8, 8, -8], rot: [0, -6, 0], shimmerDelay: 0.5, shimmerInterval: 10 },
-    { size: 22, left: "21%", top: "14%", color: "#FFD6E8", blur: 2.5, glow: 0.18, duration: 30, delay: 1.5, dx: [-15, 15, -15], dy: [-12, 12, -12], rot: [0, 10, 0], shimmerDelay: 2.5, shimmerInterval: 13 },
-    { size: 24, left: "75%", top: "79%", color: "#E6F5FA", blur: 2.5, glow: 0.18, duration: 35, delay: 4, dx: [-20, 20, -20], dy: [-15, 15, -15], rot: [0, -10, 0], shimmerDelay: 5, shimmerInterval: 14 },
-    { size: 28, left: "6%", top: "43%", color: "#FFF9F5", blur: 2, glow: 0.18, duration: 27, delay: 2.5, dx: [-14, 14, -14], dy: [-10, 10, -10], rot: [0, 8, 0], shimmerDelay: 3.5, shimmerInterval: 11.5 },
-    { size: 20, left: "88%", top: "83%", color: "#FFDFE6", blur: 2.5, glow: 0.18, duration: 29, delay: 0.8, dx: [-12, 12, -12], dy: [-14, 14, -14], rot: [0, -8, 0], shimmerDelay: 1.8, shimmerInterval: 10.5 },
-
-    // Background (Heavy blur, very faint, some almost disappear)
-    { size: 14, left: "9%", top: "18%", color: "#FFDEEB", blur: 4, glow: 0.12, duration: 22, delay: 5, dx: [-8, 8, -8], dy: [-6, 6, -6], rot: [0, 5, 0], shimmerDelay: 6, shimmerInterval: 14 },
-    { size: 12, left: "78%", top: "30%", color: "#F0FAFF", blur: 5, glow: 0.10, duration: 31, delay: 2, dx: [-12, 12, -12], dy: [-10, 10, -10], rot: [0, -5, 0], shimmerDelay: 0, shimmerInterval: 16 },
-    { size: 10, left: "27%", top: "83%", color: "#FFF6FA", blur: 5, glow: 0.08, duration: 34, delay: 3.2, dx: [-10, 10, -10], dy: [-12, 12, -12], rot: [0, 12, 0], shimmerDelay: 4.5, shimmerInterval: 13.5 },
-    { size: 8, left: "67%", top: "15%", color: "#FFEAE6", blur: 6, glow: 0.06, duration: 26, delay: 1.2, dx: [-6, 6, -6], dy: [-8, 8, -8], rot: [0, -15, 0], shimmerDelay: 2, shimmerInterval: 11.5 },
-    { size: 12, left: "3%", top: "27%", color: "#FFF0F5", blur: 5, glow: 0.08, duration: 33, delay: 0.5, dx: [-15, 15, -15], dy: [-15, 15, -15], rot: [0, 4, 0], shimmerDelay: 1.2, shimmerInterval: 12 },
-    { size: 14, left: "93%", top: "19%", color: "#FFDCE6", blur: 4, glow: 0.10, duration: 36, delay: 4.5, dx: [-18, 18, -18], dy: [-12, 12, -12], rot: [0, -4, 0], shimmerDelay: 5.2, shimmerInterval: 15 },
-  ];
-
-  // Sparkles (tiny 2-4px dots and faint 4-point stars)
-  const sparkles = [
-    { type: "dot", size: 3, left: "18%", top: "16%" },
-    { type: "star", size: 8, left: "84%", top: "34%" },
-    { type: "dot", size: 4, left: "4%", top: "67%" },
-    { type: "star", size: 10, left: "89%", top: "77%" },
-    { type: "dot", size: 2, left: "14%", top: "87%" },
-    { type: "star", size: 7, left: "76%", top: "7%" },
-    { type: "dot", size: 3, left: "33%", top: "89%" },
-    { type: "star", size: 9, left: "64%", top: "11%" },
-  ];
+  const partnerDisplayName = partner?.display_name || "Partner";
 
   return (
-    <div
-      className="relative min-h-[100dvh] flex flex-col items-center overflow-x-hidden"
-      style={{ backgroundColor: "var(--bg)" }}
-    >
-      {/* ─── AMBIENT BACKGROUND PARTICLES ─── */}
-      <div 
-        className="absolute inset-0 pointer-events-none overflow-hidden select-none" 
-        style={{ zIndex: 1 }}
-        aria-hidden="true"
-      >
-        {/* 1. Large Blurred Background Glass Blobs */}
-        {glassBlobs.map((blob, idx) => {
-          const blobAnim: any = reducedMotion || !tabActive
-            ? {}
-            : {
-                x: blob.dx,
-                y: blob.dy,
-              };
-
-          return (
-            <motion.div
-              key={`blob-${idx}`}
-              className="absolute rounded-full pointer-events-none select-none"
-              style={{
-                left: blob.left,
-                top: blob.top,
-                width: `${blob.size}px`,
-                height: `${blob.size}px`,
-                background: `radial-gradient(circle, ${blob.color} 0%, transparent 70%)`,
-                opacity: 0.6,
-                willChange: "transform",
-              }}
-              animate={blobAnim}
-              transition={{
-                duration: blob.duration,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          );
-        })}
-
-        {/* 2. Glass Hearts */}
-        {glassHearts.map((p, idx) => {
-          const animationProps: any = reducedMotion || !tabActive
-            ? {
-                animate: { opacity: p.glow * 0.4 },
-                transition: { duration: 1 }
-              }
-            : {
-                animate: {
-                  x: p.dx,
-                  y: p.dy,
-                  rotate: p.rot,
-                  opacity: [p.glow * 0.3, p.glow * 0.9, p.glow * 0.3],
-                },
-                transition: {
-                  duration: p.duration,
-                  delay: p.delay,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }
-              };
-
-          return (
-            <motion.div
-              key={`heart-${idx}`}
-              className="absolute select-none pointer-events-none"
-              style={{
-                left: p.left,
-                top: p.top,
-                width: `${p.size}px`,
-                height: `${p.size}px`,
-                willChange: "transform, opacity",
-                zIndex: p.size > 50 ? 2 : 1,
-              }}
-              {...animationProps}
-            >
-              <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
-                <defs>
-                  {/* Glass texture gradient */}
-                  <radialGradient id={`glassGrad-${idx}`} cx="35%" cy="30%" r="65%">
-                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
-                    <stop offset="50%" stopColor={p.color} stopOpacity="0.22" />
-                    <stop offset="100%" stopColor="#FFB3C6" stopOpacity="0.08" />
-                  </radialGradient>
-                  {/* Glass edge stroke gradient */}
-                  <linearGradient id={`edgeGrad-${idx}`} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75" />
-                    <stop offset="45%" stopColor="#FFFFFF" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor={p.color} stopOpacity="0.45" />
-                  </linearGradient>
-                  {/* Specular sunlight shimmer sweep gradient */}
-                  <linearGradient id={`shimmerGrad-${idx}`} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
-                    <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-
-                {/* Soft background shape shadow/bloom blur */}
-                <path
-                  d="M 50 86 C 25 63, 6 43, 6 27 C 6 12, 23 5, 50 31 C 77 5, 94 12, 94 27 C 94 43, 75 63, 50 86 Z"
-                  fill="rgba(255, 200, 215, 0.06)"
-                  filter="blur(3px)"
-                />
-
-                {/* Main Glass Heart Body */}
-                <path
-                  d="M 50 84 C 25 61, 8 41, 8 26 C 8 11, 25 4, 50 29 C 75 4, 92 11, 92 26 C 92 41, 75 61, 50 84 Z"
-                  fill={`url(#glassGrad-${idx})`}
-                  stroke={`url(#edgeGrad-${idx})`}
-                  strokeWidth="1.2"
-                />
-
-                {/* Specular Inner Refraction highlight */}
-                <path
-                  d="M 50 76 C 31 57, 15 39, 15 26 C 15 15, 27 10, 50 31"
-                  stroke="#FFFFFF"
-                  strokeOpacity="0.35"
-                  strokeWidth="0.8"
-                  strokeLinecap="round"
-                />
-
-                {/* Top Left Glass Curved highlight */}
-                <path
-                  d="M 24 23 C 28 15, 38 13, 47 23"
-                  stroke="#FFFFFF"
-                  strokeOpacity="0.65"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Specular Shine catch: sweeps across the surface dynamically */}
-                <g style={{ mixBlendMode: "overlay" }}>
-                  <rect
-                    className="shimmer-active"
-                    x="-20"
-                    y="-20"
-                    width="15"
-                    height="120"
-                    fill={`url(#shimmerGrad-${idx})`}
-                    style={{
-                      animationDelay: `${p.shimmerDelay}s`,
-                      animationDuration: `${p.shimmerInterval}s`,
-                    }}
-                  />
-                </g>
-              </svg>
-            </motion.div>
-          );
-        })}
-
-        {/* 3. Sparkles */}
-        {sparkles.map((sp, idx) => {
-          const sparkleAnim: any = reducedMotion || !tabActive
-            ? { opacity: 0.05 }
-            : {
-                opacity: [0.03, 0.18, 0.03],
-                scale: [0.9, 1.15, 0.9],
-              };
-
-          return (
-            <motion.div
-              key={`sparkle-${idx}`}
-              className="absolute pointer-events-none select-none text-[var(--rose)]"
-              style={{
-                left: sp.left,
-                top: sp.top,
-                width: `${sp.size}px`,
-                height: `${sp.size}px`,
-                opacity: 0.05,
-              }}
-              animate={sparkleAnim}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: idx * 0.7,
-              }}
-            >
-              {sp.type === "star" ? (
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-                  <path d="M12 2l2.4 7.2 7.2 2.4-7.2 2.4-2.4 7.2-2.4-7.2-7.2-2.4 7.2-2.4z" />
-                </svg>
-              ) : (
-                <div className="w-full h-full rounded-full bg-current" />
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-
+    <div className="relative min-h-screen bg-[#FAF9F6] text-stone-900 font-sans selection:bg-rose-100 selection:text-rose-900">
       <Navigation />
 
-      {/* Main Container: stacked layered zIndex above background particles */}
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        className="relative max-w-6xl mx-auto w-full px-6 md:pl-36 md:pr-12 py-16 pb-36 pt-24 space-y-10"
-        style={{ zIndex: 10 }}
-      >
-        <PushOptInBanner />
+      {/* Main Content Area with Desktop Sidebar Offset */}
+      <div className="lg:pl-60 xl:pl-64 min-h-screen pt-18 pb-10 sm:py-10 px-4 sm:px-8 flex justify-center">
+        <main className="w-full max-w-5xl space-y-8 select-none pb-24">
+          <PushOptInBanner />
 
-        {/* ─── UPGRADE TO PAIRFECT PLUS BANNER (When !isPlus) ─── */}
-        {!isPlus && (
-          <div className="relative overflow-hidden rounded-[28px] border border-[#FFD9E3] bg-gradient-to-r from-[#FFF5F7] via-[#FFFDF9] to-[#FFF0F4] p-5 md:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-5 paper-grain">
-            <div className="flex items-center gap-4 text-center sm:text-left">
-              <div className="w-12 h-12 rounded-2xl bg-[var(--burgundy)]/10 text-[var(--burgundy)] flex items-center justify-center shrink-0 shadow-xs">
-                <Sparkles className="w-6 h-6 text-[#E8527D]" />
-              </div>
-              <div>
-                <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#E8527D] bg-[#FFEBF0] px-2 py-0.5 rounded-full border border-[#FFD9E3]">
-                    Pairfect Plus
-                  </span>
-                  <span className="text-[10px] font-mono text-stone-500">
-                    7-Day Free Trial Available
-                  </span>
-                </div>
-                <h3 className="font-display font-black italic text-lg sm:text-xl text-[#2D1F2D]">
-                  Everything you share, kept forever
-                </h3>
-                <p className="text-xs text-[#6E5564] max-w-md mt-0.5 leading-relaxed">
-                  Keep all photos and letters on your Memory Wall forever, schedule future letters, and play all 14 quiz packs. One pass covers both of you.
-                </p>
-              </div>
+          {/* ══════════════════════════════════════════════════
+              1. TOP HEADER: GREETING & DATE + LIVE PARTNER PRESENCE
+              ══════════════════════════════════════════════════ */}
+          <div className="flex items-center justify-between pt-2">
+            <div>
+              <h1 className="text-2xl sm:text-4xl font-heading font-black text-stone-900 tracking-tight">
+                {profile?.display_name ? `Hi ${profile.display_name}` : "Hi there"}
+              </h1>
+              <p className="text-xs sm:text-sm font-mono text-stone-500 mt-1">
+                {todayFormatted}
+              </p>
             </div>
-            <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setIsPaywallOpen(true)}
-                className="w-full sm:w-auto btn-journal py-2.5 px-5 text-xs font-mono font-bold flex items-center justify-center gap-2 shadow-sm hover:scale-[1.02] active:scale-98 transition-transform cursor-pointer"
+                className="w-10 h-10 rounded-full border border-stone-200 bg-white hover:bg-stone-50 flex items-center justify-center text-stone-600 shadow-2xs transition-colors cursor-pointer"
+                aria-label="Notifications"
               >
-                <span>Try Free or Upgrade ▷</span>
+                <Bell className="w-4 h-4" />
               </button>
-            </div>
-          </div>
-        )}
 
-        {/* ─── TRIAL STATUS BANNER (When isPlus && isTrial) ─── */}
-        {isPlus && isTrial && (
-          <div className="rounded-2xl border border-pink-200 bg-pink-50/70 p-3.5 px-5 flex items-center justify-between gap-3 text-xs text-[#2D1F2D]">
-            <div className="flex items-center gap-2.5">
-              <Sparkles className="w-4 h-4 text-[#E8527D] shrink-0" />
-              <span>
-                <strong>Pairfect Plus 7-Day Free Trial Active:</strong> You have {daysRemaining ?? 7} days left to explore all exclusive features together.
-              </span>
-            </div>
-            <Link
-              href="/checkout?plan=plus-quarterly"
-              className="text-[11px] font-mono font-bold text-[#E8527D] hover:underline shrink-0"
-            >
-              Keep Plus Permanent →
-            </Link>
-          </div>
-        )}
-
-        {/* ─── MEANWHILE ♥ PROXIMITY HERO CENTERPIECE ─── */}
-        <MeanwhileCard
-          userProfile={profile}
-          partnerProfile={partner}
-          onOpenCitySelector={() => setIsCityModalOpen(true)}
-        />
-
-        {/* ─── CITY SELECTOR MODAL ─── */}
-        <CitySelectorModal
-          isOpen={isCityModalOpen}
-          onClose={() => setIsCityModalOpen(false)}
-          onCitySelected={() => refreshSession(false)}
-        />
-
-        {/* ─── MAIN HERO & WIDGETS GRID ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          
-          {/* ─── LEFT COLUMN (HERO) ─── */}
-          <div className="lg:col-span-7 flex flex-col items-center text-center lg:items-start lg:text-left space-y-10">
-            {/* Header Greeting: Editorial Typography */}
-            <div className="flex flex-row items-center justify-between w-full pb-6 gap-6">
-              <div className="space-y-2 text-left">
-                <p className="typo-chapter">
-                  {greetingLine.replace(',', '').toUpperCase()}
-                </p>
-                <h2 className="typo-display text-[42px]">
-                  {profile?.display_name || "Love"}
-                </h2>
-                <p className="typo-body text-sm mt-2">
-                  {getNarrativeSummary()}
-                </p>
-              </div>
-              <Link href="/profile" className="flex-shrink-0 transition-transform hover:scale-[1.03] active:scale-[0.97]" title="Customize Us / Profile">
-                <PairfectPortrait className="w-24 h-24 rounded-2xl shadow-sm border border-[var(--border)]" />
-              </Link>
-            </div>
-
-            {/* Envelope Centerpiece */}
-            <div className="flex justify-center w-full lg:justify-start">
-              <Link href="/love-letter" className="block transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Open Love Letters">
-                <HomeEnvelope partnerName={recipientName} />
-              </Link>
-            </div>
-
-            {/* CTA action */}
-            <div className="space-y-5 flex flex-col items-center lg:items-start w-full">
-              <p className="font-heading text-2xl text-[var(--text)] italic leading-tight">
-                A letter is waiting for you.
-              </p>
-              <Link
-                href="/love-letter"
-                className="py-3 px-10 text-xs font-mono uppercase tracking-widest text-white rounded-full shadow-sm cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  backgroundColor: "var(--burgundy)",
-                  boxShadow: "0 4px 14px rgba(142, 43, 69, 0.22)",
-                }}
-              >
-                Open Letter →
-              </Link>
-            </div>
-          </div>
-
-          {/* ─── RIGHT COLUMN (WIDGETS) ─── */}
-          <div className="lg:col-span-5 flex flex-col space-y-6">
-            
-            {/* Widget 1: Digital Bouquets */}
-            <Link
-              href="/bouquet"
-              className="p-5 rounded-[20px] border flex items-center justify-between gap-4 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md group"
-              style={{
-                backgroundColor: "var(--bg-secondary)",
-                borderColor: "var(--border)",
-                boxShadow: "0 4px 16px var(--shadow)",
-              }}
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B95]/15 to-[var(--burgundy)]/15 border border-[#FF6B95]/30 flex items-center justify-center text-[var(--burgundy)] shrink-0 transition-transform group-hover:scale-105">
-                  <Flower2 className="w-5 h-5 text-[var(--burgundy)]" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading font-bold text-base text-[var(--text)]">Digital Bouquets</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-bold uppercase">
-                      New
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--text-soft)] truncate">
-                    {partner?.display_name ? `Pick fresh blooms & write a note for ${partner.display_name}` : "Handpick botanical blooms & personal note"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0 px-3.5 py-1.5 rounded-full bg-[var(--burgundy)] text-white text-xs font-mono font-medium shadow-xs group-hover:opacity-95">
-                <span>Create</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </Link>
-
-            {/* Widget 2: Split Row (Gratitude Jar & Recent Activity) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              <Link
-                href="/gratitude-jar"
-                className="p-5 rounded-[20px] border flex flex-col items-center text-center justify-between space-y-3 cursor-pointer transition-all hover:translate-y-[-2px] hover:shadow-md"
-                style={{
-                  backgroundColor: "var(--bg-secondary)",
-                  borderColor: "var(--border)",
-                  boxShadow: "0 4px 16px var(--shadow)",
-                }}
-              >
-                <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                  <Gift className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                  <span>Gratitude Jar</span>
-                </div>
-
-                <GlassJarSketch />
-
-                <div>
-                  <p className="font-heading text-sm text-[var(--text)] font-semibold">{gratitudeCount} notes inside</p>
-                  <span
-                    className="text-[9px] font-mono uppercase text-[var(--burgundy)] hover:underline block mt-1"
-                  >
-                    Open a random note →
-                  </span>
-                </div>
-              </Link>
-
-              {/* Recent Activity Card */}
+              {/* Partner Avatar Ring with Animated Breathing Halo Pulse */}
               <div
-                className="p-5 rounded-[20px] border flex flex-col justify-between space-y-3"
-                style={{
-                  backgroundColor: "var(--bg-secondary)",
-                  borderColor: "var(--border)",
-                  boxShadow: "0 4px 16px var(--shadow)",
-                }}
+                className="relative flex items-center group cursor-pointer"
+                title={`${partnerDisplayName} is connected`}
               >
-                <div className="text-[9px] font-mono uppercase tracking-widest text-[var(--text-soft)] border-b pb-1.5" style={{ borderColor: "var(--border)" }}>
-                  Recent Activity
-                </div>
-
-                <div className="space-y-3 flex-1 flex flex-col justify-center">
-                  {recentActivities.length > 0 ? (
-                    recentActivities.map((act) => (
-                      <Link
-                        key={act.id}
-                        href={act.type === "letter" ? "/love-letter" : act.type === "moment" ? "/stories" : "/gratitude-jar"}
-                        className="text-[10px] text-[var(--text-soft)] flex items-start gap-1.5 leading-tight hover:text-[var(--burgundy)] transition-colors cursor-pointer"
-                      >
-                        <span className="text-[var(--burgundy)]">✦</span>
-                        <div>
-                          <p className="text-[var(--text)] font-medium group-hover:text-[var(--burgundy)]">{act.text}</p>
-                        </div>
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-[9px] font-mono text-[var(--text-soft)] italic">No recent activity</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Widget 3: Live Countdown Anniversary Banner */}
-            <div
-              className="p-6 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col gap-4 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-5 h-5 fill-current" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-mono uppercase text-[var(--text-soft)] tracking-wider flex items-center gap-1">
-                      Upcoming Anniversary <span className="text-[var(--rose)]">♥</span>
-                    </p>
-                    <h3 className="font-heading text-lg font-bold text-[var(--text)] leading-tight">
-                      {anniversaryNotSet ? "Set Anniversary Date" : "First Anniversary"}
-                    </h3>
-                  </div>
-                </div>
+                {/* Multi-layered breathing halo pulse */}
+                <motion.span
+                  className="absolute -inset-1.5 rounded-full bg-emerald-400/35 pointer-events-none"
+                  animate={{
+                    scale: [1, 1.35, 1],
+                    opacity: [0.8, 0.15, 0.8],
+                  }}
+                  transition={{
+                    duration: 2.8,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+                <motion.span
+                  className="absolute -inset-3 rounded-full bg-rose-400/20 pointer-events-none"
+                  animate={{
+                    scale: [1, 1.55, 1],
+                    opacity: [0.55, 0.05, 0.55],
+                  }}
+                  transition={{
+                    duration: 2.8,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 0.45,
+                  }}
+                />
 
                 <Link
-                  href="/calendar"
-                  className="py-2 px-3 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--burgundy)] bg-[var(--rose)]/15 hover:bg-[var(--rose)]/25 border border-[var(--rose)]/30 transition-all flex items-center gap-1"
+                  href="/profile"
+                  className="relative w-10 h-10 rounded-full border-2 border-emerald-500 overflow-hidden bg-rose-100 flex items-center justify-center font-bold text-rose-600 text-sm shadow-2xs hover:scale-105 transition-transform"
                 >
-                  <Calendar className="w-3 h-3" /> View all special dates
+                  <Image
+                    src="/booth/monkey-heart.jpg"
+                    alt={partnerDisplayName}
+                    fill
+                    className="object-cover"
+                    sizes="40px"
+                  />
                 </Link>
+
+                {/* Connected indicator beacon */}
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                </span>
+
+                {/* Subtle Hover Tooltip */}
+                <div className="absolute right-0 top-12 px-2.5 py-1 rounded-lg bg-stone-900/90 text-white text-[11px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-md">
+                  {partner?.display_name ? `${partner.display_name} is connected ♡` : "Live partner presence active"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════
+              2. TOP 3 STAT CARDS ROW
+              ══════════════════════════════════════════════════ */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+            
+            {/* Card 1: Activities Tried */}
+            <Link
+              href="/play"
+              className="md:col-span-3 p-5 rounded-3xl bg-white border border-stone-200/90 shadow-2xs hover:border-stone-400 transition-all flex items-center gap-4 cursor-pointer group"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-500 shrink-0 group-hover:scale-105 transition-transform">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-heading font-black text-2xl text-stone-900 leading-none">
+                  1 <span className="text-xs text-stone-400 font-mono font-normal">of 22</span>
+                </p>
+                <p className="text-[11px] font-mono text-stone-500 mt-1 uppercase tracking-wider">
+                  Tried
+                </p>
+              </div>
+            </Link>
+
+            {/* Card 2: Green Streak Card with CoupleBeansMascot & Spring Physics */}
+            <motion.div
+              onClick={() => setIsPaywallOpen(true)}
+              whileHover={{ scale: 1.025, y: -4 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 350, damping: 26 }}
+              className="md:col-span-6 p-5 sm:p-6 rounded-3xl bg-[#22C55E] text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden cursor-pointer group"
+              role="button"
+              tabIndex={0}
+              aria-label="Open Plus upgrade options"
+            >
+              <div className="space-y-1.5 z-10">
+                <div className="flex items-center gap-2 font-heading font-black text-2xl sm:text-3xl">
+                  {/* Lightning bolt with gentle pulsing glow */}
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      filter: [
+                        "drop-shadow(0 0 2px rgba(255,255,255,0.4))",
+                        "drop-shadow(0 0 10px rgba(255,255,255,0.95))",
+                        "drop-shadow(0 0 2px rgba(255,255,255,0.4))",
+                      ],
+                    }}
+                    transition={{
+                      duration: 2.2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="shrink-0"
+                  >
+                    <Zap className="w-6 h-6 sm:w-7 sm:h-7 fill-white text-white" />
+                  </motion.div>
+                  <span>{streakWeeks} Week streak</span>
+                </div>
+                <p className="text-xs font-sans text-emerald-50 leading-snug max-w-xs">
+                  Make a strip or play a game together to start one
+                </p>
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-100 bg-white/15 hover:bg-white/25 px-2.5 py-0.5 rounded-full transition-colors">
+                  <Sparkles className="w-3 h-3 text-yellow-200" />
+                  <span>Tap to explore Plus perks</span>
+                </div>
               </div>
 
-              {/* Live Countdown Segments */}
-              <div className="flex items-center justify-between gap-4 pt-2 border-t border-[var(--border)]">
-                {anniversaryNotSet ? (
+              {/* Signature Hugging Mascot with organic breathing and swaying motion */}
+              <motion.div
+                animate={{
+                  y: [0, -5, 0],
+                  rotate: [-2, 2, -2],
+                  scale: [1, 1.025, 1],
+                }}
+                transition={{
+                  duration: 3.6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="relative z-10 shrink-0 -mr-2"
+              >
+                <CoupleBeansMascot className="w-24 h-18 sm:w-28 sm:h-20" />
+              </motion.div>
+
+              {/* Background Glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-green-500 opacity-90" />
+            </motion.div>
+
+            {/* Card 3: Photo Strips */}
+            <Link
+              href="/photo-booth"
+              className="md:col-span-3 p-5 rounded-3xl bg-white border border-stone-200/90 shadow-2xs hover:border-stone-400 transition-all flex items-center gap-4 cursor-pointer group"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-500 shrink-0 group-hover:scale-105 transition-transform">
+                <Film className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-heading font-black text-2xl text-stone-900 leading-none">
+                  {momentsCount}
+                </p>
+                <p className="text-[11px] font-mono text-stone-500 mt-1 uppercase tracking-wider">
+                  Photo strips
+                </p>
+              </div>
+            </Link>
+
+          </div>
+
+          {/* ══════════════════════════════════════════════════
+              3. TODAY'S QUESTION BANNER (CORAL GRADIENT WITH 3D TILT & EXCITED MASCOT)
+              ══════════════════════════════════════════════════ */}
+          <motion.div
+            ref={bannerRef}
+            onMouseMove={handleBannerMouseMove}
+            onMouseLeave={handleBannerMouseLeave}
+            style={{
+              rotateX,
+              rotateY,
+              transformStyle: "preserve-3d",
+              perspective: 1000,
+            }}
+            className="rounded-3xl bg-gradient-to-r from-[#E11D48] via-[#F43F5E] to-[#FB7185] text-white p-6 sm:p-8 shadow-md relative overflow-hidden transition-shadow duration-300 hover:shadow-xl"
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              
+              <div className="space-y-3 max-w-xl">
+                {/* Badges */}
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs font-mono text-xs font-bold text-white flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5" /> Today&apos;s question
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-xs font-mono text-xs font-bold text-white">
+                    Honest
+                  </span>
+                </div>
+
+                {/* Question with Shimmer Sweep on load */}
+                <div className="relative overflow-hidden inline-block pr-2">
+                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white leading-snug">
+                    What do you wish I understood without you having to explain it?
+                  </h2>
+                  {/* Subtle shimmer sweep across the question text */}
+                  <motion.div
+                    className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"
+                    initial={{ x: "-120%" }}
+                    animate={{ x: "220%" }}
+                    transition={{
+                      duration: 2.2,
+                      repeat: Infinity,
+                      repeatDelay: 3.5,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </div>
+
+                {/* Subtext with Live Partner Presence Indicator */}
+                <div className="flex items-center gap-2.5 text-xs font-sans text-rose-100">
+                  <div className="relative flex items-center justify-center">
+                    <motion.span
+                      className="absolute -inset-1 rounded-full bg-white/40 pointer-events-none"
+                      animate={{
+                        scale: [1, 1.45, 1],
+                        opacity: [0.7, 0.1, 0.7],
+                      }}
+                      transition={{
+                        duration: 2.4,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    />
+                    <div className="w-5 h-5 rounded-full bg-white/30 backdrop-blur-xs border border-white/60 flex items-center justify-center text-[10px] font-bold text-white relative z-10">
+                      {partner?.display_name ? partner.display_name.charAt(0).toUpperCase() : "♥"}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white shadow-xs" />
+                  </div>
+                  <span className="font-medium">
+                    {partner?.display_name ? `Connected with ${partner.display_name}` : "Connected and waiting for partner"}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-300/40 text-[10px] font-mono text-emerald-100">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" /> Live
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
                   <Link
-                    href="/settings"
-                    className="py-2.5 px-5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-white bg-[var(--burgundy)] hover:opacity-90 transition-all"
+                    href="/checkin"
+                    className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-sm hover:scale-105 active:scale-95 transition-all"
                   >
-                    Set Date in Settings →
+                    Answer
+                  </Link>
+                  <span className="text-xs font-mono text-rose-100 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> New card in 12h 35m
+                  </span>
+                </div>
+              </div>
+
+              {/* Mascot Beans holding card: Blushes and raises card on hover or click */}
+              <div
+                className="shrink-0 flex justify-center md:justify-end cursor-pointer select-none group"
+                onMouseEnter={() => setIsMascotExcited(true)}
+                onMouseLeave={() => setIsMascotExcited(false)}
+                onClick={triggerMascotCheer}
+                role="button"
+                tabIndex={0}
+                aria-label="Interactive couple mascot"
+              >
+                <div className="relative">
+                  {/* Soft rosy blush background glow */}
+                  <motion.div
+                    className="absolute -inset-4 rounded-full bg-rose-300/40 blur-xl pointer-events-none"
+                    animate={{
+                      scale: isMascotExcited ? 1.45 : 0.85,
+                      opacity: isMascotExcited ? 0.95 : 0.2,
+                    }}
+                    transition={{ type: "spring", stiffness: 320, damping: 25 }}
+                  />
+
+                  {/* Mascot body with spring bounce & blush tilt */}
+                  <motion.div
+                    animate={
+                      isMascotExcited
+                        ? { scale: 1.08, y: -8, rotate: [-2, 2, -2, 0] }
+                        : { scale: 1, y: 0, rotate: 0 }
+                    }
+                    transition={{ type: "spring", stiffness: 360, damping: 22 }}
+                  >
+                    <CoupleBeansMascot className="w-32 h-24 sm:w-36 sm:h-28" />
+                  </motion.div>
+
+                  {/* Raised Question Card */}
+                  <motion.div
+                    className="absolute -top-2 -right-1 w-10 h-13 bg-white rounded-lg shadow-xl border border-rose-200 flex flex-col items-center justify-center text-rose-500 font-bold text-xs select-none"
+                    animate={
+                      isMascotExcited
+                        ? { y: -16, rotate: 16, scale: 1.2 }
+                        : { y: 0, rotate: 6, scale: 1 }
+                    }
+                    transition={{ type: "spring", stiffness: 380, damping: 20 }}
+                  >
+                    <span className="text-sm leading-none">♥</span>
+                    <span className="text-[9px] font-mono tracking-tighter text-rose-400 font-black mt-0.5">
+                      ASK
+                    </span>
+                  </motion.div>
+
+                  {/* Heart burst sparkles on click/hover */}
+                  <AnimatePresence>
+                    {heartsBurst.map((id) => (
+                      <motion.div
+                        key={id}
+                        initial={{ opacity: 1, scale: 0.4, y: 0 }}
+                        animate={{ opacity: 0, scale: 1.4, y: -40 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.9, ease: "easeOut" }}
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 pointer-events-none text-rose-100"
+                      >
+                        <span className="text-base">💖</span>
+                        <span className="text-xs">✨</span>
+                        <span className="text-sm">🌸</span>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+
+                  {/* Hint tooltip */}
+                  <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-mono text-rose-100/90 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    Tap to cheer
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+
+          {/* ══════════════════════════════════════════════════
+              4. OUR WEEK & OUR MOMENTS SPLIT ROW
+              ══════════════════════════════════════════════════ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Left Card: Our week */}
+            <div className="p-6 rounded-3xl bg-white border border-stone-200/90 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-heading font-black text-base text-stone-900">
+                  Our week
+                </h3>
+                <div className="flex items-center gap-2 text-[10px] font-mono text-stone-400">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-rose-400" /> strips
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-400" /> games
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="font-heading font-black text-3xl text-stone-900">
+                  0 <span className="text-sm font-sans font-normal text-stone-500">moments together</span>
+                </p>
+                <p className="text-xs font-sans text-stone-500 mt-1">
+                  Your week starts with one game.
+                </p>
+              </div>
+
+              {/* Day of week track */}
+              <div className="flex items-center justify-between pt-2 px-2 text-center font-mono text-xs text-stone-400 font-bold">
+                {["W", "T", "F", "S", "S", "M", "T"].map((day, idx) => (
+                  <div key={idx} className="space-y-1.5 flex flex-col items-center">
+                    <span className={`w-2 h-2 rounded-full ${idx === 6 ? "bg-rose-500" : "bg-stone-200"}`} />
+                    <span className={idx === 6 ? "text-rose-600 font-black" : ""}>{day}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Card: Our moments */}
+            <div className="p-6 rounded-3xl bg-white border border-stone-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-heading font-bold text-stone-900">
+                <span className="w-2 h-2 rounded-full bg-rose-400" />
+                <span className="w-2 h-2 rounded-full bg-blue-400" />
+                <span>Our moments</span>
+              </div>
+
+              <div className="space-y-2">
+                <p className="font-heading font-black text-base text-stone-900">
+                  Moments, just for two
+                </p>
+                <p className="text-xs font-sans text-stone-500 leading-relaxed">
+                  Sign in, then connect with your partner to send each other moments.
+                </p>
+              </div>
+
+              <div>
+                {!user ? (
+                  <Link
+                    href="/login"
+                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-sky-500 hover:opacity-95 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <span>Sign in</span>
                   </Link>
                 ) : (
-                  <>
-                    <LiveCountdownTimer targetDateISO={pair?.started_dating_date} />
-                    <p className="text-[10px] font-mono text-[var(--rose)] text-right font-medium">
-                      {anniversaryDateFormatted}
-                    </p>
-                  </>
+                  <Link
+                    href="/moments"
+                    className="w-full py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <span>View moments</span>
+                  </Link>
                 )}
               </div>
             </div>
 
           </div>
-        </div>
 
-        {/* ON THIS DAY: MEMORY RESURFACING */}
-        <MemoryResurfacingCard pairId={pair?.id} />
-
-        {/* DAILY DUAL-LOCK JOURNAL */}
-        <div className="w-full pt-8">
-          <JournalCard />
-        </div>
-
-        {/* 3. NARRATIVE KEEPSAKE CARDS (Material Identity) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
-          
-          {/* Card 1: Milestone Journey (material-badge inspired) */}
-          <Link
-            href="/checkin"
-            className="material-cotton p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
-          >
-            <div className="space-y-2">
-              <p className="typo-chapter">Your Journey</p>
-              <h3 className="typo-display text-2xl">
-                {daysTogether} <span className="text-lg">days</span>
-              </h3>
-              <p className="typo-annotation">of choosing each other ♡</p>
+          {/* ══════════════════════════════════════════════════
+              5. JUMP IN QUICK ACTIONS ROW
+              ══════════════════════════════════════════════════ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-stone-900">
+                JUMP IN
+              </p>
+              <Link href="/play" className="text-xs font-mono font-bold text-rose-500 hover:text-rose-600">
+                Edit
+              </Link>
             </div>
 
-            <div className="pt-3 border-t border-[var(--border)] space-y-2">
-              <p className="typo-chapter">Next Milestone</p>
-              {(() => {
-                const { next, daysToGo, percent } = getUpcomingMilestone(daysTogether);
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {[
+                { name: "Photobooth", href: "/photo-booth", icon: Camera, bg: "bg-rose-50 border-rose-200 text-rose-500" },
+                { name: "Know Me", href: "/play/love-match", icon: HelpCircle, bg: "bg-blue-50 border-blue-200 text-blue-500" },
+                { name: "Draw", href: "/play", icon: Palette, bg: "bg-indigo-50 border-indigo-200 text-indigo-500" },
+                { name: "Arcade", href: "/play", icon: Gamepad2, bg: "bg-purple-50 border-purple-200 text-purple-500" },
+                { name: "Truth or Dare", href: "/roulette", icon: Flame, bg: "bg-pink-50 border-pink-200 text-pink-500" },
+                { name: "Court", href: "/vibe-judge", icon: Scale, bg: "bg-amber-50 border-amber-200 text-amber-500" },
+              ].map((act, idx) => {
+                const Icon = act.icon;
                 return (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-sans font-semibold text-[var(--text)]">✨ {next.label}</span>
-                      <span className="typo-annotation text-[11px]">in {daysToGo} days</span>
+                  <Link
+                    key={idx}
+                    href={act.href}
+                    className="p-4 rounded-2xl bg-white border border-stone-200 hover:border-stone-900 transition-all flex flex-col items-center justify-center text-center gap-2 group shadow-2xs cursor-pointer"
+                  >
+                    <div className={`w-12 h-12 rounded-2xl border ${act.bg} flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xs`}>
+                      <Icon className="w-6 h-6" />
                     </div>
-                    <div className="w-full h-2 rounded-full bg-[var(--border)] overflow-hidden">
-                      <div className="progress-warm transition-all" style={{ width: `${percent}%` }} />
-                    </div>
-                  </div>
+                    <span className="font-heading font-bold text-xs text-stone-900">
+                      {act.name}
+                    </span>
+                  </Link>
                 );
-              })()}
+              })}
             </div>
-          </Link>
-
-          {/* Card 2: Love Letters (cotton paper material) */}
-          <Link
-            href="/love-letter"
-            className="material-cotton p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
-          >
-            <div className="space-y-2">
-              <p className="typo-chapter">Love Letters</p>
-              <h3 className="typo-display text-2xl">
-                {lettersCount} <span className="text-lg">{lettersCount === 1 ? "letter" : "letters"}</span>
-              </h3>
-            </div>
-
-            <div className="pt-3 border-t border-[var(--border)] space-y-2">
-              <p className="typo-chapter">Latest</p>
-              {latestLetter ? (
-                <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] space-y-2 relative shadow-xs">
-                  <p className="font-quote italic text-xs text-[var(--text)] line-clamp-2 leading-relaxed">
-                    "{getExcerpt(latestLetter.content) || "Goodnight, sunshine. You make my world so much brighter."}"
-                  </p>
-                  <span className="text-[9px] font-mono text-[var(--text-soft)]">
-                    {latestLetter.sent_at ? new Date(latestLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
-                  </span>
-                </div>
-              ) : (
-                <p className="typo-supporting text-sm">Write your first letter →</p>
-              )}
-            </div>
-          </Link>
-
-          {/* Card 3: Gratitude (folded note material) */}
-          <Link
-            href="/gratitude-jar"
-            className="material-note p-5 relative paper-grain flex flex-col justify-between space-y-4 cursor-pointer text-left"
-            style={{ "--note-rotate": "-0.8deg" } as React.CSSProperties}
-          >
-            <div className="space-y-2">
-              <p className="typo-chapter">Gratitude</p>
-              <h3 className="typo-display text-2xl">
-                {gratitudeCount} <span className="text-lg">notes</span>
-              </h3>
-            </div>
-
-            <div className="pt-3 border-t border-[rgba(196,168,130,0.2)] space-y-2">
-              <p className="typo-chapter">Today</p>
-              {latestGratitude ? (
-                <div className="p-3 rounded-xl space-y-2">
-                  <p className="font-quote italic text-xs text-[var(--text)] line-clamp-2 leading-relaxed">
-                    "{getExcerpt(latestGratitude.content) || "I'm grateful for your patience and the little things you do everyday."}"
-                  </p>
-                  <span className="text-[9px] font-mono text-[var(--text-soft)]">
-                    {latestGratitude.created_at ? new Date(latestGratitude.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
-                  </span>
-                </div>
-              ) : (
-                <p className="typo-supporting text-sm">Leave a note of thanks →</p>
-              )}
-            </div>
-          </Link>
-
-        </div>
-
-        {/* ─── MIXTAPE STUDIO WIDGET (ALIVE PHYSICAL CASSETTE) ─── */}
-        <Link
-          href="/mixtape"
-          className="block p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
-        >
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                <Music className="w-3.5 h-3.5 text-[var(--burgundy)]" />
-                <span>Mixtape Studio</span>
-              </div>
-              <h3 className="font-heading font-bold text-2xl text-[var(--text)] leading-none pt-0.5">
-                {latestMixtape ? latestMixtape.title : "Your Soundtrack ♡"}
-              </h3>
-            </div>
-            <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)]">
-              {mixtapeCount} Tape{mixtapeCount !== 1 ? "s" : ""}
-            </span>
           </div>
 
-          <div className="pt-3 mt-3 border-t border-[var(--border)]">
-            {latestMixtape ? (
-              <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-[var(--burgundy)]/10 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
-                    <Music className="w-4.5 h-4.5" />
+          {/* ══════════════════════════════════════════════════
+              6. WHICH GAME SHOULD WE MAKE NEXT? VOTING ROW
+              ══════════════════════════════════════════════════ */}
+          <div className="p-6 rounded-3xl bg-white border border-stone-200/90 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-heading font-bold text-sm text-stone-900">
+                  Which game should we make next?
+                </h3>
+                <p className="text-xs text-stone-500">
+                  Tap the ones you&apos;d play together.
+                </p>
+              </div>
+              <Link href="/play" className="text-xs font-mono font-bold text-rose-500 hover:text-rose-600">
+                See all &gt;
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { title: "Video call topics", src: "/booth/monkey-heart.jpg" },
+                { title: "Build a bear", src: "/booth/monkey-point.jpg" },
+                { title: "Try not to laugh", src: "/booth/monkey-shock.jpg" },
+                { title: "Couple Clash Royale", src: "/booth/monkey-heart.jpg" },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-stone-200 overflow-hidden bg-stone-50 hover:border-stone-900 transition-all group cursor-pointer"
+                >
+                  <div className="relative aspect-4/3 overflow-hidden bg-stone-200">
+                    <Image
+                      src={item.src}
+                      alt={item.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform"
+                    />
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-heading font-bold text-sm text-[var(--text)] truncate">{latestMixtape.title}</p>
-                    <p className="text-[9px] font-mono text-[var(--text-soft)]">
-                      Last updated · {new Date(latestMixtape.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  <div className="p-2.5 text-center">
+                    <p className="font-heading font-bold text-xs text-stone-900 truncate">
+                      {item.title}
                     </p>
                   </div>
                 </div>
-                <span className="btn-primary py-1.5 px-3 text-[10px] font-sans flex-shrink-0">
-                  Continue →
+              ))}
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════
+              7. YOUR MEMORIES ROW: INTERACTIVE POLAROIDS & PHOTOSTRIPS
+              ══════════════════════════════════════════════════ */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <p className="font-mono text-xs font-bold uppercase tracking-wider text-stone-900">
+                  YOUR MEMORIES
+                </p>
+                <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-mono font-bold">
+                  Interactive keepsakes
                 </span>
               </div>
-            ) : (
-              <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
-                <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No mixtapes created yet</p>
-                <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Create your first tape →</p>
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/photo-booth"
+                  className="text-xs font-mono font-bold text-rose-500 hover:text-rose-600 transition-colors"
+                >
+                  + New strip
+                </Link>
+                <Link
+                  href="/moments"
+                  className="text-xs font-mono font-bold text-stone-500 hover:text-stone-800 transition-colors"
+                >
+                  Scrapbook &gt;
+                </Link>
               </div>
-            )}
-          </div>
-        </Link>
-
-        {/* ─── WHISPER RADIO WIDGET (RETRO VOICE BROADCAST) ─── */}
-        <Link
-          href="/whisper"
-          className="block p-5 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border)] shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
-        >
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--text-soft)]">
-                <Radio className="w-3.5 h-3.5 text-teal-700" />
-                <span>Whisper Radio</span>
-              </div>
-              <h3 className="font-heading font-bold text-2xl text-[var(--text)] leading-none pt-0.5">
-                {latestWhisper ? `${latestWhisper.frequency.toFixed(1)} FM: ${latestWhisper.title}` : "Private Airwaves ♡"}
-              </h3>
             </div>
-            <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-800">
-              {whisperCount > 0 ? `${whisperCount} Note${whisperCount !== 1 ? "s" : ""}` : "Tune In"}
-            </span>
-          </div>
 
-          <div className="pt-3 mt-3 border-t border-[var(--border)]">
-            {latestWhisper ? (
-              <div className="p-3 rounded-xl bg-[var(--paper-warm)] border border-[var(--border)] flex items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0">
-                    <Radio className="w-4.5 h-4.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-heading font-bold text-sm text-[var(--text)] truncate">{latestWhisper.title}</p>
-                    <p className="text-[9px] font-mono text-[var(--text-soft)]">
-                      From {latestWhisper.sender_name} • {new Date(latestWhisper.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </p>
+            {/* Keepsakes Row with Spring Physics Tilt */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+              
+              {/* Polaroid 1: Golden Hour */}
+              <motion.div
+                whileHover={{
+                  scale: 1.05,
+                  y: -8,
+                  rotate: 0,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)",
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                style={{ rotate: SAMPLE_MEMORIES[0].rotation }}
+                onClick={() => setSelectedMemory(SAMPLE_MEMORIES[0])}
+                className="cursor-pointer group relative bg-white p-3.5 pb-4 rounded-2xl border border-stone-200/90 shadow-2xs select-none"
+                role="button"
+                tabIndex={0}
+                aria-label={`Preview ${SAMPLE_MEMORIES[0].title}`}
+              >
+                {/* Washi tape accent */}
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-12 h-3.5 bg-amber-100/80 border border-amber-200/60 rounded-xs shadow-2xs rotate-1 z-10 pointer-events-none" />
+
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-stone-100">
+                  <Image
+                    src={SAMPLE_MEMORIES[0].images[0]}
+                    alt={SAMPLE_MEMORIES[0].title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/10 transition-colors flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-xs text-stone-900 text-[10px] font-mono px-2 py-0.5 rounded-full shadow-xs">
+                      Tap to open
+                    </span>
                   </div>
                 </div>
-                <span className="btn-primary py-1.5 px-3 text-[10px] font-sans flex-shrink-0">
-                  Listen →
-                </span>
+
+                <div className="mt-2.5 space-y-0.5 px-0.5">
+                  <p className="font-heading font-black text-xs text-stone-900 truncate">
+                    {SAMPLE_MEMORIES[0].title}
+                  </p>
+                  <p className="text-[10px] font-mono text-stone-500">
+                    {SAMPLE_MEMORIES[0].date}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Photostrip 2: 3-Shot Strip */}
+              <motion.div
+                whileHover={{
+                  scale: 1.05,
+                  y: -8,
+                  rotate: 0,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)",
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                style={{ rotate: SAMPLE_MEMORIES[1].rotation }}
+                onClick={() => setSelectedMemory(SAMPLE_MEMORIES[1])}
+                className="cursor-pointer group relative bg-stone-900 p-2.5 pb-3 rounded-2xl border border-stone-800 shadow-2xs select-none text-white"
+                role="button"
+                tabIndex={0}
+                aria-label={`Preview ${SAMPLE_MEMORIES[1].title}`}
+              >
+                {/* Washi tape accent */}
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-3.5 bg-rose-200/80 border border-rose-300/60 rounded-xs shadow-2xs -rotate-2 z-10 pointer-events-none" />
+
+                <div className="space-y-1.5">
+                  {SAMPLE_MEMORIES[1].images.map((src, i) => (
+                    <div key={i} className="relative aspect-4/3 w-full rounded-lg overflow-hidden bg-stone-800">
+                      <Image
+                        src={src}
+                        alt={`Pose ${i + 1}`}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-2 text-center space-y-0.5">
+                  <p className="font-heading font-black text-[11px] text-stone-100 tracking-tight">
+                    {SAMPLE_MEMORIES[1].title}
+                  </p>
+                  <p className="text-[9px] font-mono text-stone-400">
+                    {SAMPLE_MEMORIES[1].date} · 3 poses
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Polaroid 3: Cozy Blanket Fort */}
+              <motion.div
+                whileHover={{
+                  scale: 1.05,
+                  y: -8,
+                  rotate: 0,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)",
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                style={{ rotate: SAMPLE_MEMORIES[2].rotation }}
+                onClick={() => setSelectedMemory(SAMPLE_MEMORIES[2])}
+                className="cursor-pointer group relative bg-white p-3.5 pb-4 rounded-2xl border border-stone-200/90 shadow-2xs select-none"
+                role="button"
+                tabIndex={0}
+                aria-label={`Preview ${SAMPLE_MEMORIES[2].title}`}
+              >
+                {/* Washi tape accent */}
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-12 h-3.5 bg-sky-100/80 border border-sky-200/60 rounded-xs shadow-2xs rotate-2 z-10 pointer-events-none" />
+
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-stone-100">
+                  <Image
+                    src={SAMPLE_MEMORIES[2].images[0]}
+                    alt={SAMPLE_MEMORIES[2].title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/10 transition-colors flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-xs text-stone-900 text-[10px] font-mono px-2 py-0.5 rounded-full shadow-xs">
+                      Tap to open
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-2.5 space-y-0.5 px-0.5">
+                  <p className="font-heading font-black text-xs text-stone-900 truncate">
+                    {SAMPLE_MEMORIES[2].title}
+                  </p>
+                  <p className="text-[10px] font-mono text-stone-500">
+                    {SAMPLE_MEMORIES[2].date}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Action Card: Photobooth Creator with CoupleBeansMascot */}
+              <div className="p-4 rounded-2xl bg-white border border-stone-200/90 shadow-2xs space-y-3 flex flex-col justify-between self-stretch">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-heading font-black text-sm text-stone-900">
+                      Take your next strip
+                    </h4>
+                    <span className="text-xs">📸</span>
+                  </div>
+                  <p className="text-xs text-stone-500 leading-snug">
+                    Step inside the photobooth together. Every strip is saved to your shared scrapbook forever.
+                  </p>
+                </div>
+
+                {/* Mascot Beans Cheer */}
+                <div className="py-1 flex justify-center">
+                  <CoupleBeansMascot className="w-20 h-16" />
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <Link
+                    href="/photo-booth"
+                    className="w-full py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-mono text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                  >
+                    <span>Open Photobooth</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <Link
+                    href="/moments"
+                    className="w-full py-1.5 px-3 rounded-xl border border-stone-200 hover:border-stone-400 text-stone-700 font-mono text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-stone-400" />
+                    <span>View Scrapbook</span>
+                  </Link>
+                </div>
               </div>
-            ) : (
-              <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
-                <p className="text-[10px] font-mono text-[var(--text-soft)] italic">No voice notes dropped yet</p>
-                <p className="text-[9px] font-mono uppercase text-[var(--burgundy)] mt-1 font-bold">Broadcast your first whisper →</p>
+
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════
+              8. LETTERS TO THE FUTURE BANNER
+              ══════════════════════════════════════════════════ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-stone-900">
+                LETTERS TO THE FUTURE
+              </p>
+              <Link href="/love-letter" className="text-xs font-mono font-bold text-rose-500 hover:text-rose-600 flex items-center gap-1">
+                <span>✎</span> Write
+              </Link>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-white border border-stone-200 flex items-center justify-between gap-4 shadow-2xs">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-500 shrink-0">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-heading font-bold text-sm text-stone-900">
+                    A letter that opens years from now
+                  </h4>
+                  <p className="text-xs text-stone-500">
+                    To the one you&apos;re with, or to future you.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/love-letter"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-sky-500 text-white font-mono text-xs font-bold uppercase tracking-wider shrink-0 shadow-xs"
+              >
+                Write a letter &gt;
+              </Link>
+            </div>
+          </div>
+
+          {/* Meanwhile Card & City Selector for Timezone / Location */}
+          <MeanwhileCard
+            userProfile={profile}
+            partnerProfile={partner}
+            onOpenCitySelector={() => setIsCityModalOpen(true)}
+          />
+
+          <CitySelectorModal
+            isOpen={isCityModalOpen}
+            onClose={() => setIsCityModalOpen(false)}
+            onCitySelected={() => refreshSession(false)}
+          />
+
+          <PlusPaywallModal
+            isOpen={isPaywallOpen}
+            onClose={() => setIsPaywallOpen(false)}
+          />
+
+          {/* ══════════════════════════════════════════════════
+              9. INTERACTIVE MEMORIES PREVIEW MODAL
+              ══════════════════════════════════════════════════ */}
+          <AnimatePresence>
+            {selectedMemory && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setSelectedMemory(null)}
+                  className="fixed inset-0 bg-stone-950/70 backdrop-blur-sm"
+                />
+
+                {/* Modal Container with Spring Physics */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 24 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: 16 }}
+                  transition={{ type: "spring", stiffness: 360, damping: 26 }}
+                  className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-stone-200"
+                >
+                  {/* Top Bar */}
+                  <div className="p-4 px-6 border-b border-stone-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span className="font-heading font-black text-sm text-stone-900">
+                        {selectedMemory.title}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMemory(null)}
+                      className="w-8 h-8 rounded-full border border-stone-200 hover:bg-stone-100 flex items-center justify-center text-stone-500 cursor-pointer transition-colors"
+                      aria-label="Close modal"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="p-6 space-y-4">
+                    {selectedMemory.type === "polaroid" ? (
+                      /* Polaroid Frame */
+                      <div className="bg-[#FAF9F6] p-4 pb-6 rounded-2xl border border-stone-200 shadow-inner flex flex-col items-center">
+                        <div className="relative aspect-square w-full rounded-xl overflow-hidden shadow-xs">
+                          <Image
+                            src={selectedMemory.images[0]}
+                            alt={selectedMemory.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="w-full pt-4 text-center space-y-1">
+                          <p className="font-heading font-black text-stone-900 text-sm">
+                            {selectedMemory.caption}
+                          </p>
+                          <p className="font-mono text-xs text-stone-400">
+                            Captured {selectedMemory.date} · Kept safe in Pairfect
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Photostrip Frame */
+                      <div className="bg-stone-950 p-4 rounded-2xl shadow-inner text-white flex flex-col items-center space-y-3">
+                        <div className="grid grid-cols-3 gap-2 w-full">
+                          {selectedMemory.images.map((img, i) => (
+                            <div key={i} className="relative aspect-4/3 rounded-lg overflow-hidden border border-stone-800">
+                              <Image
+                                src={img}
+                                alt={`Frame ${i + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-center pt-1 space-y-1">
+                          <p className="font-heading font-black text-stone-100 text-sm">
+                            {selectedMemory.caption}
+                          </p>
+                          <p className="font-mono text-xs text-stone-400">
+                            {selectedMemory.date} · 3-shot classic photobooth
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Modal Actions */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                      <Link
+                        href="/photo-booth"
+                        onClick={() => setSelectedMemory(null)}
+                        className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                      >
+                        <Camera className="w-4 h-4" />
+                        <span>Create in photobooth</span>
+                      </Link>
+                      <Link
+                        href="/moments"
+                        onClick={() => setSelectedMemory(null)}
+                        className="w-full sm:flex-1 py-2.5 px-4 rounded-xl border border-stone-200 hover:border-stone-400 text-stone-800 font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <BookOpen className="w-4 h-4 text-stone-500" />
+                        <span>View in scrapbook</span>
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             )}
-          </div>
-        </Link>
+          </AnimatePresence>
 
-        {/* ─── RITUAL PROMPT (Time-Aware) ─── */}
-        <Link
-          href={ritual.href}
-          className="material-cotton p-6 paper-grain flex items-center gap-5 cursor-pointer"
-        >
-          <div className="w-12 h-12 rounded-full bg-[var(--rose)]/15 text-[var(--burgundy)] flex items-center justify-center flex-shrink-0">
-            <RitualIcon className="w-6 h-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="typo-supporting text-base">{ritual.text}</p>
-            <span className="typo-chapter mt-2 inline-block">{ritual.label} →</span>
-          </div>
-        </Link>
+        </main>
+      </div>
 
-        {/* ─── FLOATING UPGRADE PILL (When !isPlus) ─── */}
-        {!isPlus && (
-          <button
-            type="button"
-            onClick={() => setIsPaywallOpen(true)}
-            className="fixed bottom-24 right-5 md:bottom-8 md:right-8 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[var(--burgundy)] to-[#E8527D] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer font-heading text-xs font-bold border border-white/20"
-            title="Unlock Pairfect Plus"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-            <span>Upgrade to Pro ▷</span>
-          </button>
-        )}
-
-        {/* ─── PLUS PAYWALL MODAL ─── */}
-        <PlusPaywallModal
-          isOpen={isPaywallOpen}
-          onClose={() => setIsPaywallOpen(false)}
-        />
-
-      </motion.main>
     </div>
   );
 }

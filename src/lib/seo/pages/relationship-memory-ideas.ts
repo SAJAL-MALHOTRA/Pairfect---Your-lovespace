@@ -16,7 +16,7 @@ export const page: SEOPage = {
     ogDescription: "Find unique relationship memory ideas to capture your romance, from digital scrapbooks to shared canvases."
   },
   h1: "Creative Relationship Memory Ideas to Preserve Your Love Story",
-  introduction: "Memories are the foundation of any long-term relationship. They serve as anchors during tough times and fuel for future joy. While taking photos on your phone is easy, actively preserving and celebrating those memories takes a bit more thought. Creating dedicated spaces—both physical and digital—to store your relationship milestones can profoundly impact how you view your journey together. In this guide, we'll explore beautiful, creative ways to capture and preserve the moments that make your relationship unique.",
+  introduction: "Memories are the foundation of any long-term relationship. They serve as anchors during tough times and fuel for future joy. While taking photos on your phone is easy, actively preserving and celebrating those memories takes a bit more thought. Creating dedicated spaces-both physical and digital-to store your relationship milestones can profoundly impact how you view your journey together. In this guide, we'll explore beautiful, creative ways to capture and preserve the moments that make your relationship unique.",
   sections: [
     {
       heading: "Digital Scrapbooks and Shared Journals",

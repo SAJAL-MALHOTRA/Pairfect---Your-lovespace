@@ -284,7 +284,7 @@ export default function MemoryDesk() {
 
 
           {/* ════════════════════════════════════════════════════════════════
-              3. COFFEE RECEIPT ("Café Lumière — 2 Cappuccinos, 1 Croissant")
+              3. COFFEE RECEIPT ("Café Lumière - 2 Cappuccinos, 1 Croissant")
               ════════════════════════════════════════════════════════════════ */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -366,7 +366,7 @@ export default function MemoryDesk() {
 
 
           {/* ════════════════════════════════════════════════════════════════
-              4. MOVIE / CONCERT TICKET ("Inside Out 2 — Row G, Seat 14 & 15")
+              4. MOVIE / CONCERT TICKET ("Inside Out 2 - Row G, Seat 14 & 15")
               ════════════════════════════════════════════════════════════════ */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -447,7 +447,7 @@ export default function MemoryDesk() {
 
 
           {/* ════════════════════════════════════════════════════════════════
-              5. BOARDING PASS ("Punjab → Goa — Window Seats ♡")
+              5. BOARDING PASS ("Punjab → Goa - Window Seats ♡")
               ════════════════════════════════════════════════════════════════ */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -18,7 +18,7 @@ export const page: SEOPage = {
   sections: [
     {
       heading: "Everyday & Candid Photo Ideas",
-      body: "The best photos often aren't posed. They capture the beautiful mundanity of your shared life.\n\n*   **The In-Between Moments:** Take photos when your partner isn't looking—drinking coffee, reading a book, or laughing at something on their phone. These authentic glimpses are pure gold.\n*   **The POV (Point of View) Shot:** Instead of a selfie, take a picture of your partner from your perspective. E.g., their hands holding the steering wheel, or them walking slightly ahead of you on a trail.\n*   **The Reflection Shot:** Use mirrors, store windows, or even puddles to capture interesting, abstract portraits of the two of you together."
+      body: "The best photos often aren't posed. They capture the beautiful mundanity of your shared life.\n\n*   **The In-Between Moments:** Take photos when your partner isn't looking-drinking coffee, reading a book, or laughing at something on their phone. These authentic glimpses are pure gold.\n*   **The POV (Point of View) Shot:** Instead of a selfie, take a picture of your partner from your perspective. E.g., their hands holding the steering wheel, or them walking slightly ahead of you on a trail.\n*   **The Reflection Shot:** Use mirrors, store windows, or even puddles to capture interesting, abstract portraits of the two of you together."
     },
     {
       heading: "Playful & Sill Photo Ideas",

@@ -20,7 +20,7 @@ export const page: SEOPage = {
   sections: [
     {
       heading: "The Game Night Template",
-      body: "A little friendly competition is a great way to inject energy into your relationship. For a Game Night date, gather a mix of classic board games, card games, and digital trivia. Set the stakes early—perhaps the loser has to cook dinner next time or give the winner a massage. Keep snacks simple and bite-sized so you can focus on the games. It's about laughter, trash talk, and enjoying each other's company in a low-stakes environment."
+      body: "A little friendly competition is a great way to inject energy into your relationship. For a Game Night date, gather a mix of classic board games, card games, and digital trivia. Set the stakes early-perhaps the loser has to cook dinner next time or give the winner a massage. Keep snacks simple and bite-sized so you can focus on the games. It's about laughter, trash talk, and enjoying each other's company in a low-stakes environment."
     },
     {
       heading: "The Art and Creativity Night",

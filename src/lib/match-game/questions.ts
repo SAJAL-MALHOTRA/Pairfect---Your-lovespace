@@ -31,7 +31,7 @@ export const MATCH_QUESTIONS: MatchQuestion[] = [
       { id: "a", text: "Definitely Me (Tactical & Fast)", emoji: "🏃" },
       { id: "b", text: "100% My Partner (The Mastermind)", emoji: "🧠" },
       { id: "c", text: "We go down fighting together", emoji: "🤝" },
-      { id: "d", text: "Neither — we'd be zombies in 10 mins", emoji: "🧟" },
+      { id: "d", text: "Neither: we'd be zombies in 10 mins", emoji: "🧟" },
     ],
   },
   {
@@ -64,7 +64,7 @@ export const MATCH_QUESTIONS: MatchQuestion[] = [
       { id: "a", text: "Guilty! Definitely me", emoji: "🛍️" },
       { id: "b", text: "Without a doubt, my partner", emoji: "💸" },
       { id: "c", text: "We are equally reckless together", emoji: "🙈" },
-      { id: "d", text: "Neither — we save every penny", emoji: "🏦" },
+      { id: "d", text: "Neither: we save every penny", emoji: "🏦" },
     ],
   },
   {
@@ -153,7 +153,7 @@ export function getMatchFeedback(percentage: number): {
   if (percentage >= 25) {
     return {
       headline: "Opposites attract.",
-      message: "You two see the world from different angles — which makes every day a new surprise 👀",
+      message: "You two see the world from different angles, which makes every day a new surprise 👀",
       emoji: "✨",
     };
   }

@@ -71,7 +71,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
     id: "quiet_moment",
     emoji: "🕯️",
     title: "A Quiet Moment When I Knew",
-    tagline: "No grand gestures — just quiet certainty.",
+    tagline: "No grand gestures - just quiet certainty.",
     defaultTag: "intimacy",
     starterQuestions: "What were you two doing? What did your partner say or do? Why did that simple moment stick in your memory so deeply?",
   },

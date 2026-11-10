@@ -125,7 +125,7 @@ Two partners have a lighthearted dispute: "${dispute.topic}"
 ${nameA}'s case: "${argA}"
 ${nameB}'s case: "${argB}"
 
-Give a fun, warm verdict (2-3 sentences) picking a "winner" (A for ${nameA}, B for ${nameB}) — keep it sweet and playful.
+Give a fun, warm verdict (2-3 sentences) picking a "winner" (A for ${nameA}, B for ${nameB}) - keep it sweet and playful.
 End with a playful, harmless "sentence" for the loser (e.g. "must bring morning coffee", "picks next movie").
 
 Respond in JSON format with exact keys:

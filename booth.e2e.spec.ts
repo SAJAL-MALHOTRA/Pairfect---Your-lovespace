@@ -156,7 +156,7 @@ test.describe('Synchronized Virtual Photobooth', () => {
       const realNow = Date.now;
       const realPerfNow = performance.now.bind(performance);
       Date.now = () => realNow() + skewMs;
-      performance.now = () => realPerfNow(); // keep the monotonic timer real — only skew wall-clock time
+      performance.now = () => realPerfNow(); // keep the monotonic timer real - only skew wall-clock time
     });
     console.log('[Test 2] Injected 300ms artificial clock skew on guest context via addInitScript');
 

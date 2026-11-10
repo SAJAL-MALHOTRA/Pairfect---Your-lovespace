@@ -69,7 +69,7 @@ All measurements below are real empirical figures obtained via Chrome DevTools P
 * **Solution:** Replaced live Gaussian blur filters with pure hardware-accelerated radial gradients and opacity transforms with `will-change: transform, opacity`.
 
 ### 5. Fast-Path Edge Middleware (`src/proxy.ts`)
-* **Problem:** `supabase.auth.getUser()` was executed on every incoming request, delaying anonymous visitors on SEO and public marketing pages by 150–250ms.
+* **Problem:** `supabase.auth.getUser()` was executed on every incoming request, delaying anonymous visitors on SEO and public marketing pages by 150-250ms.
 * **Solution:** Moved protected route check ahead of the auth call so public visitors bypass remote Supabase Auth network roundtrips entirely.
 
 ### 6. Dependency Pruning in `package.json`

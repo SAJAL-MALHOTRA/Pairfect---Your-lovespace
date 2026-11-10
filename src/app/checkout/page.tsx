@@ -146,7 +146,7 @@ function CheckoutContent() {
           </h1>
 
           <p className="max-w-2xl mx-auto text-sm sm:text-base text-[#7A4B5D] leading-relaxed">
-            When either partner buys a pass, both accounts get full access. No recurring auto-debit surprises — recharge only when you want.
+            When either partner buys a pass, both accounts get full access. No recurring auto-debit surprises - recharge only when you want.
           </p>
 
           {/* User Sign-In Notice if unauthenticated */}

@@ -16,7 +16,7 @@ export const page: SEOPage = {
     ogDescription: "Explore the best online games for couples, from trivia to brain teasers. Discover how to add fun to your relationship."
   },
   h1: "Fun Online Games for Couples to Play Together",
-  introduction: "Playing games together is one of the most effective—and enjoyable—ways to strengthen your relationship. Whether you're sitting on the same couch or living thousands of miles apart, online games for couples offer a fantastic way to break the ice, spark friendly competition, and create shared memories. From testing your knowledge to solving complex puzzles, the digital world is full of opportunities for couples to connect. In this guide, we'll dive into the best categories of online games and how you can start playing today.",
+  introduction: "Playing games together is one of the most effective-and enjoyable-ways to strengthen your relationship. Whether you're sitting on the same couch or living thousands of miles apart, online games for couples offer a fantastic way to break the ice, spark friendly competition, and create shared memories. From testing your knowledge to solving complex puzzles, the digital world is full of opportunities for couples to connect. In this guide, we'll dive into the best categories of online games and how you can start playing today.",
   sections: [
     {
       heading: "Quiz and Trivia Games",

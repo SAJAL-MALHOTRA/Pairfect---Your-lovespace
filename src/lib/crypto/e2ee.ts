@@ -172,10 +172,10 @@ export async function generateCoupleKey(): Promise<CryptoKey> {
 }
 
 /**
- * Helper: Convert ArrayBuffer to URL-safe Base64 string
+ * Helper: Convert ArrayBuffer or Uint8Array to URL-safe Base64 string
  */
-function bufferToBase64Url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
+function bufferToBase64Url(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = "";
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
@@ -225,6 +225,153 @@ export async function importKeyFromFragment(base64UrlKey: string): Promise<Crypt
     true, // extractable: true
     ["encrypt", "decrypt"]
   );
+}
+
+/**
+ * Wrap a master vault CryptoKey using an envelope derived from the 6-character invite code
+ * Enables 100% automated key delivery when a partner enters only the invite code.
+ */
+export async function wrapVaultKeyWithCode(
+  vaultKey: CryptoKey,
+  inviteCode: string,
+  pairId: string
+): Promise<string> {
+  const code = inviteCode.trim().toUpperCase();
+  const salt = new TextEncoder().encode("pairfect_vault_transport:" + pairId);
+  const codeMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(code),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
+
+  const transportKey = await window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    codeMaterial,
+    {
+      name: "AES-GCM",
+      length: 256,
+    },
+    false,
+    ["encrypt", "decrypt"]
+  );
+
+  const rawMasterKey = await window.crypto.subtle.exportKey("raw", vaultKey);
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+  const encryptedKeyBuffer = await window.crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    transportKey,
+    rawMasterKey
+  );
+
+  const envelopePayload = {
+    v: 1,
+    iv: bufferToBase64Url(iv),
+    data: bufferToBase64Url(encryptedKeyBuffer),
+  };
+
+  return JSON.stringify(envelopePayload);
+}
+
+/**
+ * Unwrap a master vault CryptoKey envelope using the 6-character invite code
+ */
+export async function unwrapVaultKeyWithCode(
+  envelopeStr: string,
+  inviteCode: string,
+  pairId: string
+): Promise<CryptoKey> {
+  const code = inviteCode.trim().toUpperCase();
+  const envelope = JSON.parse(envelopeStr);
+
+  if (!envelope.iv || !envelope.data) {
+    throw new Error("Invalid envelope format.");
+  }
+
+  const salt = new TextEncoder().encode("pairfect_vault_transport:" + pairId);
+  const codeMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(code),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
+
+  const transportKey = await window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    codeMaterial,
+    {
+      name: "AES-GCM",
+      length: 256,
+    },
+    false,
+    ["encrypt", "decrypt"]
+  );
+
+  const iv = new Uint8Array(base64UrlToBuffer(envelope.iv));
+  const encryptedBytes = base64UrlToBuffer(envelope.data);
+
+  const decryptedRawBuffer = await window.crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    transportKey,
+    encryptedBytes
+  );
+
+  return window.crypto.subtle.importKey(
+    "raw",
+    decryptedRawBuffer,
+    {
+      name: "AES-GCM",
+      length: 256,
+    },
+    true, // extractable: true enables re-sharing and multi-device sync
+    ["encrypt", "decrypt"]
+  );
+}
+
+/**
+ * Automatically recovers the vault key for an active pair if missing from local IndexedDB
+ * Retrieves the encrypted envelope from the server and unwraps it with the invite code.
+ */
+export async function autoRecoverVaultKeyIfMissing(pairId: string, inviteCode: string): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    const exists = await hasPairKey(pairId);
+    if (exists) return true;
+
+    if (!inviteCode) return false;
+
+    const res = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`);
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    if (!data.success || !data.envelope) return false;
+
+    const unwrappedKey = await unwrapVaultKeyWithCode(data.envelope, inviteCode, pairId);
+    await savePairKey(pairId, unwrappedKey);
+    return true;
+  } catch (err) {
+    console.warn("[E2EE] Background vault key auto-recovery skipped:", err);
+    return false;
+  }
 }
 
 export interface E2EEContext {

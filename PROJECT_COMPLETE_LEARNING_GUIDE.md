@@ -1,4 +1,4 @@
-# Pairfect — Complete Learning Documentation & Architectural Guide
+# Pairfect - Complete Learning Documentation & Architectural Guide
 
 > **Application:** Pairfect (Private Relationship Sanctuary)  
 > **Production URL:** [https://pairfect.site](https://pairfect.site)  
@@ -10,10 +10,10 @@
 ## Table of Contents
 1. [Complete Project Audit & Universal Execution Flow](#1-complete-project-audit--universal-execution-flow)
 2. [Executive Summary & Real System Architecture](#2-executive-summary--real-system-architecture)
-3. [Technology Stack — Deep "WHY" Analysis](#3-technology-stack--deep-why-analysis)
+3. [Technology Stack - Deep "WHY" Analysis](#3-technology-stack--deep-why-analysis)
 4. [Frontend Deep Dive & Directory Anatomy](#4-frontend-deep-dive--directory-anatomy)
 5. [Important Components Breakdown](#5-important-components-breakdown)
-6. [Functions — Teach Me WHY](#6-functions--teach-me-why)
+6. [Functions - Teach Me WHY](#6-functions--teach-me-why)
 7. [React 19 & Next.js 16 Concepts in Pairfect](#7-react-19--nextjs-16-concepts-in-pairfect)
 8. [Backend Deep Dive & Route Handlers](#8-backend-deep-dive--route-handlers)
 9. [Complete API Documentation](#9-complete-api-documentation)
@@ -139,7 +139,7 @@ Pairfect provides a unified private universe for two people. Core modules includ
 
 ---
 
-## 3. Technology Stack — Deep "WHY" Analysis
+## 3. Technology Stack - Deep "WHY" Analysis
 `🟡 Intermediate`
 
 | Technology | Where Used | What It Does | Why We Selected It | Alternative Considered | Tradeoff & Justification |
@@ -183,7 +183,7 @@ $$ language plpgsql security definer;
 
 ---
 
-## 5. Master Blueprint — If You Rebuilt This From Scratch
+## 5. Master Blueprint - If You Rebuilt This From Scratch
 `🟢 Beginner`
 
 1. **Project Scaffold:** `npx create-next-app@latest pairfect --typescript --tailwind --app`

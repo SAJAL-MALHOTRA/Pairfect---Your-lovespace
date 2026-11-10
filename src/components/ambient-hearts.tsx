@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 
 /**
- * AmbientHearts — Global floating hearts ambient background layer.
+ * AmbientHearts - Global floating hearts ambient background layer.
  * 
  * Renders soft, blurred heart shapes scattered across the viewport that
  * drift gently upward with horizontal sway and an opacity breathing effect.
@@ -28,7 +28,7 @@ interface HeartConfig {
 const HEART_COUNT = 14;
 
 function generateHearts(): HeartConfig[] {
-  // Deterministic seed — we want the same layout every render to avoid
+  // Deterministic seed - we want the same layout every render to avoid
   // hydration mismatches between server and client.
   const hearts: HeartConfig[] = [
     { id: 0,  size: 18, left: "5%",  startY: 95, blur: 5, opacity: 0.10, duration: 22, delay: 0,    color: "rose" },

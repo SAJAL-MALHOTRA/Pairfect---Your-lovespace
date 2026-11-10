@@ -14,7 +14,7 @@ export const page: SEOPage = {
     ogDescription: 'Learn what a gratitude jar is and how couples use it to foster appreciation, positivity, and connection in their relationship.'
   },
   h1: 'Gratitude Jar',
-  introduction: 'A gratitude jar is a dedicated space—physical or digital—where individuals or couples collect notes of thankfulness and appreciation. In relationships, a gratitude jar serves as a powerful tool to shift focus from daily frustrations to positive moments, reinforcing the value you see in your partner and the life you are building together.',
+  introduction: 'A gratitude jar is a dedicated space-physical or digital-where individuals or couples collect notes of thankfulness and appreciation. In relationships, a gratitude jar serves as a powerful tool to shift focus from daily frustrations to positive moments, reinforcing the value you see in your partner and the life you are building together.',
   sections: [
     {
       heading: 'The Psychology Behind Gratitude in Relationships',

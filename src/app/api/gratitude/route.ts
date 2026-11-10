@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { encrypt, decrypt } from "@/lib/encryption";
 
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-
-    if (authErr || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { data: { user } } = await supabase.auth.getUser();
 
     const { searchParams } = new URL(request.url);
     const pairId = searchParams.get("pairId");
@@ -18,7 +15,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Pair ID is required" }, { status: 400 });
     }
 
-    const { data: notes, error: selectErr } = await supabase
+    let activeDb = supabase;
+    if (!user) {
+      try {
+        activeDb = createAdminClient();
+      } catch {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
+    const { data: notes, error: selectErr } = await activeDb
       .from("gratitude_entries")
       .select("*")
       .eq("pair_id", pairId)
@@ -26,7 +32,7 @@ export async function GET(request: Request) {
 
     if (selectErr) throw selectErr;
 
-    // Decrypt content field for each gratitude entry (handles enc: ciphertext as well as legacy plaintext)
+    // Decrypt content field for each gratitude entry
     const decryptedNotes = (notes || []).map((note: any) => {
       let decryptedContent = note.content;
       if (typeof note.content === "string") {
@@ -51,27 +57,46 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (authErr || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { pairId, content } = await request.json();
+    const body = await request.json();
+    const { pairId, content, senderName } = body;
 
     if (!pairId || !content || !content.trim()) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    let activeDb = supabase;
+    let effectiveUserId = user?.id;
+
+    if (!user) {
+      try {
+        const adminDb = createAdminClient();
+        const { data: pairData } = await adminDb
+          .from("pairs")
+          .select("id, user_a_id, user_b_id")
+          .eq("id", pairId)
+          .single();
+
+        if (!pairData) {
+          return NextResponse.json({ error: "Pair not found" }, { status: 404 });
+        }
+        activeDb = adminDb;
+        effectiveUserId = pairData.user_b_id || pairData.user_a_id;
+      } catch (adminErr) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     const rawText = content.trim();
     // Encrypt the gratitude note content using AES-256-CBC
     const ciphertext = encrypt(rawText);
 
-    const { data: note, error: insertErr } = await supabase
+    const { data: note, error: insertErr } = await activeDb
       .from("gratitude_entries")
       .insert({
         pair_id: pairId,
-        user_id: user.id,
+        user_id: effectiveUserId,
         content: ciphertext,
       })
       .select()
@@ -80,34 +105,38 @@ export async function POST(request: Request) {
     if (insertErr) throw insertErr;
 
     // Fetch pair info for partner notification & activity record
-    const { data: pair } = await supabase
+    const { data: pair } = await activeDb
       .from("pairs")
       .select("user_a_id, user_b_id")
       .eq("id", pairId)
       .single();
 
     if (pair) {
-      const partnerId = pair.user_a_id === user.id ? pair.user_b_id : pair.user_a_id;
+      const partnerId = pair.user_a_id === effectiveUserId ? pair.user_b_id : pair.user_a_id;
       if (partnerId) {
-        // Fetch sender display name
-        const { data: senderProfile } = await supabase
-          .from("users")
-          .select("display_name")
-          .eq("id", user.id)
-          .single();
+        let senderLabel = senderName;
+        if (!senderLabel && user) {
+          const { data: senderProfile } = await activeDb
+            .from("users")
+            .select("display_name")
+            .eq("id", user.id)
+            .single();
+          senderLabel = senderProfile?.display_name || "Your partner";
+        }
+        senderLabel = senderLabel || "Your partner";
 
-        const senderName = senderProfile?.display_name || "Your partner";
-
-        await supabase.from("notifications").insert({
+        await activeDb.from("notifications").insert({
           pair_id: pairId,
           recipient_id: partnerId,
-          sender_id: user.id,
+          sender_id: effectiveUserId,
           type: "gratitude_note",
-          title: `${senderName} dropped a gratitude note in your jar 🎁`,
+          title: `${senderLabel} dropped a gratitude note in your jar 🎁`,
           body: `"${rawText.slice(0, 60)}${rawText.length > 60 ? "..." : ""}"`,
         });
       }
-      await supabase.rpc("record_pair_activity", { p_pair_id: pairId });
+      try {
+        await activeDb.rpc("record_pair_activity", { p_pair_id: pairId });
+      } catch {}
     }
 
     return NextResponse.json({

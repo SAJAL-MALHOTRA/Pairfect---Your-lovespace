@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         const geoData = await geoRes.json();
         const rawResults = geoData.results || [];
 
-        // Map and SANITIZE — strip all coordinates, latitude, longitude!
+        // Map and SANITIZE - strip all coordinates, latitude, longitude!
         const externalResults = rawResults.map((r: any) => ({
           name: r.name,
           country: r.country || "International",

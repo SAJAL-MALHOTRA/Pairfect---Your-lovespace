@@ -29,7 +29,7 @@ export async function GET() {
       return NextResponse.json({ memories: [] });
     }
 
-    // Call the RPC function — today's date is the default in the SQL function
+    // Call the RPC function - today's date is the default in the SQL function
     const { data: memories, error: rpcErr } = await supabase.rpc(
       "get_on_this_day",
       {
@@ -39,7 +39,7 @@ export async function GET() {
 
     if (rpcErr) {
       console.error("on-this-day RPC error:", rpcErr);
-      // Don't crash the dashboard — return empty gracefully
+      // Don't crash the dashboard - return empty gracefully
       return NextResponse.json({ memories: [] });
     }
 
@@ -47,7 +47,7 @@ export async function GET() {
       { memories: memories || [] },
       {
         headers: {
-          // Cache for 1 hour — data only changes once per day
+          // Cache for 1 hour - data only changes once per day
           "Cache-Control": "private, max-age=3600",
         },
       }

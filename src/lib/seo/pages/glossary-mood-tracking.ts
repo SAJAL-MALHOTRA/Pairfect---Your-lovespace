@@ -18,7 +18,7 @@ export const page: SEOPage = {
   sections: [
     {
       heading: 'How Mood Tracking Works in Relationships',
-      body: 'At its core, mood tracking involves identifying how you feel—whether that\'s joyful, stressed, anxious, or content—and communicating that to your partner. This can be done through a shared journal, a whiteboard on the fridge, or, most conveniently, a digital app.\n\nWhen you use the **Mood Tracking** feature in Pairfect, you can log your emotional state with just a few taps. Your partner receives this update, giving them immediate insight into your headspace. If you log a "stressed" mood after a long workday, your partner knows to offer support rather than asking you to tackle a complex household issue immediately.'
+      body: 'At its core, mood tracking involves identifying how you feel-whether that\'s joyful, stressed, anxious, or content-and communicating that to your partner. This can be done through a shared journal, a whiteboard on the fridge, or, most conveniently, a digital app.\n\nWhen you use the **Mood Tracking** feature in Pairfect, you can log your emotional state with just a few taps. Your partner receives this update, giving them immediate insight into your headspace. If you log a "stressed" mood after a long workday, your partner knows to offer support rather than asking you to tackle a complex household issue immediately.'
     },
     {
       heading: 'The Benefits of Emotional Awareness',
