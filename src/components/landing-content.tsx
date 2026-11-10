@@ -575,6 +575,39 @@ interface ActivityCardData {
   screenContent: React.ReactNode;
 }
 
+/* Cute Floating Player Cursor with Name Pill */
+function CuteCursor({
+  name,
+  color = "pink",
+  className = "",
+}: {
+  name: string;
+  color?: "pink" | "blue";
+  className?: string;
+}) {
+  const isPink = color === "pink";
+  const arrowColor = isPink ? "#FF5E8E" : "#4F86F7";
+  const badgeBorder = isPink ? "border-[#FF5E8E]" : "border-[#4F86F7]";
+  const textColor = isPink ? "text-[#FF5E8E]" : "text-[#4F86F7]";
+
+  return (
+    <div className={`inline-flex items-center gap-0.5 select-none pointer-events-none drop-shadow-sm ${className}`}>
+      <svg width="13" height="16" viewBox="0 0 13 16" fill="none" className="shrink-0 drop-shadow-xs">
+        <path
+          d="M1 1L11.5 8.5L6 9.5L3 15L1 1Z"
+          fill={arrowColor}
+          stroke="#FFFFFF"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-black uppercase tracking-wider bg-white border shadow-xs ${badgeBorder} ${textColor}`}>
+        {name}
+      </span>
+    </div>
+  );
+}
+
 function ActivitiesCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -591,7 +624,360 @@ function ActivitiesCarousel() {
   };
 
   const activities: ActivityCardData[] = [
-    // 1. Botanical Floral Studio (DigiBouquet)
+    // 1. How Well Do You Know Me? (Love Match)
+    {
+      id: "love-match",
+      badge: "HOW WELL DO YOU KNOW ME?",
+      badgeColor: "bg-pink-100 text-pink-700 border-pink-200",
+      title: "How Well Do You Know Me?",
+      description: "Answer intimate couple prompts simultaneously. Compare your real thoughts with your partner's guess and celebrate every match.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between p-3.5 bg-white text-stone-900 font-sans text-xs select-none relative overflow-hidden">
+          {/* Top Score Bar */}
+          <div className="flex items-center justify-between text-[10px] font-mono">
+            <span className="px-2.5 py-0.5 rounded-full bg-pink-50 border border-pink-200 text-pink-700 font-bold flex items-center gap-1.5 shadow-2xs">
+              <span>You</span>
+              <span className="w-3.5 h-3.5 rounded-full bg-[#FF5E8E] text-white flex items-center justify-center text-[8px] font-black">
+                0
+              </span>
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 font-bold flex items-center gap-1.5 shadow-2xs">
+              <span className="w-3.5 h-3.5 rounded-full bg-[#4F86F7] text-white flex items-center justify-center text-[8px] font-black">
+                1
+              </span>
+              <span>Partner</span>
+            </span>
+          </div>
+
+          <div className="my-auto space-y-2 text-center">
+            <p className="text-[9px] font-mono font-bold text-stone-400 uppercase tracking-widest">
+              ROUND 1 OF 6
+            </p>
+            <h4 className="font-heading font-black text-xs text-stone-900 leading-snug px-1">
+              What&apos;s something small of yours she wishes she had with her?
+            </h4>
+
+            <div className="pt-0.5">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-600 text-white font-mono text-[10px] font-black shadow-xs">
+                ✓ Matched!
+              </span>
+            </div>
+
+            {/* Answer Cards */}
+            <div className="space-y-2 pt-1 text-left">
+              <div className="p-2.5 rounded-xl border-2 border-pink-300 bg-white shadow-2xs relative">
+                <span className="text-[8px] font-mono font-bold text-stone-400 uppercase tracking-wider block">
+                  HER REAL ANSWER
+                </span>
+                <p className="font-heading font-black text-xs text-stone-900">
+                  your grey hoodie
+                </p>
+                <CuteCursor name="You" color="pink" className="absolute -bottom-2.5 left-6 z-10" />
+              </div>
+
+              <div className="p-2.5 rounded-xl border-2 border-sky-300 bg-white shadow-2xs relative">
+                <span className="text-[8px] font-mono font-bold text-stone-400 uppercase tracking-wider block">
+                  PARTNER&apos;S GUESS
+                </span>
+                <p className="font-sans font-medium text-xs text-stone-800">
+                  my grey hoodie (she stole it anyway)
+                </p>
+                <CuteCursor name="Partner" color="blue" className="absolute -bottom-2.5 right-6 z-10" />
+              </div>
+            </div>
+
+            <div className="pt-1.5 flex items-center justify-between text-[9px] font-mono text-stone-500 px-1">
+              <span>💕 1 point of 1 so far</span>
+              <button
+                type="button"
+                className="px-3 py-1 rounded-lg bg-stone-900 text-white font-mono font-bold text-[9px] shadow-xs hover:bg-stone-800"
+              >
+                next ▷
+              </button>
+            </div>
+          </div>
+
+          {/* Emoji Reaction Bar */}
+          <div className="pt-2 border-t border-stone-100 flex items-center justify-around text-base">
+            {["😂", "😍", "🥺", "😡", "😭", "🔥"].map((emoji, i) => (
+              <span key={i} className="hover:scale-125 transition-transform cursor-pointer">
+                {emoji}
+              </span>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+
+    // 2. Speed Draw Studio
+    {
+      id: "speed-draw",
+      badge: "SPEED DRAW & CANVAS",
+      badgeColor: "bg-purple-100 text-purple-700 border-purple-200",
+      title: "Speed Draw Studio",
+      description: "Draw silly prompts side by side on synchronized canvases. Watch each other's pencil strokes in real-time and send poke reactions.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between p-3 bg-white text-stone-900 font-sans text-xs select-none relative overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between text-[10px] font-mono">
+            <span className="text-stone-400 font-bold uppercase tracking-wider text-[9px]">
+              ROUND 1 OF 3
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-stone-100 border border-stone-300 font-mono font-black text-stone-900 text-[10px]">
+              1:46
+            </span>
+          </div>
+
+          <div className="text-center py-0.5">
+            <span className="font-heading font-black text-xs text-stone-900">
+              Draw: a bunny
+            </span>
+          </div>
+
+          {/* Dual Canvases */}
+          <div className="space-y-1.5 my-auto">
+            {/* Top Canvas (You) */}
+            <div className="relative h-24 rounded-xl border border-stone-300 bg-white p-1.5 flex items-center justify-center shadow-2xs">
+              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.2 rounded bg-pink-100 text-[#FF5E8E] font-mono text-[7px] font-black uppercase">
+                You
+              </span>
+              <svg viewBox="0 0 160 90" className="w-full h-full">
+                {/* Pink Bunny Doodle */}
+                <ellipse cx="80" cy="54" rx="22" ry="20" stroke="#FF5E8E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <path d="M 68 38 C 64 16, 74 16, 73 38" stroke="#FF5E8E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <path d="M 87 38 C 86 16, 96 16, 92 38" stroke="#FF5E8E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <circle cx="73" cy="50" r="2" fill="#FF5E8E" />
+                <circle cx="87" cy="50" r="2" fill="#FF5E8E" />
+                <ellipse cx="80" cy="56" rx="2" ry="1.5" fill="#FF5E8E" />
+                <path d="M 77 59 Q 80 62 83 59" stroke="#FF5E8E" strokeWidth="1.6" fill="none" />
+                {/* Carrot */}
+                <path d="M 112 48 L 124 68" stroke="#F97316" strokeWidth="4" strokeLinecap="round" />
+                <path d="M 112 48 L 109 42 M 112 48 L 115 42" stroke="#22C55E" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </div>
+
+            {/* Bottom Canvas (Partner) */}
+            <div className="relative h-24 rounded-xl border border-stone-300 bg-white p-1.5 flex items-center justify-center shadow-2xs">
+              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.2 rounded bg-sky-100 text-[#4F86F7] font-mono text-[7px] font-black uppercase">
+                Partner
+              </span>
+              <svg viewBox="0 0 160 90" className="w-full h-full">
+                {/* Blue Bunny Doodle with Bent Ear */}
+                <ellipse cx="80" cy="54" rx="22" ry="20" stroke="#4F86F7" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <path d="M 69 38 C 66 16, 76 16, 74 38" stroke="#4F86F7" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <path d="M 87 38 C 89 26, 97 26, 95 33 L 103 35" stroke="#4F86F7" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <path d="M 71 50 Q 75 46 78 50" stroke="#4F86F7" strokeWidth="1.8" fill="none" />
+                <path d="M 82 50 Q 86 46 89 50" stroke="#4F86F7" strokeWidth="1.8" fill="none" />
+                <path d="M 77 58 Q 80 62 83 58" stroke="#4F86F7" strokeWidth="1.6" fill="none" />
+                <ellipse cx="70" cy="55" rx="3" ry="1.5" fill="#FDA4AF" opacity="0.8" />
+                <ellipse cx="90" cy="55" rx="3" ry="1.5" fill="#FDA4AF" opacity="0.8" />
+                {/* Red Heart */}
+                <path d="M 114 46 C 114 42, 117 40, 119 42 C 122 40, 125 42, 125 46 C 125 50, 119 54, 119 54 C 119 54, 114 50, 114 46 Z" stroke="#EF4444" strokeWidth="1.8" fill="none" strokeLinejoin="round" />
+              </svg>
+              <CuteCursor name="Partner" color="blue" className="absolute bottom-1.5 left-4 z-10" />
+            </div>
+          </div>
+
+          {/* Color Palette & Tools */}
+          <div className="space-y-1 pt-1">
+            <div className="relative flex items-center justify-between px-1">
+              <div className="flex items-center gap-1.5">
+                {[
+                  { color: "#FF5E8E" },
+                  { color: "#4F86F7" },
+                  { color: "#1C1917" },
+                  { color: "#F97316" },
+                  { color: "#10B981" },
+                  { color: "#8B5CF6" },
+                  { color: "#F59E0B" },
+                  { color: "#EF4444" },
+                ].map((item, idx) => (
+                  <span
+                    key={idx}
+                    className="w-3.5 h-3.5 rounded-full border border-black/10 cursor-pointer shadow-2xs hover:scale-115 transition-transform"
+                    style={{ backgroundColor: item.color }}
+                  />
+                ))}
+              </div>
+              <CuteCursor name="You" color="pink" className="absolute -top-3 left-0 z-10" />
+              <button
+                type="button"
+                className="text-[8px] font-mono text-stone-500 font-bold px-1.5 py-0.5 rounded border border-stone-200 bg-stone-50"
+              >
+                clear
+              </button>
+            </div>
+
+            {/* Poke Reaction Bar */}
+            <div className="flex items-center justify-between text-[8px] font-mono text-stone-400 pt-1 border-t border-stone-100">
+              <span className="font-bold text-stone-600">POKE ➔</span>
+              <div className="flex items-center gap-2 text-xs">
+                <span>👉</span>
+                <span>💖</span>
+                <span>😂</span>
+                <span>🌀</span>
+                <span>💥</span>
+                <span>⭐</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+
+    // 3. Two-Player Arcade (Flappy Face)
+    {
+      id: "two-player-arcade",
+      badge: "TWO-PLAYER ARCADE",
+      badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
+      title: "Two-Player Arcade",
+      description: "Play live synchronized retro arcade games together. Flap between pipes with your partner's face avatar and battle for the high score.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between bg-[#0F172A] text-white font-sans text-xs select-none rounded-[28px] overflow-hidden p-2 relative">
+          {/* Top Arcade Bar */}
+          <div className="flex items-center justify-between px-2 py-1 rounded-t-xl bg-[#1E293B] border-b border-stone-700 text-[10px] font-mono">
+            <div className="flex items-center gap-1">
+              <div className="relative w-5 h-5 rounded-full overflow-hidden border border-[#FF5E8E]">
+                <Image src="/booth/couple-peace.jpg" alt="You" fill className="object-cover" />
+              </div>
+              <span className="font-black text-amber-300">3</span>
+            </div>
+            <div className="text-center">
+              <span className="font-bold text-emerald-400 text-[9px] block">✨ Flappy Face</span>
+              <span className="text-[7px] text-stone-400 font-mono">18 · game 1/1</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-black text-amber-300">1</span>
+              <div className="relative w-5 h-5 rounded-full overflow-hidden border border-[#4F86F7]">
+                <Image src="/booth/couple-heart.jpg" alt="Partner" fill className="object-cover" />
+              </div>
+            </div>
+          </div>
+
+          {/* Retro Arcade Play Area */}
+          <div className="relative flex-1 bg-gradient-to-b from-[#38BDF8] via-[#7DD3FC] to-[#BAE6FD] overflow-hidden rounded-b-xl border border-stone-800">
+            {/* Clouds */}
+            <div className="absolute top-3 left-4 w-10 h-3 rounded-full bg-white/70" />
+            <div className="absolute top-8 right-6 w-14 h-4 rounded-full bg-white/60" />
+
+            {/* Top Pipes */}
+            <div className="absolute top-0 right-10 w-9 h-22 bg-gradient-to-r from-emerald-400 via-emerald-500 to-green-700 border-2 border-stone-900 rounded-b-md shadow-md" />
+            <div className="absolute top-0 left-2 w-7 h-10 bg-gradient-to-r from-emerald-400 via-emerald-500 to-green-700 border-2 border-stone-900 rounded-b-md shadow-md" />
+
+            {/* Bottom Pipes */}
+            <div className="absolute bottom-6 right-10 w-9 h-26 bg-gradient-to-r from-emerald-400 via-emerald-500 to-green-700 border-2 border-stone-900 rounded-t-md shadow-md" />
+
+            {/* Player 1 Flapping Bubble (You) */}
+            <div className="absolute top-16 left-10 z-20 flex flex-col items-center">
+              <div className="relative w-8 h-8 rounded-full border-2 border-[#FF5E8E] overflow-hidden shadow-lg bg-white ring-2 ring-[#FF5E8E]/40 animate-bounce">
+                <Image src="/booth/couple-peace.jpg" alt="You" fill className="object-cover" />
+              </div>
+              <CuteCursor name="You" color="pink" className="absolute -top-3 left-5 z-30" />
+            </div>
+
+            {/* Player 2 Flapping Bubble (Partner) */}
+            <div className="absolute bottom-16 left-20 z-20 flex flex-col items-center">
+              <div className="relative w-8 h-8 rounded-full border-2 border-[#4F86F7] overflow-hidden shadow-lg bg-white ring-2 ring-[#4F86F7]/40">
+                <Image src="/booth/couple-heart.jpg" alt="Partner" fill className="object-cover" />
+              </div>
+              <CuteCursor name="Partner" color="blue" className="absolute -bottom-3 left-5 z-30" />
+            </div>
+
+            {/* Ground Strip */}
+            <div className="absolute bottom-0 inset-x-0 h-6 bg-[#D97706] border-t-2 border-stone-900 flex flex-col justify-between">
+              <div className="h-1.5 bg-[#65A30D]" />
+              <div className="h-4 bg-[repeating-linear-gradient(45deg,#B45309,#B45309_8px,#D97706_8px,#D97706_16px)]" />
+            </div>
+          </div>
+        </div>
+      ),
+    },
+
+    // 4. Korean 인생네컷 Virtual Photobooth
+    {
+      id: "korean-photobooth",
+      badge: "SYNCHRONIZED PHOTOBOOTH",
+      badgeColor: "bg-rose-100 text-rose-700 border-rose-200",
+      title: "Korean 인생네컷 Photobooth",
+      description: "One countdown takes the photo on both your phones, framing your shots in authentic Seoul studio 4-cut filmstrips.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between p-3 bg-stone-950 text-white font-sans text-xs select-none">
+          {/* Header */}
+          <div className="flex items-center justify-between text-[10px] font-mono text-stone-400">
+            <span className="text-rose-400 font-bold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> 인생네컷
+            </span>
+            <span className="font-bold text-stone-300">Shot 3 of 4</span>
+          </div>
+
+          {/* Split Screen Synchronized Live Viewfinder */}
+          <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-stone-900 border border-stone-800 my-auto flex items-center justify-center shadow-lg">
+            <div className="absolute inset-0 grid grid-cols-2 gap-1 p-1">
+              {/* You (Jakarta) */}
+              <div className="relative rounded-xl overflow-hidden bg-stone-800">
+                <Image
+                  src="/booth/couple-peace.jpg"
+                  alt="You (Jakarta)"
+                  fill
+                  className="object-cover"
+                />
+                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[9px] font-mono text-rose-300 font-bold border border-white/10">
+                  Jakarta (You)
+                </span>
+                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[8px] font-mono font-bold text-white uppercase tracking-wider">
+                  Live
+                </span>
+                <CuteCursor name="You" color="pink" className="absolute top-6 left-2 z-10" />
+              </div>
+              {/* Partner (Calgary) */}
+              <div className="relative rounded-xl overflow-hidden bg-stone-800">
+                <Image
+                  src="/booth/couple-cozy.jpg"
+                  alt="Partner (Calgary)"
+                  fill
+                  className="object-cover"
+                />
+                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[9px] font-mono text-sky-300 font-bold border border-white/10">
+                  Calgary (Partner)
+                </span>
+                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[8px] font-mono font-bold text-white uppercase tracking-wider">
+                  Live
+                </span>
+                <CuteCursor name="Partner" color="blue" className="absolute top-6 right-2 z-10" />
+              </div>
+            </div>
+
+            {/* Pulsing Countdown Overlay */}
+            <div className="relative z-10 w-12 h-12 rounded-full bg-black/75 backdrop-blur-xs border-2 border-rose-400 flex items-center justify-center font-mono font-black text-2xl text-rose-400 animate-pulse shadow-lg">
+              3
+            </div>
+          </div>
+
+          {/* Filter & Cursors */}
+          <div className="space-y-1.5 pt-1 border-t border-stone-800">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[9px] font-mono font-bold">
+                  You ↖
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-mono font-bold">
+                  Partner ↖
+                </span>
+              </div>
+              <span className="text-[9px] font-mono text-emerald-400 font-bold">
+                Synced live
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[8px] font-mono text-stone-500">
+              <span>CLASSIC STUDIO PACK</span>
+              <span>AUTO SHUTTER ON</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+
+    // 5. Botanical Floral Studio (DigiBouquet)
     {
       id: "botanical-studio",
       badge: "BOTANICAL FLORAL STUDIO",
@@ -739,89 +1125,7 @@ function ActivitiesCarousel() {
       ),
     },
 
-    // 2. Korean 인생네컷 Virtual Photobooth
-    {
-      id: "korean-photobooth",
-      badge: "SYNCHRONIZED PHOTOBOOTH",
-      badgeColor: "bg-rose-100 text-rose-700 border-rose-200",
-      title: "Korean 인생네컷 Photobooth",
-      description: "One countdown takes the photo on both your phones, framing your shots in authentic Seoul studio 4-cut filmstrips.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between p-3 bg-stone-950 text-white font-sans text-xs select-none">
-          {/* Header */}
-          <div className="flex items-center justify-between text-[10px] font-mono text-stone-400">
-            <span className="text-rose-400 font-bold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> 인생네컷
-            </span>
-            <span className="font-bold text-stone-300">Shot 3 of 4</span>
-          </div>
-
-          {/* Split Screen Synchronized Live Viewfinder */}
-          <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-stone-900 border border-stone-800 my-auto flex items-center justify-center shadow-lg">
-            <div className="absolute inset-0 grid grid-cols-2 gap-1 p-1">
-              {/* You (Jakarta) */}
-              <div className="relative rounded-xl overflow-hidden bg-stone-800">
-                <Image
-                  src="/booth/couple-peace.jpg"
-                  alt="You (Jakarta)"
-                  fill
-                  className="object-cover"
-                />
-                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[9px] font-mono text-rose-300 font-bold border border-white/10">
-                  Jakarta (You)
-                </span>
-                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[8px] font-mono font-bold text-white uppercase tracking-wider">
-                  Live
-                </span>
-              </div>
-              {/* Partner (Calgary) */}
-              <div className="relative rounded-xl overflow-hidden bg-stone-800">
-                <Image
-                  src="/booth/couple-cozy.jpg"
-                  alt="Partner (Calgary)"
-                  fill
-                  className="object-cover"
-                />
-                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[9px] font-mono text-sky-300 font-bold border border-white/10">
-                  Calgary (Partner)
-                </span>
-                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[8px] font-mono font-bold text-white uppercase tracking-wider">
-                  Live
-                </span>
-              </div>
-            </div>
-
-            {/* Pulsing Countdown Overlay */}
-            <div className="relative z-10 w-12 h-12 rounded-full bg-black/75 backdrop-blur-xs border-2 border-rose-400 flex items-center justify-center font-mono font-black text-2xl text-rose-400 animate-pulse shadow-lg">
-              3
-            </div>
-          </div>
-
-          {/* Filter & Cursors */}
-          <div className="space-y-1.5 pt-1 border-t border-stone-800">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[9px] font-mono font-bold">
-                  You ↖
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-mono font-bold">
-                  Partner ↖
-                </span>
-              </div>
-              <span className="text-[9px] font-mono text-emerald-400 font-bold">
-                Synced live
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-[8px] font-mono text-stone-500">
-              <span>CLASSIC STUDIO PACK</span>
-              <span>AUTO SHUTTER ON</span>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    // 3. Wax-Sealed Love Letters
+    // 6. Wax-Sealed Love Letters
     {
       id: "love-letters",
       badge: "TIMELESS ROMANCE",
@@ -870,167 +1174,6 @@ function ActivitiesCarousel() {
             <span className="text-[9px] font-mono font-bold text-rose-600">
               You ✉ Partner
             </span>
-          </div>
-        </div>
-      ),
-    },
-
-    // 4. IQ Duel (live simultaneous puzzle battle)
-    {
-      id: "iq-duel",
-      badge: "SIMULTANEOUS BATTLE",
-      badgeColor: "bg-purple-100 text-purple-700 border-purple-200",
-      title: "IQ Duel",
-      description: "Solve progressive Raven matrix puzzles on the exact same timer. Watch each other's streak climb in real-time.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between p-3 bg-white text-stone-900 font-sans text-xs select-none">
-          <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
-            <span>Pattern 4 of 10</span>
-            <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
-              14.8s left
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 my-1">
-            <div className="p-2 rounded-xl bg-sky-50 border border-sky-200 text-center">
-              <span className="text-[9px] font-mono text-sky-700 font-bold block">You</span>
-              <span className="font-heading font-black text-sm text-sky-900">420 pts</span>
-              <span className="text-[8px] font-mono text-sky-600 block">Streak 🔥 3</span>
-            </div>
-            <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-center">
-              <span className="text-[9px] font-mono text-rose-700 font-bold block">Partner</span>
-              <span className="font-heading font-black text-sm text-rose-900">480 pts</span>
-              <span className="text-[8px] font-mono text-rose-600 block">Streak 🔥 4</span>
-            </div>
-          </div>
-
-          <div className="my-auto text-center space-y-2">
-            <p className="font-heading font-bold text-xs text-stone-900">
-              Which shape completes the sequence?
-            </p>
-            <div className="grid grid-cols-3 gap-1.5 w-32 mx-auto p-1.5 rounded-xl bg-stone-100 border border-stone-200">
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">■</span>
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">●</span>
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">▲</span>
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">●</span>
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">▲</span>
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">■</span>
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">▲</span>
-              <span className="w-8 h-8 rounded bg-stone-900 text-white flex items-center justify-center font-bold">■</span>
-              <span className="w-8 h-8 rounded bg-rose-500 text-white flex items-center justify-center font-bold font-mono animate-pulse">?</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] font-mono pt-1">
-            <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold">
-              Partner locked in C ✓
-            </span>
-            <span className="text-stone-400">Locking in...</span>
-          </div>
-        </div>
-      ),
-    },
-
-    // 5. Between the Lines (AI Vibe Judge courtroom)
-    {
-      id: "between-the-lines",
-      badge: "AI COURTROOM",
-      badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-200",
-      title: "Between the Lines",
-      description: "Bring your playful couples debates before our impartial AI Judge for dramatic courtroom verdicts and peace treaties.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between p-3.5 bg-[#FAF8F5] text-stone-900 font-sans text-xs select-none">
-          <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
-            <span className="text-indigo-600 font-bold flex items-center gap-1">
-              <Scale className="w-3 h-3" /> Courtroom for Two
-            </span>
-            <span>Case #108</span>
-          </div>
-
-          <div className="my-auto space-y-2.5">
-            <div className="p-2 rounded-xl bg-white border border-stone-200 shadow-2xs space-y-1">
-              <span className="text-[9px] font-mono text-stone-400 uppercase">THE DISPUTE:</span>
-              <p className="font-heading font-bold text-xs text-stone-900 leading-snug">
-                &ldquo;Who is responsible for the late night snack raids on call?&rdquo;
-              </p>
-            </div>
-
-            <div className="p-3 rounded-2xl bg-indigo-50/90 border-2 border-indigo-200 space-y-2 text-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-sm">
-                ⚖️
-              </div>
-              <div className="space-y-0.5">
-                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] uppercase">
-                  VERDICT: 84% GUILTY (Partner)
-                </span>
-                <p className="text-[10px] font-sans font-medium text-stone-700 leading-tight pt-1">
-                  &ldquo;The Court orders Partner to send you surprise dessert on next date night.&rdquo;
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 pt-1">
-            <span>You: Objection sustained!</span>
-            <span className="text-indigo-600 font-bold">Judge AI Presiding</span>
-          </div>
-        </div>
-      ),
-    },
-
-    // 6. Gratitude Jar
-    {
-      id: "gratitude-jar",
-      badge: "DAILY RITUAL",
-      badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
-      title: "Gratitude Jar",
-      description: "Fold daily origami lucky stars and parchment scrolls into a shared glass jar that grows richer over time.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#FFFDF9] via-[#FEFBF2] to-[#FEF3C7]/30 text-stone-900 font-sans text-xs select-none">
-          <div className="flex items-center justify-between text-[10px] font-mono text-amber-800">
-            <span className="font-bold flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-500" /> Gratitude Jar
-            </span>
-            <span className="bg-amber-200/60 px-2 py-0.5 rounded-full font-bold text-[9px]">
-              Our Star Jar
-            </span>
-          </div>
-
-          <div className="my-auto relative flex flex-col items-center">
-            <div className="relative w-36 h-40 flex items-center justify-center">
-              <svg viewBox="0 0 140 160" className="w-full h-full drop-shadow-md">
-                <rect x="40" y="8" width="60" height="14" rx="4" fill="#C29A6B" stroke="#9A7447" strokeWidth="1.5" />
-                <rect x="46" y="22" width="48" height="6" fill="#8F6B3E" />
-                <path
-                  d="M 46 28 L 30 50 C 20 65 20 140 30 150 C 40 155 100 155 110 150 C 120 140 120 65 110 50 L 94 28 Z"
-                  fill="#FFFFFF"
-                  fillOpacity="0.45"
-                  stroke="#CBD5E1"
-                  strokeWidth="2"
-                />
-                <path d="M 32 60 Q 26 100 32 140" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.8" />
-                <polygon points="55,130 58,138 66,138 60,143 62,151 55,146 48,151 50,143 44,138 52,138" fill="#FBBF24" />
-                <polygon points="85,125 88,133 96,133 90,138 92,146 85,141 78,146 80,138 74,133 82,133" fill="#F43F5E" />
-                <polygon points="70,105 73,113 81,113 75,118 77,126 70,121 63,126 65,118 59,113 67,113" fill="#A78BFA" />
-                <polygon points="48,95 51,103 59,103 53,108 55,116 48,111 41,116 43,108 37,103 45,103" fill="#34D399" />
-                <polygon points="92,95 95,103 103,103 97,108 99,116 92,111 85,116 87,108 81,103 89,103" fill="#38BDF8" />
-                <polygon points="70,72 73,80 81,80 75,85 77,93 70,88 63,93 65,85 59,80 67,80" fill="#F472B6" />
-              </svg>
-            </div>
-
-            <div className="mt-1 p-2.5 rounded-xl bg-white/95 border border-amber-200 shadow-md text-center max-w-[210px]">
-              <span className="text-[8px] font-mono text-amber-700 font-bold block uppercase">
-                Partner&apos;s Star From Today
-              </span>
-              <p className="font-sans text-[10px] text-stone-800 leading-snug pt-0.5">
-                &ldquo;When you fell asleep on our call and I could just hear you breathing peacefully.&rdquo;
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[9px] font-mono text-amber-900 pt-1">
-            <span>Fold tomorrow&apos;s star ✦</span>
-            <span className="font-bold">Synced Live</span>
           </div>
         </div>
       ),
@@ -1111,7 +1254,112 @@ function ActivitiesCarousel() {
       ),
     },
 
-    // 8. Daily Mood Sanctuary
+    // 8. Between the Lines (AI Vibe Judge courtroom)
+    {
+      id: "between-the-lines",
+      badge: "AI COURTROOM",
+      badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-200",
+      title: "Between the Lines",
+      description: "Bring your playful couples debates before our impartial AI Judge for dramatic courtroom verdicts and peace treaties.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between p-3.5 bg-[#FAF8F5] text-stone-900 font-sans text-xs select-none">
+          <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
+            <span className="text-indigo-600 font-bold flex items-center gap-1">
+              <Scale className="w-3 h-3" /> Courtroom for Two
+            </span>
+            <span>Case #108</span>
+          </div>
+
+          <div className="my-auto space-y-2.5">
+            <div className="p-2 rounded-xl bg-white border border-stone-200 shadow-2xs space-y-1">
+              <span className="text-[9px] font-mono text-stone-400 uppercase">THE DISPUTE:</span>
+              <p className="font-heading font-bold text-xs text-stone-900 leading-snug">
+                &ldquo;Who is responsible for the late night snack raids on call?&rdquo;
+              </p>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-indigo-50/90 border-2 border-indigo-200 space-y-2 text-center">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-sm">
+                ⚖️
+              </div>
+              <div className="space-y-0.5">
+                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] uppercase">
+                  VERDICT: 84% GUILTY (Partner)
+                </span>
+                <p className="text-[10px] font-sans font-medium text-stone-700 leading-tight pt-1">
+                  &ldquo;The Court orders Partner to send you surprise dessert on next date night.&rdquo;
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 pt-1">
+            <span>You: Objection sustained!</span>
+            <span className="text-indigo-600 font-bold">Judge AI Presiding</span>
+          </div>
+        </div>
+      ),
+    },
+
+    // 9. Gratitude Jar
+    {
+      id: "gratitude-jar",
+      badge: "DAILY RITUAL",
+      badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
+      title: "Gratitude Jar",
+      description: "Fold daily origami lucky stars and parchment scrolls into a shared glass jar that grows richer over time.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#FFFDF9] via-[#FEFBF2] to-[#FEF3C7]/30 text-stone-900 font-sans text-xs select-none">
+          <div className="flex items-center justify-between text-[10px] font-mono text-amber-800">
+            <span className="font-bold flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-500" /> Gratitude Jar
+            </span>
+            <span className="bg-amber-200/60 px-2 py-0.5 rounded-full font-bold text-[9px]">
+              Our Star Jar
+            </span>
+          </div>
+
+          <div className="my-auto relative flex flex-col items-center">
+            <div className="relative w-36 h-40 flex items-center justify-center">
+              <svg viewBox="0 0 140 160" className="w-full h-full drop-shadow-md">
+                <rect x="40" y="8" width="60" height="14" rx="4" fill="#C29A6B" stroke="#9A7447" strokeWidth="1.5" />
+                <rect x="46" y="22" width="48" height="6" fill="#8F6B3E" />
+                <path
+                  d="M 46 28 L 30 50 C 20 65 20 140 30 150 C 40 155 100 155 110 150 C 120 140 120 65 110 50 L 94 28 Z"
+                  fill="#FFFFFF"
+                  fillOpacity="0.45"
+                  stroke="#CBD5E1"
+                  strokeWidth="2"
+                />
+                <path d="M 32 60 Q 26 100 32 140" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.8" />
+                <polygon points="55,130 58,138 66,138 60,143 62,151 55,146 48,151 50,143 44,138 52,138" fill="#FBBF24" />
+                <polygon points="85,125 88,133 96,133 90,138 92,146 85,141 78,146 80,138 74,133 82,133" fill="#F43F5E" />
+                <polygon points="70,105 73,113 81,113 75,118 77,126 70,121 63,126 65,118 59,113 67,113" fill="#A78BFA" />
+                <polygon points="48,95 51,103 59,103 53,108 55,116 48,111 41,116 43,108 37,103 45,103" fill="#34D399" />
+                <polygon points="92,95 95,103 103,103 97,108 99,116 92,111 85,116 87,108 81,103 89,103" fill="#38BDF8" />
+                <polygon points="70,72 73,80 81,80 75,85 77,93 70,88 63,93 65,85 59,80 67,80" fill="#F472B6" />
+              </svg>
+            </div>
+
+            <div className="mt-1 p-2.5 rounded-xl bg-white/95 border border-amber-200 shadow-md text-center max-w-[210px]">
+              <span className="text-[8px] font-mono text-amber-700 font-bold block uppercase">
+                Partner&apos;s Star From Today
+              </span>
+              <p className="font-sans text-[10px] text-stone-800 leading-snug pt-0.5">
+                &ldquo;When you fell asleep on our call and I could just hear you breathing peacefully.&rdquo;
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[9px] font-mono text-amber-900 pt-1">
+            <span>Fold tomorrow&apos;s star ✦</span>
+            <span className="font-bold">Synced Live</span>
+          </div>
+        </div>
+      ),
+    },
+
+    // 10. Daily Mood Sanctuary & Distance Compass
     {
       id: "daily-sanctuary",
       badge: "DISTANCE COMPASS",
@@ -1173,119 +1421,6 @@ function ActivitiesCarousel() {
 
           <div className="text-center text-[9px] font-mono text-sky-700 font-bold">
             Synchronized in real-time across both screens
-          </div>
-        </div>
-      ),
-    },
-
-    // 9. Love Roulette (romantic decision wheel)
-    {
-      id: "love-roulette",
-      badge: "DATE NIGHT SOLVER",
-      badgeColor: "bg-rose-100 text-rose-700 border-rose-200",
-      title: "Love Roulette",
-      description: "Can't decide what to eat, watch, or do? Spin the romantic fortune wheel and let destiny settle it.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between p-3.5 bg-[#FFF9F9] text-stone-900 font-sans text-xs select-none">
-          <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
-            <span className="text-rose-600 font-bold flex items-center gap-1">
-              <RotateCw className="w-3 h-3" /> Date Decider
-            </span>
-            <span>Spin to decide</span>
-          </div>
-
-          <div className="my-auto relative flex flex-col items-center">
-            <div className="w-0 h-0 border-x-[7px] border-x-transparent border-t-[10px] border-t-rose-600 z-20 -mb-1 drop-shadow-sm" />
-
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 18, ease: "linear" }}
-              className="relative w-36 h-36 rounded-full shadow-lg border-3 border-stone-900 overflow-hidden"
-            >
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <path d="M50 50 L50 0 A50 50 0 0 1 93.3 25 Z" fill="#FDA4AF" />
-                <path d="M50 50 L93.3 25 A50 50 0 0 1 93.3 75 Z" fill="#BAE6FD" />
-                <path d="M50 50 L93.3 75 A50 50 0 0 1 50 100 Z" fill="#FDE68A" />
-                <path d="M50 50 L50 100 A50 50 0 0 1 6.7 75 Z" fill="#DDD6FE" />
-                <path d="M50 50 L6.7 75 A50 50 0 0 1 6.7 25 Z" fill="#BBF7D0" />
-                <path d="M50 50 L6.7 25 A50 50 0 0 1 50 0 Z" fill="#FECDD3" />
-                <circle cx="50" cy="50" r="10" fill="#1C1917" />
-                <circle cx="50" cy="50" r="4" fill="#FFFFFF" />
-              </svg>
-            </motion.div>
-
-            <div className="mt-2.5 p-2 rounded-xl bg-white border border-rose-200 shadow-sm text-center">
-              <span className="text-[8px] font-mono text-rose-500 font-bold uppercase block">
-                DESTINY SELECTED:
-              </span>
-              <p className="font-heading font-black text-[11px] text-stone-900">
-                Order partner surprise dessert! 🍰
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 pt-1">
-            <span>You spun</span>
-            <span className="text-rose-600 font-bold">Partner approved ✓</span>
-          </div>
-        </div>
-      ),
-    },
-
-    // 10. Collaborative Canvas
-    {
-      id: "collaborative-canvas",
-      badge: "SHARED SCRAPBOOK",
-      badgeColor: "bg-teal-100 text-teal-800 border-teal-200",
-      title: "Collaborative Canvas",
-      description: "An infinite digital bulletin board where you pin polaroids, sketch together in real time, and leave doodle love notes.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between p-3 bg-[#FAF8F3] text-stone-900 font-sans text-xs select-none relative overflow-hidden">
-          <div className="flex items-center justify-between text-[10px] font-mono text-stone-600">
-            <span className="font-bold flex items-center gap-1">
-              <Palette className="w-3 h-3 text-teal-600" /> Corkboard Studio
-            </span>
-            <span className="text-[9px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">
-              Live for Two
-            </span>
-          </div>
-
-          <div className="my-auto space-y-2 relative">
-            <div className="w-28 bg-white p-1.5 rounded-xs shadow-md border border-stone-300 -rotate-3 mx-auto">
-              <div className="relative h-14 rounded-xs overflow-hidden bg-stone-100">
-                <Image
-                  src="/booth/couple-reunion.jpg"
-                  alt="Airport hug"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <p className="text-[7px] font-mono font-bold text-stone-600 text-center pt-1">
-                Airport hug · 2026 ♡
-              </p>
-            </div>
-
-            <div className="relative flex items-center justify-center">
-              <CoupleBeansMascot className="w-24 h-14" />
-            </div>
-
-            <div className="w-32 bg-[#FEF9C3] p-1.5 rounded-xs shadow-sm border border-amber-300 rotate-2 mx-auto text-center">
-              <p className="font-mono text-[8px] font-bold text-amber-900">
-                &ldquo;You are my home.&rdquo;
-              </p>
-            </div>
-
-            <div className="absolute top-2 left-3 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-              <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-mono text-[7px] font-bold">
-                Partner drawing
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[8px] font-mono text-stone-500 pt-1 border-t border-stone-200">
-            <span>DRAWING TOGETHER</span>
-            <span className="text-teal-700 font-bold">SAVED LIVE</span>
           </div>
         </div>
       ),
