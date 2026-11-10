@@ -55,6 +55,7 @@ const JUMP_IN_ACTIVITIES: JumpInItem[] = [
   { id: "mixtape", name: "Spotify Mixtape", href: "/mixtape", iconBg: "bg-teal-100", iconColor: "text-teal-600", icon: Music },
   { id: "whisper", name: "Whisper Memos", href: "/whisper", iconBg: "bg-sky-100", iconColor: "text-sky-600", icon: MessageSquare },
   { id: "checkin", name: "Daily Check-in", href: "/checkin", iconBg: "bg-cyan-100", iconColor: "text-cyan-600", icon: Compass },
+  { id: "fridge", name: "Keepsake Fridge", href: "/fridge", iconBg: "bg-amber-100", iconColor: "text-amber-600", icon: Sparkles },
   { id: "scrapbook", name: "Memory Wall", href: "/moments", iconBg: "bg-indigo-100", iconColor: "text-indigo-600", icon: BookOpen },
   { id: "draw", name: "Shared Canvas", href: "/moments", iconBg: "bg-violet-100", iconColor: "text-violet-600", icon: Palette },
   { id: "arcade", name: "Arcade Path", href: "/play", iconBg: "bg-purple-100", iconColor: "text-purple-600", icon: Gamepad2 },

@@ -328,6 +328,14 @@ export default function MomentsPage() {
                   <span>Photo Booth</span>
                 </Link>
 
+                <Link
+                  href="/fridge"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-stone-900 text-xs font-bold border-2 border-stone-800 shadow-[2px_2px_0px_0px_rgba(28,25,23,0.9)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-sky-600 stroke-[2.5]" />
+                  <span>Keepsake Fridge</span>
+                </Link>
+
                 <button
                   type="button"
                   onClick={handleCopyShareLink}

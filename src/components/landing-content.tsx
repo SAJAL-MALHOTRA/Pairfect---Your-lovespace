@@ -709,203 +709,19 @@ function ActivitiesCarousel() {
       ),
     },
 
-    // 2. Speed Draw Studio
+    // 2. Virtual Studio Photobooth
     {
-      id: "speed-draw",
-      badge: "SPEED DRAW & CANVAS",
-      badgeColor: "bg-purple-100 text-purple-700 border-purple-200",
-      title: "Speed Draw Studio",
-      description: "Draw silly prompts side by side on synchronized canvases. Watch each other's pencil strokes in real-time and send poke reactions.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between p-3 bg-white text-stone-900 font-sans text-xs select-none relative overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between text-[10px] font-mono">
-            <span className="text-stone-400 font-bold uppercase tracking-wider text-[9px]">
-              ROUND 1 OF 3
-            </span>
-            <span className="px-2 py-0.5 rounded-md bg-stone-100 border border-stone-300 font-mono font-black text-stone-900 text-[10px]">
-              1:46
-            </span>
-          </div>
-
-          <div className="text-center py-0.5">
-            <span className="font-heading font-black text-xs text-stone-900">
-              Draw: a bunny
-            </span>
-          </div>
-
-          {/* Dual Canvases */}
-          <div className="space-y-1.5 my-auto">
-            {/* Top Canvas (You) */}
-            <div className="relative h-24 rounded-xl border border-stone-300 bg-white p-1.5 flex items-center justify-center shadow-2xs">
-              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.2 rounded bg-pink-100 text-[#FF5E8E] font-mono text-[7px] font-black uppercase">
-                You
-              </span>
-              <svg viewBox="0 0 160 90" className="w-full h-full">
-                {/* Pink Bunny Doodle */}
-                <ellipse cx="80" cy="54" rx="22" ry="20" stroke="#FF5E8E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                <path d="M 68 38 C 64 16, 74 16, 73 38" stroke="#FF5E8E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                <path d="M 87 38 C 86 16, 96 16, 92 38" stroke="#FF5E8E" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                <circle cx="73" cy="50" r="2" fill="#FF5E8E" />
-                <circle cx="87" cy="50" r="2" fill="#FF5E8E" />
-                <ellipse cx="80" cy="56" rx="2" ry="1.5" fill="#FF5E8E" />
-                <path d="M 77 59 Q 80 62 83 59" stroke="#FF5E8E" strokeWidth="1.6" fill="none" />
-                {/* Carrot */}
-                <path d="M 112 48 L 124 68" stroke="#F97316" strokeWidth="4" strokeLinecap="round" />
-                <path d="M 112 48 L 109 42 M 112 48 L 115 42" stroke="#22C55E" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </div>
-
-            {/* Bottom Canvas (Partner) */}
-            <div className="relative h-24 rounded-xl border border-stone-300 bg-white p-1.5 flex items-center justify-center shadow-2xs">
-              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.2 rounded bg-sky-100 text-[#4F86F7] font-mono text-[7px] font-black uppercase">
-                Partner
-              </span>
-              <svg viewBox="0 0 160 90" className="w-full h-full">
-                {/* Blue Bunny Doodle with Bent Ear */}
-                <ellipse cx="80" cy="54" rx="22" ry="20" stroke="#4F86F7" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                <path d="M 69 38 C 66 16, 76 16, 74 38" stroke="#4F86F7" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                <path d="M 87 38 C 89 26, 97 26, 95 33 L 103 35" stroke="#4F86F7" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                <path d="M 71 50 Q 75 46 78 50" stroke="#4F86F7" strokeWidth="1.8" fill="none" />
-                <path d="M 82 50 Q 86 46 89 50" stroke="#4F86F7" strokeWidth="1.8" fill="none" />
-                <path d="M 77 58 Q 80 62 83 58" stroke="#4F86F7" strokeWidth="1.6" fill="none" />
-                <ellipse cx="70" cy="55" rx="3" ry="1.5" fill="#FDA4AF" opacity="0.8" />
-                <ellipse cx="90" cy="55" rx="3" ry="1.5" fill="#FDA4AF" opacity="0.8" />
-                {/* Red Heart */}
-                <path d="M 114 46 C 114 42, 117 40, 119 42 C 122 40, 125 42, 125 46 C 125 50, 119 54, 119 54 C 119 54, 114 50, 114 46 Z" stroke="#EF4444" strokeWidth="1.8" fill="none" strokeLinejoin="round" />
-              </svg>
-              <CuteCursor name="Partner" color="blue" className="absolute bottom-1.5 left-4 z-10" />
-            </div>
-          </div>
-
-          {/* Color Palette & Tools */}
-          <div className="space-y-1 pt-1">
-            <div className="relative flex items-center justify-between px-1">
-              <div className="flex items-center gap-1.5">
-                {[
-                  { color: "#FF5E8E" },
-                  { color: "#4F86F7" },
-                  { color: "#1C1917" },
-                  { color: "#F97316" },
-                  { color: "#10B981" },
-                  { color: "#8B5CF6" },
-                  { color: "#F59E0B" },
-                  { color: "#EF4444" },
-                ].map((item, idx) => (
-                  <span
-                    key={idx}
-                    className="w-3.5 h-3.5 rounded-full border border-black/10 cursor-pointer shadow-2xs hover:scale-115 transition-transform"
-                    style={{ backgroundColor: item.color }}
-                  />
-                ))}
-              </div>
-              <CuteCursor name="You" color="pink" className="absolute -top-3 left-0 z-10" />
-              <button
-                type="button"
-                className="text-[8px] font-mono text-stone-500 font-bold px-1.5 py-0.5 rounded border border-stone-200 bg-stone-50"
-              >
-                clear
-              </button>
-            </div>
-
-            {/* Poke Reaction Bar */}
-            <div className="flex items-center justify-between text-[8px] font-mono text-stone-400 pt-1 border-t border-stone-100">
-              <span className="font-bold text-stone-600">POKE ➔</span>
-              <div className="flex items-center gap-2 text-xs">
-                <span>👉</span>
-                <span>💖</span>
-                <span>😂</span>
-                <span>🌀</span>
-                <span>💥</span>
-                <span>⭐</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    // 3. Two-Player Arcade (Flappy Face)
-    {
-      id: "two-player-arcade",
-      badge: "TWO-PLAYER ARCADE",
-      badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
-      title: "Two-Player Arcade",
-      description: "Play live synchronized retro arcade games together. Flap between pipes with your partner's face avatar and battle for the high score.",
-      screenContent: (
-        <div className="h-full flex flex-col justify-between bg-[#0F172A] text-white font-sans text-xs select-none rounded-[28px] overflow-hidden p-2 relative">
-          {/* Top Arcade Bar */}
-          <div className="flex items-center justify-between px-2 py-1 rounded-t-xl bg-[#1E293B] border-b border-stone-700 text-[10px] font-mono">
-            <div className="flex items-center gap-1">
-              <div className="relative w-5 h-5 rounded-full overflow-hidden border border-[#FF5E8E]">
-                <Image src="/booth/couple-peace.jpg" alt="You" fill className="object-cover" />
-              </div>
-              <span className="font-black text-amber-300">3</span>
-            </div>
-            <div className="text-center">
-              <span className="font-bold text-emerald-400 text-[9px] block">✨ Flappy Face</span>
-              <span className="text-[7px] text-stone-400 font-mono">18 · game 1/1</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="font-black text-amber-300">1</span>
-              <div className="relative w-5 h-5 rounded-full overflow-hidden border border-[#4F86F7]">
-                <Image src="/booth/couple-heart.jpg" alt="Partner" fill className="object-cover" />
-              </div>
-            </div>
-          </div>
-
-          {/* Retro Arcade Play Area */}
-          <div className="relative flex-1 bg-gradient-to-b from-[#38BDF8] via-[#7DD3FC] to-[#BAE6FD] overflow-hidden rounded-b-xl border border-stone-800">
-            {/* Clouds */}
-            <div className="absolute top-3 left-4 w-10 h-3 rounded-full bg-white/70" />
-            <div className="absolute top-8 right-6 w-14 h-4 rounded-full bg-white/60" />
-
-            {/* Top Pipes */}
-            <div className="absolute top-0 right-10 w-9 h-22 bg-gradient-to-r from-emerald-400 via-emerald-500 to-green-700 border-2 border-stone-900 rounded-b-md shadow-md" />
-            <div className="absolute top-0 left-2 w-7 h-10 bg-gradient-to-r from-emerald-400 via-emerald-500 to-green-700 border-2 border-stone-900 rounded-b-md shadow-md" />
-
-            {/* Bottom Pipes */}
-            <div className="absolute bottom-6 right-10 w-9 h-26 bg-gradient-to-r from-emerald-400 via-emerald-500 to-green-700 border-2 border-stone-900 rounded-t-md shadow-md" />
-
-            {/* Player 1 Flapping Bubble (You) */}
-            <div className="absolute top-16 left-10 z-20 flex flex-col items-center">
-              <div className="relative w-8 h-8 rounded-full border-2 border-[#FF5E8E] overflow-hidden shadow-lg bg-white ring-2 ring-[#FF5E8E]/40 animate-bounce">
-                <Image src="/booth/couple-peace.jpg" alt="You" fill className="object-cover" />
-              </div>
-              <CuteCursor name="You" color="pink" className="absolute -top-3 left-5 z-30" />
-            </div>
-
-            {/* Player 2 Flapping Bubble (Partner) */}
-            <div className="absolute bottom-16 left-20 z-20 flex flex-col items-center">
-              <div className="relative w-8 h-8 rounded-full border-2 border-[#4F86F7] overflow-hidden shadow-lg bg-white ring-2 ring-[#4F86F7]/40">
-                <Image src="/booth/couple-heart.jpg" alt="Partner" fill className="object-cover" />
-              </div>
-              <CuteCursor name="Partner" color="blue" className="absolute -bottom-3 left-5 z-30" />
-            </div>
-
-            {/* Ground Strip */}
-            <div className="absolute bottom-0 inset-x-0 h-6 bg-[#D97706] border-t-2 border-stone-900 flex flex-col justify-between">
-              <div className="h-1.5 bg-[#65A30D]" />
-              <div className="h-4 bg-[repeating-linear-gradient(45deg,#B45309,#B45309_8px,#D97706_8px,#D97706_16px)]" />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    // 4. Korean 인생네컷 Virtual Photobooth
-    {
-      id: "korean-photobooth",
+      id: "virtual-photobooth",
       badge: "SYNCHRONIZED PHOTOBOOTH",
       badgeColor: "bg-rose-100 text-rose-700 border-rose-200",
-      title: "Korean 인생네컷 Photobooth",
-      description: "One countdown takes the photo on both your phones, framing your shots in authentic Seoul studio 4-cut filmstrips.",
+      title: "Virtual Studio Photobooth",
+      description: "One countdown takes the photo on both your phones, framing your shots in authentic studio 4-cut filmstrips.",
       screenContent: (
         <div className="h-full flex flex-col justify-between p-3 bg-stone-950 text-white font-sans text-xs select-none">
           {/* Header */}
           <div className="flex items-center justify-between text-[10px] font-mono text-stone-400">
             <span className="text-rose-400 font-bold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> 인생네컷
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> STUDIO 4-CUT
             </span>
             <span className="font-bold text-stone-300">Shot 3 of 4</span>
           </div>
@@ -972,6 +788,109 @@ function ActivitiesCarousel() {
               <span>CLASSIC STUDIO PACK</span>
               <span>AUTO SHUTTER ON</span>
             </div>
+          </div>
+        </div>
+      ),
+    },
+
+    // 3. Digital Keepsake Fridge
+    {
+      id: "keepsake-fridge",
+      badge: "MAGNETIC KEEPSAKES",
+      badgeColor: "bg-sky-100 text-sky-800 border-sky-200",
+      title: "Digital Keepsake Fridge",
+      description: "Pin photostrips, polaroids, and love reminders on your shared retro enamel fridge door. Arrange freely anytime.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between p-3 bg-gradient-to-b from-[#FBF9F5] via-[#F4F0E8] to-[#E9E4D8] text-stone-900 font-sans text-xs select-none">
+          <div className="flex items-center justify-between text-[10px] font-mono text-stone-600 border-b border-stone-300/80 pb-1.5">
+            <span className="font-bold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Retro Fridge
+            </span>
+            <span className="text-[9px] font-bold text-stone-500">4°C · FRESH</span>
+          </div>
+
+          <div className="my-auto relative h-56 rounded-2xl bg-white/40 border border-stone-300/60 p-2 overflow-hidden flex flex-col justify-between">
+            {/* Draggable Post-it */}
+            <div className="w-36 p-2 rounded-lg bg-[#FEF08A] border border-amber-300 shadow-md rotate-[-4deg] self-start relative">
+              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 shadow-xs absolute -top-1.5 left-1/2 -translate-x-1/2 border border-white" />
+              <p className="font-sans font-bold text-[9px] text-stone-800 leading-snug">
+                &ldquo;Don&apos;t forget: FaceTime date at 9pm! Love you ♡&rdquo;
+              </p>
+              <CuteCursor name="Partner" color="blue" className="absolute -bottom-2 right-1 z-10" />
+            </div>
+
+            {/* Draggable Photostrip */}
+            <div className="w-28 bg-white border border-stone-300 p-1.5 rounded-sm shadow-md rotate-[3deg] self-end space-y-1 relative">
+              <div className="w-3 h-3 rounded-full bg-sky-500 shadow-xs absolute -top-1.5 left-1/2 -translate-x-1/2 border border-white" />
+              <div className="relative aspect-4/3 rounded bg-stone-100 overflow-hidden">
+                <Image src="/booth/couple-heart.jpg" alt="Photo" fill className="object-cover" />
+              </div>
+              <div className="relative aspect-4/3 rounded bg-stone-100 overflow-hidden">
+                <Image src="/booth/couple-peace.jpg" alt="Photo" fill className="object-cover" />
+              </div>
+              <p className="text-[7px] font-mono font-bold text-center text-stone-700">PAIRFECT 2026</p>
+              <CuteCursor name="You" color="pink" className="absolute -bottom-2 -left-2 z-10" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[9px] font-mono text-stone-500 pt-1 border-t border-stone-200">
+            <span>Arrange freely ♡</span>
+            <span className="font-bold text-rose-500">Live for Two</span>
+          </div>
+        </div>
+      ),
+    },
+
+    // 4. IQ Duel
+    {
+      id: "iq-duel",
+      badge: "LIVE QUIZ DUEL",
+      badgeColor: "bg-indigo-100 text-indigo-700 border-indigo-200",
+      title: "IQ Duel",
+      description: "Battle in real-time brain teasers and couple trivia. Buzz in before your partner and see who claims bragging rights.",
+      screenContent: (
+        <div className="h-full flex flex-col justify-between p-3.5 bg-gradient-to-b from-[#1E1B4B] via-[#2E1065] to-[#0F172A] text-white font-sans text-xs select-none">
+          <div className="flex items-center justify-between text-[10px] font-mono">
+            <span className="px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 font-bold">
+              Round 3 of 5
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white font-bold text-[9px] animate-pulse">
+              ⚡ 00:08
+            </span>
+          </div>
+
+          <div className="my-auto space-y-2.5 text-center">
+            {/* Score Bar */}
+            <div className="flex items-center justify-between px-1 text-[10px] font-mono font-bold">
+              <span className="text-pink-300">You: 120 pts</span>
+              <span className="text-sky-300">Partner: 95 pts</span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xs text-left space-y-1">
+              <span className="text-[8px] font-mono font-bold text-amber-300 uppercase tracking-wider block">
+                SPEED RIDDLE
+              </span>
+              <p className="font-heading font-black text-xs text-white leading-snug">
+                &ldquo;A plane crashes on the border of the US and Canada. Where do you bury the survivors?&rdquo;
+              </p>
+            </div>
+
+            <div className="space-y-1.5 pt-1 text-left">
+              <div className="p-2 rounded-xl bg-emerald-500/20 border-2 border-emerald-400 text-white font-mono text-[10px] font-bold flex items-center justify-between relative shadow-xs">
+                <span>A. You don&apos;t bury survivors!</span>
+                <span className="text-emerald-300 text-xs">✓ Fast Lock</span>
+                <CuteCursor name="You" color="pink" className="absolute -bottom-2.5 right-6 z-10" />
+              </div>
+              <div className="p-2 rounded-xl bg-white/5 border border-white/15 text-stone-300 font-mono text-[10px] flex items-center justify-between relative">
+                <span>B. In Canada</span>
+                <CuteCursor name="Partner" color="blue" className="absolute -top-2.5 right-10 z-10" />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[9px] font-mono text-stone-300">
+            <span className="text-emerald-400 font-bold">+25 Speed Bonus!</span>
+            <span>Live Buzzer Synced</span>
           </div>
         </div>
       ),
@@ -1528,8 +1447,30 @@ function ActivitiesCarousel() {
 /* ════════════════════════════════════════════════════════════════════════
    4. FRESH OUT OF THE BOOTH CLOTHESLINE SECTION
    ════════════════════════════════════════════════════════════════════════ */
+/* Realistic SVG Clothespin Clip Component */
+function ClothespinClip({ color = "#F59E0B" }: { color?: string }) {
+  return (
+    <svg width="22" height="34" viewBox="0 0 22 34" fill="none" className="drop-shadow-md z-20 -mb-2 select-none pointer-events-none">
+      {/* Upper Pinch Handles */}
+      <rect x="5.5" y="0.5" width="4" height="11" rx="1.5" fill={color} stroke="#78350F" strokeWidth="0.8" />
+      <rect x="12.5" y="0.5" width="4" height="11" rx="1.5" fill={color} stroke="#78350F" strokeWidth="0.8" />
+      {/* Spring wire coil */}
+      <circle cx="11" cy="11.5" r="3.2" fill="#E2E8F0" stroke="#475569" strokeWidth="1" />
+      <circle cx="11" cy="11.5" r="1.5" fill="#94A3B8" />
+      {/* Lower clamping jaws gripping wire and strip */}
+      <path d="M 5.5 12 L 6 32 C 6 33, 9 33, 9.5 32 L 10 12 Z" fill={color} stroke="#78350F" strokeWidth="0.8" />
+      <path d="M 12 12 L 12.5 32 C 13 33, 16 33, 16.5 32 L 16.5 12 Z" fill={color} stroke="#78350F" strokeWidth="0.8" />
+      {/* Center jaw shadow gap */}
+      <rect x="9.5" y="15" width="3" height="16" fill="#000000" opacity="0.18" />
+    </svg>
+  );
+}
+
 function FreshOutOfTheBoothClothesline() {
   const [isPlaying, setIsPlaying] = useState(true);
+
+  const baseAngles = [-3.2, 2.6, -1.9, 3.4, -2.5, 2.1];
+  const clipColors = ["#F43F5E", "#38BDF8", "#F59E0B", "#FB7185", "#10B981", "#64748B"];
 
   const strips = [
     {
@@ -1678,7 +1619,7 @@ function FreshOutOfTheBoothClothesline() {
             .
           </h2>
           <p className="text-sm sm:text-base font-sans text-stone-600">
-            Authentic Seoul-inspired studio frames designed for two screens. Tap any frame to open the photobooth together.
+            Authentic studio frames designed for two screens. Tap any frame to open the photobooth together.
           </p>
         </div>
 
@@ -1716,28 +1657,68 @@ function FreshOutOfTheBoothClothesline() {
 
       {/* The Clothesline Wire and Hanging Strips Container */}
       <div className="relative w-full overflow-hidden pt-4 pb-12 relative z-10">
-        <div className="absolute top-7 left-0 right-0 h-[2px] bg-stone-300 shadow-xs z-10" />
+        {/* Wall Eyelets and Sagging Twine Line */}
+        <div className="relative w-full max-w-[1360px] mx-auto px-4 mb-2">
+          {/* Left Wall Brass Eyelet */}
+          <div className="absolute left-2 top-[22px] w-4 h-4 rounded-full border-2 border-amber-700 bg-amber-200 shadow-xs flex items-center justify-center z-20">
+            <div className="w-1.5 h-1.5 rounded-full bg-stone-800" />
+          </div>
+          {/* Braided Twine Cord */}
+          <div className="w-full h-[3px] bg-gradient-to-r from-stone-400 via-stone-300 to-stone-400 shadow-[0_2px_4px_rgba(0,0,0,0.15)] relative">
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,#A8A29E,#A8A29E_3px,#D6D3D1_3px,#D6D3D1_6px)] opacity-60" />
+          </div>
+          {/* Right Wall Brass Eyelet */}
+          <div className="absolute right-2 top-[22px] w-4 h-4 rounded-full border-2 border-amber-700 bg-amber-200 shadow-xs flex items-center justify-center z-20">
+            <div className="w-1.5 h-1.5 rounded-full bg-stone-800" />
+          </div>
+        </div>
 
         <div
-          className={`flex items-start gap-10 whitespace-nowrap pl-4 ${isPlaying ? "animate-marquee" : ""}`}
+          className={`flex items-start gap-12 whitespace-nowrap pl-6 ${isPlaying ? "animate-marquee" : ""}`}
           style={{ width: "max-content" }}
         >
-          {strips.concat(strips).map((strip, idx) => (
-            <div
-              key={`${strip.id}-${idx}`}
-              className="relative flex flex-col items-center pt-5 transition-transform duration-300 hover:scale-105"
-            >
-              <div
-                className={`w-3.5 h-6 rounded-xs shadow-md border border-black/20 relative z-20 -mb-2 ${strip.pegColor}`}
-              >
-                <div className="w-full h-1 bg-black/20 my-2" />
-              </div>
+          {strips.concat(strips).map((strip, idx) => {
+            const angle = baseAngles[idx % baseAngles.length];
+            const clipColor = clipColors[idx % clipColors.length];
 
-              <div className="relative z-10 transition-transform hover:rotate-1">
-                {strip.content}
+            return (
+              <div
+                key={`${strip.id}-${idx}`}
+                className="relative flex flex-col items-center pt-2"
+              >
+                {/* SVG Clothespin Clip Clamping the Wire and Top Edge */}
+                <ClothespinClip color={clipColor} />
+
+                {/* Photo Strip Hanging with Physics Tilt and Breeze Sway */}
+                <motion.div
+                  style={{ transformOrigin: "top center" }}
+                  animate={
+                    isPlaying
+                      ? {
+                          rotate: [angle - 1.2, angle + 1.2, angle - 1.2],
+                        }
+                      : {
+                          rotate: angle,
+                        }
+                  }
+                  transition={{
+                    duration: 3.5 + (idx % 3) * 0.4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  whileHover={{
+                    scale: 1.05,
+                    y: -8,
+                    rotate: angle * 0.2,
+                    transition: { duration: 0.2 },
+                  }}
+                  className="relative z-10 transition-shadow drop-shadow-[0_12px_22px_rgba(0,0,0,0.16)]"
+                >
+                  {strip.content}
+                </motion.div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1795,13 +1776,13 @@ function KeepsakeFridgeSection() {
           {/* Action CTA */}
           <div className="pt-3 space-y-2">
             <Link
-              href="/moments"
+              href="/fridge"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#FF5E8E] to-[#4F86F7] hover:opacity-95 text-white font-mono text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
             >
-              <span>Open Your Keepsakes ▷</span>
+              <span>Open Keepsake Fridge ▷</span>
             </Link>
             <p className="text-[11px] font-mono text-stone-500">
-              Living memory scrapbook · saves automatically in your private room
+              Interactive magnetic fridge door · saves automatically in your private room
             </p>
           </div>
         </div>
@@ -2039,7 +2020,7 @@ function FaqSection() {
   const faqs = [
     {
       q: "What games and activities can we experience on Pairfect?",
-      a: "Pairfect features a rich suite of live shared activities: the Korean-style online photobooth, Botanical Floral Studio, Wax-Sealed Love Letters, IQ Duel, Between the Lines courtroom, Gratitude Jar, Spotify Mixtape Sync, Daily Mood Sanctuary, Love Roulette, Collaborative Canvas, Love Match, Riddle Night, and more. All activities run live in your private room at the exact same moment, so you are playing together in real-time, not texting back and forth.",
+      a: "Pairfect features a rich suite of live shared activities: the synchronized 4-cut online photobooth, Botanical Floral Studio, Wax-Sealed Love Letters, IQ Duel, Between the Lines courtroom, Gratitude Jar, Spotify Mixtape Sync, Daily Mood Sanctuary, Love Roulette, Collaborative Canvas, Love Match, Riddle Night, and more. All activities run live in your private room at the exact same moment, so you are playing together in real-time, not texting back and forth.",
     },
     {
       q: "Is Pairfect free to play together?",

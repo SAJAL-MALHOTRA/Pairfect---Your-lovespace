@@ -1295,7 +1295,7 @@ export default function LensBoothView({
               {/* Tag & Heading */}
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFE4E8] text-rose-600 font-mono text-xs font-bold tracking-wider">
-                  <span>인생네컷 · for two</span>
+                  <span>STUDIO 4-CUT · for two</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-heading font-black text-stone-900 tracking-tight">
                   Photobooth
