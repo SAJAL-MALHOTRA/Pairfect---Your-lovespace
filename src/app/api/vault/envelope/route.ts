@@ -116,9 +116,9 @@ export async function GET(req: Request) {
     }
 
     const storagePath = `${pairId}/vault-envelope.json`;
-    const { data, error: downloadErr } = await adminSupabase.storage
-      .from("memories")
-      .download(storagePath);
+    const { data, error: downloadErr } = await (adminSupabase.storage
+      .from("memories") as any)
+      .download(storagePath, { cacheNonce: Date.now() }, { cache: "no-store" });
 
     if (downloadErr || !data) {
       return NextResponse.json(

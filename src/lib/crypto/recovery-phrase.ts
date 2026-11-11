@@ -1,15 +1,15 @@
 import { BIP39_WORDLIST, BIP39_WORD_MAP } from "./bip39-wordlist";
 
 /**
- * BIP-39 Client-Side 12-Word Recovery Phrase Module
+ * Client-Side 12-Word Recovery Phrase Module
  *
  * Cryptographic Specifications:
  * - Entropy: 128 bits (16 bytes) from cryptographically secure CSPRNG
  * - Checksum: 4 bits derived from SHA-256(entropy)
- * - Word Count: 12 words from official BIP-39 English dictionary (2048 words)
+ * - Word Count: 12 words from official 2048-word dictionary
  * - Key Derivation: PBKDF2 with 100,000 iterations, HMAC-SHA-256
  * - Key Wrap: AES-256-GCM authenticated encryption (12-byte IV)
- * - Zero Knowledge: The recovery phrase is generated and processed exclusively on the client.
+ * - Client Privacy: The recovery phrase is generated and processed exclusively on the client.
  *   Servers never receive, store, or log the recovery phrase.
  */
 

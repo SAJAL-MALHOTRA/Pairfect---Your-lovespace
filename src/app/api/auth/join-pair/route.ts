@@ -163,6 +163,10 @@ export async function POST(req: Request) {
         .download(`${targetPair.id}/vault-envelope.json`);
       if (envData) {
         vaultEnvelope = await envData.text();
+        // Immediately delete temporary transport envelope once delivered to joining partner
+        await adminSupabase.storage
+          .from("memories")
+          .remove([`${targetPair.id}/vault-envelope.json`]);
       }
     } catch (e) {
       console.warn("[Join Pair API] No vault envelope found:", e);

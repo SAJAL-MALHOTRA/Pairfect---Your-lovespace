@@ -351,13 +351,11 @@ export async function unwrapVaultKeyWithCode(
  * Automatically recovers the vault key for an active pair if missing from local IndexedDB
  * Retrieves the encrypted envelope from the server and unwraps it with the invite code.
  */
-export async function autoRecoverVaultKeyIfMissing(pairId: string, inviteCode: string): Promise<boolean> {
+export async function autoRecoverVaultKeyIfMissing(pairId: string, inviteCode?: string): Promise<boolean> {
   if (typeof window === "undefined") return false;
   try {
     const exists = await hasPairKey(pairId);
     if (exists) return true;
-
-    if (!inviteCode) return false;
 
     const res = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`);
     if (!res.ok) return false;
@@ -365,9 +363,31 @@ export async function autoRecoverVaultKeyIfMissing(pairId: string, inviteCode: s
     const data = await res.json();
     if (!data.success || !data.envelope) return false;
 
-    const unwrappedKey = await unwrapVaultKeyWithCode(data.envelope, inviteCode, pairId);
-    await savePairKey(pairId, unwrappedKey);
-    return true;
+    let envelopeObj: any = null;
+    try {
+      envelopeObj = typeof data.envelope === "string" ? JSON.parse(data.envelope) : data.envelope;
+    } catch {
+      return false;
+    }
+
+    if (envelopeObj?.type === "bip39_recovery_envelope" || envelopeObj?.v === 2) {
+      const { getRecoveryPhraseLocally, unwrapVaultKeyWithPhrase } = await import("@/lib/crypto/recovery-phrase");
+      const phrase = await getRecoveryPhraseLocally(pairId);
+      if (phrase) {
+        const unwrapped = await unwrapVaultKeyWithPhrase(data.envelope, phrase, pairId);
+        await savePairKey(pairId, unwrapped);
+        return true;
+      }
+      return false;
+    }
+
+    if (inviteCode) {
+      const unwrappedKey = await unwrapVaultKeyWithCode(data.envelope, inviteCode, pairId);
+      await savePairKey(pairId, unwrappedKey);
+      return true;
+    }
+
+    return false;
   } catch (err) {
     console.warn("[E2EE] Background vault key auto-recovery skipped:", err);
     return false;

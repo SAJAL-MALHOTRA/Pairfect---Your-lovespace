@@ -311,7 +311,7 @@ export function WhisperRecorderModal({
         }
 
         if (!key) {
-          throw new Error("Cannot find your couple encryption key on this device. Please reload the app or ensure your partner has opened Pairfect on their device to sync keys.");
+          throw new Error("Cannot find your couple encryption key on this device. Restore it in Settings -> Vault using your 12-word recovery phrase.");
         }
         try {
           const encryptedBytes = await encryptAudioBlob(audioBlob, key);

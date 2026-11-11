@@ -6,6 +6,7 @@ import {
   validateRecoveryPhrase,
   saveRecoveryPhraseLocally,
   getRecoveryPhraseLocally,
+  wrapVaultKeyWithPhrase,
   unwrapVaultKeyWithPhrase,
 } from "@/lib/crypto/recovery-phrase";
 import { getPairKey, savePairKey } from "@/lib/crypto/e2ee";
@@ -41,6 +42,12 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
   const [serverEnvelopeDeleted, setServerEnvelopeDeleted] = useState<boolean>(false);
   const [isDeletingEnvelope, setIsDeletingEnvelope] = useState<boolean>(false);
   const [backupConfirmed, setBackupConfirmed] = useState<boolean>(false);
+  const [isSyncingEnvelope, setIsSyncingEnvelope] = useState<boolean>(false);
+
+  // Purge confirmation dialog state
+  const [showPurgeConfirm, setShowPurgeConfirm] = useState<boolean>(false);
+  const [purgeWordInput, setPurgeWordInput] = useState<string>("");
+  const [purgeError, setPurgeError] = useState<string | null>(null);
 
   // Restore state
   const [restoreInput, setRestoreInput] = useState<string>("");
@@ -54,16 +61,30 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
 
     async function loadOrCreatePhrase() {
       // 1. Check local IndexedDB cache first
-      const existing = await getRecoveryPhraseLocally(pairId!);
-      if (existing) {
-        setPhrase(existing);
-        return;
+      let currentPhrase = await getRecoveryPhraseLocally(pairId!);
+      if (!currentPhrase) {
+        currentPhrase = await generateRecoveryPhrase();
+        await saveRecoveryPhraseLocally(pairId!, currentPhrase);
       }
+      setPhrase(currentPhrase);
 
-      // 2. Otherwise generate a new authentic 12-word phrase
-      const newPhrase = await generateRecoveryPhrase();
-      setPhrase(newPhrase);
-      await saveRecoveryPhraseLocally(pairId!, newPhrase);
+      // 2. Wrap vault key and update server envelope to 128-bit recovery envelope
+      try {
+        setIsSyncingEnvelope(true);
+        const vaultKey = await getPairKey(pairId!);
+        if (vaultKey) {
+          const recoveryEnvelopeStr = await wrapVaultKeyWithPhrase(vaultKey, currentPhrase, pairId!);
+          await fetch("/api/vault/envelope", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pairId, envelope: recoveryEnvelopeStr }),
+          });
+        }
+      } catch (err) {
+        console.warn("[Recovery Modal] Error syncing recovery envelope:", err);
+      } finally {
+        setIsSyncingEnvelope(false);
+      }
     }
 
     loadOrCreatePhrase();
@@ -72,6 +93,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
   if (!isOpen) return null;
 
   const words = phrase ? phrase.split(" ") : [];
+  const confirmationTargetWord = words[2] || ""; // Word #3 for purge confirmation
 
   const handleCopy = () => {
     if (!phrase) return;
@@ -83,8 +105,8 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
   const handleDownload = () => {
     if (!phrase) return;
     const content =
-      "PAIRFECT VAULT ZERO-KNOWLEDGE RECOVERY PHRASE\n" +
-      "=============================================\n" +
+      "PAIRFECT VAULT CLIENT RECOVERY PHRASE\n" +
+      "====================================\n" +
       `Pair ID: ${pairId}\n` +
       `Date Created: ${new Date().toLocaleDateString()}\n\n` +
       "12-Word Secret Recovery Phrase:\n" +
@@ -92,6 +114,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
       "\n\n" +
       "IMPORTANT NOTICE:\n" +
       "These 12 words allow you and your partner to unlock your encrypted photos and memories.\n" +
+      "Photos, letters and voice notes are encrypted on your device.\n" +
       "Pairfect servers never store or transmit this phrase. Keep this file in a secure location.\n";
 
     const blob = new Blob([content], { type: "text/plain" });
@@ -103,8 +126,15 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
     URL.revokeObjectURL(url);
   };
 
-  const handleDeleteServerEnvelope = async () => {
+  const handleConfirmPurge = async () => {
     if (!pairId) return;
+    setPurgeError(null);
+
+    if (purgeWordInput.trim().toLowerCase() !== confirmationTargetWord.toLowerCase()) {
+      setPurgeError(`Word #3 does not match. Please verify word 3 from your phrase above.`);
+      return;
+    }
+
     setIsDeletingEnvelope(true);
     try {
       const res = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`, {
@@ -112,9 +142,13 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
       });
       if (res.ok) {
         setServerEnvelopeDeleted(true);
+        setShowPurgeConfirm(false);
+      } else {
+        const data = await res.json();
+        setPurgeError(data.error || "Failed to purge cloud envelope.");
       }
-    } catch (e) {
-      console.warn("Could not delete server envelope:", e);
+    } catch (e: any) {
+      setPurgeError(e?.message || "Network error purging server envelope.");
     } finally {
       setIsDeletingEnvelope(false);
     }
@@ -139,29 +173,25 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
 
     setIsRestoring(true);
     try {
-      // 2. Fetch envelope from server if available, or derive directly
+      // 2. Fetch envelope from server
       const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`);
       const envData = await envRes.json();
 
-      let recoveredKey: CryptoKey | null = null;
-      if (envData.success && envData.envelope) {
-        // Try unwrapping if envelope was wrapped with recovery phrase
-        try {
-          recoveredKey = await unwrapVaultKeyWithPhrase(envData.envelope, restoreInput, pairId);
-        } catch {
-          // Fallback to checking existing local pair key
-        }
+      if (!envData.success || !envData.envelope) {
+        setRestoreError(
+          "No backup envelope found on the server. The envelope was purged from cloud storage. To restore without a server envelope, import your saved vault backup file directly."
+        );
+        return;
       }
 
-      // If no envelope, or envelope unwrap completed, save key
-      if (recoveredKey) {
-        await savePairKey(pairId, recoveredKey);
-      }
+      // 3. Unwrap vault key using the recovery phrase
+      const recoveredKey = await unwrapVaultKeyWithPhrase(envData.envelope, restoreInput, pairId);
+      await savePairKey(pairId, recoveredKey);
       await saveRecoveryPhraseLocally(pairId, restoreInput.trim().toLowerCase());
 
       setRestoreSuccess(true);
     } catch (err: any) {
-      setRestoreError(err?.message || "Failed to restore vault key from phrase.");
+      setRestoreError(err?.message || "Failed to restore vault key from phrase. Verify word spelling and order.");
     } finally {
       setIsRestoring(false);
     }
@@ -181,7 +211,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
                 Couple Vault Recovery Phrase
               </h3>
               <p className="text-[11px] font-mono text-stone-500">
-                Zero-Knowledge BIP-39 Client Security
+                Client-Side Encrypted Couple Vault
               </p>
             </div>
           </div>
@@ -226,9 +256,9 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
             <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
               <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">Client-Side Zero-Knowledge</p>
+                <p className="font-medium">Encrypted On Your Device</p>
                 <p className="text-[11px] text-amber-700 mt-0.5">
-                  Write down these 12 words in order. Pairfect servers never see, store, or transmit your recovery phrase. If you change phones or clear storage, this phrase restores your photos.
+                  Write down these 12 words in order. Photos, letters and voice notes are encrypted on your device. The server keeps no copy of your key once purged.
                 </p>
               </div>
             </div>
@@ -315,41 +345,97 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
               </label>
             </div>
 
-            {/* Optional Zero-Knowledge Upgrade: Purge server-side envelope */}
+            {/* Optional Device-Only Upgrade: Purge server-side envelope */}
             {backupConfirmed && (
-              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-2 mt-2">
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2 mt-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-mono font-bold text-emerald-900">
-                      True Zero-Knowledge Mode
+                    <Sparkles className="w-4 h-4 text-rose-600" />
+                    <span className="text-xs font-mono font-bold text-stone-900">
+                      Device-Only Mode (Cloud Purge)
                     </span>
                   </div>
                   {serverEnvelopeDeleted ? (
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                      Active
+                      Envelope Purged
                     </span>
                   ) : null}
                 </div>
-                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                <p className="text-[11px] text-stone-600 leading-relaxed">
                   {serverEnvelopeDeleted
-                    ? "The server-stored key envelope has been permanently deleted from cloud storage. Your couple vault is strictly client-only."
-                    : "Delete the server-stored backup envelope so that your key exists only on your devices and on your written recovery paper."}
+                    ? "The server-stored key envelope has been permanently deleted from cloud storage. The server keeps no copy of your key."
+                    : "Delete the server-stored envelope so that your key exists only on your devices and on your written recovery paper."}
                 </p>
-                {!serverEnvelopeDeleted && (
+
+                {!serverEnvelopeDeleted && !showPurgeConfirm && (
                   <button
                     type="button"
-                    onClick={handleDeleteServerEnvelope}
-                    disabled={isDeletingEnvelope}
+                    onClick={() => setShowPurgeConfirm(true)}
                     className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-rose-700 hover:text-rose-900 bg-white border border-rose-200 hover:bg-rose-50 px-3 py-1.5 rounded-xl shadow-2xs transition-colors"
                   >
-                    {isDeletingEnvelope ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-3.5 h-3.5" />
-                    )}
+                    <Trash2 className="w-3.5 h-3.5" />
                     <span>Purge Server Envelope</span>
                   </button>
+                )}
+
+                {/* Two-step purge confirmation */}
+                {showPurgeConfirm && !serverEnvelopeDeleted && (
+                  <div className="mt-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 space-y-2.5 text-xs">
+                    <div className="flex items-start gap-2 text-rose-900">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">Permanent Loss Warning</p>
+                        <p className="text-[11px] text-rose-800 mt-0.5">
+                          Purging permanently deletes the encrypted key envelope from the server. If both partners lose local browser data, photos, voice notes, and letters cannot be recovered by anyone. The server keeps no copy of the key once you purge.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-mono text-stone-700 mb-1">
+                        To confirm, please enter word #3 ({confirmationTargetWord ? `"${confirmationTargetWord}"` : ""}) from your phrase:
+                      </label>
+                      <input
+                        type="text"
+                        value={purgeWordInput}
+                        onChange={(e) => setPurgeWordInput(e.target.value)}
+                        placeholder="Type word #3 to confirm"
+                        className="w-full p-2 rounded-lg bg-white border border-stone-300 text-xs font-mono text-stone-800 focus:outline-hidden focus:border-rose-500"
+                      />
+                    </div>
+
+                    {purgeError && (
+                      <p className="text-[11px] text-rose-700 font-mono">{purgeError}</p>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleConfirmPurge}
+                        disabled={isDeletingEnvelope || !purgeWordInput.trim()}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 px-3 py-1.5 rounded-lg shadow-2xs transition-colors"
+                      >
+                        {isDeletingEnvelope ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                        <span>Confirm & Purge Forever</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPurgeConfirm(false);
+                          setPurgeWordInput("");
+                          setPurgeError(null);
+                        }}
+                        className="text-xs font-mono text-stone-600 hover:text-stone-900 py-1.5 px-2.5 rounded-lg hover:bg-rose-100/50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

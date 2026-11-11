@@ -35,26 +35,13 @@ export async function GET() {
       "CASHFREE_KEY",
     ]);
 
-    const safeKeys = Object.keys(process.env)
-      .filter(
-        (k) =>
-          !k.toUpperCase().includes("SECRET") &&
-          !k.toUpperCase().includes("TOKEN") &&
-          !k.toUpperCase().includes("PASSWORD") &&
-          !k.toUpperCase().includes("PRIVATE")
-      )
-      .sort();
-
     return NextResponse.json({
       status: "healthy",
       service: "pairfect-api",
-      version: "1.0.4",
-      vercel_project_name: process.env.VERCEL_PROJECT_NAME || "unknown",
+      database: "connected",
       cashfree_configured: {
         has_app_id: !!appId,
         has_secret: !!secretKey,
-        env: process.env.CASHFREE_ENV || "not_set",
-        safe_keys: safeKeys,
       },
       timestamp,
     });
