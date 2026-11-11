@@ -338,243 +338,6 @@ function HeroPhotoboothDispenser() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════
-   2. HERO REALISTIC 3D EARTH GLOBE WITH COORDINATE GRIDS & FLIGHT ARC
-   ════════════════════════════════════════════════════════════════════════ */
-function HeroGlobeGraphic() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const springConfig = { stiffness: 320, damping: 28 };
-  const smoothX = useSpring(mouseX, springConfig);
-  const smoothY = useSpring(mouseY, springConfig);
-
-  const rotateX = useTransform(smoothY, [-0.5, 0.5], [14, -14]);
-  const rotateY = useTransform(smoothX, [-0.5, 0.5], [-14, 14]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    mouseX.set(x);
-    mouseY.set(y);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
-
-  return (
-    <div
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative w-full max-w-[480px] mx-auto flex items-center justify-center py-6 select-none"
-      style={{ perspective: 1200 }}
-    >
-      <motion.div
-        style={{
-          rotateX,
-          rotateY,
-          transformStyle: "preserve-3d",
-        }}
-        className="relative w-full flex items-center justify-center"
-      >
-        {/* Atmospheric Glow Aura Behind Sphere */}
-        <div className="absolute w-88 h-88 rounded-full bg-gradient-to-tr from-sky-400/30 via-rose-300/25 to-purple-400/20 blur-3xl pointer-events-none" />
-
-        {/* 3D Realistic Earth Globe Sphere */}
-        <div
-          style={{ transform: "translateZ(20px)" }}
-          className="relative w-76 h-76 sm:w-84 sm:h-84 rounded-full overflow-hidden border-4 border-white/80 shadow-[0_25px_60px_-10px_rgba(20,60,140,0.45)] flex items-center justify-center bg-[radial-gradient(circle_at_35%_28%,#38BDF8_0%,#2563EB_35%,#1E3A8A_65%,#0B132B_100%)]"
-        >
-          {/* SVG Map Texture with Accurate Continents and Blue Coordinate Grid */}
-          <svg viewBox="0 0 400 400" className="w-full h-full object-cover">
-            <defs>
-              {/* Landmass Shading Gradient */}
-              <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#4ADE80" />
-                <stop offset="60%" stopColor="#22C55E" />
-                <stop offset="100%" stopColor="#15803D" />
-              </linearGradient>
-
-              {/* Highland / Mountain Texture Gradient */}
-              <linearGradient id="highlandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#86EFAC" />
-                <stop offset="100%" stopColor="#16A34A" />
-              </linearGradient>
-
-              {/* Glowing Flight Arc Gradient */}
-              <linearGradient id="flightArcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#38BDF8" />
-                <stop offset="50%" stopColor="#FFFFFF" />
-                <stop offset="100%" stopColor="#FF5E8E" />
-              </linearGradient>
-            </defs>
-
-            {/* Blue Latitude & Longitude Coordinate Grid Lines (Planetary Grids) */}
-            <g stroke="#93C5FD" opacity="0.32" strokeDasharray="3 3">
-              {/* Equator */}
-              <line x1="20" y1="200" x2="380" y2="200" strokeWidth="1.2" opacity="0.5" />
-              {/* Latitude 30N & 30S */}
-              <path d="M 44 140 Q 200 165 356 140" fill="none" strokeWidth="1" />
-              <path d="M 44 260 Q 200 235 356 260" fill="none" strokeWidth="1" />
-              {/* Latitude 60N & 60S */}
-              <path d="M 110 85 Q 200 105 290 85" fill="none" strokeWidth="0.8" />
-              <path d="M 110 315 Q 200 295 290 315" fill="none" strokeWidth="0.8" />
-              {/* Meridians (Curved Longitude Ellipses) */}
-              <ellipse cx="200" cy="200" rx="60" ry="176" fill="none" strokeWidth="1" />
-              <ellipse cx="200" cy="200" rx="120" ry="176" fill="none" strokeWidth="1" />
-              <line x1="200" y1="24" x2="200" y2="376" strokeWidth="1.2" opacity="0.5" />
-            </g>
-
-            {/* Continents & Landmasses */}
-            <g fill="url(#landGrad)" opacity="0.94">
-              {/* North America (Alaska, Canada, USA, Mexico, Baja) */}
-              <path d="M 40 85 C 55 65 90 55 125 70 C 145 80 155 105 145 130 C 135 150 115 165 85 160 C 65 155 45 135 40 105 Z" />
-              <path d="M 125 100 C 150 105 165 125 155 145 C 145 160 120 170 100 165 C 105 145 115 125 125 100 Z" fill="url(#highlandGrad)" />
-              {/* Central America & Caribbean */}
-              <path d="M 85 160 C 95 175 105 190 115 200 C 110 205 100 195 90 180 Z" />
-
-              {/* South America */}
-              <path d="M 110 205 C 135 205 155 225 145 260 C 135 290 115 320 95 330 C 85 325 85 285 95 250 C 100 230 95 215 110 205 Z" />
-
-              {/* Eurasia / Europe & Asia */}
-              <path d="M 195 95 C 220 75 270 70 310 90 C 340 105 365 140 350 180 C 335 210 295 230 255 220 C 230 215 210 195 200 165 C 190 135 185 115 195 95 Z" />
-              {/* Scandinavian & Siberian Highlands */}
-              <path d="M 235 90 C 265 85 295 100 285 125 C 270 145 245 135 235 115 Z" fill="url(#highlandGrad)" />
-
-              {/* Africa */}
-              <path d="M 190 165 C 220 160 240 180 235 215 C 230 255 205 290 185 295 C 170 290 165 250 170 215 C 175 190 175 175 190 165 Z" />
-
-              {/* India & Southeast Asia Peninsulas */}
-              <path d="M 260 180 C 275 195 285 220 275 235 C 265 235 255 210 250 195 Z" />
-
-              {/* Indonesia & Archipelago Islands */}
-              <ellipse cx="270" cy="245" rx="14" ry="5" />
-              <ellipse cx="295" cy="255" rx="12" ry="4" />
-              <ellipse cx="320" cy="265" rx="10" ry="5" />
-              <circle cx="250" cy="240" r="5" />
-
-              {/* Australia */}
-              <path d="M 295 285 C 330 280 350 300 345 330 C 330 350 300 350 285 335 C 275 315 280 295 295 285 Z" />
-
-              {/* Japan Archipelago */}
-              <path d="M 345 140 Q 355 160 340 175" stroke="url(#landGrad)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-            </g>
-
-            {/* Slowly Rotating Translucent Cloud Formations */}
-            <g opacity="0.35" fill="#FFFFFF">
-              <path d="M 70 110 C 90 95 130 95 150 115 C 130 125 90 125 70 110 Z" />
-              <path d="M 220 130 C 250 115 300 120 330 140 C 300 150 250 145 220 130 Z" />
-              <path d="M 120 240 C 150 230 190 235 210 250 C 180 260 140 255 120 240 Z" />
-              <path d="M 260 210 C 285 200 320 205 340 220 C 315 230 280 225 260 210 Z" />
-            </g>
-
-            {/* Glowing Parabolic Flight Trajectory Arc (Jakarta to Calgary) */}
-            <path
-              d="M 270 245 Q 185 80 100 125"
-              fill="none"
-              stroke="url(#flightArcGrad)"
-              strokeWidth="3"
-              strokeDasharray="6 6"
-              className="opacity-95"
-            />
-
-            {/* City Ping Marker: Jakarta (Cyan/Green Pulse) */}
-            <circle cx="270" cy="245" r="4.5" fill="#34D399" />
-            <circle cx="270" cy="245" r="8" fill="none" stroke="#34D399" strokeWidth="1.5" className="animate-ping" />
-
-            {/* City Ping Marker: Calgary (Rose/Pink Pulse) */}
-            <circle cx="100" cy="125" r="4.5" fill="#FF5E8E" />
-            <circle cx="100" cy="125" r="8" fill="none" stroke="#FF5E8E" strokeWidth="1.5" className="animate-ping" />
-          </svg>
-
-          {/* Spherical Inner Edge Shadow & Ambient Reflection Sheen */}
-          <div className="absolute inset-0 rounded-full shadow-[inset_-16px_-16px_40px_rgba(0,0,0,0.65),inset_16px_16px_35px_rgba(255,255,255,0.35)] pointer-events-none" />
-          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none" />
-        </div>
-
-        {/* Mascot Soaring Along Flight Path */}
-        <div
-          style={{ transform: "translateZ(45px)" }}
-          className="absolute -top-10 sm:-top-12 z-25 pointer-events-none hidden sm:block"
-        >
-          <HeartBeansAirplaneMascot className="w-24 h-16 drop-shadow-md" />
-        </div>
-
-        {/* Avatar Pin 1: Jakarta Partner (Bottom Left) */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          style={{ transform: "translateZ(55px)" }}
-          className="absolute bottom-2 left-0 sm:-left-4 z-30 flex flex-col items-center group cursor-pointer"
-        >
-          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-rose-100">
-            <Image
-              src="/booth/couple-peace.jpg"
-              alt="You"
-              fill
-              className="object-cover"
-              sizes="64px"
-            />
-          </div>
-          <div className="mt-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs border border-stone-200 shadow-md flex items-center gap-1.5 text-center">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-[11px] font-mono font-bold text-stone-900">Jakarta</span>
-            <span className="text-[10px] font-mono text-stone-500">ID</span>
-          </div>
-        </motion.div>
-
-        {/* Avatar Pin 2: Calgary Partner (Top Right) */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          style={{ transform: "translateZ(55px)" }}
-          className="absolute top-2 right-0 sm:-right-4 z-30 flex flex-col items-center group cursor-pointer"
-        >
-          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-sky-100">
-            <Image
-              src="/booth/couple-heart.jpg"
-              alt="Partner"
-              fill
-              className="object-cover"
-              sizes="64px"
-            />
-          </div>
-          <div className="mt-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs border border-stone-200 shadow-md flex items-center gap-1.5 text-center">
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-            <span className="text-[11px] font-mono font-bold text-stone-900">Calgary</span>
-            <span className="text-[10px] font-mono text-stone-500">CA</span>
-          </div>
-        </motion.div>
-
-        {/* Centered Photobooth Camera & 4-Cut Strip Hanging Down */}
-        <div style={{ transform: "translateZ(65px)" }} className="absolute top-4 z-20">
-          <HeroPhotoboothDispenser />
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════════════
-   3. CURATED ACTIVITIES CAROUSEL SECTION (10 GENUINE PAIRFECT FEATURES)
-   ════════════════════════════════════════════════════════════════════════ */
-interface ActivityCardData {
-  id: string;
-  badge?: string;
-  badgeColor?: string;
-  title: string;
-  description: string;
-  screenContent: React.ReactNode;
-}
-
 /* Cute Floating Player Cursor with Name Pill */
 function CuteCursor({
   name,
@@ -606,6 +369,156 @@ function CuteCursor({
       </span>
     </div>
   );
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   2. HERO PAIRFECT LOVE SPACE DUAL ORBIT & SANCTUARY PORTAL
+   ════════════════════════════════════════════════════════════════════════ */
+function HeroLoveOrbitGraphic() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { stiffness: 320, damping: 28 };
+  const smoothX = useSpring(mouseX, springConfig);
+  const smoothY = useSpring(mouseY, springConfig);
+
+  const rotateX = useTransform(smoothY, [-0.5, 0.5], [14, -14]);
+  const rotateY = useTransform(smoothX, [-0.5, 0.5], [-14, 14]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative w-full max-w-[500px] min-h-[460px] mx-auto flex items-center justify-center py-6 select-none"
+      style={{ perspective: 1200 }}
+    >
+      <motion.div
+        style={{
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d",
+        }}
+        className="relative w-full flex items-center justify-center"
+      >
+        {/* Soft Ambient Diffuse Romantic Glow (No globe behind) */}
+        <div className="absolute w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-gradient-to-tr from-[#FF5E8E]/15 via-rose-100/20 to-[#4F86F7]/15 blur-3xl pointer-events-none -z-10" />
+
+        {/* Delicate Connecting Love Arc across timezones */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"
+          viewBox="0 0 460 380"
+        >
+          <defs>
+            <linearGradient id="heroLoveArc" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FF5E8E" stopOpacity="0.85" />
+              <stop offset="50%" stopColor="#FDA4AF" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#4F86F7" stopOpacity="0.85" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M 60 320 C 130 190 330 140 400 70"
+            fill="none"
+            stroke="url(#heroLoveArc)"
+            strokeWidth="2.5"
+            strokeDasharray="6 6"
+            strokeLinecap="round"
+            className="opacity-75"
+          />
+        </svg>
+
+        {/* Pairfect Mascot Soaring Along Love Bridge */}
+        <div
+          style={{ transform: "translateZ(45px)" }}
+          className="absolute -top-10 sm:-top-12 z-25 pointer-events-none hidden sm:block"
+        >
+          <HeartBeansAirplaneMascot className="w-24 h-16 drop-shadow-md" />
+        </div>
+
+        {/* Avatar Pod 1: Jakarta Partner (Bottom Left) */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          style={{ transform: "translateZ(55px)" }}
+          className="absolute bottom-2 left-1 sm:left-2 z-30 flex flex-col items-center group cursor-pointer"
+        >
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-rose-100 ring-2 ring-emerald-400/60">
+            <Image
+              src="/booth/couple-peace.jpg"
+              alt="You"
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
+          </div>
+          <div className="mt-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs border border-stone-200 shadow-md flex items-center gap-1.5 text-center">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-mono font-bold text-stone-900">Jakarta</span>
+            <span className="text-[10px] font-mono text-stone-500">11:24 PM 🌙</span>
+          </div>
+          <CuteCursor name="You" color="pink" className="mt-1" />
+        </motion.div>
+
+        {/* Avatar Pod 2: Calgary Partner (Top Right) */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          style={{ transform: "translateZ(55px)" }}
+          className="absolute top-2 right-1 sm:right-2 z-30 flex flex-col items-center group cursor-pointer"
+        >
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-sky-100 ring-2 ring-rose-400/60">
+            <Image
+              src="/booth/couple-heart.jpg"
+              alt="Partner"
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
+          </div>
+          <div className="mt-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs border border-stone-200 shadow-md flex items-center gap-1.5 text-center">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            <span className="text-[11px] font-mono font-bold text-stone-900">Calgary</span>
+            <span className="text-[10px] font-mono text-stone-500">9:24 AM ☀️</span>
+          </div>
+          <CuteCursor name="Partner" color="blue" className="mt-1" />
+        </motion.div>
+
+        {/* Centered Vintage Photobooth Camera & 4-Cut Strip Dispenser */}
+        <div style={{ transform: "translateZ(30px)" }} className="relative z-20 flex flex-col items-center">
+          <HeroPhotoboothDispenser />
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   3. CURATED ACTIVITIES CAROUSEL SECTION (10 GENUINE PAIRFECT FEATURES)
+   ════════════════════════════════════════════════════════════════════════ */
+interface ActivityCardData {
+  id: string;
+  badge?: string;
+  badgeColor?: string;
+  title: string;
+  description: string;
+  screenContent: React.ReactNode;
 }
 
 function ActivitiesCarousel() {
@@ -2309,9 +2222,9 @@ export default function LandingContent() {
 
             </div>
 
-            {/* Right Column: Realistic 3D Earth Globe with Flight Arc & Emerging Photostrip Dispenser */}
+            {/* Right Column: Bespoke 3D Love Space Sanctuary Orbit & Dispenser */}
             <div className="lg:col-span-5 flex justify-center">
-              <HeroGlobeGraphic />
+              <HeroLoveOrbitGraphic />
             </div>
 
           </div>
@@ -2333,46 +2246,65 @@ export default function LandingContent() {
       {/* FAQ Accordion */}
       <FaqSection />
 
-      {/* Clean Footer with Pairfect Logo */}
-      <footer className="border-t border-stone-200 py-10 px-4 sm:px-8 bg-white select-none">
-        <div className="max-w-[1360px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo with official Pairfect emblem */}
-          <div className="flex items-center gap-2.5">
-            <Image
-              src="/logo-book.png"
-              alt="Pairfect Logo"
-              width={26}
-              height={26}
-              className="rounded-md object-contain"
-            />
-            <span className="font-heading font-black text-xl tracking-tight text-stone-900">
-              pairfect
-            </span>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[#FF5E8E]" />
-              <span className="w-2 h-2 rounded-full bg-[#4F86F7]" />
-            </div>
+      {/* Clean, Honest Footer Aligned with Pairfect Policies */}
+      <footer className="border-t border-stone-200 py-12 px-4 sm:px-8 bg-white select-none">
+        <div className="max-w-[1360px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          {/* Logo & Honest Commitment */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+              <Image
+                src="/logo-book.png"
+                alt="Pairfect Logo"
+                width={28}
+                height={28}
+                className="rounded-md object-contain transition-transform group-hover:scale-105"
+              />
+              <span className="font-heading font-black text-xl tracking-tight text-stone-900 group-hover:text-rose-600 transition-colors">
+                pairfect
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#FF5E8E]" />
+                <span className="w-2 h-2 rounded-full bg-[#4F86F7]" />
+              </div>
+            </Link>
+            <div className="hidden sm:block h-4 w-px bg-stone-300" />
+            <p className="text-xs text-stone-500 font-sans">
+              A private relationship sanctuary built strictly for two. Zero ads. Encrypted memories.
+            </p>
           </div>
 
-          {/* Center Links */}
-          <div className="flex flex-wrap justify-center gap-6 text-xs text-stone-500 font-mono">
-            <Link href="/blog" className="hover:text-stone-900 transition-colors">
-              Blog
+          {/* Genuine & Relevant Links (No fake blog or dead routes) */}
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs font-mono text-stone-600">
+            <Link href="/privacy" className="hover:text-rose-600 transition-colors">
+              Privacy &amp; Terms
             </Link>
-            <Link href="/privacy" className="hover:text-stone-900 transition-colors">
-              Privacy Policy
+            <Link href="/moments" className="hover:text-rose-600 transition-colors">
+              Keepsake Sanctuary
             </Link>
-            <Link href="/terms" className="hover:text-stone-900 transition-colors">
-              Terms &amp; Conditions
+            <Link href="/photo-booth" className="hover:text-rose-600 transition-colors">
+              Virtual Photobooth
             </Link>
-            <a href="mailto:contact@pairfect.site" className="hover:text-stone-900 transition-colors">
-              contact@pairfect.site
+            <Link href="/fridge" className="hover:text-rose-600 transition-colors">
+              Keepsake Fridge
+            </Link>
+            <Link href="/play" className="hover:text-rose-600 transition-colors">
+              Activities
+            </Link>
+            <a
+              href="mailto:pairfect.site@yahoo.com"
+              className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 transition-colors"
+            >
+              <span>pairfect.site@yahoo.com</span>
             </a>
           </div>
 
-          <div className="text-center md:text-right">
+          {/* Clean Copyright & Sanctuary Policy */}
+          <div className="text-center md:text-right space-y-1">
             <p className="text-xs text-stone-400 font-mono">
-              pairfect.site · your private relationship sanctuary
+              &copy; 2026 pairfect.site &middot; private room for two
+            </p>
+            <p className="text-[11px] text-stone-400 font-mono">
+              No public feeds &middot; No data selling &middot; AES-256 E2EE
             </p>
           </div>
         </div>
