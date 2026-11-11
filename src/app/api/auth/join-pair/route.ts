@@ -2,36 +2,44 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-// Rate limiting: 5 join attempts per minute per user to prevent brute-forcing 6-character codes
-const joinRateLimitMap = new Map<string, number[]>();
+// Rate limiting: 5 join attempts per minute per user, 10 per minute per IP
+const userJoinRateLimitMap = new Map<string, number[]>();
+const ipJoinRateLimitMap = new Map<string, number[]>();
 const JOIN_WINDOW_MS = 60 * 1000;
-const MAX_JOIN_ATTEMPTS = 5;
+const MAX_USER_ATTEMPTS = 5;
+const MAX_IP_ATTEMPTS = 10;
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-function isJoinRateLimited(userId: string): boolean {
+function checkRateLimit(map: Map<string, number[]>, key: string, limit: number): boolean {
   const now = Date.now();
-  const attempts = (joinRateLimitMap.get(userId) || []).filter(
-    (t) => now - t < JOIN_WINDOW_MS
-  );
+  const attempts = (map.get(key) || []).filter((t) => now - t < JOIN_WINDOW_MS);
 
-  if (attempts.length >= MAX_JOIN_ATTEMPTS) {
-    joinRateLimitMap.set(userId, attempts);
+  if (attempts.length >= limit) {
+    map.set(key, attempts);
     return true;
   }
 
   attempts.push(now);
-  joinRateLimitMap.set(userId, attempts);
+  map.set(key, attempts);
 
   // Periodic cleanup if map grows
-  if (joinRateLimitMap.size > 2000) {
-    for (const [key, times] of joinRateLimitMap.entries()) {
+  if (map.size > 2000) {
+    for (const [k, times] of map.entries()) {
       const valid = times.filter((t) => now - t < JOIN_WINDOW_MS);
-      if (valid.length === 0) joinRateLimitMap.delete(key);
-      else joinRateLimitMap.set(key, valid);
+      if (valid.length === 0) map.delete(k);
+      else map.set(k, valid);
     }
   }
 
   return false;
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  return req.headers.get("x-real-ip") || "unknown_ip";
 }
 
 async function resolveAuthUser(req: Request) {
@@ -73,10 +81,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized. Please log in." }, { status: 401 });
     }
 
+    const ip = getClientIp(req);
+    if (checkRateLimit(ipJoinRateLimitMap, ip, MAX_IP_ATTEMPTS)) {
+      return NextResponse.json(
+        { success: false, error: "Too many join attempts from this network. Please wait a minute before trying again." },
+        { status: 429 }
+      );
+    }
+
     const userId = user.id;
 
     // Rate limit check per authenticated user
-    if (isJoinRateLimited(userId)) {
+    if (checkRateLimit(userJoinRateLimitMap, userId, MAX_USER_ATTEMPTS)) {
       return NextResponse.json(
         { success: false, error: "Too many join attempts. Please wait a minute before trying another invite code." },
         { status: 429 }

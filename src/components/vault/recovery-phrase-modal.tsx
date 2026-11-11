@@ -135,8 +135,48 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
       return;
     }
 
+    if (!phrase) {
+      setPurgeError("No recovery phrase loaded. Purge aborted.");
+      return;
+    }
+
     setIsDeletingEnvelope(true);
     try {
+      // Safety gate: Test-restore verification before cloud destruction
+      // Proves cryptographically that the phrase can successfully unwrap the active vault key
+      const localKey = await getPairKey(pairId);
+      if (localKey) {
+        const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`);
+        const envData = await envRes.json();
+        if (envData.success && envData.envelope) {
+          try {
+            const testRecoveredKey = await unwrapVaultKeyWithPhrase(envData.envelope, phrase, pairId);
+            const testBytes = await window.crypto.subtle.exportKey("raw", testRecoveredKey);
+            const localBytes = await window.crypto.subtle.exportKey("raw", localKey);
+            const testArr = new Uint8Array(testBytes);
+            const localArr = new Uint8Array(localBytes);
+            let matches = testArr.byteLength === localArr.byteLength;
+            if (matches) {
+              for (let i = 0; i < testArr.byteLength; i++) {
+                if (testArr[i] !== localArr[i]) {
+                  matches = false;
+                  break;
+                }
+              }
+            }
+            if (!matches) {
+              setPurgeError("Safety check failed: Recovery phrase does not unwrap the active vault key. Purge aborted to prevent permanent data loss.");
+              setIsDeletingEnvelope(false);
+              return;
+            }
+          } catch (unwrapErr: any) {
+            setPurgeError(`Safety check failed: Could not unwrap vault envelope with this phrase (${unwrapErr?.message || "invalid key"}). Purge aborted.`);
+            setIsDeletingEnvelope(false);
+            return;
+          }
+        }
+      }
+
       const res = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`, {
         method: "DELETE",
       });
