@@ -24,7 +24,14 @@ import {
   Scale,
   CalendarHeart,
   CheckCircle2,
+  Key,
 } from "lucide-react";
+import {
+  generateRecoveryPhrase,
+  saveRecoveryPhraseLocally,
+  getRecoveryPhraseLocally,
+  wrapVaultKeyWithPhrase,
+} from "@/lib/crypto/recovery-phrase";
 import {
   generateCoupleKey,
   savePairKey,
@@ -73,6 +80,8 @@ export default function OnboardingPage() {
   // E2EE states
   const [secretInviteLink, setSecretInviteLink] = useState("");
   const [detectedFragmentKey, setDetectedFragmentKey] = useState<CryptoKey | null>(null);
+  const [recoveryPhrase, setRecoveryPhrase] = useState("");
+  const [copiedPhrase, setCopiedPhrase] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
@@ -128,6 +137,12 @@ export default function OnboardingPage() {
       setMode("create");
       setCurrentStep(3);
       setInviteCode(pair.invite_code);
+
+      getRecoveryPhraseLocally(pair.id)
+        .then((existingPhrase) => {
+          if (existingPhrase) setRecoveryPhrase(existingPhrase);
+        })
+        .catch(() => {});
 
       getPairKey(pair.id)
         .then(async (existingKey) => {
@@ -284,6 +299,21 @@ export default function OnboardingPage() {
         console.warn("[E2EE] Envelope persist warning:", envErr);
       }
 
+      // Generate 12-word recovery phrase for permanent multi-device vault backup
+      try {
+        const phrase = await generateRecoveryPhrase();
+        setRecoveryPhrase(phrase);
+        await saveRecoveryPhraseLocally(createdPair.id, phrase);
+        const recoveryEnvelopeStr = await wrapVaultKeyWithPhrase(coupleKey, phrase, createdPair.id);
+        await fetch("/api/vault/envelope", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pairId: createdPair.id, envelope: recoveryEnvelopeStr, type: "recovery" }),
+        });
+      } catch (phraseErr) {
+        console.warn("[Onboarding] Recovery phrase setup warning:", phraseErr);
+      }
+
       const keyFragment = await exportKeyToFragment(coupleKey);
       const origin = typeof window !== "undefined" ? window.location.origin : "https://www.pairfect.site";
       const fullSecretLink = `${origin}/onboarding?code=${code}#k=${keyFragment}`;
@@ -334,6 +364,17 @@ export default function OnboardingPage() {
         try {
           const unwrappedKey = await unwrapVaultKeyWithCode(data.vaultEnvelope, cleanedCode, pairId);
           await savePairKey(pairId, unwrappedKey);
+
+          // Confirm key unwrap to server to purge temporary transport envelope
+          try {
+            await fetch("/api/vault/envelope/ack-join", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ pairId }),
+            });
+          } catch (ackErr) {
+            console.warn("[Onboarding] Ack join warning:", ackErr);
+          }
         } catch (unwrapErr) {
           console.warn("[E2EE] Auto-unwrap error:", unwrapErr);
           await promotePendingKey(cleanedCode, pairId);
@@ -667,6 +708,53 @@ export default function OnboardingPage() {
                 </button>
               </div>
             </div>
+
+            {/* 12-Word Recovery Phrase Card */}
+            {recoveryPhrase && (
+              <div className="text-left bg-[#FFFBF8] border border-stone-200 rounded-2xl p-4 mb-5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-stone-700">
+                    <Key className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Your 12-Word Recovery Phrase</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(recoveryPhrase);
+                      setCopiedPhrase(true);
+                      setTimeout(() => setCopiedPhrase(false), 2000);
+                    }}
+                    className="text-[11px] font-mono text-stone-600 hover:text-stone-900 inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedPhrase ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-700 font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Copy words</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] text-stone-500 font-sans leading-relaxed">
+                  Save these 12 words. They allow you to restore your couple vault and photos if you switch phones.
+                </p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 pt-1">
+                  {recoveryPhrase.split(" ").map((w, idx) => (
+                    <div
+                      key={idx}
+                      className="px-2 py-1 rounded-lg bg-white border border-stone-200 font-mono text-[11px] text-stone-800 flex items-center gap-1"
+                    >
+                      <span className="text-stone-400 select-none text-[9px]">{idx + 1}.</span>
+                      <span className="font-semibold">{w}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* WHAT'S NEXT 3-Step Guide */}
             <div className="text-left bg-[#FFFBF8] border border-stone-200 rounded-2xl p-4 mb-5 space-y-2.5">

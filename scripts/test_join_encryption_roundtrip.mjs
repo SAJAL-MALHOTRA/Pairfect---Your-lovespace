@@ -227,8 +227,8 @@ async function runJoinEncryptionRoundtripTest() {
     console.log(`   [PASS] Pending pair created: ${pairId}`);
     console.log(`   [PASS] Initial status: ${pair.status}, tier: ${pair.subscription_tier || "free"}\n`);
 
-    // 3. Alice generates AES-256 master key on client and wraps with invite code
-    console.log("3. Alice generates 256-bit AES-GCM vault key and wraps with invite code...");
+    // 3. Alice generates AES-256 master key on client and wraps with invite code + recovery phrase
+    console.log("3. Alice generates 256-bit AES-GCM vault key, transport envelope, and 12-word recovery envelope...");
     const aliceVaultKey = await globalThis.crypto.subtle.generateKey(
       { name: "AES-GCM", length: 256 },
       true,
@@ -237,22 +237,40 @@ async function runJoinEncryptionRoundtripTest() {
     const aliceRawKey = await globalThis.crypto.subtle.exportKey("raw", aliceVaultKey);
     const aliceKeyHex = Buffer.from(aliceRawKey).toString("hex");
 
-    const wrappedEnvelope = await wrapVaultKeyWithCode(aliceVaultKey, inviteCode, pairId);
+    const wrappedTransportEnvelope = await wrapVaultKeyWithCode(aliceVaultKey, inviteCode, pairId);
 
-    // Alice uploads envelope to /api/vault/envelope as transport type
+    // Alice uploads transport envelope
     const uploadRes = await fetch(`${baseUrl}/api/vault/envelope`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${authAlice.session.access_token}`,
       },
-      body: JSON.stringify({ pairId, envelope: wrappedEnvelope, type: "transport" }),
+      body: JSON.stringify({ pairId, envelope: wrappedTransportEnvelope, type: "transport" }),
     });
 
-    assert.strictEqual(uploadRes.status, 200, "Envelope upload must return 200");
-    console.log("   [PASS] Wrapped transport envelope uploaded to server.\n");
+    assert.strictEqual(uploadRes.status, 200, "Transport envelope upload must return 200");
+    console.log("   [PASS] Wrapped transport envelope uploaded to server.");
 
-    // 4. Verify envelope exists in Supabase Storage
+    // Alice also uploads 128-bit recovery envelope (onboarding Step 3A)
+    const recoveryEnvelopeMock = JSON.stringify({
+      v: 2,
+      type: "bip39_recovery_envelope",
+      iv: bufferToBase64Url(new Uint8Array(12)),
+      data: bufferToBase64Url(aliceRawKey),
+    });
+    const recoveryUploadRes = await fetch(`${baseUrl}/api/vault/envelope`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authAlice.session.access_token}`,
+      },
+      body: JSON.stringify({ pairId, envelope: recoveryEnvelopeMock, type: "recovery" }),
+    });
+    assert.strictEqual(recoveryUploadRes.status, 200, "Recovery envelope upload must return 200");
+    console.log("   [PASS] 128-bit recovery envelope uploaded to server.\n");
+
+    // 4. Verify transport envelope exists in Supabase Storage prior to join
     console.log("4. Verifying transport envelope is present on Supabase Storage prior to join...");
     const { data: preJoinStorageData, error: preJoinErr } = await admin.storage.from("memories").download(
       `${pairId}/transport-envelope.json`,
@@ -281,13 +299,42 @@ async function runJoinEncryptionRoundtripTest() {
     console.log("   [PASS] Bob received vault envelope in join response.");
     console.log(`   [PASS] Envelope size: ${joinData.vaultEnvelope.length} characters\n`);
 
-    // 6. Verify that server immediately deleted the transport envelope
-    console.log("6. Verifying server auto-purged the transport envelope from storage upon delivery...");
+    // 5b. Bob sends unwrap ack to /api/vault/envelope/ack-join
+    console.log("5b. Bob sends unwrap confirmation ack to /api/vault/envelope/ack-join...");
+    const ackRes = await fetch(`${baseUrl}/api/vault/envelope/ack-join`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authBob.session.access_token}`,
+      },
+      body: JSON.stringify({ pairId }),
+    });
+    const ackData = await ackRes.json();
+    assert.strictEqual(ackRes.status, 200, "Ack endpoint must return 200");
+    assert.strictEqual(ackData.success, true, "Ack endpoint must succeed");
+    console.log("   [PASS] Bob sent client unwrap ack to server.\n");
+
+    // 6. Verify that server deleted the transport envelope
+    console.log("6. Verifying server purged the transport envelope from storage upon ack...");
     const { data: postJoinStorageData, error: postJoinErr } = await admin.storage.from("memories").download(
       `${pairId}/transport-envelope.json`,
       { cacheNonce: Date.now() },
       { cache: "no-store" }
     );
+    assert(
+      !postJoinStorageData || postJoinErr,
+      "Transport envelope must be purged from Supabase Storage after partner join"
+    );
+    console.log("   [PASS] Confirmed: Transport envelope purged from storage bucket.");
+
+    // 6b. Verify recovery envelope is NOT deleted!
+    const { data: recoveryData, error: recErr } = await admin.storage.from("memories").download(
+      `${pairId}/recovery-envelope.json`,
+      { cacheNonce: Date.now() },
+      { cache: "no-store" }
+    );
+    assert(recoveryData && !recErr, "Recovery envelope must remain intact in Supabase Storage");
+    console.log("   [PASS] Confirmed: 128-bit recovery envelope remains safely intact in storage.\n");
     assert(
       !postJoinStorageData || postJoinErr,
       "Transport envelope must be purged from Supabase Storage after partner join"

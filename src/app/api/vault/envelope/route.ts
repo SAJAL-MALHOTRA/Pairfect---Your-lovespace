@@ -88,10 +88,16 @@ export async function POST(req: Request) {
     }
 
     if (isRecovery) {
-      // Automatically clean up legacy 31-bit transport envelopes once a 128-bit recovery envelope is established
+      // Clean up legacy pre-v46 envelope once a 128-bit recovery envelope is established.
+      // For active pairs where both partners already joined, transport envelope is also safely removed.
+      // For pending pairs, transport envelope must remain until partner B joins and acknowledges.
+      const filesToRemove = [`${pairId}/vault-envelope.json`];
+      if (pair.status === "active") {
+        filesToRemove.push(`${pairId}/transport-envelope.json`);
+      }
       await adminSupabase.storage
         .from("memories")
-        .remove([`${pairId}/transport-envelope.json`, `${pairId}/vault-envelope.json`]);
+        .remove(filesToRemove);
     }
 
     return NextResponse.json({ success: true, type: isRecovery ? "recovery" : "transport" });

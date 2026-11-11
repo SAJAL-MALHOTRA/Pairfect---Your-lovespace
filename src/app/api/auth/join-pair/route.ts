@@ -195,20 +195,9 @@ export async function POST(req: Request) {
 
       if (envData && pathToDelete) {
         vaultEnvelope = await envData.text();
-
-        // Check if pair already has an active 128-bit recovery envelope
-        const { data: recData } = await (adminSupabase.storage.from("memories") as any)
-          .download(`${targetPair.id}/recovery-envelope.json`, { cacheNonce: Date.now() }, { cache: "no-store" });
-
-        if (recData) {
-          // If recovery envelope is established, delete temporary transport envelope immediately
-          await adminSupabase.storage
-            .from("memories")
-            .remove([pathToDelete]);
-        } else {
-          // Interim safety guard: if no recovery phrase exists yet, retain transport envelope until
-          // phrase is created via Settings or until 48-hour expiration to prevent lockout if a partner wipes local storage
-        }
+        // Transport envelope deletion is deferred to POST /api/vault/envelope/ack-join
+        // to ensure the joining client successfully unwraps and saves the key to IndexedDB
+        // before the server removes the transport blob.
       }
     } catch (e) {
       console.warn("[Join Pair API] No transport envelope found:", e);
