@@ -77,7 +77,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
           await fetch("/api/vault/envelope", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pairId, envelope: recoveryEnvelopeStr }),
+            body: JSON.stringify({ pairId, envelope: recoveryEnvelopeStr, type: "recovery" }),
           });
         }
       } catch (err) {
@@ -146,7 +146,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
       // Proves cryptographically that the phrase can successfully unwrap the active vault key
       const localKey = await getPairKey(pairId);
       if (localKey) {
-        const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`);
+        const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}&type=recovery`);
         const envData = await envRes.json();
         if (envData.success && envData.envelope) {
           try {
@@ -177,7 +177,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
         }
       }
 
-      const res = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`, {
+      const res = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}&type=recovery`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -213,8 +213,8 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
 
     setIsRestoring(true);
     try {
-      // 2. Fetch envelope from server
-      const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}`);
+      // 2. Fetch recovery envelope from server
+      const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId)}&type=recovery`);
       const envData = await envRes.json();
 
       if (!envData.success || !envData.envelope) {
@@ -424,9 +424,9 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
                     <div className="flex items-start gap-2 text-rose-900">
                       <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-bold">Permanent Loss Warning</p>
+                        <p className="font-bold">Device-Only Mode Warning</p>
                         <p className="text-[11px] text-rose-800 mt-0.5">
-                          Purging permanently deletes the encrypted key envelope from the server. If both partners lose local browser data, photos, voice notes, and letters cannot be recovered by anyone. The server keeps no copy of the key once you purge.
+                          Purging permanently deletes your 128-bit recovery envelope from Pairfect servers. After purging, a new phone or browser cannot restore your vault from the cloud using the 12 words alone because no envelope exists on the server. Recovery will depend entirely on maintaining an active local device or an exported offline backup file.
                         </p>
                       </div>
                     </div>

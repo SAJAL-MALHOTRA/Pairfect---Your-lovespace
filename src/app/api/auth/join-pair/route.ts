@@ -171,21 +171,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Failed to update pair status." }, { status: 500 });
     }
 
-    // 4. Retrieve vault envelope if available so joining partner automatically receives key
+    // 4. Retrieve temporary transport envelope if available so joining partner automatically receives key
     let vaultEnvelope: string | null = null;
     try {
-      const { data: envData } = await adminSupabase.storage
-        .from("memories")
-        .download(`${targetPair.id}/vault-envelope.json`);
-      if (envData) {
+      let envData: any = null;
+      let pathToDelete: string | null = null;
+
+      // Check transport-envelope.json first
+      const resTransport = await (adminSupabase.storage.from("memories") as any)
+        .download(`${targetPair.id}/transport-envelope.json`, { cacheNonce: Date.now() }, { cache: "no-store" });
+      if (resTransport.data && !resTransport.error) {
+        envData = resTransport.data;
+        pathToDelete = `${targetPair.id}/transport-envelope.json`;
+      } else {
+        // Fallback to legacy vault-envelope.json for older pairs
+        const resLegacy = await (adminSupabase.storage.from("memories") as any)
+          .download(`${targetPair.id}/vault-envelope.json`, { cacheNonce: Date.now() }, { cache: "no-store" });
+        if (resLegacy.data && !resLegacy.error) {
+          envData = resLegacy.data;
+          pathToDelete = `${targetPair.id}/vault-envelope.json`;
+        }
+      }
+
+      if (envData && pathToDelete) {
         vaultEnvelope = await envData.text();
         // Immediately delete temporary transport envelope once delivered to joining partner
+        // Note: NEVER removes recovery-envelope.json!
         await adminSupabase.storage
           .from("memories")
-          .remove([`${targetPair.id}/vault-envelope.json`]);
+          .remove([pathToDelete]);
       }
     } catch (e) {
-      console.warn("[Join Pair API] No vault envelope found:", e);
+      console.warn("[Join Pair API] No transport envelope found:", e);
     }
 
     return NextResponse.json({

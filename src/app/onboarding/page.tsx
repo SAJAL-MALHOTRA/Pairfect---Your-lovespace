@@ -142,7 +142,7 @@ export default function OnboardingPage() {
             await fetch("/api/vault/envelope", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ pairId: pair.id, envelope: envelopeStr }),
+              body: JSON.stringify({ pairId: pair.id, envelope: envelopeStr, type: "transport" }),
             });
           } catch (e) {
             console.warn("[E2EE] Envelope refresh warning:", e);
@@ -278,7 +278,7 @@ export default function OnboardingPage() {
         await fetch("/api/vault/envelope", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pairId: createdPair.id, envelope: envelopeStr }),
+          body: JSON.stringify({ pairId: createdPair.id, envelope: envelopeStr, type: "transport" }),
         });
       } catch (envErr) {
         console.warn("[E2EE] Envelope persist warning:", envErr);

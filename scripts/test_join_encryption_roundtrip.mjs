@@ -239,28 +239,28 @@ async function runJoinEncryptionRoundtripTest() {
 
     const wrappedEnvelope = await wrapVaultKeyWithCode(aliceVaultKey, inviteCode, pairId);
 
-    // Alice uploads envelope to /api/vault/envelope
+    // Alice uploads envelope to /api/vault/envelope as transport type
     const uploadRes = await fetch(`${baseUrl}/api/vault/envelope`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${authAlice.session.access_token}`,
       },
-      body: JSON.stringify({ pairId, envelope: wrappedEnvelope }),
+      body: JSON.stringify({ pairId, envelope: wrappedEnvelope, type: "transport" }),
     });
 
     assert.strictEqual(uploadRes.status, 200, "Envelope upload must return 200");
     console.log("   [PASS] Wrapped transport envelope uploaded to server.\n");
 
     // 4. Verify envelope exists in Supabase Storage
-    console.log("4. Verifying envelope is present on Supabase Storage prior to join...");
+    console.log("4. Verifying transport envelope is present on Supabase Storage prior to join...");
     const { data: preJoinStorageData, error: preJoinErr } = await admin.storage.from("memories").download(
-      `${pairId}/vault-envelope.json`,
+      `${pairId}/transport-envelope.json`,
       { cacheNonce: Date.now() },
       { cache: "no-store" }
     );
-    assert(!preJoinErr && preJoinStorageData, "Storage must contain vault-envelope.json before join");
-    console.log("   [PASS] Envelope exists in storage bucket 'memories'.\n");
+    assert(!preJoinErr && preJoinStorageData, "Storage must contain transport-envelope.json before join");
+    console.log("   [PASS] Transport envelope exists in storage bucket 'memories'.\n");
 
     // 5. Bob joins with invite code ONLY (no URL hash fragment #k=...)
     console.log("5. Bob joins via POST /api/auth/join-pair using code ONLY (no #k= fragment)...");
@@ -284,7 +284,7 @@ async function runJoinEncryptionRoundtripTest() {
     // 6. Verify that server immediately deleted the transport envelope
     console.log("6. Verifying server auto-purged the transport envelope from storage upon delivery...");
     const { data: postJoinStorageData, error: postJoinErr } = await admin.storage.from("memories").download(
-      `${pairId}/vault-envelope.json`,
+      `${pairId}/transport-envelope.json`,
       { cacheNonce: Date.now() },
       { cache: "no-store" }
     );
@@ -395,7 +395,11 @@ async function runJoinEncryptionRoundtripTest() {
     if (pairId) {
       await admin.from("pair_trial_history").delete().eq("pair_id", pairId);
       await admin.from("pairs").delete().eq("id", pairId);
-      await admin.storage.from("memories").remove([`${pairId}/vault-envelope.json`]);
+      await admin.storage.from("memories").remove([
+        `${pairId}/transport-envelope.json`,
+        `${pairId}/recovery-envelope.json`,
+        `${pairId}/vault-envelope.json`,
+      ]);
     }
     if (aliceId) {
       await admin.from("users").delete().eq("id", aliceId);

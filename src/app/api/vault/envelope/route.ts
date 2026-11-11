@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { pairId, envelope } = body;
+    const { pairId, envelope, type } = body;
 
     if (!pairId || !envelope) {
       return NextResponse.json({ success: false, error: "Missing pairId or envelope payload." }, { status: 400 });
@@ -61,7 +61,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Forbidden. Not a member of this pair." }, { status: 403 });
     }
 
-    const storagePath = `${pairId}/vault-envelope.json`;
+    let envelopeObj: any = null;
+    try {
+      envelopeObj = typeof envelope === "string" ? JSON.parse(envelope) : envelope;
+    } catch {}
+
+    const isRecovery =
+      type === "recovery" ||
+      envelopeObj?.type === "bip39_recovery_envelope" ||
+      envelopeObj?.v === 2;
+
+    const filename = isRecovery ? "recovery-envelope.json" : "transport-envelope.json";
+    const storagePath = `${pairId}/${filename}`;
     const envelopeBuffer = Buffer.from(typeof envelope === "string" ? envelope : JSON.stringify(envelope));
 
     const { error: uploadErr } = await adminSupabase.storage
@@ -76,7 +87,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Failed to persist vault envelope." }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, type: isRecovery ? "recovery" : "transport" });
   } catch (err: any) {
     console.error("[Vault Envelope API] Error:", err);
     return NextResponse.json({ success: false, error: err.message || "Server error." }, { status: 500 });
@@ -87,6 +98,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const pairId = searchParams.get("pairId");
+    const requestedType = searchParams.get("type"); // "recovery" | "transport" | null
 
     if (!pairId) {
       return NextResponse.json({ success: false, error: "Missing pairId." }, { status: 400 });
@@ -115,19 +127,46 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: "Forbidden." }, { status: 403 });
     }
 
-    const storagePath = `${pairId}/vault-envelope.json`;
-    const { data, error: downloadErr } = await (adminSupabase.storage
+    let storagePath = `${pairId}/recovery-envelope.json`;
+    if (requestedType === "transport") {
+      storagePath = `${pairId}/transport-envelope.json`;
+    }
+
+    let downloadResult = await (adminSupabase.storage
       .from("memories") as any)
       .download(storagePath, { cacheNonce: Date.now() }, { cache: "no-store" });
 
-    if (downloadErr || !data) {
+    // Fallbacks if not found at specific path
+    if (downloadResult.error || !downloadResult.data) {
+      if (!requestedType || requestedType === "recovery") {
+        const fallbackPaths = [`${pairId}/transport-envelope.json`, `${pairId}/vault-envelope.json`];
+        for (const p of fallbackPaths) {
+          const fb = await (adminSupabase.storage
+            .from("memories") as any)
+            .download(p, { cacheNonce: Date.now() }, { cache: "no-store" });
+          if (fb.data && !fb.error) {
+            downloadResult = fb;
+            break;
+          }
+        }
+      } else if (requestedType === "transport") {
+        const fb = await (adminSupabase.storage
+          .from("memories") as any)
+          .download(`${pairId}/vault-envelope.json`, { cacheNonce: Date.now() }, { cache: "no-store" });
+        if (fb.data && !fb.error) {
+          downloadResult = fb;
+        }
+      }
+    }
+
+    if (downloadResult.error || !downloadResult.data) {
       return NextResponse.json(
         { success: true, envelope: null },
         { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
       );
     }
 
-    const envelopeText = await data.text();
+    const envelopeText = await downloadResult.data.text();
     return NextResponse.json(
       { success: true, envelope: envelopeText },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
@@ -142,6 +181,7 @@ export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const pairId = searchParams.get("pairId");
+    const requestedType = searchParams.get("type"); // "recovery" | "transport" | "all"
 
     if (!pairId) {
       return NextResponse.json({ success: false, error: "Missing pairId." }, { status: 400 });
@@ -170,10 +210,23 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, error: "Forbidden." }, { status: 403 });
     }
 
-    const storagePath = `${pairId}/vault-envelope.json`;
+    let pathsToRemove: string[] = [];
+    if (requestedType === "transport") {
+      pathsToRemove = [`${pairId}/transport-envelope.json`];
+    } else if (requestedType === "all") {
+      pathsToRemove = [
+        `${pairId}/recovery-envelope.json`,
+        `${pairId}/transport-envelope.json`,
+        `${pairId}/vault-envelope.json`,
+      ];
+    } else {
+      // Default: purge recovery envelope (Device-Only Mode) and legacy
+      pathsToRemove = [`${pairId}/recovery-envelope.json`, `${pairId}/vault-envelope.json`];
+    }
+
     const { data: removeData, error: removeErr } = await adminSupabase.storage
       .from("memories")
-      .remove([storagePath]);
+      .remove(pathsToRemove);
 
     if (removeErr) {
       console.error("[Vault Envelope API] Storage delete error:", removeErr);
@@ -182,7 +235,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Server vault envelope deleted. True zero-knowledge client protection active.",
+      message: "Vault envelope purged from server storage. Device-only mode active.",
       deleted: removeData,
     });
   } catch (err: any) {
