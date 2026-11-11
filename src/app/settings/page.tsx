@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-provider";
 import Navigation from "@/components/navigation";
 import { CoupleBeansMascot } from "@/components/couple-mascot";
+import { RecoveryPhraseModal } from "@/components/vault/recovery-phrase-modal";
 import { motion } from "framer-motion";
 import {
   ChevronLeft,
@@ -114,8 +115,9 @@ function SettingsMascotWithHearts() {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, pair, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -265,22 +267,26 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Storage */}
-                  <div className="p-4 flex items-center justify-between hover:bg-stone-50 transition-colors group cursor-pointer">
+                  {/* Storage & Vault */}
+                  <div
+                    onClick={() => setShowRecoveryModal(true)}
+                    className="p-4 flex items-center justify-between hover:bg-stone-50 transition-colors group cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600 group-hover:scale-105 transition-transform">
                         <HardDrive className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="font-heading font-bold text-xs sm:text-sm text-stone-900">
-                          Storage
+                        <p className="font-heading font-bold text-xs sm:text-sm text-stone-900 flex items-center gap-2">
+                          <span>Vault & Recovery Phrase</span>
+                          <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">12 Words</span>
                         </p>
                         <p className="text-[11px] text-stone-500 font-mono">
-                          Encrypted on cloud
+                          Zero-knowledge client backup · manage key
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-stone-300" />
+                    <ChevronRight className="w-4 h-4 text-stone-300 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </motion.div>
               </div>
@@ -463,6 +469,12 @@ export default function SettingsPage() {
             </p>
           </div>
 
+          {/* BIP-39 Recovery Phrase Modal */}
+          <RecoveryPhraseModal
+            isOpen={showRecoveryModal}
+            onClose={() => setShowRecoveryModal(false)}
+            pairId={pair?.id}
+          />
         </main>
       </div>
 

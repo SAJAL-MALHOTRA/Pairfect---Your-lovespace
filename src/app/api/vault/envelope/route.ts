@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function resolveAuthUser(req: Request) {
   const authHeader = req.headers.get("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
@@ -118,13 +121,72 @@ export async function GET(req: Request) {
       .download(storagePath);
 
     if (downloadErr || !data) {
-      return NextResponse.json({ success: true, envelope: null });
+      return NextResponse.json(
+        { success: true, envelope: null },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      );
     }
 
     const envelopeText = await data.text();
-    return NextResponse.json({ success: true, envelope: envelopeText });
+    return NextResponse.json(
+      { success: true, envelope: envelopeText },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (err: any) {
     console.error("[Vault Envelope API] GET error:", err);
+    return NextResponse.json({ success: false, error: err.message || "Server error." }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const pairId = searchParams.get("pairId");
+
+    if (!pairId) {
+      return NextResponse.json({ success: false, error: "Missing pairId." }, { status: 400 });
+    }
+
+    const user = await resolveAuthUser(req);
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // Verify membership
+    const { data: pair, error: pairErr } = await adminSupabase
+      .from("pairs")
+      .select("id, user_a_id, user_b_id")
+      .eq("id", pairId)
+      .single();
+
+    if (pairErr || !pair) {
+      return NextResponse.json({ success: false, error: "Pair not found." }, { status: 404 });
+    }
+
+    if (pair.user_a_id !== user.id && pair.user_b_id !== user.id) {
+      return NextResponse.json({ success: false, error: "Forbidden." }, { status: 403 });
+    }
+
+    const storagePath = `${pairId}/vault-envelope.json`;
+    const { data: removeData, error: removeErr } = await adminSupabase.storage
+      .from("memories")
+      .remove([storagePath]);
+
+    if (removeErr) {
+      console.error("[Vault Envelope API] Storage delete error:", removeErr);
+      return NextResponse.json({ success: false, error: removeErr.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Server vault envelope deleted. True zero-knowledge client protection active.",
+      deleted: removeData,
+    });
+  } catch (err: any) {
+    console.error("[Vault Envelope API] DELETE error:", err);
     return NextResponse.json({ success: false, error: err.message || "Server error." }, { status: 500 });
   }
 }
