@@ -2,15 +2,35 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function POST(req: Request) {
+async function resolveAuthUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (token) {
+      try {
+        const admin = createAdminClient();
+        const { data: { user }, error } = await admin.auth.getUser(token);
+        if (!error && user) return user;
+      } catch (e) {
+        console.warn("[Vault Envelope API] Bearer token auth error:", e);
+      }
+    }
+  }
+
   try {
     const sessionSupabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await sessionSupabase.auth.getUser();
+    const { data: { user } } = await sessionSupabase.auth.getUser();
+    return user || null;
+  } catch {
+    return null;
+  }
+}
 
-    if (authError || !user) {
+export async function POST(req: Request) {
+  try {
+    const user = await resolveAuthUser(req);
+
+    if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
     }
 
@@ -69,13 +89,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: "Missing pairId." }, { status: 400 });
     }
 
-    const sessionSupabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await sessionSupabase.auth.getUser();
+    const user = await resolveAuthUser(req);
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
     }
 

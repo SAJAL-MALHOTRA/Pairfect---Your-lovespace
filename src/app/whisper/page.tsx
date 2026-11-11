@@ -749,6 +749,7 @@ function WhisperContent() {
         onBroadcastSuccess={handleBroadcastSuccess}
         pairId={pair?.id}
         senderName={profile?.display_name || "Partner"}
+        inviteCode={pair?.invite_code}
       />
 
       <WhisperArchiveDrawer

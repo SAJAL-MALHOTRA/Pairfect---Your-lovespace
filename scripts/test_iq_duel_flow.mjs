@@ -47,12 +47,12 @@ async function run() {
   for (let i = 0; i < 6; i++) {
     console.log(`Answering question ${i + 1}...`);
     // Wait for the option buttons for this question
-    const option = page.locator("button.border-2").first();
+    const option = page.locator(".grid button").first();
     await option.waitFor({ state: "visible", timeout: 8000 });
     await option.click();
     
     // Give time for feedback animation + transition to next question (or finish)
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(1500);
   }
 
   // Wait for reveal screen

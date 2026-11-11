@@ -84,8 +84,52 @@ async function searchFallback(query: string): Promise<UnifiedTrackResult[]> {
   }
 }
 
+// Sliding-window rate limiter per client IP to protect Spotify API quota
+const spotifyRateLimitMap = new Map<string, number[]>();
+const SPOTIFY_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_SPOTIFY_SEARCHES_PER_MINUTE = 30; // Max 30 searches per IP per minute
+
+function isSpotifyRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = (spotifyRateLimitMap.get(ip) || []).filter(
+    (t) => now - t < SPOTIFY_WINDOW_MS
+  );
+
+  if (timestamps.length >= MAX_SPOTIFY_SEARCHES_PER_MINUTE) {
+    spotifyRateLimitMap.set(ip, timestamps);
+    return true;
+  }
+
+  timestamps.push(now);
+  spotifyRateLimitMap.set(ip, timestamps);
+
+  if (spotifyRateLimitMap.size > 5000) {
+    for (const [key, times] of spotifyRateLimitMap.entries()) {
+      const valid = times.filter((t) => now - t < SPOTIFY_WINDOW_MS);
+      if (valid.length === 0) {
+        spotifyRateLimitMap.delete(key);
+      } else {
+        spotifyRateLimitMap.set(key, valid);
+      }
+    }
+  }
+
+  return false;
+}
+
 export async function GET(req: Request) {
   try {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("x-real-ip") ||
+      "anonymous";
+
+    if (isSpotifyRateLimited(ip)) {
+      return NextResponse.json(
+        { error: "Too many track searches. Please pause a moment before searching again." },
+        { status: 429 }
+      );
+    }
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q")?.trim();
 

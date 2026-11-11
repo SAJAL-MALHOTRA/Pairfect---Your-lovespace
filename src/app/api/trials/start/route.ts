@@ -1,23 +1,46 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { startPairTrial } from "@/lib/trials";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authErr,
-    } = await supabase.auth.getUser();
+async function resolveAuthUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (token) {
+      try {
+        const admin = createAdminClient();
+        const { data: { user }, error } = await admin.auth.getUser(token);
+        if (!error && user) return user;
+      } catch (e) {
+        console.warn("[Trials Start API] Bearer token auth error:", e);
+      }
+    }
+  }
 
-    if (authErr || !user) {
+  try {
+    const sessionSupabase = await createClient();
+    const { data: { user } } = await sessionSupabase.auth.getUser();
+    return user || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const user = await resolveAuthUser(req);
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in first." }, { status: 401 });
     }
 
+    const admin = createAdminClient();
+
     // Find user's active pair
-    const { data: pair, error: pairErr } = await supabase
+    const { data: pair, error: pairErr } = await admin
       .from("pairs")
       .select("id, user_a_id, user_b_id, status")
       .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)

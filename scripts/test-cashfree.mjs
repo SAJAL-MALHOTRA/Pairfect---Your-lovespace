@@ -1,4 +1,4 @@
-﻿import crypto from "crypto";
+import crypto from "crypto";
 import { Cashfree, CFEnvironment } from "cashfree-pg";
 import { PAYMENT_PLANS, getPlan } from "../src/lib/plans.ts";
 
@@ -28,10 +28,10 @@ assert(microPlan?.amount === 1.0, "Plan 'micro-test' is exactly ₹1.00");
 assert(microPlan?.currency === "INR", "Currency is INR");
 
 const plusPlan = getPlan("pairfect-plus");
-assert(plusPlan?.amount === 49.0, "Plan 'pairfect-plus' is exactly ₹49.00");
+assert(plusPlan?.amount === 129.0, "Plan 'pairfect-plus' is exactly ₹129.00");
 
 const foreverPlan = getPlan("pairfect-forever");
-assert(foreverPlan?.amount === 199.0, "Plan 'pairfect-forever' is exactly ₹199.00");
+assert(foreverPlan?.amount === 1999.0, "Plan 'pairfect-forever' is exactly ₹1999.00");
 
 const invalidPlan = getPlan("hacker-free-plan");
 assert(invalidPlan === null, "Tampered/invalid plan_id correctly returns null");

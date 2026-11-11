@@ -2,6 +2,62 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+// Rate limiting: 5 join attempts per minute per user to prevent brute-forcing 6-character codes
+const joinRateLimitMap = new Map<string, number[]>();
+const JOIN_WINDOW_MS = 60 * 1000;
+const MAX_JOIN_ATTEMPTS = 5;
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isJoinRateLimited(userId: string): boolean {
+  const now = Date.now();
+  const attempts = (joinRateLimitMap.get(userId) || []).filter(
+    (t) => now - t < JOIN_WINDOW_MS
+  );
+
+  if (attempts.length >= MAX_JOIN_ATTEMPTS) {
+    joinRateLimitMap.set(userId, attempts);
+    return true;
+  }
+
+  attempts.push(now);
+  joinRateLimitMap.set(userId, attempts);
+
+  // Periodic cleanup if map grows
+  if (joinRateLimitMap.size > 2000) {
+    for (const [key, times] of joinRateLimitMap.entries()) {
+      const valid = times.filter((t) => now - t < JOIN_WINDOW_MS);
+      if (valid.length === 0) joinRateLimitMap.delete(key);
+      else joinRateLimitMap.set(key, valid);
+    }
+  }
+
+  return false;
+}
+
+async function resolveAuthUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (token) {
+      try {
+        const admin = createAdminClient();
+        const { data: { user }, error } = await admin.auth.getUser(token);
+        if (!error && user) return user;
+      } catch (e) {
+        console.warn("[Join Pair API] Bearer token auth error:", e);
+      }
+    }
+  }
+
+  try {
+    const sessionSupabase = await createClient();
+    const { data: { user } } = await sessionSupabase.auth.getUser();
+    return user || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -11,19 +67,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Please enter an invite code." }, { status: 400 });
     }
 
-    // Route handlers are public endpoints, so derive identity exclusively from
-    // the authenticated Supabase session rather than from request data.
-    const sessionSupabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await sessionSupabase.auth.getUser();
+    const user = await resolveAuthUser(req);
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized. Please log in." }, { status: 401 });
     }
 
     const userId = user.id;
+
+    // Rate limit check per authenticated user
+    if (isJoinRateLimited(userId)) {
+      return NextResponse.json(
+        { success: false, error: "Too many join attempts. Please wait a minute before trying another invite code." },
+        { status: 429 }
+      );
+    }
+
     const adminSupabase = createAdminClient();
 
     // 1. Find pending pair by invite code using Admin client
@@ -51,6 +110,17 @@ export async function POST(req: Request) {
         success: false,
         error: "Invalid invite code or pair is no longer joinable. Make sure your partner clicked 'Create a new pair' and shared their 6-character code.",
       }, { status: 404 });
+    }
+
+    // Check code expiration: pending invite codes expire after 7 days
+    if (targetPair.created_at) {
+      const codeAge = Date.now() - new Date(targetPair.created_at).getTime();
+      if (codeAge > SEVEN_DAYS_MS) {
+        return NextResponse.json({
+          success: false,
+          error: "This invite code has expired (valid for 7 days). Please have your partner cancel it and generate a new code.",
+        }, { status: 410 });
+      }
     }
 
     // Prevent user from pairing with themselves

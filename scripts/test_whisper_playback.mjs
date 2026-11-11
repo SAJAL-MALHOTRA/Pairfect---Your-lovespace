@@ -37,9 +37,9 @@ async function run() {
   await guideBtn.click();
   await page.waitForTimeout(800);
 
-  // Click the 92.2 FM note in the drawer
-  const noteRow = page.locator("button:has-text('Romantic Whisper')").first();
-  await noteRow.click();
+  // Click Tune In for the note in the drawer
+  const tuneBtn = page.locator("button:has-text('Tune In')").first();
+  await tuneBtn.click();
   await page.waitForTimeout(1000);
 
   // Capture locked frequency on 92.2 FM (matches user screenshot)

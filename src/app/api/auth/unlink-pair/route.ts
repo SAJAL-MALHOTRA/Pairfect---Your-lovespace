@@ -2,21 +2,39 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function POST() {
-  try {
-    const supabase = await createClient();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+async function resolveAuthUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (token) {
+      try {
+        const admin = createAdminClient();
+        const { data: { user }, error } = await admin.auth.getUser(token);
+        if (!error && user) return user;
+      } catch (e) {
+        console.warn("[Unlink API] Bearer token auth error:", e);
+      }
+    }
+  }
 
-    if (authErr || !user) {
+  try {
+    const sessionSupabase = await createClient();
+    const { data: { user } } = await sessionSupabase.auth.getUser();
+    return user || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const user = await resolveAuthUser(req);
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let dbClient = supabase;
-    try {
-      dbClient = createAdminClient();
-    } catch {
-      // Service key not set, use user client
-    }
+    const dbClient = createAdminClient();
 
     const { data: pairsList, error: pairErr } = await dbClient
       .from("pairs")
@@ -53,7 +71,7 @@ export async function POST() {
       }
 
       // 2. Try calling the SECURITY DEFINER RPC first
-      const { data: rpcData, error: rpcErr } = await supabase.rpc("unlink_and_delete_pair", { p_pair_id: p.id });
+      const { data: rpcData, error: rpcErr } = await dbClient.rpc("unlink_and_delete_pair", { p_pair_id: p.id });
 
       if (rpcErr || !rpcData?.success) {
         // Fallback: Delete pair row

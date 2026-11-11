@@ -43,7 +43,7 @@ async function run() {
   await page.waitForTimeout(6000);
 
   // Check if decree card is visible
-  const decree = page.locator("text=Tonight's Decree");
+  const decree = page.locator("text=Tonight's Decree").first();
   const isDecreeVisible = await decree.isVisible();
   console.log("Is Tonight's Decree visible now?", isDecreeVisible);
 

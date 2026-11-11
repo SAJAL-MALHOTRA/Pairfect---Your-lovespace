@@ -112,21 +112,31 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
-    // 5. Webhook Idempotency Check:
-    // Check current status before acting - prevent re-triggering downstream side effects
+    // 5. Webhook Idempotency & Grant Recovery Check:
+    // If order is already paid AND subscription was already recorded as granted, ignore duplicate.
+    // If order was marked paid but server died before granting, proceed to grant recovery.
     const { data: existingPayment } = await admin
       .from("payments")
-      .select("id, user_id, order_id, amount, status, metadata")
+      .select("id, user_id, order_id, amount, currency, status, metadata")
       .eq("order_id", orderId)
       .maybeSingle();
 
-    if (existingPayment?.status === "paid") {
+    const isAlreadyPaid = existingPayment?.status === "paid";
+    const isAlreadyGranted = !!existingPayment?.metadata?.subscription_granted;
+
+    if (isAlreadyPaid && isAlreadyGranted) {
       console.log(
-        `[Cashfree Webhook] Idempotent duplicate: Order ${orderId} is already marked as paid. Ignoring.`
+        `[Cashfree Webhook] Idempotent duplicate: Order ${orderId} is already paid and subscription granted. Ignoring.`
       );
       return NextResponse.json(
-        { success: true, message: "Order already paid (duplicate webhook ignored)" },
+        { success: true, message: "Order already paid and granted (duplicate webhook ignored)" },
         { status: 200 }
+      );
+    }
+
+    if (isAlreadyPaid && !isAlreadyGranted) {
+      console.warn(
+        `[Cashfree Webhook] Recovery mode: Order ${orderId} was marked paid but subscription grant was not completed. Proceeding to grant recovery.`
       );
     }
 
@@ -145,24 +155,66 @@ export async function POST(request: Request) {
     if (isSuccess) {
       console.log(`[Cashfree Webhook] Order ${orderId} confirmed PAID.`);
 
-      // Update payments table status via Service Role
-      const { error: updateErr } = await admin
-        .from("payments")
-        .update({
-          status: "paid",
-          updated_at: new Date().toISOString(),
-          raw_response: event,
-        })
-        .eq("order_id", orderId);
+      // 6a. Server-Side Price & Currency Integrity Validation
+      const incomingAmount = Number(paymentData.payment_amount || orderData.order_amount);
+      const incomingCurrency = String(paymentData.payment_currency || orderData.order_currency || "INR").toUpperCase();
+      const expectedAmount = Number(existingPayment?.amount);
+      const expectedCurrency = String(existingPayment?.currency || "INR").toUpperCase();
 
-      if (updateErr) {
+      if (expectedAmount > 0 && !isNaN(incomingAmount) && incomingAmount < expectedAmount) {
         console.error(
-          `[Cashfree Webhook] Error updating payment status to paid for order ${orderId}:`,
-          updateErr
+          `[Cashfree Webhook] Underpayment detected for order ${orderId}: Received ${incomingAmount} ${incomingCurrency}, expected ${expectedAmount} ${expectedCurrency}`
+        );
+        return NextResponse.json(
+          { error: `Payment amount ${incomingAmount} is less than required order amount ${expectedAmount}` },
+          { status: 400 }
         );
       }
 
-      // Resolve plan ID from payment metadata or order ID convention
+      if (expectedCurrency && incomingCurrency !== expectedCurrency) {
+        console.error(
+          `[Cashfree Webhook] Currency mismatch for order ${orderId}: Received ${incomingCurrency}, expected ${expectedCurrency}`
+        );
+        return NextResponse.json(
+          { error: `Currency ${incomingCurrency} does not match expected ${expectedCurrency}` },
+          { status: 400 }
+        );
+      }
+
+      // 6b. Atomic check-and-set state transition (if not already paid)
+      if (!isAlreadyPaid) {
+        const { data: updatedPayment, error: updateErr } = await admin
+          .from("payments")
+          .update({
+            status: "paid",
+            updated_at: new Date().toISOString(),
+            raw_response: event,
+          })
+          .eq("order_id", orderId)
+          .or("status.neq.paid,status.is.null")
+          .select()
+          .maybeSingle();
+
+        if (updateErr) {
+          console.error(
+            `[Cashfree Webhook] Error updating payment status to paid for order ${orderId}:`,
+            updateErr
+          );
+        }
+
+        // If no row was updated and order wasn't previously paid, concurrent delivery won
+        if (!updatedPayment) {
+          console.log(
+            `[Cashfree Webhook] Concurrent duplicate detected for order ${orderId}. Already processed by concurrent worker.`
+          );
+          return NextResponse.json(
+            { success: true, message: "Order already paid (concurrent webhook suppressed)" },
+            { status: 200 }
+          );
+        }
+      }
+
+      // 6c. Resolve plan ID and target user ID
       let planId: string | undefined = existingPayment?.metadata?.plan_id;
       if (!planId) {
         const orderIdParts = orderId.match(/^cf_([a-zA-Z0-9-]+)_\d+_/);
@@ -170,15 +222,41 @@ export async function POST(request: Request) {
           planId = orderIdParts[1];
         }
       }
+      if (!planId && (orderData?.order_notes?.plan_id || event.data?.order?.order_notes?.plan_id)) {
+        planId = orderData?.order_notes?.plan_id || event.data?.order?.order_notes?.plan_id;
+      }
 
-      // Authoritative subscription grant to user's pair
-      if (existingPayment?.user_id && planId) {
+      const targetUserId =
+        existingPayment?.user_id ||
+        orderData?.order_notes?.user_id ||
+        event.data?.order?.order_notes?.user_id ||
+        orderData?.customer_details?.customer_id;
+
+      // 6d. Authoritative subscription grant to user's pair
+      if (targetUserId && planId) {
         const grantResult = await grantPairSubscription({
-          userId: existingPayment.user_id,
+          userId: targetUserId,
           planId,
           orderId,
         });
         console.log(`[Cashfree Webhook] Subscription grant outcome for order ${orderId}:`, grantResult);
+
+        if (!grantResult.success) {
+          // Reset payment status to pending so Cashfree webhook retry will re-attempt grant
+          await admin
+            .from("payments")
+            .update({ status: "pending", updated_at: new Date().toISOString() })
+            .eq("order_id", orderId);
+
+          return NextResponse.json(
+            { error: `Subscription grant failed: ${grantResult.message}. Cashfree will retry.` },
+            { status: 500 }
+          );
+        }
+      } else {
+        console.warn(
+          `[Cashfree Webhook] Warning: Could not resolve target user or plan for order ${orderId}. (targetUserId: ${targetUserId}, planId: ${planId})`
+        );
       }
 
       return NextResponse.json(

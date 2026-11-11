@@ -3,8 +3,52 @@ import { findCity, CITY_CATALOG } from "@/lib/city-catalog";
 import { getCachedWeather, setCachedWeather, WeatherData } from "@/lib/weather-cache";
 import { getWeatherInfo } from "@/lib/weather-codes";
 
+// Sliding-window rate limiter per client IP to protect upstream weather API
+const weatherRateLimitMap = new Map<string, number[]>();
+const WEATHER_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_WEATHER_REQUESTS_PER_MINUTE = 30; // Max 30 lookups per IP per minute
+
+function isWeatherRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = (weatherRateLimitMap.get(ip) || []).filter(
+    (t) => now - t < WEATHER_WINDOW_MS
+  );
+
+  if (timestamps.length >= MAX_WEATHER_REQUESTS_PER_MINUTE) {
+    weatherRateLimitMap.set(ip, timestamps);
+    return true;
+  }
+
+  timestamps.push(now);
+  weatherRateLimitMap.set(ip, timestamps);
+
+  if (weatherRateLimitMap.size > 5000) {
+    for (const [key, times] of weatherRateLimitMap.entries()) {
+      const valid = times.filter((t) => now - t < WEATHER_WINDOW_MS);
+      if (valid.length === 0) {
+        weatherRateLimitMap.delete(key);
+      } else {
+        weatherRateLimitMap.set(key, valid);
+      }
+    }
+  }
+
+  return false;
+}
+
 export async function GET(request: Request) {
   try {
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      request.headers.get("x-real-ip") ||
+      "anonymous";
+
+    if (isWeatherRateLimited(ip)) {
+      return NextResponse.json(
+        { error: "Too many weather queries. Please pause before checking the weather again." },
+        { status: 429 }
+      );
+    }
     const { searchParams } = new URL(request.url);
     const cityName = searchParams.get("city");
     const countryName = searchParams.get("country") || "India";

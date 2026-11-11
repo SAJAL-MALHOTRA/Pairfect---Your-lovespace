@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { X, Mic, Square, Play, Pause, RotateCcw, Send, Radio, Sparkles, Check, AlertCircle } from "lucide-react";
 import { PRESET_STATIONS, WhisperMoodTag, MOOD_TAG_LABELS } from "@/lib/whisper/types";
 import { playRadioClick } from "@/lib/whisper/audio-fx";
-import { encryptAudioBlob, getPairKey } from "@/lib/crypto/e2ee";
+import { encryptAudioBlob, getPairKey, autoRecoverVaultKeyIfMissing } from "@/lib/crypto/e2ee";
 
 interface WhisperRecorderModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ interface WhisperRecorderModalProps {
   onBroadcastSuccess: (newWhisper: any) => void;
   pairId?: string;
   senderName?: string;
+  inviteCode?: string;
 }
 
 export function WhisperRecorderModal({
@@ -22,6 +23,7 @@ export function WhisperRecorderModal({
   onBroadcastSuccess,
   pairId,
   senderName = "Partner",
+  inviteCode,
 }: WhisperRecorderModalProps) {
   const [recordState, setRecordState] = useState<"idle" | "recording" | "paused" | "preview" | "broadcasting">("idle");
   const [seconds, setSeconds] = useState(0);
@@ -293,17 +295,30 @@ export function WhisperRecorderModal({
       let uploadPayload: Blob | string = audioBlob;
       let isEncrypted = false;
 
-      // Encrypt audio blob on client if pair encryption vault key exists
+      // Encrypt audio blob on client using pair encryption vault key (fails closed)
       if (pairId) {
-        try {
-          const key = await getPairKey(pairId);
-          if (key) {
-            const encryptedBytes = await encryptAudioBlob(audioBlob, key);
-            uploadPayload = new Blob([encryptedBytes], { type: "application/octet-stream" });
-            isEncrypted = true;
+        let key = await getPairKey(pairId);
+        if (!key && inviteCode) {
+          // Attempt automatic recovery via encrypted envelope before failing
+          try {
+            const recovered = await autoRecoverVaultKeyIfMissing(pairId, inviteCode);
+            if (recovered) {
+              key = await getPairKey(pairId);
+            }
+          } catch (recErr) {
+            console.warn("[Whisper] Auto key recovery attempt failed:", recErr);
           }
-        } catch (encErr) {
-          console.warn("Client encryption failed, uploading unencrypted fallback:", encErr);
+        }
+
+        if (!key) {
+          throw new Error("Cannot find your couple encryption key on this device. Please reload the app or ensure your partner has opened Pairfect on their device to sync keys.");
+        }
+        try {
+          const encryptedBytes = await encryptAudioBlob(audioBlob, key);
+          uploadPayload = new Blob([encryptedBytes], { type: "application/octet-stream" });
+          isEncrypted = true;
+        } catch (encErr: any) {
+          throw new Error(`Failed to encrypt whisper audio: ${encErr.message || encErr}`);
         }
       }
 

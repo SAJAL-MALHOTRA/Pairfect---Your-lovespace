@@ -28,6 +28,39 @@ function getSupabaseClient() {
   return createClientJS(url, key);
 }
 
+// Sliding-window rate limiter per user to protect Groq AI API
+const rateLimitMap = new Map<string, number[]>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_JUDGE_REQUESTS_PER_MINUTE = 6; // 6 verdicts per minute per user
+
+function isJudgeRateLimited(userId: string): boolean {
+  const now = Date.now();
+  const timestamps = (rateLimitMap.get(userId) || []).filter(
+    (t) => now - t < RATE_LIMIT_WINDOW_MS
+  );
+
+  if (timestamps.length >= MAX_JUDGE_REQUESTS_PER_MINUTE) {
+    rateLimitMap.set(userId, timestamps);
+    return true;
+  }
+
+  timestamps.push(now);
+  rateLimitMap.set(userId, timestamps);
+
+  if (rateLimitMap.size > 2000) {
+    for (const [key, times] of rateLimitMap.entries()) {
+      const valid = times.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+      if (valid.length === 0) {
+        rateLimitMap.delete(key);
+      } else {
+        rateLimitMap.set(key, valid);
+      }
+    }
+  }
+
+  return false;
+}
+
 export async function POST(req: Request) {
   try {
     const userClient = await createClient();
@@ -35,6 +68,13 @@ export async function POST(req: Request) {
 
     if (authErr || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (isJudgeRateLimited(user.id)) {
+      return NextResponse.json(
+        { error: "Too many judging requests. Please take a breath before having Judge Vibe deliberate again." },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();
