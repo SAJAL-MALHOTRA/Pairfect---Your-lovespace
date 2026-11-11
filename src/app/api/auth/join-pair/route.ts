@@ -8,7 +8,7 @@ const ipJoinRateLimitMap = new Map<string, number[]>();
 const JOIN_WINDOW_MS = 60 * 1000;
 const MAX_USER_ATTEMPTS = 5;
 const MAX_IP_ATTEMPTS = 10;
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
 
 function checkRateLimit(map: Map<string, number[]>, key: string, limit: number): boolean {
   const now = Date.now();
@@ -128,13 +128,13 @@ export async function POST(req: Request) {
       }, { status: 404 });
     }
 
-    // Check code expiration: pending invite codes expire after 7 days
+    // Check code expiration: pending invite codes expire after 48 hours
     if (targetPair.created_at) {
       const codeAge = Date.now() - new Date(targetPair.created_at).getTime();
-      if (codeAge > SEVEN_DAYS_MS) {
+      if (codeAge > FORTY_EIGHT_HOURS_MS) {
         return NextResponse.json({
           success: false,
-          error: "This invite code has expired (valid for 7 days). Please have your partner cancel it and generate a new code.",
+          error: "This invite code has expired (valid for 48 hours). Please have your partner cancel it and generate a new code.",
         }, { status: 410 });
       }
     }
@@ -195,11 +195,20 @@ export async function POST(req: Request) {
 
       if (envData && pathToDelete) {
         vaultEnvelope = await envData.text();
-        // Immediately delete temporary transport envelope once delivered to joining partner
-        // Note: NEVER removes recovery-envelope.json!
-        await adminSupabase.storage
-          .from("memories")
-          .remove([pathToDelete]);
+
+        // Check if pair already has an active 128-bit recovery envelope
+        const { data: recData } = await (adminSupabase.storage.from("memories") as any)
+          .download(`${targetPair.id}/recovery-envelope.json`, { cacheNonce: Date.now() }, { cache: "no-store" });
+
+        if (recData) {
+          // If recovery envelope is established, delete temporary transport envelope immediately
+          await adminSupabase.storage
+            .from("memories")
+            .remove([pathToDelete]);
+        } else {
+          // Interim safety guard: if no recovery phrase exists yet, retain transport envelope until
+          // phrase is created via Settings or until 48-hour expiration to prevent lockout if a partner wipes local storage
+        }
       }
     } catch (e) {
       console.warn("[Join Pair API] No transport envelope found:", e);

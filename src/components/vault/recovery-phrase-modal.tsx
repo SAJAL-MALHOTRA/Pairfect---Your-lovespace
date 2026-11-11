@@ -219,7 +219,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
 
       if (!envData.success || !envData.envelope) {
         setRestoreError(
-          "No backup envelope found on the server. The envelope was purged from cloud storage. To restore without a server envelope, import your saved vault backup file directly."
+          "No backup envelope found on the server. The recovery envelope was purged from cloud storage (device-only mode). To sync keys to this device, open Pairfect on your partner's active device."
         );
         return;
       }
@@ -426,7 +426,7 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
                       <div>
                         <p className="font-bold">Device-Only Mode Warning</p>
                         <p className="text-[11px] text-rose-800 mt-0.5">
-                          Purging permanently deletes your 128-bit recovery envelope from Pairfect servers. After purging, a new phone or browser cannot restore your vault from the cloud using the 12 words alone because no envelope exists on the server. Recovery will depend entirely on maintaining an active local device or an exported offline backup file.
+                          Purging permanently deletes your 128-bit recovery envelope from Pairfect servers. The server only holds an encrypted envelope locked with your 12 words, which it never sees. After purging, a new phone or browser cannot restore your vault from the cloud using the 12 words alone because no envelope exists on the server. Recovery will depend entirely on maintaining an active local device.
                         </p>
                       </div>
                     </div>

@@ -87,6 +87,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Failed to persist vault envelope." }, { status: 500 });
     }
 
+    if (isRecovery) {
+      // Automatically clean up legacy 31-bit transport envelopes once a 128-bit recovery envelope is established
+      await adminSupabase.storage
+        .from("memories")
+        .remove([`${pairId}/transport-envelope.json`, `${pairId}/vault-envelope.json`]);
+    }
+
     return NextResponse.json({ success: true, type: isRecovery ? "recovery" : "transport" });
   } catch (err: any) {
     console.error("[Vault Envelope API] Error:", err);
@@ -213,15 +220,13 @@ export async function DELETE(req: Request) {
     let pathsToRemove: string[] = [];
     if (requestedType === "transport") {
       pathsToRemove = [`${pairId}/transport-envelope.json`];
-    } else if (requestedType === "all") {
+    } else {
+      // Purge all envelope types (recovery, legacy, and transport) to leave zero envelope artifacts on server
       pathsToRemove = [
         `${pairId}/recovery-envelope.json`,
-        `${pairId}/transport-envelope.json`,
         `${pairId}/vault-envelope.json`,
+        `${pairId}/transport-envelope.json`,
       ];
-    } else {
-      // Default: purge recovery envelope (Device-Only Mode) and legacy
-      pathsToRemove = [`${pairId}/recovery-envelope.json`, `${pairId}/vault-envelope.json`];
     }
 
     const { data: removeData, error: removeErr } = await adminSupabase.storage

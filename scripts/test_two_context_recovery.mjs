@@ -2,10 +2,24 @@ import { chromium } from "playwright";
 import { createClient } from "@supabase/supabase-js";
 import assert from "assert";
 import fs from "fs";
+import path from "path";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qdwesijydqasbyjswvkv.supabase.co";
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Load .env.local
+const envPath = path.resolve(process.cwd(), ".env.local");
+let env = {};
+if (fs.existsSync(envPath)) {
+  for (const line of fs.readFileSync(envPath, "utf-8").split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+      const [k, ...v] = trimmed.split("=");
+      env[k.trim()] = v.join("=").trim();
+    }
+  }
+}
+
+const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qdwesijydqasbyjswvkv.supabase.co";
+const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!serviceRoleKey || !anonKey) {
   console.error("Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY");
@@ -425,7 +439,11 @@ async function runTwoContextRecoveryTest() {
     console.log("9. Cleaning up test accounts from Supabase...");
     try {
       if (pairId) {
-        await admin.storage.from("memories").remove([`${pairId}/vault-envelope.json`]);
+        await admin.storage.from("memories").remove([
+          `${pairId}/recovery-envelope.json`,
+          `${pairId}/transport-envelope.json`,
+          `${pairId}/vault-envelope.json`,
+        ]);
         await admin.from("pairs").delete().eq("id", pairId);
       }
       if (aliceId) {
