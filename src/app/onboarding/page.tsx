@@ -116,16 +116,17 @@ export default function OnboardingPage() {
 
     // 1. Check for v3 secret fragment #s=...
     if (hash.includes("s=")) {
+      // Strip fragment from browser address bar immediately before parsing
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
       const match = hash.match(/[#&]s=([A-Za-z0-9_-]+)/);
       if (match) {
         try {
           const secretBytes = decodeCrockfordBase32(match[1]);
           setDetectedSecretBytes(secretBytes);
-        } catch (e) {
-          console.warn("[Onboarding] Failed to decode #s= secret:", e);
+        } catch {
+          console.warn("[Onboarding] Failed to decode invite secret fragment");
         }
       }
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
 
     // 2. Fallback check for legacy #k=...
@@ -194,21 +195,24 @@ export default function OnboardingPage() {
             await savePairKey(pair.id, key);
             await savePendingKey(pair.invite_code, key);
           }
-          try {
-            const envelopeStr = await wrapVaultKeyWithCode(key, pair.invite_code, pair.id);
-            await fetch("/api/vault/envelope", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ pairId: pair.id, envelope: envelopeStr, type: "transport" }),
-            });
-          } catch (e) {
-            console.warn("[E2EE] Envelope refresh warning:", e);
+          const storedSecretB32 = localStorage.getItem(`pairfect_invite_secret_${pair.id}`);
+          if (storedSecretB32) {
+            try {
+              const secretBytes = decodeCrockfordBase32(storedSecretB32);
+              const envelopeStr = await wrapVaultKeyV3(key, secretBytes, pair.id);
+              await fetch("/api/vault/envelope", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pairId: pair.id, envelope: envelopeStr, type: "transport" }),
+              });
+              const origin = typeof window !== "undefined" ? window.location.origin : "https://www.pairfect.site";
+              setSecretInviteLink(`${origin}/onboarding?code=${pair.invite_code}#s=${storedSecretB32}`);
+            } catch {
+              console.warn("[E2EE] Transport envelope refresh warning");
+            }
           }
-          const keyFragment = await exportKeyToFragment(key);
-          const origin = typeof window !== "undefined" ? window.location.origin : "https://www.pairfect.site";
-          setSecretInviteLink(`${origin}/onboarding?code=${pair.invite_code}#k=${keyFragment}`);
         })
-        .catch((e) => console.warn("Failed to load pair key:", e));
+        .catch(() => console.warn("Failed to load pair key"));
 
       // 1. WebSockets listener
       const channel = supabase
@@ -224,6 +228,9 @@ export default function OnboardingPage() {
           (payload: any) => {
             const updatedPair = payload.new as any;
             if (updatedPair.status === "active") {
+              try {
+                localStorage.removeItem(`pairfect_invite_secret_${pair.id}`);
+              } catch {}
               setPartnerConnected(true);
               refreshSession(true).then(() => {
                 setTimeout(() => setCurrentStep(4), 1200);
@@ -244,12 +251,15 @@ export default function OnboardingPage() {
 
           if (updatedPair?.status === "active") {
             clearInterval(interval);
+            try {
+              localStorage.removeItem(`pairfect_invite_secret_${pair.id}`);
+            } catch {}
             setPartnerConnected(true);
             await refreshSession(true);
             setTimeout(() => setCurrentStep(4), 1200);
           }
-        } catch (e) {
-          console.warn("Pair status check polling error:", e);
+        } catch {
+          console.warn("Pair status check polling check failed");
         }
       }, 2000);
 
@@ -378,8 +388,7 @@ export default function OnboardingPage() {
       setCurrentStep(3);
       await refreshSession();
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to create pair invite code.");
+      setError(err?.message || "Failed to create pair invite code.");
     } finally {
       setLoading(false);
     }
@@ -493,6 +502,7 @@ export default function OnboardingPage() {
             unwrappedKey = await unwrapVaultKeyWithCode(data.vaultEnvelope, cleanedCode, pairId);
           }
           await savePairKey(pairId, unwrappedKey);
+          setDetectedSecretBytes(null);
 
           // Confirm key unwrap to server to purge temporary transport envelope
           try {
@@ -572,6 +582,7 @@ export default function OnboardingPage() {
     if (pair && pair.status === "pending" && pair.user_a_id === user?.id) {
       setLoading(true);
       try {
+        localStorage.removeItem(`pairfect_invite_secret_${pair.id}`);
         await supabase.from("pairs").delete().eq("id", pair.id);
         await refreshSession(false);
       } catch (e) {

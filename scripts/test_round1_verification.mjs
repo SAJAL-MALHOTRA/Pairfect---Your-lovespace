@@ -3,6 +3,13 @@ import fs from "fs";
 import path from "path";
 import assert from "node:assert";
 import crypto from "crypto";
+import {
+  generateInviteSecret,
+  joinProof,
+  joinVerifier,
+  wrapVaultKeyV3,
+  unwrapVaultKeyV3,
+} from "../src/lib/crypto/e2ee.ts";
 
 // ------------------------------------------------------------------
 // Load .env.local
@@ -269,18 +276,28 @@ async function run() {
   authCharlie = await provisionUser("Charlie");
   pass(`Charlie: ${authCharlie.userId}`);
 
-  console.log("\n1b. Alice creates pending pair...");
+  console.log("\n1b. Alice creates pending pair with v3 verifier...");
   inviteCode1 = "VR1" + String(Date.now()).slice(-3);
+  const secret1 = generateInviteSecret();
+  const proof1 = await joinProof(secret1);
+  const verifier1 = await joinVerifier(proof1);
+
   const { data: pair1Data, error: pair1Err } = await admin
     .from("pairs")
-    .insert({ user_a_id: authAlice.userId, invite_code: inviteCode1, status: "pending" })
+    .insert({
+      user_a_id: authAlice.userId,
+      invite_code: inviteCode1,
+      status: "pending",
+      invite_verifier: verifier1,
+      invite_issued_at: new Date().toISOString(),
+    })
     .select()
     .single();
   if (pair1Err) throw new Error(`Pair creation failed: ${pair1Err.message}`);
   pairId1 = pair1Data.id;
   pass(`Pair created: ${pairId1}, code: ${inviteCode1}`);
 
-  console.log("\n1c. Alice generates vault key and uploads envelopes...");
+  console.log("\n1c. Alice generates vault key and uploads v3 envelopes...");
   aliceKey1 = await globalThis.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, [
     "encrypt",
     "decrypt",
@@ -288,7 +305,7 @@ async function run() {
   const aliceRawKey1 = await globalThis.crypto.subtle.exportKey("raw", aliceKey1);
   const aliceKeyHex1 = Buffer.from(aliceRawKey1).toString("hex");
 
-  const transportEnvelope = await wrapVaultKeyWithCode(aliceKey1, inviteCode1, pairId1);
+  const transportEnvelope = await wrapVaultKeyV3(aliceKey1, secret1, pairId1);
   const uploadTransport = await fetch(`${baseUrl}/api/vault/envelope`, {
     method: "POST",
     headers: {
@@ -331,8 +348,8 @@ async function run() {
   rCheck ? pass("recovery-envelope.json exists in storage") : fail("recovery-envelope.json NOT found");
 
   // 1e. Bob joins
-  console.log("\n1e. Bob joins with code only...");
-  const joinRes = await fetch(`${baseUrl}/api/auth/join-pair`, {
+  console.log("\n1e-1. Bob attempts code-only join on v47 pair (slot takeover check)...");
+  const codeOnlyRes = await fetch(`${baseUrl}/api/auth/join-pair`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -340,9 +357,22 @@ async function run() {
     },
     body: JSON.stringify({ code: inviteCode1 }),
   });
+  codeOnlyRes.status === 404
+    ? pass("Bob code-only join on v47 pair correctly rejected with HTTP 404 (slot takeover blocked)")
+    : fail(`Expected 404 for code-only join, got: HTTP ${codeOnlyRes.status}`);
+
+  console.log("\n1e-2. Bob joins with authentic code and proof...");
+  const joinRes = await fetch(`${baseUrl}/api/auth/join-pair`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authBob.session.access_token}`,
+    },
+    body: JSON.stringify({ code: inviteCode1, proof: proof1 }),
+  });
   const joinData = await joinRes.json();
   joinRes.status === 200 && joinData.success
-    ? pass("Bob joined successfully (HTTP 200)")
+    ? pass("Bob joined successfully with proof (HTTP 200)")
     : fail(`Join failed: ${JSON.stringify(joinData)}`);
   joinData.vaultEnvelope
     ? pass("Transport envelope delivered to Bob in join response")
@@ -423,7 +453,7 @@ async function run() {
 
   // 1h. Bidirectional encryption
   console.log("\n1h. Testing bidirectional encryption between Alice and Bob...");
-  const bobKey = await unwrapVaultKeyWithCode(joinData.vaultEnvelope, inviteCode1, pairId1);
+  const bobKey = await unwrapVaultKeyV3(joinData.vaultEnvelope, secret1, pairId1);
   const bobRawKey = await globalThis.crypto.subtle.exportKey("raw", bobKey);
   const bobKeyHex = Buffer.from(bobRawKey).toString("hex");
   aliceKeyHex1 === bobKeyHex ? pass("Both partners share identical 256-bit vault key") : fail("Keys DO NOT match!");
@@ -547,11 +577,21 @@ async function run() {
     ? pass("Bob cannot access old pair envelope (HTTP 404 / null)")
     : fail(`Bob still has access: ${JSON.stringify(bobAccessData)}`);
 
-  console.log("\n3c. Alice re-pairs with Charlie...");
+  console.log("\n3c. Alice re-pairs with Charlie (v3)...");
   const inviteCode2 = "VR2" + String(Date.now()).slice(-3);
+  const secret2 = generateInviteSecret();
+  const proof2 = await joinProof(secret2);
+  const verifier2 = await joinVerifier(proof2);
+
   const { data: pair2Data, error: pair2Err } = await admin
     .from("pairs")
-    .insert({ user_a_id: authAlice.userId, invite_code: inviteCode2, status: "pending" })
+    .insert({
+      user_a_id: authAlice.userId,
+      invite_code: inviteCode2,
+      status: "pending",
+      invite_verifier: verifier2,
+      invite_issued_at: new Date().toISOString(),
+    })
     .select()
     .single();
   if (pair2Err) throw new Error(`Re-pair failed: ${pair2Err.message}`);
@@ -574,7 +614,7 @@ async function run() {
   }
 
   // Upload envelope for Charlie
-  const transportEnvelope2 = await wrapVaultKeyWithCode(aliceKey2, inviteCode2, pairId2);
+  const transportEnvelope2 = await wrapVaultKeyV3(aliceKey2, secret2, pairId2);
   await fetch(`${baseUrl}/api/vault/envelope`, {
     method: "POST",
     headers: {
@@ -584,22 +624,22 @@ async function run() {
     body: JSON.stringify({ pairId: pairId2, envelope: transportEnvelope2, type: "transport" }),
   });
 
-  // Charlie joins
+  // Charlie joins with proof
   const charlieJoinRes = await fetch(`${baseUrl}/api/auth/join-pair`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authCharlie.session.access_token}`,
     },
-    body: JSON.stringify({ code: inviteCode2 }),
+    body: JSON.stringify({ code: inviteCode2, proof: proof2 }),
   });
   const charlieJoinData = await charlieJoinRes.json();
   charlieJoinRes.status === 200 && charlieJoinData.success
-    ? pass("Charlie joined new pair successfully")
+    ? pass("Charlie joined new pair successfully with proof")
     : fail(`Charlie join failed: ${JSON.stringify(charlieJoinData)}`);
 
   if (charlieJoinData.vaultEnvelope) {
-    const charlieKey = await unwrapVaultKeyWithCode(charlieJoinData.vaultEnvelope, inviteCode2, pairId2);
+    const charlieKey = await unwrapVaultKeyV3(charlieJoinData.vaultEnvelope, secret2, pairId2);
     const charlieRawKey = await globalThis.crypto.subtle.exportKey("raw", charlieKey);
     const charlieKeyHex = Buffer.from(charlieRawKey).toString("hex");
     charlieKeyHex === aliceKeyHex2

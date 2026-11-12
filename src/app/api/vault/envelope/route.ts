@@ -84,7 +84,7 @@ export async function POST(req: Request) {
 
       const LEGACY_TRANSPORT_UNTIL = process.env.LEGACY_TRANSPORT_UNTIL
         ? parseInt(process.env.LEGACY_TRANSPORT_UNTIL, 10)
-        : (Date.now() + 48 * 60 * 60 * 1000);
+        : Date.parse("2026-11-20T00:00:00Z");
 
       const isValidB64Url = (s: any) => typeof s === "string" && s.length > 0 && /^[A-Za-z0-9_-]+$/.test(s);
 

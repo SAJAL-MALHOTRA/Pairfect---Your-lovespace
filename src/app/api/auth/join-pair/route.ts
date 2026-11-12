@@ -154,7 +154,7 @@ export async function POST(req: Request) {
     // 2. Verify proof against pair.invite_verifier
     const LEGACY_TRANSPORT_UNTIL = process.env.LEGACY_TRANSPORT_UNTIL
       ? parseInt(process.env.LEGACY_TRANSPORT_UNTIL, 10)
-      : (Date.now() + 48 * 60 * 60 * 1000);
+      : Date.parse("2026-11-20T00:00:00Z");
 
     const proof = body.proof;
     let isProofValid = false;

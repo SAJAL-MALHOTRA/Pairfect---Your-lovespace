@@ -305,7 +305,7 @@ export async function unwrapVaultKeyWithPhrase(
 /**
  * Local IndexedDB helpers for offline recovery phrase cache (optional user convenience)
  */
-const VAULT_DB_NAME = "pairfect_vault";
+const RECOVERY_DB_NAME = "pairfect_recovery";
 const PHRASE_STORE = "recovery_phrases";
 
 function openPhraseDB(): Promise<IDBDatabase> {
@@ -313,17 +313,22 @@ function openPhraseDB(): Promise<IDBDatabase> {
     if (typeof window === "undefined" || !window.indexedDB) {
       return reject(new Error("IndexedDB unavailable"));
     }
-    const request = window.indexedDB.open(VAULT_DB_NAME, 2);
+    const request = window.indexedDB.open(RECOVERY_DB_NAME, 1);
     request.onupgradeneeded = () => {
       const db = request.result;
-      if (!db.objectStoreNames.contains("keys")) {
-        db.createObjectStore("keys");
-      }
       if (!db.objectStoreNames.contains(PHRASE_STORE)) {
         db.createObjectStore(PHRASE_STORE);
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        try {
+          db.close();
+        } catch {}
+      };
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -335,8 +340,18 @@ export async function saveRecoveryPhraseLocally(pairId: string, phrase: string):
       const tx = db.transaction(PHRASE_STORE, "readwrite");
       const store = tx.objectStore(PHRASE_STORE);
       const req = store.put(phrase, `phrase:${pairId}`);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        try {
+          db.close();
+        } catch {}
+        resolve();
+      };
+      req.onerror = () => {
+        try {
+          db.close();
+        } catch {}
+        reject(req.error);
+      };
     });
   } catch (err) {
     console.warn("[Recovery] Could not save phrase to IndexedDB:", err);
@@ -350,8 +365,18 @@ export async function getRecoveryPhraseLocally(pairId: string): Promise<string |
       const tx = db.transaction(PHRASE_STORE, "readonly");
       const store = tx.objectStore(PHRASE_STORE);
       const req = store.get(`phrase:${pairId}`);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        try {
+          db.close();
+        } catch {}
+        resolve(req.result || null);
+      };
+      req.onerror = () => {
+        try {
+          db.close();
+        } catch {}
+        reject(req.error);
+      };
     });
   } catch {
     return null;
@@ -365,8 +390,18 @@ export async function deleteRecoveryPhraseLocally(pairId: string): Promise<void>
       const tx = db.transaction(PHRASE_STORE, "readwrite");
       const store = tx.objectStore(PHRASE_STORE);
       const req = store.delete(`phrase:${pairId}`);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        try {
+          db.close();
+        } catch {}
+        resolve();
+      };
+      req.onerror = () => {
+        try {
+          db.close();
+        } catch {}
+        reject(req.error);
+      };
     });
   } catch (err) {
     console.warn("[Recovery] Could not delete phrase from IndexedDB:", err);

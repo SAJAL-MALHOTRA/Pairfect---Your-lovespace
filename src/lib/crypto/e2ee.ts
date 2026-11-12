@@ -37,7 +37,15 @@ function openVaultDB(): Promise<IDBDatabase> {
       }
     };
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        try {
+          db.close();
+        } catch {}
+      };
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -52,8 +60,18 @@ export async function saveKeyToIndexedDB(keyId: string, key: CryptoKey): Promise
     const store = tx.objectStore(STORE_NAME);
     const req = store.put(key, keyId);
 
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      try {
+        db.close();
+      } catch {}
+      resolve();
+    };
+    req.onerror = () => {
+      try {
+        db.close();
+      } catch {}
+      reject(req.error);
+    };
   });
 }
 
@@ -67,8 +85,18 @@ export async function getKeyFromIndexedDB(keyId: string): Promise<CryptoKey | nu
     const store = tx.objectStore(STORE_NAME);
     const req = store.get(keyId);
 
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      try {
+        db.close();
+      } catch {}
+      resolve(req.result || null);
+    };
+    req.onerror = () => {
+      try {
+        db.close();
+      } catch {}
+      reject(req.error);
+    };
   });
 }
 
@@ -90,8 +118,18 @@ export async function promotePendingKey(inviteCode: string, pairId: string): Pro
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       const req = store.delete(pendingKeyId);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        try {
+          db.close();
+        } catch {}
+        resolve();
+      };
+      req.onerror = () => {
+        try {
+          db.close();
+        } catch {}
+        reject(req.error);
+      };
     });
 
     return true;
@@ -149,8 +187,18 @@ export async function deletePairKey(pairId: string): Promise<void> {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       const req = store.delete(`pair:${pairId}`);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        try {
+          db.close();
+        } catch {}
+        resolve();
+      };
+      req.onerror = () => {
+        try {
+          db.close();
+        } catch {}
+        reject(req.error);
+      };
     });
   } catch (err) {
     console.warn("[E2EE] Failed to delete pair key:", err);
