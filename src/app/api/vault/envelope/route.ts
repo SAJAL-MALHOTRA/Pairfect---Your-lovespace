@@ -71,9 +71,55 @@ export async function POST(req: Request) {
       envelopeObj?.type === "bip39_recovery_envelope" ||
       envelopeObj?.v === 2;
 
+    const envelopeBuffer = Buffer.from(typeof envelope === "string" ? envelope : JSON.stringify(envelope));
+
+    // Validate transport envelope requirements
+    if (!isRecovery) {
+      if (envelopeBuffer.byteLength > 1024) {
+        return NextResponse.json(
+          { success: false, error: "Transport envelope exceeds 1 KB size limit." },
+          { status: 400 }
+        );
+      }
+
+      const LEGACY_TRANSPORT_UNTIL = process.env.LEGACY_TRANSPORT_UNTIL
+        ? parseInt(process.env.LEGACY_TRANSPORT_UNTIL, 10)
+        : (Date.now() + 48 * 60 * 60 * 1000);
+
+      const isValidB64Url = (s: any) => typeof s === "string" && s.length > 0 && /^[A-Za-z0-9_-]+$/.test(s);
+
+      if (envelopeObj?.v === 3) {
+        if (
+          envelopeObj.type !== "transport" ||
+          envelopeObj.alg !== "AES-256-GCM" ||
+          !envelopeObj.kdf ||
+          envelopeObj.kdf.name !== "HKDF-SHA-256" ||
+          !isValidB64Url(envelopeObj.kdf.salt) ||
+          !isValidB64Url(envelopeObj.iv) ||
+          !isValidB64Url(envelopeObj.ct)
+        ) {
+          return NextResponse.json(
+            { success: false, error: "Invalid v3 transport envelope payload structure." },
+            { status: 400 }
+          );
+        }
+      } else if (envelopeObj?.v === 1 || !envelopeObj?.v) {
+        if (Date.now() >= LEGACY_TRANSPORT_UNTIL) {
+          return NextResponse.json(
+            { success: false, error: "Legacy v1 transport envelopes are deprecated and no longer accepted." },
+            { status: 400 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { success: false, error: "Unsupported transport envelope version." },
+          { status: 400 }
+        );
+      }
+    }
+
     const filename = isRecovery ? "recovery-envelope.json" : "transport-envelope.json";
     const storagePath = `${pairId}/${filename}`;
-    const envelopeBuffer = Buffer.from(typeof envelope === "string" ? envelope : JSON.stringify(envelope));
 
     const { error: uploadErr } = await adminSupabase.storage
       .from("memories")
@@ -100,7 +146,10 @@ export async function POST(req: Request) {
         .remove(filesToRemove);
     }
 
-    return NextResponse.json({ success: true, type: isRecovery ? "recovery" : "transport" });
+    return NextResponse.json(
+      { success: true, type: isRecovery ? "recovery" : "transport" },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (err: any) {
     console.error("[Vault Envelope API] Error:", err);
     return NextResponse.json({ success: false, error: err.message || "Server error." }, { status: 500 });

@@ -1,5 +1,5 @@
 /**
- * Client-Side Zero-Knowledge End-to-End Encryption (E2EE) Module
+ * Client-Side Encrypted Couple Vault (E2EE) Module
  * 
  * Cryptographic Specifications:
  * - Algorithm: AES-256-GCM (W3C Web Crypto API)
@@ -347,6 +347,261 @@ export async function unwrapVaultKeyWithCode(
   );
 }
 
+// =====================================================================
+// TRANSPORT ENVELOPE V3: FRAGMENT SECRET & PROOF-OF-SECRET ARCHITECTURE
+// =====================================================================
+
+export const CROCKFORD_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+export function encodeCrockfordBase32(bytes: Uint8Array): string {
+  let bits = 0;
+  let value = 0;
+  let output = "";
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 5) {
+      output += CROCKFORD_ALPHABET[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) {
+    output += CROCKFORD_ALPHABET[(value << (5 - bits)) & 31];
+  }
+  return output;
+}
+
+export function decodeCrockfordBase32(str: string): Uint8Array {
+  const normalized = str
+    .toUpperCase()
+    .replace(/[\s-]/g, "")
+    .replace(/[IL]/g, "1")
+    .replace(/O/g, "0");
+  let bits = 0;
+  let value = 0;
+  const bytes: number[] = [];
+  for (let i = 0; i < normalized.length; i++) {
+    const idx = CROCKFORD_ALPHABET.indexOf(normalized[i]);
+    if (idx === -1) throw new Error("Invalid Crockford base32 character: " + normalized[i]);
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
+  }
+  return new Uint8Array(bytes.slice(0, 16));
+}
+
+export function formatSecretDashed(secretB32: string): string {
+  if (secretB32.length < 26) return secretB32;
+  return [
+    secretB32.slice(0, 5),
+    secretB32.slice(5, 10),
+    secretB32.slice(10, 15),
+    secretB32.slice(15, 20),
+    secretB32.slice(20, 25),
+    secretB32.slice(25, 26),
+  ].join("-");
+}
+
+export function encodeInvite(code: string, secretBytes: Uint8Array): string {
+  const cleanCode = code.trim().toUpperCase();
+  const secretB32 = encodeCrockfordBase32(secretBytes);
+  return `${cleanCode}-${formatSecretDashed(secretB32)}`;
+}
+
+export function parseInvite(input: string): { code: string; secret: Uint8Array | null } {
+  if (!input || typeof input !== "string") {
+    return { code: "", secret: null };
+  }
+
+  const trimmed = input.trim();
+
+  // 1. Check if input is a URL
+  if (trimmed.includes("http://") || trimmed.includes("https://") || trimmed.includes("onboarding")) {
+    try {
+      const url = new URL(trimmed.startsWith("http") ? trimmed : `https://pairfect.site${trimmed.startsWith("/") ? "" : "/"}${trimmed}`);
+      const code = (url.searchParams.get("code") || "").trim().toUpperCase();
+      let secretB32 = "";
+
+      // Check hash fragment #s=...
+      if (url.hash) {
+        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+        secretB32 = hashParams.get("s") || "";
+        if (!secretB32) {
+          const match = url.hash.match(/[#&]s=([A-Za-z0-9_-]+)/);
+          if (match) secretB32 = match[1];
+        }
+      }
+
+      // Fallback: check query param ?s=
+      if (!secretB32) {
+        secretB32 = url.searchParams.get("s") || "";
+      }
+
+      let secret: Uint8Array | null = null;
+      if (secretB32) {
+        try {
+          secret = decodeCrockfordBase32(secretB32);
+        } catch {
+          secret = null;
+        }
+      }
+      return { code, secret };
+    } catch {
+      // Not a valid URL, fall through
+    }
+  }
+
+  // 2. Text input: check for DASHED format (e.g. CODE-SECRET)
+  const cleaned = trimmed.replace(/[\s]/g, "");
+
+  if (cleaned.includes("-")) {
+    const parts = cleaned.split("-");
+    const code = parts[0].toUpperCase();
+    const rest = parts.slice(1).join("");
+    if (code.length === 6 && rest.length >= 26) {
+      try {
+        const secret = decodeCrockfordBase32(rest.slice(0, 26));
+        return { code, secret };
+      } catch {
+        return { code, secret: null };
+      }
+    }
+  }
+
+  // 3. Contiguous string: 6 code + 26 secret = 32 chars
+  const noDashes = cleaned.replace(/-/g, "");
+  if (noDashes.length >= 32) {
+    const code = noDashes.slice(0, 6).toUpperCase();
+    try {
+      const secret = decodeCrockfordBase32(noDashes.slice(6, 32));
+      return { code, secret };
+    } catch {
+      return { code, secret: null };
+    }
+  }
+
+  // 4. Bare code (e.g. 6 chars)
+  if (noDashes.length === 6) {
+    return { code: noDashes.toUpperCase(), secret: null };
+  }
+
+  return { code: noDashes.slice(0, 6).toUpperCase(), secret: null };
+}
+
+export function generateInviteSecret(): Uint8Array {
+  const cryptoObj = typeof window !== "undefined" ? window.crypto : globalThis.crypto;
+  return cryptoObj.getRandomValues(new Uint8Array(16));
+}
+
+const encUtf8 = new TextEncoder();
+
+async function hkdfDerive(secret: Uint8Array, salt: Uint8Array, info: string): Promise<Uint8Array> {
+  const cryptoObj = typeof window !== "undefined" ? window.crypto : globalThis.crypto;
+  const base = await cryptoObj.subtle.importKey("raw", secret as unknown as BufferSource, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(
+    await cryptoObj.subtle.deriveBits(
+      { name: "HKDF", hash: "SHA-256", salt: salt as unknown as BufferSource, info: encUtf8.encode(info) as unknown as BufferSource },
+      base,
+      256
+    )
+  );
+}
+
+async function deriveTransportWrapKey(secret: Uint8Array, salt: Uint8Array, pairId: string): Promise<CryptoKey> {
+  const cryptoObj = typeof window !== "undefined" ? window.crypto : globalThis.crypto;
+  const bits = await hkdfDerive(secret, salt, `pairfect_vault_transport:v3:${pairId}`);
+  const k = await cryptoObj.subtle.importKey("raw", bits as unknown as BufferSource, "AES-GCM", false, ["encrypt", "decrypt"]);
+  bits.fill(0);
+  return k;
+}
+
+export async function joinProof(secret: Uint8Array, _pairId?: string | null): Promise<string> {
+  // Salt is fixed because the client cannot know pairId before joining.
+  const p = await hkdfDerive(secret, new Uint8Array(16), "pairfect_join_proof:v3");
+  return bufferToBase64Url(p); // sent to server on join
+}
+
+export async function joinVerifier(proofB64: string): Promise<string> {
+  const cryptoObj = typeof window !== "undefined" ? window.crypto : globalThis.crypto;
+  const rawProof = base64UrlToBuffer(proofB64);
+  const hash = await cryptoObj.subtle.digest("SHA-256", rawProof);
+  return bufferToBase64Url(new Uint8Array(hash));
+}
+
+export interface TransportEnvelopeV3 {
+  v: 3;
+  type: "transport";
+  alg: "AES-256-GCM";
+  kdf: {
+    name: "HKDF-SHA-256";
+    salt: string;
+  };
+  iv: string;
+  ct: string;
+}
+
+export async function wrapVaultKeyV3(
+  vaultKey: CryptoKey,
+  secret: Uint8Array,
+  pairId: string
+): Promise<TransportEnvelopeV3> {
+  const cryptoObj = typeof window !== "undefined" ? window.crypto : globalThis.crypto;
+  const salt = cryptoObj.getRandomValues(new Uint8Array(16));
+  const iv = cryptoObj.getRandomValues(new Uint8Array(12));
+  const raw = new Uint8Array(await cryptoObj.subtle.exportKey("raw", vaultKey));
+  const wrapKey = await deriveTransportWrapKey(secret, salt, pairId);
+  const ct = await cryptoObj.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv,
+      additionalData: encUtf8.encode(`pairfect:transport:v3:${pairId}`) as unknown as BufferSource,
+    },
+    wrapKey,
+    raw as unknown as BufferSource
+  );
+  raw.fill(0);
+  return {
+    v: 3,
+    type: "transport",
+    alg: "AES-256-GCM",
+    kdf: { name: "HKDF-SHA-256", salt: bufferToBase64Url(salt) },
+    iv: bufferToBase64Url(iv),
+    ct: bufferToBase64Url(new Uint8Array(ct)),
+  };
+}
+
+export async function unwrapVaultKeyV3(
+  env: any,
+  secret: Uint8Array,
+  pairId: string
+): Promise<CryptoKey> {
+  const cryptoObj = typeof window !== "undefined" ? window.crypto : globalThis.crypto;
+  const envObj = typeof env === "string" ? JSON.parse(env) : env;
+  const ciphertext = base64UrlToBuffer(envObj.ct || envObj.data);
+  const salt = new Uint8Array(base64UrlToBuffer(envObj.kdf?.salt));
+  const iv = new Uint8Array(base64UrlToBuffer(envObj.iv));
+  const wrapKey = await deriveTransportWrapKey(secret, salt, pairId);
+  const raw = await cryptoObj.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv,
+      additionalData: encUtf8.encode(`pairfect:transport:v3:${pairId}`) as unknown as BufferSource,
+    },
+    wrapKey,
+    ciphertext
+  );
+  return cryptoObj.subtle.importKey(
+    "raw",
+    raw,
+    "AES-GCM",
+    true, // extractable: true enables multi-device sync and local backup
+    ["encrypt", "decrypt"]
+  );
+}
+
 /**
  * Automatically recovers the vault key for an active pair if missing from local IndexedDB
  * Retrieves the encrypted envelope from the server and unwraps it with the invite code.
@@ -379,6 +634,22 @@ export async function autoRecoverVaultKeyIfMissing(pairId: string, inviteCode?: 
         return true;
       }
       return false;
+    }
+
+    if (envelopeObj?.v === 3) {
+      const storedSecret = typeof window !== "undefined"
+        ? (localStorage.getItem(`pairfect_invite_secret_${pairId}`) || sessionStorage.getItem(`pairfect_invite_secret_${pairId}`))
+        : null;
+      if (storedSecret) {
+        try {
+          const secretBytes = decodeCrockfordBase32(storedSecret);
+          const unwrappedKey = await unwrapVaultKeyV3(data.envelope, secretBytes, pairId);
+          await savePairKey(pairId, unwrappedKey);
+          return true;
+        } catch (e) {
+          console.warn("[E2EE] Auto-recovery with stored secret failed:", e);
+        }
+      }
     }
 
     if (inviteCode) {

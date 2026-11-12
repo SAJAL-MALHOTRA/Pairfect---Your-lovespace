@@ -25,6 +25,7 @@ import {
   CalendarHeart,
   CheckCircle2,
   Key,
+  RefreshCw,
 } from "lucide-react";
 import {
   generateRecoveryPhrase,
@@ -43,6 +44,15 @@ import {
   wrapVaultKeyWithCode,
   unwrapVaultKeyWithCode,
   getPairKey,
+  generateInviteSecret,
+  encodeCrockfordBase32,
+  decodeCrockfordBase32,
+  encodeInvite,
+  parseInvite,
+  joinProof,
+  joinVerifier,
+  wrapVaultKeyV3,
+  unwrapVaultKeyV3,
 } from "@/lib/crypto/e2ee";
 import { CoupleBeansMascot } from "@/components/couple-mascot";
 
@@ -73,20 +83,25 @@ export default function OnboardingPage() {
   const [tempDisplayName, setTempDisplayName] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedFullInvite, setCopiedFullInvite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [partnerConnected, setPartnerConnected] = useState(false);
 
   // E2EE states
   const [secretInviteLink, setSecretInviteLink] = useState("");
+  const [fullInviteString, setFullInviteString] = useState("");
   const [detectedFragmentKey, setDetectedFragmentKey] = useState<CryptoKey | null>(null);
+  const [detectedSecretBytes, setDetectedSecretBytes] = useState<Uint8Array | null>(null);
   const [recoveryPhrase, setRecoveryPhrase] = useState("");
   const [copiedPhrase, setCopiedPhrase] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerateSuccess, setRegenerateSuccess] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
 
-  // Handle URL query code and hash fragment #k=... on mount
+  // Handle URL query code and hash fragments (#s=... or legacy #k=...) on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -98,6 +113,22 @@ export default function OnboardingPage() {
     }
 
     const hash = window.location.hash;
+
+    // 1. Check for v3 secret fragment #s=...
+    if (hash.includes("s=")) {
+      const match = hash.match(/[#&]s=([A-Za-z0-9_-]+)/);
+      if (match) {
+        try {
+          const secretBytes = decodeCrockfordBase32(match[1]);
+          setDetectedSecretBytes(secretBytes);
+        } catch (e) {
+          console.warn("[Onboarding] Failed to decode #s= secret:", e);
+        }
+      }
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+
+    // 2. Fallback check for legacy #k=...
     let rawKey = extractKeyFromFragment(hash);
 
     if (rawKey) {
@@ -137,6 +168,17 @@ export default function OnboardingPage() {
       setMode("create");
       setCurrentStep(3);
       setInviteCode(pair.invite_code);
+
+      try {
+        const storedSecretB32 = localStorage.getItem(`pairfect_invite_secret_${pair.id}`);
+        if (storedSecretB32) {
+          const secretBytes = decodeCrockfordBase32(storedSecretB32);
+          const formattedInvite = encodeInvite(pair.invite_code, secretBytes);
+          setFullInviteString(formattedInvite);
+          const origin = typeof window !== "undefined" ? window.location.origin : "https://www.pairfect.site";
+          setSecretInviteLink(`${origin}/onboarding?code=${pair.invite_code}#s=${storedSecretB32}`);
+        }
+      } catch {}
 
       getRecoveryPhraseLocally(pair.id)
         .then((existingPhrase) => {
@@ -260,6 +302,9 @@ export default function OnboardingPage() {
       let lastError: any = null;
 
       const coupleKey = await generateCoupleKey();
+      const secret = generateInviteSecret();
+      const proof = await joinProof(secret, null);
+      const verifier = await joinVerifier(proof);
 
       for (let attempt = 0; attempt < 3 && !createdPair; attempt++) {
         code = generateSecureInviteCode(6);
@@ -270,6 +315,7 @@ export default function OnboardingPage() {
             user_a_id: user!.id,
             invite_code: code,
             status: "pending",
+            invite_verifier: verifier,
           })
           .select()
           .single();
@@ -288,12 +334,18 @@ export default function OnboardingPage() {
       await savePairKey(createdPair.id, coupleKey);
       await savePendingKey(code, coupleKey);
 
+      // Save secret locally so Alice can regenerate or re-display while pending/unacked
       try {
-        const envelopeStr = await wrapVaultKeyWithCode(coupleKey, code, createdPair.id);
+        localStorage.setItem(`pairfect_invite_secret_${createdPair.id}`, encodeCrockfordBase32(secret));
+      } catch {}
+
+      // Upload v3 transport envelope (HKDF-derived AES-GCM with AAD context)
+      try {
+        const envelopeV3 = await wrapVaultKeyV3(coupleKey, secret, createdPair.id);
         await fetch("/api/vault/envelope", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pairId: createdPair.id, envelope: envelopeStr, type: "transport" }),
+          body: JSON.stringify({ pairId: createdPair.id, envelope: envelopeV3, type: "transport" }),
         });
       } catch (envErr) {
         console.warn("[E2EE] Envelope persist warning:", envErr);
@@ -314,9 +366,11 @@ export default function OnboardingPage() {
         console.warn("[Onboarding] Recovery phrase setup warning:", phraseErr);
       }
 
-      const keyFragment = await exportKeyToFragment(coupleKey);
+      const formattedInvite = encodeInvite(code, secret);
+      setFullInviteString(formattedInvite);
+
       const origin = typeof window !== "undefined" ? window.location.origin : "https://www.pairfect.site";
-      const fullSecretLink = `${origin}/onboarding?code=${code}#k=${keyFragment}`;
+      const fullSecretLink = `${origin}/onboarding?code=${code}#s=${encodeCrockfordBase32(secret)}`;
       setSecretInviteLink(fullSecretLink);
 
       setInviteCode(code);
@@ -331,38 +385,113 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleRegenerateInvite = async () => {
+    const pairId = pair?.id;
+    if (!pairId) return;
+    setRegenerating(true);
+    setError(null);
+    try {
+      const coupleKey = await getPairKey(pairId);
+      if (!coupleKey) {
+        throw new Error("Local encryption key not found. Please reload.");
+      }
+      const newSecret = generateInviteSecret();
+      const newProof = await joinProof(newSecret, null);
+      const newVerifier = await joinVerifier(newProof);
+      const newEnvelope = await wrapVaultKeyV3(coupleKey, newSecret, pairId);
+
+      const res = await fetch("/api/auth/regenerate-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pairId,
+          verifier: newVerifier,
+          envelope: newEnvelope,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to regenerate invite.");
+      }
+
+      const newCode = data.code;
+      setInviteCode(newCode);
+
+      try {
+        localStorage.setItem(`pairfect_invite_secret_${pairId}`, encodeCrockfordBase32(newSecret));
+      } catch {}
+
+      const formattedInvite = encodeInvite(newCode, newSecret);
+      setFullInviteString(formattedInvite);
+
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://www.pairfect.site";
+      const fullSecretLink = `${origin}/onboarding?code=${newCode}#s=${encodeCrockfordBase32(newSecret)}`;
+      setSecretInviteLink(fullSecretLink);
+
+      setRegenerateSuccess(true);
+      setTimeout(() => setRegenerateSuccess(false), 3000);
+    } catch (err: any) {
+      console.error("[Onboarding] Regenerate error:", err);
+      setError(err.message || "Failed to regenerate invite.");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   const handleJoinPair = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setLoading(true);
     setError(null);
     try {
-      const cleanedCode = inputCode.trim().toUpperCase();
+      // Parse the input to extract code and secret if pasted as full string or link
+      const parsed = parseInvite(inputCode);
+      const cleanedCode = (parsed.code || inputCode).trim().toUpperCase();
+      const effectiveSecret = parsed.secret || detectedSecretBytes;
 
       if (cleanedCode === "PAIRFECT2026") {
-        setError("PAIRFECT2026 was the early access beta code. Please enter the 6-character invite code from your partner's screen (e.g. 6VAFPR).");
+        setError("PAIRFECT2026 was the early access beta code. Please enter the invite code or link from your partner's screen.");
         setLoading(false);
         return;
+      }
+
+      if (!effectiveSecret && !detectedFragmentKey) {
+        // If partner provided no secret and no legacy fragment key, prompt them without calling server
+        setError("Please ask your partner to send the full invite string or invite link. The invite includes an encryption secret needed to access your couple vault.");
+        setLoading(false);
+        return;
+      }
+
+      let proof: string | null = null;
+      if (effectiveSecret) {
+        proof = await joinProof(effectiveSecret);
       }
 
       const res = await fetch("/api/auth/join-pair", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: cleanedCode }),
+        body: JSON.stringify({ code: cleanedCode, proof }),
       });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Could not find a pending pair with that code.");
+        throw new Error(data.error === "invalid_or_expired_invite" ? "Invalid or expired invite. Please verify the code with your partner." : (data.error || "Could not find a pending pair with that code."));
       }
 
       const pairId = data.pairId;
       if (detectedFragmentKey) {
         await savePairKey(pairId, detectedFragmentKey);
-      } else if (data.vaultEnvelope) {
+      } else if (data.vaultEnvelope && effectiveSecret) {
         try {
-          const unwrappedKey = await unwrapVaultKeyWithCode(data.vaultEnvelope, cleanedCode, pairId);
+          const envObj = typeof data.vaultEnvelope === "string" ? JSON.parse(data.vaultEnvelope) : data.vaultEnvelope;
+          let unwrappedKey: CryptoKey;
+          if (envObj.v === 3) {
+            unwrappedKey = await unwrapVaultKeyV3(data.vaultEnvelope, effectiveSecret, pairId);
+          } else {
+            unwrappedKey = await unwrapVaultKeyWithCode(data.vaultEnvelope, cleanedCode, pairId);
+          }
           await savePairKey(pairId, unwrappedKey);
 
           // Confirm key unwrap to server to purge temporary transport envelope
@@ -377,7 +506,9 @@ export default function OnboardingPage() {
           }
         } catch (unwrapErr) {
           console.warn("[E2EE] Auto-unwrap error:", unwrapErr);
-          await promotePendingKey(cleanedCode, pairId);
+          setError("That invite does not match the room encryption secret. Please ask your partner to resend the invite.");
+          setLoading(false);
+          return;
         }
       } else {
         await promotePendingKey(cleanedCode, pairId);
@@ -626,7 +757,7 @@ export default function OnboardingPage() {
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
               </button>
-              <span className="text-[11px] font-mono text-stone-400">Zero-Knowledge E2EE</span>
+              <span className="text-[11px] font-mono text-stone-400">Client-Side Encrypted Couple Vault</span>
             </div>
           </div>
         )}
@@ -641,22 +772,63 @@ export default function OnboardingPage() {
             </div>
 
             <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 tracking-tight">
-              Send this code to your partner
+              Send this invite to your partner
             </h2>
             <p className="mt-1.5 text-xs sm:text-sm text-stone-600 font-sans leading-relaxed">
-              Once they enter it, your private spaces will be connected instantly.
+              Once they enter the code or tap the link, your private spaces connect with end-to-end encryption.
             </p>
 
             {/* Dashed Code Box */}
             <div className="my-5 p-4 sm:p-5 rounded-2xl border-2 border-dashed border-stone-300 bg-[#FFFDFB]">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-400 mb-1">
+                Room Lookup Code
+              </div>
               <span className="font-mono text-3xl sm:text-4xl font-black tracking-[0.25em] text-stone-900 select-all block">
                 {formattedCode}
               </span>
               <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md">
                 <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                <span>End-to-End Encrypted</span>
+                <span>Client-Side Encrypted Couple Vault</span>
               </div>
             </div>
+
+            {/* Full Invite String Display */}
+            {fullInviteString && (
+              <div className="text-left bg-[#FFFDFB] border border-stone-200 rounded-2xl p-4 mb-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-500">
+                    Combined Invite String (Code + Secret)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(fullInviteString);
+                      setCopiedFullInvite(true);
+                      setTimeout(() => setCopiedFullInvite(false), 2000);
+                    }}
+                    className="text-[11px] font-mono text-stone-600 hover:text-stone-900 inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedFullInvite ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-700 font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Copy string</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="font-mono text-xs text-stone-800 break-all bg-stone-50 p-2.5 rounded-lg border border-stone-200 select-all leading-relaxed">
+                  {fullInviteString}
+                </div>
+                <p className="text-[10px] text-stone-500 leading-normal">
+                  Your partner can paste this full string or use the link below. The secret stays entirely in their browser.
+                </p>
+              </div>
+            )}
 
             {/* Primary Action Button: Send to my partner */}
             <div className="space-y-3 mb-6">
@@ -666,7 +838,7 @@ export default function OnboardingPage() {
                 className="w-full bg-stone-900 hover:bg-stone-800 text-white py-3.5 px-6 rounded-full font-heading font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Share2 className="w-4 h-4" />
-                <span>Send to my partner</span>
+                <span>Send invite link</span>
               </button>
 
               {/* Dual pills: Copy code / Copy invite link */}
@@ -702,9 +874,22 @@ export default function OnboardingPage() {
                   ) : (
                     <>
                       <Share2 className="w-3.5 h-3.5 text-stone-500" />
-                      <span>Copy invite link</span>
+                      <span>Copy link</span>
                     </>
                   )}
+                </button>
+              </div>
+
+              {/* Regenerate invite action */}
+              <div className="pt-2 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleRegenerateInvite}
+                  disabled={regenerating}
+                  className="text-xs font-mono text-stone-500 hover:text-stone-900 inline-flex items-center gap-1.5 transition-colors cursor-pointer py-1.5 px-3 rounded-lg hover:bg-stone-100"
+                >
+                  {regenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-500" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  <span>{regenerateSuccess ? "Invite regenerated!" : "Regenerate code & secret"}</span>
                 </button>
               </div>
             </div>
@@ -829,10 +1014,10 @@ export default function OnboardingPage() {
                 Step 3 of 4
               </span>
               <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 tracking-tight">
-                Enter partner&apos;s code
+                Enter partner&apos;s invite
               </h2>
               <p className="mt-1.5 text-xs sm:text-sm text-stone-600 font-sans leading-relaxed">
-                Enter the unique 6-character code from your partner&apos;s screen to unlock your shared space.
+                Paste the invite string or link from your partner to unlock your shared space.
               </p>
             </div>
 
@@ -841,22 +1026,29 @@ export default function OnboardingPage() {
                 <input
                   type="text"
                   required
-                  maxLength={6}
+                  maxLength={120}
                   autoFocus
-                  placeholder="e.g. 841557"
+                  placeholder="e.g. K7M2QX-8F3JD... or paste link"
                   value={inputCode}
                   onChange={(e) => {
-                    setInputCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+                    setInputCode(e.target.value);
                     if (error) setError(null);
                   }}
-                  className="w-full text-center uppercase tracking-[0.25em] font-mono text-3xl py-4 border-2 border-stone-800 rounded-2xl bg-[#FFFDFB] text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-inner"
+                  className="w-full text-center tracking-wider font-mono text-base sm:text-lg py-3.5 px-3 border-2 border-stone-800 rounded-2xl bg-[#FFFDFB] text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-inner break-all"
                 />
               </div>
+
+              {detectedSecretBytes && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Client-Side Encrypted Couple Vault secret verified from link!</span>
+                </div>
+              )}
 
               {detectedFragmentKey && (
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <span>Zero-knowledge client-side encryption key verified!</span>
+                  <span>Client-Side Encrypted Couple Vault key verified!</span>
                 </div>
               )}
 
@@ -945,7 +1137,7 @@ export default function OnboardingPage() {
               <div className="flex items-start gap-2.5 text-xs text-stone-800">
                 <Check className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <strong className="font-semibold text-stone-900">Whisper FM Radio:</strong> Private retro audio frequencies with analog tuning and zero-knowledge encryption.
+                  <strong className="font-semibold text-stone-900">Whisper FM Radio:</strong> Private retro audio frequencies with analog tuning and client-side vault encryption.
                 </div>
               </div>
 

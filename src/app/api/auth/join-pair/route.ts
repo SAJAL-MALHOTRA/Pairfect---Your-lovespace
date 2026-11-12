@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import crypto from "crypto";
 
 // Rate limiting: 5 join attempts per minute per user, 10 per minute per IP
 const userJoinRateLimitMap = new Map<string, number[]>();
@@ -101,7 +102,39 @@ export async function POST(req: Request) {
 
     const adminSupabase = createAdminClient();
 
-    // 1. Find pending pair by invite code using Admin client
+    // 0. Idempotent check: if caller is already user_b of an active pair, return transport envelope
+    const { data: existingActivePair } = await adminSupabase
+      .from("pairs")
+      .select("*")
+      .eq("user_b_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (existingActivePair) {
+      const resExistingTransport = await (adminSupabase.storage.from("memories") as any)
+        .download(`${existingActivePair.id}/transport-envelope.json`, { cacheNonce: Date.now() }, { cache: "no-store" });
+      if (resExistingTransport.data && !resExistingTransport.error) {
+        const vaultEnvelope = await resExistingTransport.data.text();
+        return NextResponse.json(
+          {
+            success: true,
+            pairId: existingActivePair.id,
+            vaultEnvelope,
+            message: "Retrieved transport envelope for existing active pair.",
+          },
+          { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+        );
+      }
+    }
+
+    if (code === "PAIRFECT2026") {
+      return NextResponse.json({
+        success: false,
+        error: "PAIRFECT2026 was the early access beta code, not your partner's invite code! One partner must click 'Create a new pair' to generate an invite, and the other partner enters it here.",
+      }, { status: 400 });
+    }
+
+    // 1. Look up pending pair by code
     const { data: targetPair, error: fetchErr } = await adminSupabase
       .from("pairs")
       .select("*")
@@ -114,29 +147,53 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Database error checking invite code." }, { status: 500 });
     }
 
-    if (code === "PAIRFECT2026") {
-      return NextResponse.json({
-        success: false,
-        error: `${code} was the early access beta code, not your partner's invite code! One partner must click "Create a new pair" to generate a 6-character code (e.g. 6VAFPR), and the other partner enters that code here.`,
-      }, { status: 400 });
-    }
-
-    if (!targetPair) {
-      return NextResponse.json({
-        success: false,
-        error: "Invalid invite code or pair is no longer joinable. Make sure your partner clicked 'Create a new pair' and shared their 6-character code.",
-      }, { status: 404 });
-    }
-
     // Check code expiration: pending invite codes expire after 48 hours
-    if (targetPair.created_at) {
-      const codeAge = Date.now() - new Date(targetPair.created_at).getTime();
-      if (codeAge > FORTY_EIGHT_HOURS_MS) {
-        return NextResponse.json({
-          success: false,
-          error: "This invite code has expired (valid for 48 hours). Please have your partner cancel it and generate a new code.",
-        }, { status: 410 });
+    const issueTime = targetPair?.invite_issued_at || targetPair?.created_at;
+    const isExpired = issueTime ? (Date.now() - new Date(issueTime).getTime() > FORTY_EIGHT_HOURS_MS) : false;
+
+    // 2. Verify proof against pair.invite_verifier
+    const LEGACY_TRANSPORT_UNTIL = process.env.LEGACY_TRANSPORT_UNTIL
+      ? parseInt(process.env.LEGACY_TRANSPORT_UNTIL, 10)
+      : (Date.now() + 48 * 60 * 60 * 1000);
+
+    const proof = body.proof;
+    let isProofValid = false;
+
+    if (targetPair && !isExpired) {
+      if (targetPair.invite_verifier) {
+        if (proof && typeof proof === "string") {
+          try {
+            const rawProof = Buffer.from(proof.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+            const computedVerifier = crypto
+              .createHash("sha256")
+              .update(rawProof)
+              .digest("base64")
+              .replace(/\+/g, "-")
+              .replace(/\//g, "_")
+              .replace(/=+$/, "");
+
+            const bufComputed = Buffer.from(computedVerifier, "base64url");
+            const bufExpected = Buffer.from(targetPair.invite_verifier, "base64url");
+            if (bufComputed.length === bufExpected.length && crypto.timingSafeEqual(bufComputed, bufExpected)) {
+              isProofValid = true;
+            }
+          } catch {
+            isProofValid = false;
+          }
+        }
+      } else {
+        // Pre-v47 legacy pending pair without invite_verifier
+        if (Date.now() < LEGACY_TRANSPORT_UNTIL) {
+          isProofValid = true;
+        }
       }
+    }
+
+    if (!targetPair || isExpired || !isProofValid) {
+      return NextResponse.json(
+        { success: false, error: "invalid_or_expired_invite" },
+        { status: 404, headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      );
     }
 
     // Prevent user from pairing with themselves
@@ -147,7 +204,7 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // 2. Clean up any unjoined pending pairs created by the joining user
+    // 3. Clean up any unjoined pending pairs created by the joining user
     await adminSupabase
       .from("pairs")
       .delete()
@@ -203,12 +260,15 @@ export async function POST(req: Request) {
       console.warn("[Join Pair API] No transport envelope found:", e);
     }
 
-    return NextResponse.json({
-      success: true,
-      pairId: targetPair.id,
-      vaultEnvelope,
-      message: "Pair successfully activated!",
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        pairId: targetPair.id,
+        vaultEnvelope,
+        message: "Pair successfully activated!",
+      },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (err: any) {
     console.error("[Join Pair API] Error:", err);
     return NextResponse.json({ success: false, error: err.message || "Server error joining pair." }, { status: 500 });
