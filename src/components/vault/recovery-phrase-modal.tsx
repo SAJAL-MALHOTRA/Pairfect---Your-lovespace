@@ -4,8 +4,6 @@ import React, { useState, useEffect } from "react";
 import {
   generateRecoveryPhrase,
   validateRecoveryPhrase,
-  saveRecoveryPhraseLocally,
-  getRecoveryPhraseLocally,
   wrapVaultKeyWithPhrase,
   unwrapVaultKeyWithPhrase,
 } from "@/lib/crypto/recovery-phrase";
@@ -55,40 +53,53 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
   const [restoreSuccess, setRestoreSuccess] = useState<boolean>(false);
   const [isRestoring, setIsRestoring] = useState<boolean>(false);
 
-  // Load or generate phrase for the current couple
+  // Check server recovery envelope status when modal opens
   useEffect(() => {
     if (!isOpen || !pairId) return;
 
-    async function loadOrCreatePhrase() {
-      // 1. Check local IndexedDB cache first
-      let currentPhrase = await getRecoveryPhraseLocally(pairId!);
-      if (!currentPhrase) {
-        currentPhrase = await generateRecoveryPhrase();
-        await saveRecoveryPhraseLocally(pairId!, currentPhrase);
-      }
-      setPhrase(currentPhrase);
-
-      // 2. Wrap vault key and update server envelope to 128-bit recovery envelope
+    async function checkEnvelopeStatus() {
       try {
         setIsSyncingEnvelope(true);
-        const vaultKey = await getPairKey(pairId!);
-        if (vaultKey) {
-          const recoveryEnvelopeStr = await wrapVaultKeyWithPhrase(vaultKey, currentPhrase, pairId!);
-          await fetch("/api/vault/envelope", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pairId, envelope: recoveryEnvelopeStr, type: "recovery" }),
-          });
+        const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pairId!)}&type=recovery`);
+        const envData = await envRes.json();
+        if (envData.success && !envData.envelope) {
+          setServerEnvelopeDeleted(true);
         }
       } catch (err) {
-        console.warn("[Recovery Modal] Error syncing recovery envelope:", err);
+        console.warn("[Recovery Modal] Error checking recovery envelope:", err);
       } finally {
         setIsSyncingEnvelope(false);
       }
     }
 
-    loadOrCreatePhrase();
+    checkEnvelopeStatus();
   }, [isOpen, pairId]);
+
+  const handleGenerateNewPhrase = async () => {
+    if (!pairId) return;
+    setIsSyncingEnvelope(true);
+    setPurgeError(null);
+    try {
+      const vaultKey = await getPairKey(pairId);
+      if (!vaultKey) {
+        setPurgeError("No active couple key found on this device to backup.");
+        return;
+      }
+      const newPhrase = await generateRecoveryPhrase();
+      setPhrase(newPhrase);
+      const recoveryEnvelopeStr = await wrapVaultKeyWithPhrase(vaultKey, newPhrase, pairId);
+      await fetch("/api/vault/envelope", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pairId, envelope: recoveryEnvelopeStr, type: "recovery" }),
+      });
+      setServerEnvelopeDeleted(false);
+    } catch (err: any) {
+      setPurgeError(err?.message || "Failed to generate new recovery phrase.");
+    } finally {
+      setIsSyncingEnvelope(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -227,7 +238,6 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
       // 3. Unwrap vault key using the recovery phrase
       const recoveredKey = await unwrapVaultKeyWithPhrase(envData.envelope, restoreInput, pairId);
       await savePairKey(pairId, recoveredKey);
-      await saveRecoveryPhraseLocally(pairId, restoreInput.trim().toLowerCase());
 
       setRestoreSuccess(true);
     } catch (err: any) {
@@ -303,74 +313,93 @@ export function RecoveryPhraseModal({ isOpen, onClose, pairId }: RecoveryPhraseM
               </div>
             </div>
 
-            {/* Word Chips Grid */}
-            <div className="relative p-4 rounded-2xl bg-stone-50 border border-stone-200">
-              <div className="grid grid-cols-3 gap-2">
-                {words.map((word, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-white border border-stone-200 text-xs font-mono shadow-2xs"
-                  >
-                    <span className="text-[10px] text-stone-400 select-none">
-                      {idx + 1}.
-                    </span>
-                    <span
-                      className={`font-medium transition-all ${
-                        isMasked ? "blur-xs select-none" : "text-stone-800"
-                      }`}
-                    >
-                      {word}
-                    </span>
+            {words.length > 0 ? (
+              <>
+                {/* Word Chips Grid */}
+                <div className="relative p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                  <div className="grid grid-cols-3 gap-2">
+                    {words.map((word, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-white border border-stone-200 text-xs font-mono shadow-2xs"
+                      >
+                        <span className="text-[10px] text-stone-400 select-none">
+                          {idx + 1}.
+                        </span>
+                        <span
+                          className={`font-medium transition-all ${
+                            isMasked ? "blur-xs select-none" : "text-stone-800"
+                          }`}
+                        >
+                          {word}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Mask overlay button */}
-              {isMasked && (
-                <div className="absolute inset-0 flex items-center justify-center bg-stone-50/60 backdrop-blur-[1px] rounded-2xl">
+                  {/* Mask overlay button */}
+                  {isMasked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-stone-50/60 backdrop-blur-[1px] rounded-2xl">
+                      <button
+                        type="button"
+                        onClick={() => setIsMasked(false)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-stone-300 text-stone-700 text-xs font-mono font-medium shadow-xs hover:bg-stone-50 transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-stone-500" />
+                        <span>Click to reveal words</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions: Reveal toggle, Copy, Download */}
+                <div className="flex items-center justify-between gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setIsMasked(false)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-stone-300 text-stone-700 text-xs font-mono font-medium shadow-xs hover:bg-stone-50 transition-colors"
+                    onClick={() => setIsMasked(!isMasked)}
+                    className="inline-flex items-center gap-1.5 text-xs font-mono text-stone-600 hover:text-stone-900 py-1.5 px-3 rounded-lg hover:bg-stone-100 transition-colors"
                   >
-                    <Eye className="w-3.5 h-3.5 text-stone-500" />
-                    <span>Click to reveal words</span>
+                    {isMasked ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    <span>{isMasked ? "Reveal" : "Hide"}</span>
                   </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownload}
+                      className="inline-flex items-center gap-1.5 text-xs font-mono text-stone-600 hover:text-stone-900 py-1.5 px-3 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5 text-stone-500" />
+                      <span>Download .txt</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="inline-flex items-center gap-1.5 text-xs font-mono font-medium bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3.5 rounded-lg shadow-2xs transition-colors"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copied ? "Copied" : "Copy Phrase"}</span>
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            {/* Actions: Reveal toggle, Copy, Download */}
-            <div className="flex items-center justify-between gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setIsMasked(!isMasked)}
-                className="inline-flex items-center gap-1.5 text-xs font-mono text-stone-600 hover:text-stone-900 py-1.5 px-3 rounded-lg hover:bg-stone-100 transition-colors"
-              >
-                {isMasked ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                <span>{isMasked ? "Reveal" : "Hide"}</span>
-              </button>
-
-              <div className="flex items-center gap-2">
+              </>
+            ) : (
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-3">
+                <p className="text-xs text-stone-600">
+                  Your 12-word recovery phrase was presented during onboarding. For maximum security, Pairfect never stores recovery phrases in browser storage or in the cloud.
+                </p>
                 <button
                   type="button"
-                  onClick={handleDownload}
-                  className="inline-flex items-center gap-1.5 text-xs font-mono text-stone-600 hover:text-stone-900 py-1.5 px-3 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
+                  onClick={handleGenerateNewPhrase}
+                  disabled={isSyncingEnvelope}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-mono font-medium shadow-xs transition-colors"
                 >
-                  <Download className="w-3.5 h-3.5 text-stone-500" />
-                  <span>Download .txt</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 text-xs font-mono font-medium bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3.5 rounded-lg shadow-2xs transition-colors"
-                >
-                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied ? "Copied" : "Copy Phrase"}</span>
+                  <Key className="w-3.5 h-3.5" />
+                  <span>{isSyncingEnvelope ? "Generating..." : "Generate New Recovery Phrase"}</span>
                 </button>
               </div>
-            </div>
+            )}
 
             {/* Confirmation checkbox */}
             <div className="pt-2 border-t border-stone-100">

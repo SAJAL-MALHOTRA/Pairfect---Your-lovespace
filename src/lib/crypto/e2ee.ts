@@ -674,23 +674,37 @@ export async function autoRecoverVaultKeyIfMissing(pairId: string, inviteCode?: 
     }
 
     if (envelopeObj?.type === "bip39_recovery_envelope" || envelopeObj?.v === 2) {
-      const { getRecoveryPhraseLocally, unwrapVaultKeyWithPhrase } = await import("@/lib/crypto/recovery-phrase");
-      const phrase = await getRecoveryPhraseLocally(pairId);
-      if (phrase) {
-        const unwrapped = await unwrapVaultKeyWithPhrase(data.envelope, phrase, pairId);
-        await savePairKey(pairId, unwrapped);
-        return true;
-      }
+      // 12-word recovery phrases are never cached locally to prevent local origin extraction.
+      // Device recovery requires manual user entry via the recovery module or settings modal.
       return false;
     }
 
     if (envelopeObj?.v === 3) {
-      const storedSecret = typeof window !== "undefined"
-        ? (localStorage.getItem(`pairfect_invite_secret_${pairId}`) || sessionStorage.getItem(`pairfect_invite_secret_${pairId}`))
-        : null;
-      if (storedSecret) {
+      let storedSecretB32: string | null = null;
+      if (typeof window !== "undefined") {
+        const raw =
+          localStorage.getItem(`pairfect_invite_secret_${pairId}`) ||
+          sessionStorage.getItem(`pairfect_invite_secret_${pairId}`);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && parsed.secret) {
+              if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+                localStorage.removeItem(`pairfect_invite_secret_${pairId}`);
+              } else {
+                storedSecretB32 = parsed.secret;
+              }
+            } else {
+              storedSecretB32 = raw;
+            }
+          } catch {
+            storedSecretB32 = raw;
+          }
+        }
+      }
+      if (storedSecretB32) {
         try {
-          const secretBytes = decodeCrockfordBase32(storedSecret);
+          const secretBytes = decodeCrockfordBase32(storedSecretB32);
           const unwrappedKey = await unwrapVaultKeyV3(data.envelope, secretBytes, pairId);
           await savePairKey(pairId, unwrappedKey);
           return true;

@@ -182,8 +182,12 @@ export async function POST(req: Request) {
           }
         }
       } else {
-        // Pre-v47 legacy pending pair without invite_verifier
-        if (Date.now() < LEGACY_TRANSPORT_UNTIL) {
+        // Pre-v47 legacy pending pair without invite_verifier.
+        // Only allow code-only join for pairs whose invite_issued_at is before migration v47 was applied.
+        // Newly created pairs post-v47 are strictly required to supply a valid fragment secret proof.
+        const V47_CUTOFF_MS = Date.parse("2026-11-12T13:22:22Z");
+        const issuedMs = issueTime ? new Date(issueTime).getTime() : 0;
+        if (issuedMs > 0 && issuedMs < V47_CUTOFF_MS && Date.now() < LEGACY_TRANSPORT_UNTIL) {
           isProofValid = true;
         }
       }

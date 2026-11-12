@@ -29,8 +29,6 @@ import {
 } from "lucide-react";
 import {
   generateRecoveryPhrase,
-  saveRecoveryPhraseLocally,
-  getRecoveryPhraseLocally,
   wrapVaultKeyWithPhrase,
 } from "@/lib/crypto/recovery-phrase";
 import {
@@ -74,6 +72,70 @@ function generateSecureInviteCode(length = 6): string {
   return code;
 }
 
+const INVITE_SECRET_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
+
+function saveStoredInviteSecret(pairId: string, secretB32: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const payload = JSON.stringify({
+      secret: secretB32,
+      expiresAt: Date.now() + INVITE_SECRET_TTL_MS,
+    });
+    localStorage.setItem(`pairfect_invite_secret_${pairId}`, payload);
+  } catch {}
+}
+
+function getStoredInviteSecret(pairId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(`pairfect_invite_secret_${pairId}`);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && parsed.secret) {
+        if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+          localStorage.removeItem(`pairfect_invite_secret_${pairId}`);
+          return null;
+        }
+        return parsed.secret;
+      }
+    } catch {
+      return raw;
+    }
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredInviteSecret(pairId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(`pairfect_invite_secret_${pairId}`);
+  } catch {}
+}
+
+function pruneExpiredInviteSecrets(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const now = Date.now();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("pairfect_invite_secret_")) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.expiresAt && now > parsed.expiresAt) {
+              localStorage.removeItem(key);
+            }
+          }
+        } catch {}
+      }
+    }
+  } catch {}
+}
+
 export default function OnboardingPage() {
   const { user, profile, pair, signOut, refreshSession } = useAuth();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
@@ -100,6 +162,10 @@ export default function OnboardingPage() {
 
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    pruneExpiredInviteSecrets();
+  }, []);
 
   // Handle URL query code and hash fragments (#s=... or legacy #k=...) on mount
   useEffect(() => {
@@ -171,7 +237,7 @@ export default function OnboardingPage() {
       setInviteCode(pair.invite_code);
 
       try {
-        const storedSecretB32 = localStorage.getItem(`pairfect_invite_secret_${pair.id}`);
+        const storedSecretB32 = getStoredInviteSecret(pair.id);
         if (storedSecretB32) {
           const secretBytes = decodeCrockfordBase32(storedSecretB32);
           const formattedInvite = encodeInvite(pair.invite_code, secretBytes);
@@ -181,12 +247,6 @@ export default function OnboardingPage() {
         }
       } catch {}
 
-      getRecoveryPhraseLocally(pair.id)
-        .then((existingPhrase) => {
-          if (existingPhrase) setRecoveryPhrase(existingPhrase);
-        })
-        .catch(() => {});
-
       getPairKey(pair.id)
         .then(async (existingKey) => {
           let key = existingKey;
@@ -195,7 +255,7 @@ export default function OnboardingPage() {
             await savePairKey(pair.id, key);
             await savePendingKey(pair.invite_code, key);
           }
-          const storedSecretB32 = localStorage.getItem(`pairfect_invite_secret_${pair.id}`);
+          const storedSecretB32 = getStoredInviteSecret(pair.id);
           if (storedSecretB32) {
             try {
               const secretBytes = decodeCrockfordBase32(storedSecretB32);
@@ -228,9 +288,7 @@ export default function OnboardingPage() {
           (payload: any) => {
             const updatedPair = payload.new as any;
             if (updatedPair.status === "active") {
-              try {
-                localStorage.removeItem(`pairfect_invite_secret_${pair.id}`);
-              } catch {}
+              clearStoredInviteSecret(pair.id);
               setPartnerConnected(true);
               refreshSession(true).then(() => {
                 setTimeout(() => setCurrentStep(4), 1200);
@@ -251,9 +309,7 @@ export default function OnboardingPage() {
 
           if (updatedPair?.status === "active") {
             clearInterval(interval);
-            try {
-              localStorage.removeItem(`pairfect_invite_secret_${pair.id}`);
-            } catch {}
+            clearStoredInviteSecret(pair.id);
             setPartnerConnected(true);
             await refreshSession(true);
             setTimeout(() => setCurrentStep(4), 1200);
@@ -344,10 +400,8 @@ export default function OnboardingPage() {
       await savePairKey(createdPair.id, coupleKey);
       await savePendingKey(code, coupleKey);
 
-      // Save secret locally so Alice can regenerate or re-display while pending/unacked
-      try {
-        localStorage.setItem(`pairfect_invite_secret_${createdPair.id}`, encodeCrockfordBase32(secret));
-      } catch {}
+      // Save secret locally with 48h TTL so Alice can regenerate or re-display while pending/unacked
+      saveStoredInviteSecret(createdPair.id, encodeCrockfordBase32(secret));
 
       // Upload v3 transport envelope (HKDF-derived AES-GCM with AAD context)
       try {
@@ -362,10 +416,10 @@ export default function OnboardingPage() {
       }
 
       // Generate 12-word recovery phrase for permanent multi-device vault backup
+      // The recovery phrase is held in memory for user display and never persisted to local storage
       try {
         const phrase = await generateRecoveryPhrase();
         setRecoveryPhrase(phrase);
-        await saveRecoveryPhraseLocally(createdPair.id, phrase);
         const recoveryEnvelopeStr = await wrapVaultKeyWithPhrase(coupleKey, phrase, createdPair.id);
         await fetch("/api/vault/envelope", {
           method: "POST",
@@ -427,9 +481,7 @@ export default function OnboardingPage() {
       const newCode = data.code;
       setInviteCode(newCode);
 
-      try {
-        localStorage.setItem(`pairfect_invite_secret_${pairId}`, encodeCrockfordBase32(newSecret));
-      } catch {}
+      saveStoredInviteSecret(pairId, encodeCrockfordBase32(newSecret));
 
       const formattedInvite = encodeInvite(newCode, newSecret);
       setFullInviteString(formattedInvite);
@@ -582,7 +634,7 @@ export default function OnboardingPage() {
     if (pair && pair.status === "pending" && pair.user_a_id === user?.id) {
       setLoading(true);
       try {
-        localStorage.removeItem(`pairfect_invite_secret_${pair.id}`);
+        clearStoredInviteSecret(pair.id);
         await supabase.from("pairs").delete().eq("id", pair.id);
         await refreshSession(false);
       } catch (e) {

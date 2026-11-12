@@ -303,107 +303,30 @@ export async function unwrapVaultKeyWithPhrase(
 }
 
 /**
- * Local IndexedDB helpers for offline recovery phrase cache (optional user convenience)
+ * Security: The 12-word recovery phrase is generated and shown to the user once.
+ * To ensure zero client persistence, the recovery phrase is NEVER saved in IndexedDB,
+ * localStorage, server request bodies, logs, or analytics.
+ * Any legacy offline recovery phrase database is deleted.
  */
-const RECOVERY_DB_NAME = "pairfect_recovery";
-const PHRASE_STORE = "recovery_phrases";
-
-function openPhraseDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === "undefined" || !window.indexedDB) {
-      return reject(new Error("IndexedDB unavailable"));
-    }
-    const request = window.indexedDB.open(RECOVERY_DB_NAME, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(PHRASE_STORE)) {
-        db.createObjectStore(PHRASE_STORE);
-      }
-    };
-    request.onsuccess = () => {
-      const db = request.result;
-      db.onversionchange = () => {
-        try {
-          db.close();
-        } catch {}
-      };
-      resolve(db);
-    };
-    request.onerror = () => reject(request.error);
-  });
-}
-
-export async function saveRecoveryPhraseLocally(pairId: string, phrase: string): Promise<void> {
-  try {
-    const db = await openPhraseDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(PHRASE_STORE, "readwrite");
-      const store = tx.objectStore(PHRASE_STORE);
-      const req = store.put(phrase, `phrase:${pairId}`);
-      req.onsuccess = () => {
-        try {
-          db.close();
-        } catch {}
-        resolve();
-      };
-      req.onerror = () => {
-        try {
-          db.close();
-        } catch {}
-        reject(req.error);
-      };
-    });
-  } catch (err) {
-    console.warn("[Recovery] Could not save phrase to IndexedDB:", err);
+export async function purgeRecoveryPhraseCache(): Promise<void> {
+  if (typeof window !== "undefined" && window.indexedDB) {
+    try {
+      window.indexedDB.deleteDatabase("pairfect_recovery");
+    } catch {}
   }
 }
 
-export async function getRecoveryPhraseLocally(pairId: string): Promise<string | null> {
-  try {
-    const db = await openPhraseDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(PHRASE_STORE, "readonly");
-      const store = tx.objectStore(PHRASE_STORE);
-      const req = store.get(`phrase:${pairId}`);
-      req.onsuccess = () => {
-        try {
-          db.close();
-        } catch {}
-        resolve(req.result || null);
-      };
-      req.onerror = () => {
-        try {
-          db.close();
-        } catch {}
-        reject(req.error);
-      };
-    });
-  } catch {
-    return null;
-  }
+export async function saveRecoveryPhraseLocally(_pairId: string, _phrase: string): Promise<void> {
+  // Deprecated: Recovery phrase is never persisted to client storage.
+  // Purge any legacy cache that may exist from previous versions.
+  await purgeRecoveryPhraseCache();
 }
 
-export async function deleteRecoveryPhraseLocally(pairId: string): Promise<void> {
-  try {
-    const db = await openPhraseDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(PHRASE_STORE, "readwrite");
-      const store = tx.objectStore(PHRASE_STORE);
-      const req = store.delete(`phrase:${pairId}`);
-      req.onsuccess = () => {
-        try {
-          db.close();
-        } catch {}
-        resolve();
-      };
-      req.onerror = () => {
-        try {
-          db.close();
-        } catch {}
-        reject(req.error);
-      };
-    });
-  } catch (err) {
-    console.warn("[Recovery] Could not delete phrase from IndexedDB:", err);
-  }
+export async function getRecoveryPhraseLocally(_pairId: string): Promise<string | null> {
+  // Deprecated: Recovery phrase is never retained in client storage.
+  return null;
+}
+
+export async function deleteRecoveryPhraseLocally(_pairId: string): Promise<void> {
+  await purgeRecoveryPhraseCache();
 }
