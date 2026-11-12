@@ -185,10 +185,10 @@ async function runBrowserTest() {
     await pageAlice.click('button:has-text("Create our space")');
     pass("Alice clicked 'Create our space'");
 
-    // Step 3: Alice reaches Space Ready screen
-    console.log("\n3c. Alice reaches Step 3: Invite Screen & Recovery Phrase...");
+    // Step 3: Alice lands on Word Re-entry Confirmation Gate
+    console.log("\n3c. Alice reaches Step 3: Word Re-entry Gate...");
     try {
-      await pageAlice.waitForSelector('text="Send this invite to your partner"', { timeout: 15000 });
+      await pageAlice.waitForSelector('text="Keep your couple vault safe"', { timeout: 15000 });
     } catch (e) {
       console.log("Alice Current URL:", pageAlice.url());
       const bodyText = await pageAlice.innerText("body");
@@ -196,7 +196,40 @@ async function runBrowserTest() {
       await pageAlice.screenshot({ path: "alice_timeout.png" });
       throw e;
     }
-    pass("Alice reached Step 3 (Space Ready screen)");
+    pass("Alice reached Step 3 (Word Re-entry Confirmation Gate)");
+
+    // Extract 12-word recovery phrase from grid
+    const wordElements = await pageAlice.$$('div[class*="bg-white border"] span[class*="font-semibold"]');
+    const recoveryWords = [];
+    for (const el of wordElements) {
+      const text = (await el.textContent()) || "";
+      if (text.trim()) recoveryWords.push(text.trim());
+    }
+    assert.strictEqual(recoveryWords.length, 12, "Must display exactly 12 recovery phrase words");
+    const recoveryPhrase = recoveryWords.join(" ");
+    pass(`Extracted 12-word recovery phrase: ${recoveryPhrase.slice(0, 15)}... (12 words total)`);
+
+    // Extract word positions required by the verification gate
+    const posLabels = await pageAlice.$$('label:has-text("Word #")');
+    assert.strictEqual(posLabels.length, 2, "Gate must require exactly 2 verification words");
+    const pos1Text = (await posLabels[0].textContent()) || "";
+    const pos2Text = (await posLabels[1].textContent()) || "";
+    const pos1 = parseInt(pos1Text.replace(/\D/g, ""), 10);
+    const pos2 = parseInt(pos2Text.replace(/\D/g, ""), 10);
+    assert(pos1 >= 1 && pos1 <= 12, "Word position 1 must be between 1 and 12");
+    assert(pos2 >= 1 && pos2 <= 12, "Word position 2 must be between 1 and 12");
+    pass(`Word verification gate requires: Word #${pos1} and Word #${pos2}`);
+
+    // Fill in the two words and confirm the gate
+    const input1 = await pageAlice.locator(`input[placeholder="Word #${pos1}"]`);
+    const input2 = await pageAlice.locator(`input[placeholder="Word #${pos2}"]`);
+    await input1.fill(recoveryWords[pos1 - 1]);
+    await input2.fill(recoveryWords[pos2 - 1]);
+    pass(`Filled in Word #${pos1} (${recoveryWords[pos1 - 1]}) and Word #${pos2} (${recoveryWords[pos2 - 1]})`);
+
+    await pageAlice.click('button:has-text("Verify and view invite code")');
+    await pageAlice.waitForSelector('text="Send this invite to your partner"', { timeout: 15000 });
+    pass("Word Re-entry Gate passed: Alice reached Space Ready invite screen");
 
     // Extract 6-character room lookup code from the dashed box
     const codeElement = await pageAlice.waitForSelector('span[class*="tracking-[0.25em]"]', { timeout: 10000 });
@@ -211,17 +244,6 @@ async function runBrowserTest() {
     assert(fullInviteString.startsWith(lookupCode), "Invite string starts with lookup code");
     assert.strictEqual(fullInviteString.length, 38, "Combined invite string length is 38 chars (6 code + 1 dash + 26 secret + 5 inner dashes)");
     pass(`Extracted combined invite string: ${fullInviteString}`);
-
-    // Extract 12-word recovery phrase
-    const wordElements = await pageAlice.$$('div[class*="bg-white border"] span[class*="font-semibold"]');
-    const recoveryWords = [];
-    for (const el of wordElements) {
-      const text = (await el.textContent()) || "";
-      if (text.trim()) recoveryWords.push(text.trim());
-    }
-    assert.strictEqual(recoveryWords.length, 12, "Must display exactly 12 recovery phrase words");
-    const recoveryPhrase = recoveryWords.join(" ");
-    pass(`Extracted 12-word recovery phrase: ${recoveryPhrase.slice(0, 15)}... (12 words total)`);
 
     // Verify database state for Alice's pair
     const { data: alicePairInDb } = await admin
@@ -375,33 +397,58 @@ async function runBrowserTest() {
     pass("Alice's browser automatically updated in real-time to /dashboard (Paired!)");
 
     // ------------------------------------------------------------------
-    // CONTEXT 3: MULTI-DEVICE RECOVERY WITH 12-WORD PHRASE
+    // CONTEXT 3: MULTI-DEVICE RECOVERY VIA ONBOARDING UI
     // ------------------------------------------------------------------
-    console.log("\n6. Opening Fresh Browser Context 3 (Alice New Device - Recovery Flow)...");
+    console.log("\n6. Opening Fresh Browser Context 3 (Alice New Device - Onboarding UI Restore)...");
     const contextNewDevice = await browser.newContext();
     const pageNewDevice = await contextNewDevice.newPage();
+    pageNewDevice.on("console", (msg) => console.log(`[NewDevice Console] ${msg.type()}: ${msg.text()}`));
+    pageNewDevice.on("pageerror", (err) => console.error(`[NewDevice PageError] ${err.message}`));
 
     // Sign in Alice on new device
     await pageNewDevice.goto(`${baseUrl}/login`);
     await pageNewDevice.fill('input[type="email"]', aliceUser.email);
     await pageNewDevice.fill('input[type="password"]', aliceUser.password);
     await pageNewDevice.click('button[type="submit"]');
-    await pageNewDevice.waitForURL(/dashboard/, { timeout: 15000 });
-    pass("Alice signed in on fresh browser context");
+    await pageNewDevice.waitForURL(
+      (url) => url.pathname.includes("/dashboard") || url.pathname.includes("/onboarding"),
+      { timeout: 15000 }
+    );
+    pass("Alice signed in on fresh device context");
 
-    // Test phrase unwrap of recovery-envelope.json
-    console.log("6a. Fetching recovery envelope from server and unwrapping with 12-word phrase...");
-    const recoveryRes = await fetch(`${baseUrl}/api/vault/envelope?pairId=${pairId}&type=recovery`, {
-      headers: { Authorization: `Bearer ${alicePairInDb.id}` }, // We use admin or service client for envelope fetch
-    });
-    const { data: recBlob } = await admin.storage
-      .from("memories")
-      .download(`${pairId}/recovery-envelope.json`, { cacheNonce: Date.now() });
-    const recText = await recBlob.text();
+    // Navigate to /onboarding?mode=restore to perform UI restore
+    await pageNewDevice.goto(`${baseUrl}/onboarding?mode=restore`);
+    await pageNewDevice.waitForLoadState("networkidle");
+    pass("Alice navigated to /onboarding?mode=restore on fresh device context");
 
-    const restoredKey = await unwrapVaultKeyWithPhrase(recText, recoveryPhrase, pairId);
-    assert(restoredKey, "Key restored successfully with 12-word phrase");
-    pass("12-word recovery phrase successfully unwrapped recovery-envelope.json on fresh device");
+    // Step 3C: Enter 12-word recovery phrase into textarea
+    await pageNewDevice.waitForSelector('textarea[placeholder*="apple banana"]', { timeout: 10000 });
+    await pageNewDevice.fill('textarea[placeholder*="apple banana"]', recoveryPhrase);
+    await pageNewDevice.click('button:has-text("Unlock Lovespace")');
+    pass("Submitted 12-word recovery phrase via UI restore form");
+
+    // Verify successful unlock and auto-navigation to dashboard
+    await pageNewDevice.waitForURL((url) => url.pathname.includes("/dashboard"), { timeout: 15000 });
+    pass("Successfully unlocked and auto-routed to /dashboard via UI restore");
+
+    // Verify IndexedDB in Context 3 has the unwrapped vault key persisted locally!
+    const newDeviceHasKey = await pageNewDevice.evaluate(async (pId) => {
+      return new Promise((resolve) => {
+        const req = indexedDB.open("pairfect_vault", 1);
+        req.onerror = () => resolve(false);
+        req.onsuccess = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains("keys")) return resolve(false);
+          const tx = db.transaction("keys", "readonly");
+          const store = tx.objectStore("keys");
+          const getReq = store.get(`pair:${pId}`);
+          getReq.onsuccess = () => resolve(!!getReq.result);
+          getReq.onerror = () => resolve(false);
+        };
+      });
+    }, pairId);
+    assert(newDeviceHasKey, "New device context must have vault key stored in IndexedDB");
+    pass("New device IndexedDB verified: vault key successfully unwrapped and persisted via UI restore");
 
     console.log("\n========================================================================");
     console.log(`ALL BROWSER TESTS VERIFIED: ${passedChecks} / ${passedChecks + failedChecks} checks passed!`);

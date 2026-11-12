@@ -24,7 +24,8 @@ import {
   X,
   Eye,
   Maximize2,
-  ArrowRight
+  ArrowRight,
+  Key,
 } from "lucide-react";
 import {
   motion,
@@ -39,6 +40,7 @@ import MeanwhileCard from "@/components/meanwhile-card";
 import CitySelectorModal from "@/components/city-selector-modal";
 import { useSubscription } from "@/hooks/use-subscription";
 import PlusPaywallModal from "@/components/plus-paywall-modal";
+import { RecoveryPhraseModal } from "@/components/vault/recovery-phrase-modal";
 
 interface MemoryKeepsake {
   id: string;
@@ -93,6 +95,9 @@ export default function DashboardPage() {
   const [gratitudeCount, setGratitudeCount] = useState(0);
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+  const [hasRecoveryEnvelope, setHasRecoveryEnvelope] = useState<boolean | null>(null);
+  const [dismissBanner, setDismissBanner] = useState(false);
 
   // Today Question 3D Tilt & Mascot Cheer
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -145,6 +150,30 @@ export default function DashboardPage() {
     };
   }, [pair, loading]);
 
+  const checkRecoveryStatus = async () => {
+    if (!pair?.id || pair.status !== "active") return;
+    try {
+      const res = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(pair.id)}&type=recovery`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setHasRecoveryEnvelope(!!data.envelope);
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (!pair?.id || pair.status !== "active") return;
+    try {
+      const isDismissed = localStorage.getItem(`pairfect_dismiss_recovery_banner_${pair.id}`);
+      if (isDismissed === "true") {
+        setDismissBanner(true);
+      }
+    } catch {}
+    checkRecoveryStatus();
+  }, [pair?.id, pair?.status]);
+
   // Handle ESC key to dismiss memory preview modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -191,6 +220,60 @@ export default function DashboardPage() {
       <div className="lg:pl-60 xl:pl-64 min-h-screen pt-18 pb-10 sm:py-10 px-4 sm:px-8 flex justify-center">
         <main className="w-full max-w-5xl space-y-8 select-none pb-24">
           <PushOptInBanner />
+
+          {/* Couple Vault Recovery Backup Migration Banner */}
+          {pair?.status === "active" && hasRecoveryEnvelope === false && !dismissBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
+                  <Key className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-heading font-bold text-sm text-stone-900">
+                      Back up your couple vault
+                    </h3>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded-full">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-600 mt-0.5 leading-relaxed max-w-xl font-sans">
+                    Set up your 12-word recovery phrase so you can safely restore your encrypted photos and memories if you switch devices.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsRecoveryModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-heading font-bold shadow-xs transition-colors cursor-pointer"
+                >
+                  Set up phrase
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDismissBanner(true);
+                    if (pair?.id && typeof window !== "undefined") {
+                      try {
+                        localStorage.setItem(`pairfect_dismiss_recovery_banner_${pair.id}`, "true");
+                      } catch {}
+                    }
+                  }}
+                  className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-amber-100/50 transition-colors cursor-pointer"
+                  aria-label="Dismiss banner"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* ══════════════════════════════════════════════════
               1. TOP HEADER: GREETING & DATE + LIVE PARTNER PRESENCE
@@ -968,6 +1051,15 @@ export default function DashboardPage() {
           <PlusPaywallModal
             isOpen={isPaywallOpen}
             onClose={() => setIsPaywallOpen(false)}
+          />
+
+          <RecoveryPhraseModal
+            isOpen={isRecoveryModalOpen}
+            onClose={() => {
+              setIsRecoveryModalOpen(false);
+              checkRecoveryStatus();
+            }}
+            pairId={pair?.id}
           />
 
           {/* ══════════════════════════════════════════════════

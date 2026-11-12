@@ -29,7 +29,9 @@ import {
 } from "lucide-react";
 import {
   generateRecoveryPhrase,
+  validateRecoveryPhrase,
   wrapVaultKeyWithPhrase,
+  unwrapVaultKeyWithPhrase,
 } from "@/lib/crypto/recovery-phrase";
 import {
   generateCoupleKey,
@@ -138,8 +140,20 @@ function pruneExpiredInviteSecrets(): void {
 
 export default function OnboardingPage() {
   const { user, profile, pair, signOut, refreshSession } = useAuth();
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
-  const [mode, setMode] = useState<"choice" | "create" | "join">("choice");
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("mode") === "restore" || p.get("restore") === "true") return 3;
+    }
+    return 1;
+  });
+  const [mode, setMode] = useState<"choice" | "create" | "join" | "restore">(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("mode") === "restore" || p.get("restore") === "true") return "restore";
+    }
+    return "choice";
+  });
   const [inviteCode, setInviteCode] = useState("");
   const [inputCode, setInputCode] = useState("");
   const [tempDisplayName, setTempDisplayName] = useState("");
@@ -160,6 +174,19 @@ export default function OnboardingPage() {
   const [regenerating, setRegenerating] = useState(false);
   const [regenerateSuccess, setRegenerateSuccess] = useState(false);
 
+  // Recovery phrase verification gate states
+  const [phraseVerified, setPhraseVerified] = useState(false);
+  const [verifyPositions, setVerifyPositions] = useState<[number, number]>([3, 8]);
+  const [verifyInput1, setVerifyInput1] = useState("");
+  const [verifyInput2, setVerifyInput2] = useState("");
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
+  // Restore flow states
+  const [restorePhraseInput, setRestorePhraseInput] = useState("");
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [restoreSuccess, setRestoreSuccess] = useState(false);
+
   const router = useRouter();
   const supabase = createClient();
 
@@ -176,6 +203,12 @@ export default function OnboardingPage() {
     if (codeParam) {
       setInputCode(codeParam.toUpperCase().trim());
       setMode("join");
+    }
+
+    const restoreParam = params.get("mode") === "restore" || params.get("restore") === "true";
+    if (restoreParam) {
+      setMode("restore");
+      setCurrentStep(3);
     }
 
     const hash = window.location.hash;
@@ -234,6 +267,7 @@ export default function OnboardingPage() {
     if (pair && pair.status === "pending" && pair.user_a_id === user?.id) {
       setMode("create");
       setCurrentStep(3);
+      setPhraseVerified(true);
       setInviteCode(pair.invite_code);
 
       try {
@@ -426,6 +460,15 @@ export default function OnboardingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ pairId: createdPair.id, envelope: recoveryEnvelopeStr, type: "recovery" }),
         });
+
+        // Pick 2 random distinct word positions between 1 and 12 for the re-entry confirmation gate
+        const p1 = Math.floor(Math.random() * 6) + 1; // 1 to 6
+        const p2 = Math.floor(Math.random() * 6) + 7; // 7 to 12
+        setVerifyPositions([p1, p2]);
+        setPhraseVerified(false);
+        setVerifyInput1("");
+        setVerifyInput2("");
+        setVerifyError(null);
       } catch (phraseErr) {
         console.warn("[Onboarding] Recovery phrase setup warning:", phraseErr);
       }
@@ -586,6 +629,96 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleVerifyPhraseGate = (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerifyError(null);
+    if (!recoveryPhrase) {
+      setVerifyError("No recovery phrase found. Please re-create your space.");
+      return;
+    }
+    const words = recoveryPhrase.trim().toLowerCase().split(/\s+/);
+    const target1 = words[verifyPositions[0] - 1];
+    const target2 = words[verifyPositions[1] - 1];
+
+    const val1 = verifyInput1.trim().toLowerCase();
+    const val2 = verifyInput2.trim().toLowerCase();
+
+    if (!val1 || !val2) {
+      setVerifyError("Please enter both words to continue.");
+      return;
+    }
+
+    if (val1 !== target1) {
+      setVerifyError(`Word #${verifyPositions[0]} does not match. Please verify the word from your phrase above.`);
+      return;
+    }
+    if (val2 !== target2) {
+      setVerifyError(`Word #${verifyPositions[1]} does not match. Please verify the word from your phrase above.`);
+      return;
+    }
+
+    setPhraseVerified(true);
+  };
+
+  const handleRestoreLovespace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRestoreError(null);
+    setRestoreSuccess(false);
+
+    const trimmed = restorePhraseInput.trim().toLowerCase();
+    const validation = await validateRecoveryPhrase(trimmed);
+    if (!validation.valid) {
+      setRestoreError(validation.error || "Please enter a valid 12-word recovery phrase.");
+      return;
+    }
+
+    setRestoreLoading(true);
+    try {
+      // Find pair for current user
+      let targetPairId = pair?.id;
+      if (!targetPairId && user) {
+        const { data: userPairs } = await supabase
+          .from("pairs")
+          .select("id, status")
+          .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (userPairs && userPairs.length > 0) {
+          targetPairId = userPairs[0].id;
+        }
+      }
+
+      if (!targetPairId) {
+        setRestoreError("No existing lovespace found for this account. Please create a space or join first.");
+        setRestoreLoading(false);
+        return;
+      }
+
+      // Fetch recovery envelope from server
+      const envRes = await fetch(`/api/vault/envelope?pairId=${encodeURIComponent(targetPairId)}&type=recovery`);
+      const envData = await envRes.json();
+
+      if (!envData.success || !envData.envelope) {
+        setRestoreError("No recovery backup found on the server. If this space used device-only mode, restore must be done from your partner's active device.");
+        setRestoreLoading(false);
+        return;
+      }
+
+      const recoveredKey = await unwrapVaultKeyWithPhrase(envData.envelope, trimmed, targetPairId);
+      await savePairKey(targetPairId, recoveredKey);
+
+      setRestoreSuccess(true);
+      await refreshSession(true);
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
+    } catch (err: any) {
+      setRestoreError(err?.message || "Failed to unwrap couple vault key with that recovery phrase. Please check word spelling and order.");
+    } finally {
+      setRestoreLoading(false);
+    }
+  };
+
   const handleShareInviteLink = async () => {
     if (!secretInviteLink) return;
     const shareData = {
@@ -701,7 +834,7 @@ export default function OnboardingPage() {
         )}
 
         {/* STEP 1: What's your name? */}
-        {currentStep === 1 && (
+        {currentStep === 1 && mode !== "restore" && (
           <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative">
             {/* Washi tape badge */}
             <div className="absolute -top-3.5 left-8 -rotate-1 shadow-xs">
@@ -809,6 +942,31 @@ export default function OnboardingPage() {
                   <ArrowRight className="w-5 h-5 text-stone-400 group-hover:text-stone-800 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5 ml-2" />
                 </div>
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("restore");
+                  setCurrentStep(3);
+                  setError(null);
+                  setRestoreError(null);
+                }}
+                disabled={loading}
+                className="w-full text-left p-4 sm:p-5 rounded-2xl border-2 border-stone-800 bg-[#FFFDFB] hover:bg-stone-50 group transition-all cursor-pointer shadow-[2px_2px_0px_0px_rgba(28,25,23,0.8)] active:translate-x-[1px] active:translate-y-[1px]"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 text-stone-900 font-heading font-bold text-base">
+                      <span>Restore with recovery phrase</span>
+                      <Key className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <p className="text-xs text-stone-600 leading-relaxed">
+                      Have a 12-word recovery phrase? Enter it to unlock your encrypted lovespace on this device.
+                    </p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-stone-400 group-hover:text-stone-800 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5 ml-2" />
+                </div>
+              </button>
             </div>
 
             <div className="mt-6 pt-4 border-t border-stone-200 flex items-center justify-between">
@@ -825,8 +983,141 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* STEP 3A: Create Space Ready */}
-        {currentStep === 3 && mode === "create" && (
+        {/* STEP 3A: Save Recovery Phrase Gate (if not yet confirmed) */}
+        {currentStep === 3 && mode === "create" && !phraseVerified && recoveryPhrase && (
+          <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative text-center">
+            {/* Step badge */}
+            <div className="mb-4 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-[11px] font-mono font-bold uppercase tracking-wider">
+              <Key className="w-3.5 h-3.5 text-amber-600" />
+              <span>STEP 1 OF 2: SAVE YOUR RECOVERY PHRASE</span>
+            </div>
+
+            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 tracking-tight">
+              Keep your couple vault safe
+            </h2>
+            <p className="mt-1.5 text-xs sm:text-sm text-stone-600 font-sans leading-relaxed">
+              These 12 words are the only way to recover your encrypted space and memories if you switch devices. Pairfect cannot recover them for you.
+            </p>
+
+            {/* 12-Word Recovery Phrase Grid */}
+            <div className="text-left bg-[#FFFBF8] border border-stone-200 rounded-2xl p-4 my-5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-700">
+                  Your 12-Word Recovery Phrase
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(recoveryPhrase);
+                    setCopiedPhrase(true);
+                    setTimeout(() => setCopiedPhrase(false), 2000);
+                  }}
+                  className="text-[11px] font-mono text-stone-600 hover:text-stone-900 inline-flex items-center gap-1 cursor-pointer"
+                >
+                  {copiedPhrase ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      <span className="text-emerald-700 font-bold">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy words</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 pt-1">
+                {recoveryPhrase.split(" ").map((w, idx) => (
+                  <div
+                    key={idx}
+                    className="px-2 py-1.5 rounded-lg bg-white border border-stone-200 font-mono text-xs text-stone-800 flex items-center gap-1.5"
+                  >
+                    <span className="text-stone-400 select-none text-[10px]">{idx + 1}.</span>
+                    <span className="font-semibold">{w}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Confirmation Gate Form */}
+            <form onSubmit={handleVerifyPhraseGate} className="space-y-4 text-left">
+              <div className="bg-stone-50 border border-stone-200 rounded-2xl p-4 space-y-3">
+                <div className="text-xs font-mono font-bold text-stone-700 uppercase tracking-wider">
+                  Verification Gate: Confirm You Saved It
+                </div>
+                <p className="text-xs text-stone-600 leading-relaxed font-sans">
+                  To ensure you never lose access to your vault, enter the words for positions #{verifyPositions[0]} and #{verifyPositions[1]} from above:
+                </p>
+
+                {verifyError && (
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                    {verifyError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-stone-500 mb-1">
+                      Word #{verifyPositions[0]}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={verifyInput1}
+                      onChange={(e) => {
+                        setVerifyInput1(e.target.value);
+                        if (verifyError) setVerifyError(null);
+                      }}
+                      placeholder={`Word #${verifyPositions[0]}`}
+                      className="w-full px-3 py-2 text-sm border-2 border-stone-800 rounded-xl bg-white text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-stone-500 mb-1">
+                      Word #{verifyPositions[1]}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={verifyInput2}
+                      onChange={(e) => {
+                        setVerifyInput2(e.target.value);
+                        if (verifyError) setVerifyError(null);
+                      }}
+                      placeholder={`Word #${verifyPositions[1]}`}
+                      className="w-full px-3 py-2 text-sm border-2 border-stone-800 rounded-xl bg-white text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-stone-900 hover:bg-stone-800 text-white py-3.5 px-6 rounded-full font-heading font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Verify and view invite code</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+
+            <div className="mt-4 pt-3 border-t border-stone-200 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handleCancelPendingPair}
+                className="text-xs font-mono text-stone-500 hover:text-stone-900 inline-flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Cancel</span>
+              </button>
+              <span className="text-[11px] font-mono text-stone-400">Zero Cloud Persistence</span>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3A: Create Space Ready (After phrase verified or when restored) */}
+        {currentStep === 3 && mode === "create" && (phraseVerified || !recoveryPhrase) && (
           <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative text-center">
             {/* Celebratory badge */}
             <div className="mb-4 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-[11px] font-mono font-bold uppercase tracking-wider">
@@ -956,53 +1247,6 @@ export default function OnboardingPage() {
                 </button>
               </div>
             </div>
-
-            {/* 12-Word Recovery Phrase Card */}
-            {recoveryPhrase && (
-              <div className="text-left bg-[#FFFBF8] border border-stone-200 rounded-2xl p-4 mb-5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-stone-700">
-                    <Key className="w-3.5 h-3.5 text-rose-600" />
-                    <span>Your 12-Word Recovery Phrase</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(recoveryPhrase);
-                      setCopiedPhrase(true);
-                      setTimeout(() => setCopiedPhrase(false), 2000);
-                    }}
-                    className="text-[11px] font-mono text-stone-600 hover:text-stone-900 inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    {copiedPhrase ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-600" />
-                        <span className="text-emerald-700 font-bold">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Copy words</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <p className="text-[11px] text-stone-500 font-sans leading-relaxed">
-                  Save these 12 words. They allow you to restore your couple vault and photos if you switch phones.
-                </p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 pt-1">
-                  {recoveryPhrase.split(" ").map((w, idx) => (
-                    <div
-                      key={idx}
-                      className="px-2 py-1 rounded-lg bg-white border border-stone-200 font-mono text-[11px] text-stone-800 flex items-center gap-1"
-                    >
-                      <span className="text-stone-400 select-none text-[9px]">{idx + 1}.</span>
-                      <span className="font-semibold">{w}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* WHAT'S NEXT 3-Step Guide */}
             <div className="text-left bg-[#FFFBF8] border border-stone-200 rounded-2xl p-4 mb-5 space-y-2.5">
@@ -1148,6 +1392,82 @@ export default function OnboardingPage() {
                 >
                   Need a code instead?
                 </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* STEP 3C: Restore with Recovery Phrase */}
+        {currentStep === 3 && mode === "restore" && (
+          <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(28,25,23,0.9)] relative">
+            <div className="mb-6">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full inline-block mb-2">
+                Step 3 of 4: Restore Space
+              </span>
+              <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 tracking-tight">
+                Restore your couple vault
+              </h2>
+              <p className="mt-1.5 text-xs sm:text-sm text-stone-600 font-sans leading-relaxed">
+                Enter your 12-word recovery phrase to unwrap and restore your encrypted couple space on this device.
+              </p>
+            </div>
+
+            <form onSubmit={handleRestoreLovespace} className="space-y-5">
+              <div>
+                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-stone-500 mb-2">
+                  12-Word Recovery Phrase
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  autoFocus
+                  placeholder="e.g. apple banana cherry daisy elderberry fig grape hazelnut iris jasmine kiwi lemon"
+                  value={restorePhraseInput}
+                  onChange={(e) => {
+                    setRestorePhraseInput(e.target.value);
+                    if (restoreError) setRestoreError(null);
+                  }}
+                  className="w-full font-mono text-sm p-3.5 border-2 border-stone-800 rounded-2xl bg-[#FFFDFB] text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-inner resize-none leading-relaxed"
+                />
+              </div>
+
+              {restoreError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium leading-relaxed">
+                  {restoreError}
+                </div>
+              )}
+
+              {restoreSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Vault unlocked successfully! Redirecting to your dashboard...</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={restoreLoading || !restorePhraseInput.trim()}
+                className="w-full bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white py-3.5 px-6 rounded-full font-heading font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {restoreLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
+                <span>Unlock Lovespace</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <div className="pt-3 border-t border-stone-200 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("choice");
+                    setCurrentStep(2);
+                  }}
+                  className="text-xs font-mono text-stone-500 hover:text-stone-900 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+
+                <span className="text-[11px] font-mono text-stone-400">Client-Side Encrypted Couple Vault</span>
               </div>
             </form>
           </div>

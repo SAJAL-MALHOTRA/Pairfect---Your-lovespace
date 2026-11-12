@@ -280,33 +280,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // 1. If authenticated user is on landing page or auth routes, route them into app
       if (isRootOrAuthRoute) {
-        if (isPendingOnboarding) {
-          router.push("/onboarding");
-        } else {
-          let safeRedirect = "/dashboard";
-          if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            const redirectParam = params.get("redirect");
-            if (
-              redirectParam &&
-              redirectParam.startsWith("/") &&
-              !redirectParam.startsWith("//") &&
-              !redirectParam.includes("://") &&
-              !redirectParam.includes("\\")
-            ) {
-              safeRedirect = redirectParam;
-            }
+        let safeRedirect = isPendingOnboarding ? "/onboarding" : "/dashboard";
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const redirectParam = params.get("redirect");
+          if (
+            redirectParam &&
+            redirectParam.startsWith("/") &&
+            !redirectParam.startsWith("//") &&
+            !redirectParam.includes("://") &&
+            !redirectParam.includes("\\")
+          ) {
+            safeRedirect = redirectParam;
           }
-          router.push(safeRedirect);
         }
+        router.push(safeRedirect);
       }
       // 2. If user hasn't finished pairing, prevent accessing protected dashboard routes
       else if (isPendingOnboarding && isProtectedRoute) {
         router.push("/onboarding");
       }
-      // 3. If user has active pair, prevent staying on onboarding
+      // 3. If user has active pair, prevent staying on onboarding unless in restore mode
       else if (!isPendingOnboarding && isOnboardingRoute) {
-        router.push("/dashboard");
+        const isRestoreMode =
+          typeof window !== "undefined" &&
+          (window.location.search.includes("restore") ||
+            window.location.search.includes("mode=restore"));
+        if (!isRestoreMode) {
+          router.push("/dashboard");
+        }
       }
     }
   }, [user, pair, loading, pathname, router]);
