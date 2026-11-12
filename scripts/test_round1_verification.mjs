@@ -359,8 +359,40 @@ async function run() {
     fail("Transport envelope was DELETED prematurely before ack!");
   }
 
-  // 1f. Bob sends ack-join
-  console.log("\n1f. Bob unwraps key and sends ack-join confirmation...");
+  // 1f-1. Outsider security check on ack-join
+  console.log("\n1f-1. Testing outsider rejection on ack-join (Charlie)...");
+  const outsiderAckRes = await fetch(`${baseUrl}/api/vault/envelope/ack-join`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authCharlie.session.access_token}`,
+    },
+    body: JSON.stringify({ pairId: pairId1 }),
+  });
+  outsiderAckRes.status === 403
+    ? pass("Outsider (Charlie) calling ack-join correctly rejected with HTTP 403 Forbidden")
+    : fail(`Outsider ack-join returned HTTP ${outsiderAckRes.status}`);
+
+  // 1f-2. Unauthenticated caller security check on ack-join
+  const anonAckRes = await fetch(`${baseUrl}/api/vault/envelope/ack-join`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pairId: pairId1 }),
+  });
+  anonAckRes.status === 401
+    ? pass("Unauthenticated caller on ack-join correctly rejected with HTTP 401 Unauthorized")
+    : fail(`Unauthenticated ack-join returned HTTP ${anonAckRes.status}`);
+
+  // Confirm transport envelope was NOT deleted by rejected outsider attempt
+  const { data: tAfterOutsider } = await admin.storage
+    .from("memories")
+    .download(`${pairId1}/transport-envelope.json`, { cacheNonce: Date.now() });
+  tAfterOutsider
+    ? pass("Transport envelope remains intact after rejected outsider ack attempt")
+    : fail("Transport envelope was deleted by outsider attempt!");
+
+  // 1f-3. Bob sends authentic ack-join
+  console.log("\n1f-3. Bob unwraps key and sends authentic ack-join confirmation...");
   const ackRes = await fetch(`${baseUrl}/api/vault/envelope/ack-join`, {
     method: "POST",
     headers: {

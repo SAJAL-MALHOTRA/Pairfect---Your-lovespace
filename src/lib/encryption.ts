@@ -9,21 +9,15 @@ const DEV_FALLBACK_KEY = "pairfect-dev-local-encryption-key-do-not-use-in-prod";
  * In production, APP_ENCRYPTION_KEY is mandatory.
  */
 function getActiveKey(): Buffer {
-  if (process.env.NODE_ENV === "production" && !process.env.APP_ENCRYPTION_KEY) {
+  const secret = process.env.APP_ENCRYPTION_KEY;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "[Security Exception] APP_ENCRYPTION_KEY is mandatory in production environment. Configure APP_ENCRYPTION_KEY in your deployment environment variables."
+      );
+    }
     throw new Error(
-      "[Security Exception] APP_ENCRYPTION_KEY is mandatory in production environment. Configure APP_ENCRYPTION_KEY in your deployment environment variables."
-    );
-  }
-
-  const secret =
-    process.env.APP_ENCRYPTION_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    DEV_FALLBACK_KEY;
-
-  if (!process.env.APP_ENCRYPTION_KEY) {
-    console.warn(
-      "[Security Warning] APP_ENCRYPTION_KEY is not set in environment. Using dev fallback key. Set APP_ENCRYPTION_KEY in your Vercel Environment Variables for dedicated secret rotation."
+      "[Security Exception] APP_ENCRYPTION_KEY is required. Please define APP_ENCRYPTION_KEY in your environment."
     );
   }
 
