@@ -354,6 +354,7 @@ async function run() {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authBob.session.access_token}`,
+      "x-forwarded-for": "198.51.100.88",
     },
     body: JSON.stringify({ code: inviteCode1 }),
   });
@@ -367,6 +368,7 @@ async function run() {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authBob.session.access_token}`,
+      "x-forwarded-for": "198.51.100.88",
     },
     body: JSON.stringify({ code: inviteCode1, proof: proof1 }),
   });
@@ -630,6 +632,7 @@ async function run() {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authCharlie.session.access_token}`,
+      "x-forwarded-for": "198.51.100.89",
     },
     body: JSON.stringify({ code: inviteCode2, proof: proof2 }),
   });
