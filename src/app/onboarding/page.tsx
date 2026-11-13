@@ -1031,10 +1031,10 @@ export default function OnboardingPage() {
                 {recoveryPhrase.split(" ").map((w, idx) => (
                   <div
                     key={idx}
-                    className="px-2 py-1.5 rounded-lg bg-white border border-stone-200 font-mono text-xs text-stone-800 flex items-center gap-1.5"
+                    className="px-1.5 sm:px-2 py-1.5 rounded-lg bg-white border border-stone-200 font-mono text-[11px] sm:text-xs text-stone-800 flex items-center gap-1 min-w-0 overflow-hidden"
                   >
-                    <span className="text-stone-400 select-none text-[10px]">{idx + 1}.</span>
-                    <span className="font-semibold">{w}</span>
+                    <span className="text-stone-400 select-none text-[10px] shrink-0">{idx + 1}.</span>
+                    <span className="font-semibold truncate">{w}</span>
                   </div>
                 ))}
               </div>
@@ -1070,7 +1070,7 @@ export default function OnboardingPage() {
                         if (verifyError) setVerifyError(null);
                       }}
                       placeholder={`Word #${verifyPositions[0]}`}
-                      className="w-full px-3 py-2 text-sm border-2 border-stone-800 rounded-xl bg-white text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-rose-400"
+                      className="w-full px-3 py-2 text-base sm:text-sm border-2 border-stone-800 rounded-xl bg-white text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-rose-400"
                     />
                   </div>
                   <div>
@@ -1086,7 +1086,7 @@ export default function OnboardingPage() {
                         if (verifyError) setVerifyError(null);
                       }}
                       placeholder={`Word #${verifyPositions[1]}`}
-                      className="w-full px-3 py-2 text-sm border-2 border-stone-800 rounded-xl bg-white text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-rose-400"
+                      className="w-full px-3 py-2 text-base sm:text-sm border-2 border-stone-800 rounded-xl bg-white text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-rose-400"
                     />
                   </div>
                 </div>
@@ -1137,7 +1137,7 @@ export default function OnboardingPage() {
               <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-400 mb-1">
                 Room Lookup Code
               </div>
-              <span className="font-mono text-3xl sm:text-4xl font-black tracking-[0.25em] text-stone-900 select-all block">
+              <span className="font-mono text-2xl sm:text-4xl font-black tracking-widest sm:tracking-[0.25em] text-stone-900 select-all block whitespace-nowrap overflow-hidden text-ellipsis">
                 {formattedCode}
               </span>
               <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md">
@@ -1175,7 +1175,7 @@ export default function OnboardingPage() {
                     )}
                   </button>
                 </div>
-                <div className="font-mono text-xs text-stone-800 break-all bg-stone-50 p-2.5 rounded-lg border border-stone-200 select-all leading-relaxed">
+                <div className="font-mono text-[11px] sm:text-xs text-stone-800 break-all bg-stone-50 p-2.5 rounded-lg border border-stone-200 select-all leading-relaxed tracking-tight">
                   {fullInviteString}
                 </div>
                 <p className="text-[10px] text-stone-500 leading-normal">
@@ -1427,7 +1427,7 @@ export default function OnboardingPage() {
                     setRestorePhraseInput(e.target.value);
                     if (restoreError) setRestoreError(null);
                   }}
-                  className="w-full font-mono text-sm p-3.5 border-2 border-stone-800 rounded-2xl bg-[#FFFDFB] text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-inner resize-none leading-relaxed"
+                  className="w-full font-mono text-base sm:text-sm p-3.5 border-2 border-stone-800 rounded-2xl bg-[#FFFDFB] text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-inner resize-none leading-relaxed"
                 />
               </div>
 

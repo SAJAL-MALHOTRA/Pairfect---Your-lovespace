@@ -1169,7 +1169,7 @@ export default function LensBoothView({
           <span className="font-pixel text-[11px] sm:text-xs tracking-wider bg-[var(--burgundy)] text-white px-2.5 sm:px-3 py-1 rounded-md sm:rounded-lg font-bold shadow-xs select-none">
             PAIRFECT
           </span>
-          <h1 className="font-pixel text-sm sm:text-lg tracking-wider text-[var(--text)] uppercase">
+          <h1 className="hidden sm:block font-pixel text-sm sm:text-lg tracking-wider text-[var(--text)] uppercase">
             PHOTO BOOTH
           </h1>
         </div>
@@ -1349,7 +1349,7 @@ export default function LensBoothView({
                       setJoinError(null);
                     }}
                     placeholder="ENTER CODE (E.G. P7K4)"
-                    className="flex-1 px-3.5 py-2 text-xs font-mono font-bold tracking-wider uppercase rounded-xl border border-stone-300 bg-stone-50 text-stone-900 placeholder:text-stone-400 focus:outline-hidden focus:border-stone-900"
+                    className="flex-1 px-3.5 py-2 text-base sm:text-xs font-mono font-bold tracking-wider uppercase rounded-xl border border-stone-300 bg-stone-50 text-stone-900 placeholder:text-stone-400 focus:outline-hidden focus:border-stone-900"
                   />
                   <motion.button
                     whileHover={{ scale: 1.04 }}

@@ -73,6 +73,7 @@ export default function Navigation() {
 
   const isHomeActive = pathname === "/dashboard" || pathname === "/home";
   const isActivitiesActive = pathname.startsWith("/play") || pathname === "/activities";
+  const isBoothActive = pathname.startsWith("/photo-booth");
   const isProfileActive = pathname.startsWith("/profile");
 
   const visibleJumpIn = showAllJumpIn ? JUMP_IN_ACTIVITIES : JUMP_IN_ACTIVITIES.slice(0, 6);
@@ -241,6 +242,53 @@ export default function Navigation() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* ══════════════════════════════════════════════════
+          1B. MOBILE FIXED BOTTOM NAVIGATION BAR
+          ══════════════════════════════════════════════════ */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_rgba(0,0,0,0.03)] select-none">
+        <div className="grid grid-cols-4 h-16 items-center px-2 max-w-md mx-auto">
+          <Link
+            href="/dashboard"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isHomeActive ? "text-rose-600 font-bold" : "text-stone-500 hover:text-stone-900"
+            }`}
+          >
+            <Home className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium tracking-tight">Home</span>
+          </Link>
+
+          <Link
+            href="/play"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isActivitiesActive ? "text-rose-600 font-bold" : "text-stone-500 hover:text-stone-900"
+            }`}
+          >
+            <Gamepad2 className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium tracking-tight">Activities</span>
+          </Link>
+
+          <Link
+            href="/photo-booth"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isBoothActive ? "text-rose-600 font-bold" : "text-stone-500 hover:text-stone-900"
+            }`}
+          >
+            <Camera className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium tracking-tight">Booth</span>
+          </Link>
+
+          <Link
+            href="/profile"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isProfileActive ? "text-rose-600 font-bold" : "text-stone-500 hover:text-stone-900"
+            }`}
+          >
+            <User className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium tracking-tight">Profile</span>
+          </Link>
+        </div>
+      </nav>
 
       {/* ══════════════════════════════════════════════════
           2. DESKTOP FIXED LEFT SIDEBAR

@@ -282,7 +282,7 @@ export default function SettingsPage() {
                           <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">12 Words</span>
                         </p>
                         <p className="text-[11px] text-stone-500 font-mono">
-                          Zero-knowledge client backup · manage key
+                          Client-side encrypted vault backup · manage key
                         </p>
                       </div>
                     </div>
