@@ -79,9 +79,10 @@ async function injectCinematicCursor(page) {
 
 (async () => {
   console.log('Generating auth session for Sajal Malhotra...');
+  const testEmail = process.env.TEST_USER_EMAIL || 'test-user@pairfect.site';
   const { data: linkData } = await admin.auth.admin.generateLink({
     type: 'magiclink',
-    email: 'malhotrasajal243@gmail.com'
+    email: testEmail
   });
   const otp = linkData.properties.email_otp;
 
@@ -93,7 +94,7 @@ async function injectCinematicCursor(page) {
     }
   });
 
-  await browserClient.auth.verifyOtp({ email: 'malhotrasajal243@gmail.com', token: otp, type: 'email' });
+  await browserClient.auth.verifyOtp({ email: testEmail, token: otp, type: 'email' });
 
   const rawVideoDir = path.resolve('temp_video_raw');
   if (fs.existsSync(rawVideoDir)) {

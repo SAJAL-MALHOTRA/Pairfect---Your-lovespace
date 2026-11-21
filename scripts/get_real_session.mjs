@@ -13,7 +13,7 @@ const admin = createClient(env["NEXT_PUBLIC_SUPABASE_URL"], env["SUPABASE_SERVIC
 async function run() {
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: "magiclink",
-    email: "malhotraxsajal@gmail.com",
+    email: process.env.TEST_USER_EMAIL || "test-user@pairfect.site",
   });
   
   const token_hash = linkData.properties.hashed_token;

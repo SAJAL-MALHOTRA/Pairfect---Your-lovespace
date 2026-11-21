@@ -76,8 +76,10 @@ export function RazorpayCheckoutButton({
         throw new Error(orderData.error || "Failed to initialize payment order.");
       }
 
-      const keyId =
-        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TZ3aGe8ahSFQhT";
+      const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+      if (!keyId) {
+        throw new Error("Payment gateway configuration is missing. Please contact support.");
+      }
 
       // 3. Step 2: Configure & open Razorpay modal
       const options: RazorpayCheckoutOptions = {

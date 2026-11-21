@@ -22,9 +22,10 @@ try {
 const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY || serviceKey);
 
 (async () => {
+  const testEmail = process.env.TEST_USER_EMAIL || 'test-user@pairfect.site';
   const { data: linkData } = await admin.auth.admin.generateLink({
     type: 'magiclink',
-    email: 'malhotrasajal243@gmail.com'
+    email: testEmail
   });
   const otp = linkData.properties.email_otp;
 
@@ -36,7 +37,7 @@ const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY || service
     }
   });
 
-  await browserClient.auth.verifyOtp({ email: 'malhotrasajal243@gmail.com', token: otp, type: 'email' });
+  await browserClient.auth.verifyOtp({ email: testEmail, token: otp, type: 'email' });
 
   const browser = await chromium.launch({
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
