@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -64,8 +64,28 @@ const JUMP_IN_ACTIVITIES: JumpInItem[] = [
 export default function Navigation() {
   const pathname = usePathname() || "";
   const { user, profile, partner } = useAuth();
-  const [showAllJumpIn, setShowAllJumpIn] = useState(false);
+  const [showAllJumpIn, setShowAllJumpIn] = useState<boolean>(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Synchronize expanded state with localStorage so it persists across page navigations
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("pairfect_nav_show_all");
+      if (saved !== null) {
+        setShowAllJumpIn(saved === "true");
+      }
+    } catch {}
+  }, []);
+
+  const toggleShowAllJumpIn = () => {
+    setShowAllJumpIn((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("pairfect_nav_show_all", String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Hidden on auth/onboarding routes
   const hiddenRoutes = ["/login", "/signup", "/onboarding", "/auth/callback"];
@@ -210,6 +230,16 @@ export default function Navigation() {
                       );
                     })}
                   </div>
+
+                  {/* Toggle all activities button in mobile drawer */}
+                  <button
+                    type="button"
+                    onClick={toggleShowAllJumpIn}
+                    className="mt-2 w-full flex items-center justify-center gap-1.5 py-1 px-2 text-[11px] font-mono font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50/50 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <span>{showAllJumpIn ? "Show less" : `See all (${JUMP_IN_ACTIVITIES.length})`}</span>
+                    {showAllJumpIn ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
                 </div>
               </div>
 
@@ -437,10 +467,10 @@ export default function Navigation() {
             {/* See All / Show Less Toggle Button */}
             <button
               type="button"
-              onClick={() => setShowAllJumpIn(!showAllJumpIn)}
+              onClick={toggleShowAllJumpIn}
               className="mt-2 w-full flex items-center justify-center gap-1.5 py-1 px-2 text-[11px] font-mono font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50/50 rounded-lg transition-colors cursor-pointer"
             >
-              <span>{showAllJumpIn ? "Show less" : "See all"}</span>
+              <span>{showAllJumpIn ? "Show less" : `See all (${JUMP_IN_ACTIVITIES.length})`}</span>
               {showAllJumpIn ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           </div>

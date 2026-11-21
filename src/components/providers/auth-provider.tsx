@@ -271,11 +271,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         pathname.startsWith("/history") ||
         pathname.startsWith("/recap") ||
         pathname.startsWith("/moments") ||
-        pathname.startsWith("/love-letter") ||
-        pathname.startsWith("/gratitude-jar") ||
         pathname.startsWith("/stories") ||
-        pathname.startsWith("/play") ||
-        pathname.startsWith("/profile");
+        pathname.startsWith("/play");
       const isSettingsRoute = pathname.startsWith("/settings");
 
       // 1. If authenticated user is on landing page or auth routes, route them into app

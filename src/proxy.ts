@@ -46,13 +46,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/history") ||
     path.startsWith("/recap") ||
     path.startsWith("/moments") ||
-    path.startsWith("/love-letter") ||
-    path.startsWith("/gratitude-jar") ||
     path.startsWith("/stories") ||
     path.startsWith("/play") ||
     path.startsWith("/match-game") ||
-    path.startsWith("/settings") ||
-    path.startsWith("/profile") ||
     path.startsWith("/focus") ||
     path.startsWith("/calendar") ||
     path.startsWith("/onboarding") ||
